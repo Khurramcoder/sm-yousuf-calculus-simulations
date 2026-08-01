@@ -1,55 +1,39 @@
 # S.M. Yusuf Calculus & Analytic Geometry Simulations
 
-Interactive visualizations and simulations for teaching and learning Calculus and Analytic Geometry.
+An interactive educational platform featuring web-based simulations, visual proofs, 3D geometry explorers, and calculus demonstrations based on classical textbooks.
 
-## Features
+## 🚀 Live Demo
+Explore the interactive platform live on [GitHub Pages](https://Khurramcoder.github.io/sm-yousuf-calculus-simulations/).
 
-- Interactive mathematical simulations
-- Dynamic SVG/Canvas visualizations
-- 2D and 3D geometry explorations
-- Polar coordinates
-- Curve tracing
-- Quadrature methods
-- Quadric surfaces
-- Volume and multiple integrals
+---
 
-## Chapters
+## 📺 Video Tutorials & Playlist
+Watch step-by-step video walkthroughs and additional simulations on YouTube:
+👉 [S.M. Yusuf Calculus Simulation Playlist](https://www.youtube.com/watch?v=UADBCHFLbJg&list=PLFD0-KtFJHsI)
 
-| Chapter | Topic |
-|----------|--------|
-| 1 | Functions and Limits |
-| 2 | Derivatives |
-| 3 | Mean Value Theorems |
-| 4 | Applications of Derivatives |
-| 5 | Integration |
-| 6 | Polar Coordinates |
-| 7 | Applications of Integration |
-| 8 | Analytic Geometry in 3D |
-| 9 | Multiple Integrals |
-| 10 | Vector Calculus |
+---
 
-## Live Demo
+## 🐍 Related Projects
+For programmatic animations, algorithmic mathematical scenes, and video lessons, check out the companion repository:
+👉 [Khurramcoder/manim-mathematics-simulations](https://github.com/Khurramcoder/manim-mathematics-simulations)
 
-GitHub Pages:
+---
 
-https://YOUR_USERNAME.github.io/sm-yousuf-calculus-simulations/
+## 📁 Repository Structure
 
-## Screenshots
-
-Add screenshots here.
-
-## Technologies
-
-- HTML5
-- CSS3
-- JavaScript
-- SVG
-- Canvas
-- Three.js (future)
-
-## Author
-
-Khurram Pervez
+```text
+sm-yousuf-calculus-simulations/
+├── assets/                  # Shared stylesheets and media
+├── chapters/                # Organized by textbook chapters (1 through 10)
+│   ├── chapter_1/           # Functions & Limits
+│   ├── chapter_3/           # Mean Value Theorems
+│   ├── chapter_5/           # Integral Calculus
+│   ├── chapter_6/           # Polar Coordinates
+│   ├── chapter_7/           # Applications of Integration & Curve Tracing
+│   ├── chapter_8/           # 3D Analytic Geometry & Quadric Surfaces
+│   └── chapter_9/           # Multiple Integrals & Volume
+├── index.html               # Modern landing page / simulation hub
+└── README.md
 
 ## License
 
