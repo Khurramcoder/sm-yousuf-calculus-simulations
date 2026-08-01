@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Set 8.12 - Quadric Surface Solver</title>
+    
+    <!-- Core Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- KaTeX Engine for Beautiful Mathematics -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-sidebar: rgba(17, 24, 39, 0.8);
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.25);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: rgba(255, 255, 255, 0.08);
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 420px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+            overflow-y: auto;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            height: 100%;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--success);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        select {
+            padding: 12px 16px;
+            background-color: rgba(31, 41, 55, 0.7);
+            color: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .solution-card {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        #math-original {
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        #math-steps {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #d1d5db;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .instructions {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            background: rgba(255,255,255,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        #sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div>
+            <div class="subtitle">S.M. Yusuf Textbook Solver</div>
+            <h2>Exercise Set 8.12</h2>
+        </div>
+        
+        <div class="control-group">
+            <label for="exercise-select">Select Question</label>
+            <select id="exercise-select">
+                <option value="1">Question 1: x² + y² + z² - 4x + 2y = 11</option>
+                <option value="2">Question 2: 4x² + 4y² + 4z² - 4x + 16y + 12z + 1 = 0</option>
+                <option value="3">Question 3: 4x² + 9y² + 36z² = 36</option>
+                <option value="4">Question 4: x² + y² - 4z² = 0</option>
+                <option value="5">Question 5: x² + y² - z² - 4 = 0</option>
+                <option value="6">Question 6: x² + 9z² = 36 - 9y²</option>
+                <option value="7">Question 7: y² + z² = 4x</option>
+                <option value="8">Question 8: x² + 4y² = z² - 4</option>
+                <option value="9">Question 9: 9x² - 4y = 9z²</option>
+                <option value="10">Question 10: x - y² - z² = 0</option>
+                <option value="11">Question 11: x² + y² = 2z - z²</option>
+                <option value="12">Question 12: x² + 4y² = 4 - z</option>
+                <option value="13">Question 13: x² + 4y² = 4x - 4z²</option>
+                <option value="14">Question 14: 100x² + 25y² + 100 = 4z²</option>
+            </select>
+        </div>
+
+        <div class="solution-card">
+            <div class="card-title">Given Equation</div>
+            <div id="math-original"></div>
+        </div>
+
+        <div class="solution-card">
+            <div class="card-title">Mathematical Analysis & Discussion</div>
+            <div id="math-steps"></div>
+        </div>
+
+        <div class="instructions">
+            <strong>Interactive 3D Canvas Controls:</strong><br>
+            • Left Click + Drag to rotate around standard coordinate axis space<br>
+            • Right Click + Drag to translate view position<br>
+            • Scroll Wheel to zoom smoothly
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        let scene, camera, renderer, controls, surfaceMesh = null;
+
+        const exerciseSelect = document.getElementById('exercise-select');
+        const mathOriginal = document.getElementById('math-original');
+        const mathSteps = document.getElementById('math-steps');
+
+        // Full Textbook Exercise Dataset Map Configuration
+        const exercises = {
+            "1": {
+                raw: "x^2 + y^2 + z^2 - 4x + 2y = 11",
+                discussion: "Complete the squares:<br>(x-2)^2 - 4 + (y+1)^2 - 1 + z^2 = 11<br>(x-2)^2 + (y+1)^2 + z^2 = 16<br><br><strong>Classification:</strong> Sphere<br><strong>Center:</strong> (2, -1, 0)<br><strong>Radius:</strong> 4",
+                type: "sphere", params: { a: 4, b: 4, c: 4 }, offset: { x: 2, y: 0, z: -1 }
+            },
+            "2": {
+                raw: "4x^2 + 4y^2 + 4z^2 - 4x + 16y + 12z + 1 = 0",
+                discussion: "Divide by 4 and complete squares:<br>(x - 1/2)^2 + (y + 2)^2 + (z + 3/2)^2 = 25/4<br><br><strong>Classification:</strong> Sphere<br><strong>Center:</strong> (0.5, -2, -1.5)<br><strong>Radius:</strong> 2.5",
+                type: "sphere", params: { a: 2.5, b: 2.5, c: 2.5 }, offset: { x: 0.5, y: -1.5, z: -2 }
+            },
+            "3": {
+                raw: "4x^2 + 9y^2 + 36z^2 = 36",
+                discussion: "Divide by 36 to obtain standard equation form:<br>\\frac{x^2}{3^2} + \\frac{y^2}{2^2} + \\frac{z^2}{1^2} = 1<br><br><strong>Classification:</strong> Ellipsoid<br><strong>Center:</strong> (0, 0, 0)<br><strong>Semi-axes:</strong> a=3, b=2, c=1",
+                type: "ellipsoid", params: { a: 3, b: 2, c: 1 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "4": {
+                raw: "x^2 + y^2 - 4z^2 = 0",
+                discussion: "Rearrange terms into standard form:<br>\\frac{x^2}{1} + \\frac{y^2}{1} - \\frac{z^2}{(0.5)^2} = 0<br><br><strong>Classification:</strong> Elliptic Cone<br><strong>Vertex:</strong> (0, 0, 0)<br><strong>Axis of orientation:</strong> Z-axis",
+                type: "cone", params: { a: 1, b: 1, c: 0.5 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "5": {
+                raw: "x^2 + y^2 - z^2 - 4 = 0",
+                discussion: "Divide by 4 to normalize:<br>\\frac{x^2}{2^2} + \\frac{y^2}{2^2} - \\frac{z^2}{2^2} = 1<br><br><strong>Classification:</strong> Hyperboloid of One Sheet<br><strong>Center:</strong> (0, 0, 0)<br><strong>Axis of orientation:</strong> Z-axis",
+                type: "hyperboloid1", params: { a: 2, b: 2, c: 2 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "6": {
+                raw: "x^2 + 9z^2 = 36 - 9y^2",
+                discussion: "Group all variable powers together:<br>x^2 + 9y^2 + 9z^2 = 36 \\implies \\frac{x^2}{6^2} + \\frac{y^2}{2^2} + \\frac{z^2}{2^2} = 1<br><br><strong>Classification:</strong> Ellipsoid (Spheroid)<br><strong>Center:</strong> (0, 0, 0)<br><strong>Semi-axes:</strong> a=6, b=2, c=2",
+                type: "ellipsoid", params: { a: 6, b: 2, c: 2 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "7": {
+                raw: "y^2 + z^2 = 4x",
+                discussion: "Rearrange to isolate linear term:<br>\\frac{y^2}{4} + \\frac{z^2}{4} = x<br><br><strong>Classification:</strong> Circular Paraboloid<br><strong>Vertex:</strong> (0, 0, 0)<br><strong>Opens along:</strong> Positive X-axis",
+                type: "paraboloid_x", params: { a: 2, b: 2, c: 1 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "8": {
+                raw: "x^2 + 4y^2 = z^2 - 4",
+                discussion: "Rearrange terms:<br>-\\frac{x^2}{4} - y^2 + \\frac{z^2}{4} = 1<br><br><strong>Classification:</strong> Hyperboloid of Two Sheets<br><strong>Center:</strong> (0, 0, 0)<br><strong>Axis of orientation:</strong> Z-axis",
+                type: "hyperboloid2", params: { a: 2, b: 1, c: 2 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "9": {
+                raw: "9x^2 - 4y = 9z^2",
+                discussion: "Isolate linear parameter variable:<br>4y = 9x^2 - 9z^2 \\implies y = \\frac{9}{4}x^2 - \\frac{9}{4}z^2<br><br><strong>Classification:</strong> Hyperbolic Paraboloid (Saddle)<br><strong>Vertex:</strong> (0, 0, 0)",
+                type: "hyperbolic_paraboloid", params: { a: 1.5, b: 1.5, c: 1 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "10": {
+                raw: "x - y^2 - z^2 = 0",
+                discussion: "Isolate the independent linear element:<br>x = y^2 + z^2<br><br><strong>Classification:</strong> Elliptic Paraboloid<br><strong>Vertex:</strong> (0, 0, 0)<br><strong>Opens along:</strong> Positive X-axis",
+                type: "paraboloid_x", params: { a: 1, b: 1, c: 1 }, offset: { x: 0, y: 0, z: 0 }
+            },
+            "11": {
+                raw: "x^2 + y^2 = 2z - z^2",
+                discussion: "Move all terms and complete the square for Z:<br>x^2 + y^2 + (z^2 - 2z + 1) = 1 \\implies x^2 + y^2 + (z-1)^2 = 1<br><br><strong>Classification:</strong> Sphere<br><strong>Center:</strong> (0, 0, 1)<br><strong>Radius:</strong> 1",
+                type: "sphere", params: { a: 1, b: 1, c: 1 }, offset: { x: 0, y: 1, z: 0 }
+            },
+            "12": {
+                raw: "x^2 + 4y^2 = 4 - z",
+                discussion: "Rearrange quadratic parameters:<br>\\frac{x^2}{4} + y^2 = -(z - 4)<br><br><strong>Classification:</strong> Elliptic Paraboloid<br><strong>Vertex:</strong> (0, 0, 4)<br><strong>Opens along:</strong> Negative Z-axis",
+                type: "paraboloid_down", params: { a: 2, b: 1, c: 1 }, offset: { x: 0, y: 4, z: 0 }
+            },
+            "13": {
+                raw: "x^2 + 4y^2 = 4x - 4z^2",
+                discussion: "Complete the square for X and group terms:<br>(x^2 - 4x + 4) + 4y^2 + 4z^2 = 4 \\implies \\frac{(x-2)^2}{2^2} + y^2 + z^2 = 1<br><br><strong>Classification:</strong> Ellipsoid<br><strong>Center:</strong> (2, 0, 0)<br><strong>Semi-axes:</strong> a=2, b=1, c=1",
+                type: "ellipsoid", params: { a: 2, b: 1, c: 1 }, offset: { x: 2, y: 0, z: 0 }
+            },
+            "14": {
+                raw: "100x^2 + 25y^2 + 100 = 4z^2",
+                discussion: "Divide by -100 to yield structural equations format:<br>-x^2 - \\frac{y^2}{2^2} + \\frac{z^2}{5^2} = 1<br><br><strong>Classification:</strong> Hyperboloid of Two Sheets<br><strong>Center:</strong> (0, 0, 0)<br><strong>Axis of orientation:</strong> Z-axis",
+                type: "hyperboloid2", params: { a: 1, b: 2, c: 5 }, offset: { x: 0, y: 0, z: 0 }
+            }
+        };
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0f19);
+            scene.fog = new THREE.FogExp2(0x0b0f19, 0.025);
+
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(7, 6, 9);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0x1f2937, 1.4);
+            scene.add(ambientLight);
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+            keyLight.position.set(10, 15, 10);
+            scene.add(keyLight);
+            const fillLight = new THREE.DirectionalLight(0x3b82f6, 1.0);
+            fillLight.position.set(-10, 5, -10);
+            scene.add(fillLight);
+
+            // Matrix grid plane
+            const gridHelper = new THREE.GridHelper(20, 40, 0x3b82f6, 0x1e293b);
+            gridHelper.position.y = -3.5;
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            // X, Y, Z axes help lines
+            const axesHelper = new THREE.AxesHelper(6);
+            scene.add(axesHelper);
+
+            window.addEventListener('resize', onWindowResize);
+            exerciseSelect.addEventListener('change', updateVisualizer);
+
+            updateVisualizer();
+            animate();
+        }
+
+        function updateVisualizer() {
+            if (surfaceMesh) scene.remove(surfaceMesh);
+
+            const exKey = exerciseSelect.value;
+            const exData = exercises[exKey];
+
+            // Render Markdown & LaTeX Formulas
+            katex.render(exData.raw, mathOriginal, { throwOnError: false });
+            mathSteps.innerHTML = exData.discussion;
+
+            // Build structural parametric meshes
+            let geometry;
+            const uSegments = 80;
+            const vSegments = 80;
+            const { a, b, c } = exData.params;
+
+            switch (exData.type) {
+                case 'sphere':
+                case 'ellipsoid':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const phi = v * Math.PI;
+                        const x = a * Math.sin(phi) * Math.cos(theta);
+                        const y = b * Math.sin(phi) * Math.sin(theta);
+                        const z = c * Math.cos(phi);
+                        target.set(x, z, y); // Textbooks treat Z as vertical axis
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'cone':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 5; 
+                        const x = (a / c) * Math.abs(z) * Math.cos(theta);
+                        const y = (b / c) * Math.abs(z) * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperboloid1':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 4; 
+                        const cosh = Math.sqrt(1 + (z*z)/(c*c));
+                        const x = a * cosh * Math.cos(theta);
+                        const y = b * cosh * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperboloid2':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const isTop = v > 0.5;
+                        const localV = isTop ? (v - 0.5) * 2 : (0.5 - v) * 2;
+                        const zSign = isTop ? 1 : -1;
+                        const z = zSign * (c + localV * 2);
+                        const sinh = Math.sqrt(Math.max(0, (z*z)/(c*c) - 1));
+                        const x = a * sinh * Math.cos(theta);
+                        const y = b * sinh * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'paraboloid_x':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const x = v * 4; // opens along x
+                        const radius = Math.sqrt(x);
+                        const y = a * radius * Math.cos(theta);
+                        const z = b * radius * Math.sin(theta);
+                        target.set(x - 2, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperbolic_paraboloid':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const x = (u - 0.5) * 4;
+                        const z = (v - 0.5) * 4;
+                        const y = (x*x)/(a*a) - (z*z)/(b*b); // Saddle topology function
+                        target.set(x, y, z);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'paraboloid_down':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const h = v * 4; // depth displacement
+                        const radius = Math.sqrt(h);
+                        const x = a * radius * Math.cos(theta);
+                        const y = b * radius * Math.sin(theta);
+                        target.set(x, -h, y);
+                    }, uSegments, vSegments);
+                    break;
+            }
+
+            // Material Settings
+            const material = new THREE.MeshPhysicalMaterial({
+                color: 0x3b82f6,
+                emissive: 0x1d4ed8,
+                emissiveIntensity: 0.15,
+                roughness: 0.15,
+                metalness: 0.05,
+                clearcoat: 1.0,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.85,
+                transmission: 0.2
+            });
+
+            surfaceMesh = new THREE.Mesh(geometry, material);
+
+            // Overlay thin aesthetic geometry lines
+            const wireframeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.05 });
+            const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
+            surfaceMesh.add(wireframeMesh);
+
+            // Dynamic vector mapping transformation based on calculated textbook center offsets
+            surfaceMesh.position.set(exData.offset.x, exData.offset.y, exData.offset.z);
+
+            scene.add(surfaceMesh);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

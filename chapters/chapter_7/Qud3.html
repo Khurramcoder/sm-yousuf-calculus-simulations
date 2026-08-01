@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definitive Quadrature Integration Solver</title>
+    
+    <!-- 1. Consolidated MathJax LaTeX Engine Setup -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    
+    <!-- 2. Chart.js Graphing Framework -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f1f5f9; margin: 0; padding: 25px; color: #1e293b; }
+        .app-container { max-width: 1200px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h1 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; font-size: 26px; }
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-top: 25px; }
+        @media(max-width: 900px) { .grid-layout { grid-template-columns: 1fr; } }
+        label { font-weight: 600; display: block; margin-top: 15px; margin-bottom: 6px; color: #475569; }
+        input, select, button { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        input:focus, select:focus { border-color: #2563eb; outline: none; }
+        button { background-color: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 25px; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .steps-container { background-color: #f8fafc; border-left: 6px solid #2563eb; padding: 22px; border-radius: 8px; margin-top: 25px; min-height: 250px; }
+        .graph-outer { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; min-height: 450px; position: relative; }
+        .presets-row { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .preset-pill { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .preset-pill:hover { background: #bfdbfe; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>📐 Interactive Quadrature Step-by-Step Solver</h1>
+    
+    <!-- Quick Bookmarks targeting your textbook parameters explicitly -->
+    <div class="presets-row">
+        <strong>Textbook Presets:</strong>
+        <span class="preset-pill" onclick="loadTemplate('cartesian', 'Math.sqrt(2*x - x*x)', '0', '2', '\\sqrt{2x - x^2}')">Example 34: Circle Segment ($y = \\sqrt{2ax - x^2}$)</span>
+        <span class="preset-pill" onclick="loadTemplate('polar', '2 * (1 - Math.cos(x))', '0', '2*Math.PI', '2(1 - \\cos\\theta)')">Ex 19: Cardioid Area ($r = a(1-\\cos\\theta)$)</span>
+    </div>
+
+    <div class="grid-layout">
+        <!-- Variable Inputs Column -->
+        <div>
+            <label for="coordSystem">Coordinate Processing System</label>
+            <select id="coordSystem" onchange="syncUIElements()">
+                <option value="cartesian">Cartesian Path Area: ∫ f(x) dx</option>
+                <option value="polar">Polar Sector Quadrature: 0.5 * ∫ r² dθ</option>
+            </select>
+
+            <div id="box-cartesian">
+                <label for="expr-f">Mathematical Target Function f(x)</label>
+                <input type="text" id="expr-f" value="Math.sqrt(2*x - x*x)">
+            </div>
+
+            <div id="box-polar" style="display:none;">
+                <label for="expr-r">Polar Vector Expression r(x) [Use 'x' as θ]</label>
+                <input type="text" id="expr-r" value="2 * (1 - Math.cos(x))">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label id="lbl-a" for="bound-a">Lower Constraint (a)</label>
+                    <input type="text" id="bound-a" value="0">
+                </div>
+                <div>
+                    <label id="lbl-b" for="bound-b">Upper Constraint (b)</label>
+                    <input type="text" id="bound-b" value="2">
+                </div>
+            </div>
+
+            <button onclick="runCalculations()">Compute Definite Integration & Plot</button>
+
+            <div class="steps-container">
+                <h3>Step-by-Step Mathematical Derivation</h3>
+                <div id="math-derivation-output">Click Compute to populate validation arrays...</div>
+            </div>
+        </div>
+
+        <!-- Graph Display Area -->
+        <div class="graph-outer">
+            <canvas id="quadratureMainChart" style="width:100%; height:100%; min-height:400px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeChartInstance = null;
+    let currentLatexPlaceholder = '\\sqrt{2x - x^2}';
+
+    function syncUIElements() {
+        const sys = document.getElementById('coordSystem').value;
+        document.getElementById('box-cartesian').style.display = sys === 'cartesian' ? 'block' : 'none';
+        document.getElementById('box-polar').style.display = sys === 'polar' ? 'block' : 'none';
+        
+        if (sys === 'polar') {
+            document.getElementById('lbl-a').innerText = "Lower Radial Sector (α)";
+            document.getElementById('lbl-b').innerText = "Upper Radial Sector (β)";
+        } else {
+            document.getElementById('lbl-a').innerText = "Lower Domain Limit (a)";
+            document.getElementById('lbl-b').innerText = "Upper Domain Limit (b)";
+        }
+    }
+
+    function loadTemplate(sys, equation, a, b, texStr) {
+        document.getElementById('coordSystem').value = sys;
+        syncUIElements();
+        currentLatexPlaceholder = texStr;
+        if (sys === 'cartesian') document.getElementById('expr-f').value = equation;
+        if (sys === 'polar') document.getElementById('expr-r').value = equation;
+        document.getElementById('bound-a').value = a;
+        document.getElementById('bound-b').value = b;
+        runCalculations();
+    }
+
+    function runCalculations() {
+        const sys = document.getElementById('coordSystem').value;
+        const lowLimitRaw = document.getElementById('bound-a').value;
+        const uppLimitRaw = document.getElementById('bound-b').value;
+        
+        const a = eval(lowLimitRaw.replace(/pi/gi, "Math.PI"));
+        const b = eval(uppLimitRaw.replace(/pi/gi, "Math.PI"));
+        
+        let areaSum = 0;
+        let stepsHTML = "";
+        let geometryPoints = [];
+        
+        // Setup high resolution Simpson numerical integration
+        const intervals = 600; 
+        const stepWidth = (b - a) / intervals;
+
+        try {
+            if (sys === 'cartesian') {
+                const targetEquation = document.getElementById('expr-f').value;
+                const f = (x) => {
+                    let res = eval(targetEquation);
+                    return isNaN(res) ? 0 : res;
+                };
+
+                // Apply standard composite Simpson calculation rule
+                let totalSum = f(a) + f(b);
+                for (let i = 1; i < intervals; i++) {
+                    let currentX = a + i * stepWidth;
+                    totalSum += (i % 2 === 0) ? 2 * f(currentX) : 4 * f(currentX);
+                }
+                areaSum = (stepWidth / 3) * totalSum;
+
+                // Steps Rendering safely mapped to LaTeX 
+                stepsHTML = `
+                    <p><strong>1. Area Setup Integration Representation:</strong></p>
+                    $$A = \\int_{a}^{b} f(x) \\, dx = \\int_{${lowLimitRaw}}^{${uppLimitRaw}} ${currentLatexPlaceholder} \\, dx$$
+                    <p><strong>2. Quadrature Resolution Analysis:</strong></p>
+                    <p>Evaluating continuous areas through precise Riemann convergence approximations:</p>
+                    $$A \\approx ${areaSum.toFixed(5)} \\text{ units}^2$$
+                `;
+
+                // Populate smooth graph arrays
+                for(let i = 0; i <= 100; i++) {
+                    let plotX = a + (i * (b - a) / 100);
+                    geometryPoints.push({ x: plotX, y: f(plotX) });
+                }
+
+            } else if (sys === 'polar') {
+                const targetEquation = document.getElementById('expr-r').value;
+                const r = (x) => {
+                    let res = eval(targetEquation);
+                    return isNaN(res) ? 0 : res;
+                };
+
+                let totalSum = (r(a) ** 2) + (r(b) ** 2);
+                for (let i = 1; i < intervals; i++) {
+                    let currentTheta = a + i * stepWidth;
+                    totalSum += (i % 2 === 0) ? 2 * (r(currentTheta) ** 2) : 4 * (r(currentTheta) ** 2);
+                }
+                areaSum = 0.5 * (stepWidth / 3) * totalSum;
+
+                stepsHTML = `
+                    <p><strong>1. Polar Coordinate Area Model:</strong></p>
+                    $$A = \\frac{1}{2} \\int_{\\alpha}^{\\beta} [r(\\theta)]^2 \\, d\\theta = \\frac{1}{2} \\int_{${lowLimitRaw}}^{${uppLimitRaw}} \\left(${currentLatexPlaceholder}\\right)^2 \\, d\\theta$$
+                    <p><strong>2. Definitive Value Result:</strong></p>
+                    $$A \\approx ${areaSum.toFixed(5)} \\text{ units}^2$$
+                `;
+
+                // Compute Cartesian representation maps for Polar Vectors
+                for(let i = 0; i <= 200; i++) {
+                    let theta = a + (i * (b - a) / 200);
+                    let radius = r(theta);
+                    geometryPoints.push({
+                        x: radius * Math.cos(theta),
+                        y: radius * Math.sin(theta)
+                    });
+                }
+            }
+
+            // Update content blocks safely
+            document.getElementById('math-derivation-output').innerHTML = stepsHTML;
+            
+            // Explicit safely typed trigger check for window standard MathJax namespace
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise();
+            }
+
+            // Reconstruct the Chart graphic rendering canvas pipeline
+            drawChart(geometryPoints);
+
+        } catch (err) {
+            document.getElementById('math-derivation-output').innerHTML = `<span style="color:red; font-weight:bold;">Syntax Interpretation Error: ${err.message}</span>`;
+        }
+    }
+
+    function drawChart(dataPoints) {
+        const ctx = document.getElementById('quadratureMainChart').getContext('2d');
+        if (activeChartInstance) activeChartInstance.destroy();
+
+        activeChartInstance = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Enclosed Bounded Space Region Mapping',
+                    data: dataPoints,
+                    showLine: true,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                    fill: 'origin',
+                    borderWidth: 2,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { type: 'linear', position: 'bottom', grid: { color: '#e2e8f0' } },
+                    y: { type: 'linear', grid: { color: '#e2e8f0' } }
+                },
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
+            }
+        });
+    }
+
+    // Force run standard init sequence when template loads cleanly
+    window.onload = () => { runCalculations(); };
+</script>
+
+</body>
+</html>

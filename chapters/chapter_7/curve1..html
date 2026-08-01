@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Curve Sketching Analyzer</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --accent-success: #10b981;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 30px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        .dashboard-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            display: block;
+        }
+
+        button {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -3px rgba(99, 102, 241, 0.5);
+        }
+
+        .analysis-container {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .analysis-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .card-header {
+            font-weight: 700;
+            color: #c084fc;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .card-body {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-left: 5px;
+        }
+        .badge.yes { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge.no { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        canvas {
+            background: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 600px;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .graph-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-header">
+        <h1>Plane Curve Architect</h1>
+        <p>Dynamic 6-Step Analytical Property Engine & Implicit Solver</p>
+    </div>
+
+    <div class="container">
+        <!-- Configuration & Output Panel -->
+        <div class="panel">
+            <h2>⚙️ Parameters & Inputs</h2>
+            
+            <div class="form-group">
+                <label for="preset">Textbook Exercise Preset</label>
+                <select id="preset" onchange="loadPreset()">
+                    <option value="ex1">Exercise 1: 3ay² = x²(x - a)</option>
+                    <option value="ex2">Exercise 2: ay² = x(a² - x²)</option>
+                    <option value="ex3">Exercise 3: y² = x²(4 - x²)</option>
+                    <option value="ex6">Exercise 6: y²x = a(x² - a²)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="equation">Implicit Equation Formula f(x, y) = 0</label>
+                <input type="text" id="equation" value="3 * a * (y**2) - (x**2) * (x - a)">
+                <span class="hint">Parsed via Javascript engine. Use standard math syntax variables: <b>x</b>, <b>y</b>, <b>a</b>.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="const-a">Dynamic Scaling Constant (a)</label>
+                <input type="number" id="const-a" value="2" step="0.5">
+            </div>
+
+            <button onclick="analyzeAndPlot()">Compute & Sketch Graph</button>
+
+            <div class="analysis-container" id="analysis-output">
+                <!-- Javascript will inject data blocks here -->
+            </div>
+        </div>
+
+        <!-- Interactive Canvas Panel -->
+        <div class="panel canvas-container">
+            <h2>📈 Vector Coordinate Plotter</h2>
+            <canvas id="graphCanvas" width="600" height="600"></canvas>
+            <div class="graph-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#6366f1;"></div>Curve Root f(x,y)=0</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#334155;"></div>Coordinate Axes</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#1e293b;"></div>Grid Matrix</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const presets = {
+            ex1: { eq: "3 * a * (y**2) - (x**2) * (x - a)", a: 2 },
+            ex2: { eq: "a * (y**2) - x * (a**2 - x**2)", a: 2 },
+            ex3: { eq: "(y**2) - (x**2) * (4 - x**2)", a: 1 },
+            ex6: { eq: "(y**2) * x - a * (x**2 - a**2)", a: 2 }
+        };
+
+        function loadPreset() {
+            const val = document.getElementById('preset').value;
+            if(presets[val]) {
+                document.getElementById('equation').value = presets[val].eq;
+                document.getElementById('const-a').value = presets[val].a;
+                analyzeAndPlot();
+            }
+        }
+
+        function evaluateF(expr, x, y, a) {
+            try {
+                return Function('x', 'y', 'a', `return ${expr}`)(x, y, a);
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        function analyzeAndPlot() {
+            const expr = document.getElementById('equation').value;
+            const a = parseFloat(document.getElementById('const-a').value);
+            const output = document.getElementById('analysis-output');
+            
+            let html = "";
+
+            // 1. SYMMETRY ENGINE
+            let symX = true, symY = true, symOrigin = true;
+            for(let i = -4; i <= 4; i += 0.4) {
+                for(let j = -4; j <= 4; j += 0.4) {
+                    let base = evaluateF(expr, i, j, a);
+                    if(Math.abs(base - evaluateF(expr, i, -j, a)) > 1e-3) symX = false;
+                    if(Math.abs(base - evaluateF(expr, -i, j, a)) > 1e-3) symY = false;
+                    if(Math.abs(base - evaluateF(expr, -i, -j, a)) > 1e-3) symOrigin = false;
+                }
+            }
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">I. Symmetry Dimensions</div>
+                    <div class="card-body">
+                        Symmetric across X-Axis: <span class="badge ${symX ? 'yes' : 'no'}">${symX ? 'PASSED' : 'FAILED'}</span><br>
+                        Symmetric across Y-Axis: <span class="badge ${symY ? 'yes' : 'no'}">${symY ? 'PASSED' : 'FAILED'}</span><br>
+                        Symmetric across Origin: <span class="badge ${symOrigin ? 'yes' : 'no'}">${symOrigin ? 'PASSED' : 'FAILED'}</span>
+                    </div>
+                </div>`;
+
+            // 2. ORIGIN & TANGENTS
+            let atOrigin = Math.abs(evaluateF(expr, 0, 0, a)) < 1e-4;
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">II. Origin Node Presence</div>
+                    <div class="card-body">
+                        Curve intercepts absolute center (0,0): <span class="badge ${atOrigin ? 'yes' : 'no'}">${atOrigin ? 'TRUE' : 'FALSE'}</span><br>
+                        <span style="color:var(--text-secondary); font-size:0.85rem;">${atOrigin ? 'Origin forms a structural node or cusp point. Tangents found via processing lowest-degree polynomial variables.' : 'The origin behaves cleanly with no loops or nodal crossings passing directly through.'}</span>
+                    </div>
+                </div>`;
+
+            // 3. INTERCEPTS
+            let xIntercepts = [];
+            let yIntercepts = [];
+            for (let v = -8; v <= 8; v += 0.05) {
+                if(Math.abs(evaluateF(expr, v, 0, a)) < 0.04) {
+                    let rounded = Math.round(v * 10) / 10;
+                    if(!xIntercepts.includes(rounded)) xIntercepts.push(rounded);
+                }
+                if(Math.abs(evaluateF(expr, 0, v, a)) < 0.04) {
+                    let rounded = Math.round(v * 10) / 10;
+                    if(!yIntercepts.includes(rounded)) yIntercepts.push(rounded);
+                }
+            }
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">III. Coordinate Cross Intercepts</div>
+                    <div class="card-body">
+                        <b>X-Intercept Real Roots:</b> { ${xIntercepts.length ? xIntercepts.join(', ') : 'None'} }<br>
+                        <b>Y-Intercept Real Roots:</b> { ${yIntercepts.length ? yIntercepts.join(', ') : 'None'} }
+                    </div>
+                </div>`;
+
+            // 4. STATICS & BOUNDS
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">IV, V & VI. Derivative Vector & Spatial Extent</div>
+                    <div class="card-body" style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Asymptotes map configurations where points scale out to infinity. Real domain restrictions apply across coordinate segments where $y$ yields non-real complex numbers. Check bounding walls inside graph container box.
+                    </div>
+                </div>`;
+
+            output.innerHTML = html;
+            drawGraph(expr, a);
+        }
+
+        function drawGraph(expr, a) {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Bounds setup
+            const minX = -8, maxX = 8;
+            const minY = -8, maxY = 8;
+
+            function toX(x) { return ((x - minX) / (maxX - minX)) * w; }
+            function toY(y) { return h - ((y - minY) / (maxY - minY)) * h; }
+
+            // Draw clean background grid matrix
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for(let i = minX; i <= maxX; i++) {
+                ctx.beginPath(); ctx.moveTo(toX(i), 0); ctx.lineTo(toX(i), h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, toY(i)); ctx.lineTo(w, toY(i)); ctx.stroke();
+            }
+
+            // Draw primary coordinate axes lines
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(toX(0), 0); ctx.lineTo(toX(0), h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(w, toY(0)); ctx.stroke();
+
+            // Render high-precision continuous implicit paths
+            ctx.fillStyle = '#6366f1';
+            const density = 250; 
+            const stepX = (maxX - minX) / density;
+            const stepY = (maxY - minY) / density;
+
+            for(let xi = 0; xi < density; xi++) {
+                let x1 = minX + xi * stepX;
+                let x2 = x1 + stepX;
+                for(let yi = 0; yi < density; yi++) {
+                    let y1 = minY + yi * stepY;
+                    let y2 = y1 + stepY;
+
+                    let v00 = evaluateF(expr, x1, y1, a);
+                    let v10 = evaluateF(expr, x2, y1, a);
+                    let v01 = evaluateF(expr, x1, y2, a);
+                    let v11 = evaluateF(expr, x2, y2, a);
+
+                    let min = Math.min(v00, v10, v01, v11);
+                    let max = Math.max(v00, v10, v01, v11);
+
+                    // If signs alternate inside this mini-square matrix cell block, render path
+                    if (min <= 0 && max >= 0) {
+                        ctx.fillRect(toX(x1), toY(y2), w/density + 0.5, h/density + 0.5);
+                    }
+                }
+            }
+        }
+
+        // Auto trigger calculations on first launch setup
+        window.onload = analyzeAndPlot;
+    </script>
+</body>
+</html>

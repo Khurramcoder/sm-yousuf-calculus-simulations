@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Functions — A Complete Visual Guide</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --bg-2:#11172b;
+    --panel:#161c36;
+    --ink:#eef1ff;
+    --muted:#9aa3c7;
+    --accent:#7cc4ff;
+    --accent-2:#ffd166;
+    --good:#6ee7b7;
+    --warn:#f87171;
+    --purple:#c084fc;
+    --pink:#f472b6;
+    --line:#2a3058;
+    --radius:14px;
+    --shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+    line-height:1.7; -webkit-font-smoothing:antialiased;}
+  .serif{font-family:"Cormorant Garamond","EB Garamond",Georgia,serif;}
+  header{
+    padding:70px 24px 50px; text-align:center;
+    background:
+      radial-gradient(900px 400px at 20% -100px, rgba(192,132,252,.25), transparent 60%),
+      radial-gradient(900px 400px at 80% -100px, rgba(124,196,255,.25), transparent 60%),
+      var(--bg);
+    border-bottom:1px solid var(--line);
+  }
+  header h1{font-size:clamp(32px,5vw,56px);margin:0 0 14px;letter-spacing:.5px;
+    background:linear-gradient(135deg,#7cc4ff,#c084fc,#f472b6);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  header p{color:var(--muted);max-width:820px;margin:0 auto;font-size:18px;}
+  main{max-width:1200px;margin:0 auto;padding:32px 20px 80px;}
+  section{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:32px;margin:32px 0;box-shadow:var(--shadow);
+  }
+  section h2{margin-top:0;font-size:28px;color:var(--accent);
+    display:flex;align-items:center;gap:12px;}
+  section h2 .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),var(--purple));
+    color:#0a0e1a;font-weight:800;font-size:18px;
+  }
+  section h3{color:var(--accent-2);margin-top:24px;}
+  .math-block{
+    background:var(--bg-2);border:1px solid var(--line);
+    border-left:4px solid var(--accent);
+    padding:16px 22px;border-radius:10px;margin:16px 0;
+    font-size:18px;overflow-x:auto;
+  }
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}
+  canvas{
+    width:100%;height:auto;display:block;background:#0c0f1d;
+    border:1px solid var(--line);border-radius:10px;
+  }
+  .controls{
+    display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+    background:var(--bg-2);padding:14px 16px;border-radius:10px;
+    border:1px solid var(--line);margin-top:14px;
+  }
+  .controls label{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .controls input[type=range]{accent-color:var(--accent);width:160px;}
+  .controls select, .controls button{
+    background:var(--panel);color:var(--ink);border:1px solid var(--line);
+    padding:7px 14px;border-radius:8px;font-size:14px;cursor:pointer;
+    transition:all .2s;
+  }
+  .controls button:hover{border-color:var(--accent);background:#1e2448;}
+  .readout{
+    font-variant-numeric:tabular-nums;font-size:14px;color:var(--ink);
+    background:#0b0e1c;border:1px solid var(--line);padding:4px 10px;border-radius:6px;
+    min-width:60px;text-align:center;
+  }
+  .card{
+    background:var(--bg-2);border:1px solid var(--line);border-radius:12px;
+    padding:20px;transition:transform .2s, box-shadow .2s;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(124,196,255,.15);}
+  .card h4{margin:0 0 8px;color:var(--accent-2);font-size:17px;}
+  .card p{margin:0;color:var(--muted);font-size:14px;}
+  .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;
+    background:#2a3058;color:var(--accent);margin-right:6px;letter-spacing:.5px;text-transform:uppercase;}
+  .callout{
+    border:1px dashed var(--accent);background:rgba(124,196,255,.06);
+    padding:14px 18px;border-radius:10px;margin:14px 0;
+  }
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-top:8px;}
+  .legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+  .l-f::before{background:#7cc4ff}
+  .l-g::before{background:#f472b6}
+  .l-compo::before{background:#6ee7b7}
+  .l-inv::before{background:#ffd166}
+  .l-axis::before{background:#2a3058}
+  footer{text-align:center;color:var(--muted);padding:30px;font-size:13px;border-top:1px solid var(--line);}
+  .machine{
+    display:flex;align-items:center;justify-content:center;gap:20px;
+    padding:30px 10px;flex-wrap:wrap;
+  }
+  .machine-box{
+    background:linear-gradient(135deg,#1e2448,#2a3058);
+    border:2px solid var(--accent);border-radius:14px;
+    padding:20px 28px;text-align:center;min-width:120px;
+    box-shadow:0 0 20px rgba(124,196,255,.2);
+  }
+  .machine-box.gear{
+    background:linear-gradient(135deg,#3a1e5c,#5a2e8c);
+    border-color:var(--purple);
+    box-shadow:0 0 25px rgba(192,132,252,.3);
+    font-size:32px;
+  }
+  .machine-box .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .machine-box .value{font-size:24px;font-weight:700;color:var(--ink);margin-top:4px;font-variant-numeric:tabular-nums;}
+  .arrow{color:var(--accent);font-size:32px;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .mapping-demo{display:flex;justify-content:space-around;padding:20px 0;}
+  .mapping-col{display:flex;flex-direction:column;gap:18px;align-items:center;}
+  .mapping-node{
+    width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;
+    border:2px solid var(--accent);color:var(--ink);
+    background:var(--bg-2);
+  }
+  .mapping-node.domain{border-color:var(--accent);}
+  .mapping-node.codomain{border-color:var(--pink);}
+  .mapping-node.highlighted{background:var(--accent);color:#0a0e1a;}
+  .mapping-node.highlighted-pink{background:var(--pink);color:#0a0e1a;}
+  .grid-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+  .fn-tile{
+    background:var(--bg-2);border:1px solid var(--line);border-radius:12px;
+    padding:14px;cursor:pointer;transition:all .2s;
+  }
+  .fn-tile:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .fn-tile.active{border-color:var(--accent);box-shadow:0 0 15px rgba(124,196,255,.3);}
+  .fn-tile canvas{height:140px;}
+  .fn-tile h5{margin:8px 0 4px;color:var(--accent-2);font-size:15px;}
+  .fn-tile p{margin:0;font-size:12px;color:var(--muted);}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .tab{
+    padding:8px 16px;border-radius:8px;background:var(--bg-2);
+    border:1px solid var(--line);cursor:pointer;font-size:14px;
+    transition:all .2s;color:var(--muted);
+  }
+  .tab.active{background:var(--accent);color:#0a0e1a;border-color:var(--accent);font-weight:600;}
+  .tab:hover:not(.active){border-color:var(--accent);color:var(--ink);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="serif">Functions — A Complete Visual Guide</h1>
+  <p>From the intuitive "machine" that turns inputs into outputs, through injectivity, surjectivity, inverses, and every major family of functions — all brought to life with interactive simulations.</p>
+</header>
+
+<main>
+
+<!-- ============ 1. WHAT IS A FUNCTION ============ -->
+<section>
+  <h2><span class="num">1</span> What is a Function?</h2>
+  <p>A <strong>function</strong> $f$ from a set $A$ (the <em>domain</em>) to a set $B$ (the <em>codomain</em>) is a rule that assigns to <strong>every</strong> element $x\in A$ <strong>exactly one</strong> element $f(x)\in B$.</p>
+  <div class="math-block">
+    $$f:A\to B,\qquad x\mapsto f(x)$$
+  </div>
+  <p>Think of it as a machine: feed it an input, and it produces a unique output.</p>
+
+  <div class="machine">
+    <div class="machine-box">
+      <div class="label">Input $x$</div>
+      <div class="value" id="machIn">2</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="machine-box gear">
+      <div class="label">Function $f$</div>
+      <div class="value" style="font-size:18px;">$f(x)=x^2+1$</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="machine-box">
+      <div class="label">Output $f(x)$</div>
+      <div class="value" id="machOut">5</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>Drag the input:
+      <input type="range" id="machSlider" min="-5" max="5" step="0.1" value="2">
+    </label>
+    <span class="readout" id="machRead">x = 2.0</span>
+  </div>
+
+  <div class="callout">
+    <strong>Key rule:</strong> Each input must produce <em>exactly one</em> output. The vertical line test on a graph captures this: if any vertical line crosses the curve more than once, it is <em>not</em> a function.
+  </div>
+</section>
+
+<!-- ============ 2. TYPES BY MAPPING ============ -->
+<section>
+  <h2><span class="num">2</span> Types by Mapping: Injective, Surjective, Bijective</h2>
+  <p>Functions can be classified by how they relate domain elements to codomain elements.</p>
+
+  <div class="tabs" id="mapTabs">
+    <div class="tab active" data-type="inj">Injective (One-to-One)</div>
+    <div class="tab" data-type="sur">Surjective (Onto)</div>
+    <div class="tab" data-type="bij">Bijective</div>
+    <div class="tab" data-type="none">Neither</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <canvas id="mapCanvas" width="560" height="380"></canvas>
+    </div>
+    <div>
+      <div id="mapInfo" class="card">
+        <h4 id="mapTitle">Injective (One-to-One)</h4>
+        <p id="mapDef">Every element of the domain maps to a <strong>distinct</strong> element of the codomain. No two different inputs share the same output.</p>
+        <div class="math-block" id="mapMath">$$\forall x_1,x_2\in A:\; f(x_1)=f(x_2)\Rightarrow x_1=x_2$$</div>
+        <p id="mapTest" style="color:var(--good);"><strong>Horizontal line test:</strong> Every horizontal line intersects the graph at most once.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. FUNCTION FAMILIES ============ -->
+<section>
+  <h2><span class="num">3</span> Families of Functions</h2>
+  <p>Click any tile to explore it in detail on the main graph below.</p>
+
+  <div class="grid-gallery" id="fnGallery"></div>
+
+  <div style="margin-top:24px;">
+    <canvas id="mainGraph" width="1100" height="500"></canvas>
+    <div class="legend">
+      <span class="l-f">y = f(x)</span>
+      <span class="l-axis">axes</span>
+    </div>
+    <div class="controls">
+      <label>Zoom:
+        <input type="range" id="zoomSlider" min="0.3" max="4" step="0.1" value="1">
+      </label>
+      <label>Pan X:
+        <input type="range" id="panXSlider" min="-10" max="10" step="0.1" value="0">
+      </label>
+      <label>Pan Y:
+        <input type="range" id="panYSlider" min="-10" max="10" step="0.1" value="0">
+      </label>
+      <button id="resetViewBtn">↺ Reset View</button>
+      <span class="readout" id="cursorRead">hover graph</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. EVEN & ODD ============ -->
+<section>
+  <h2><span class="num">4</span> Even &amp; Odd Functions — Symmetry</h2>
+
+  <div class="two-col">
+    <div>
+      <h3 style="color:var(--accent);">Even Function</h3>
+      <p>Symmetric about the <strong>y-axis</strong>.</p>
+      <div class="math-block">$$f(-x)=f(x)$$</div>
+      <p>Examples: $x^2,\;\cos x,\;|x|$.</p>
+      <canvas id="evenCanvas" width="560" height="320"></canvas>
+    </div>
+    <div>
+      <h3 style="color:var(--pink);">Odd Function</h3>
+      <p>Symmetric about the <strong>origin</strong> (180° rotation).</p>
+      <div class="math-block">$$f(-x)=-f(x)$$</div>
+      <p>Examples: $x^3,\;\sin x,\;x$.</p>
+      <canvas id="oddCanvas" width="560" height="320"></canvas>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>Test function:
+      <select id="symSel">
+        <option value="x2">f(x) = x² (even)</option>
+        <option value="x3">f(x) = x³ (odd)</option>
+        <option value="cos">f(x) = cos x (even)</option>
+        <option value="sin">f(x) = sin x (odd)</option>
+        <option value="mix">f(x) = x² + x (neither)</option>
+      </select>
+    </label>
+    <label>Probe point x:
+      <input type="range" id="symSlider" min="-4" max="4" step="0.1" value="2">
+      <span class="readout" id="symRead">x = 2.0</span>
+    </label>
+  </div>
+</section>
+
+<!-- ============ 5. TRANSFORMATIONS ============ -->
+<section>
+  <h2><span class="num">5</span> Transformations of Functions</h2>
+  <p>Starting from a base function $f(x)$, we can translate, reflect, and stretch its graph.</p>
+
+  <canvas id="transCanvas" width="1100" height="500"></canvas>
+  <div class="legend">
+    <span class="l-f">original f(x)</span>
+    <span class="l-g">transformed</span>
+  </div>
+
+  <div class="controls">
+    <label>Base:
+      <select id="transBase">
+        <option value="x2">x²</option>
+        <option value="sin">sin x</option>
+        <option value="abs">|x|</option>
+        <option value="sqrt">√x</option>
+      </select>
+    </label>
+    <label>Vertical shift $+d$:
+      <input type="range" id="tD" min="-4" max="4" step="0.1" value="0">
+      <span class="readout" id="tDRead">0.0</span>
+    </label>
+    <label>Horizontal shift $+c$:
+      <input type="range" id="tC" min="-4" max="4" step="0.1" value="0">
+      <span class="readout" id="tCRead">0.0</span>
+    </label>
+    <label>Vertical stretch $a$:
+      <input type="range" id="tA" min="-3" max="3" step="0.1" value="1">
+      <span class="readout" id="tARead">1.0</span>
+    </label>
+    <label>Horizontal stretch $b$:
+      <input type="range" id="tB" min="0.3" max="3" step="0.1" value="1">
+      <span class="readout" id="tBRead">1.0</span>
+    </label>
+  </div>
+
+  <div class="math-block">
+    $$g(x)=a\cdot f\!\bigl(b(x-c)\bigr)+d$$
+  </div>
+</section>
+
+<!-- ============ 6. COMPOSITION ============ -->
+<section>
+  <h2><span class="num">6</span> Composition of Functions</h2>
+  <p>Given $f$ and $g$, their <strong>composition</strong> $(f\circ g)(x)=f(g(x))$ applies $g$ first, then $f$.</p>
+
+  <canvas id="compCanvas" width="1100" height="460"></canvas>
+  <div class="legend">
+    <span class="l-f">f(x)</span>
+    <span class="l-g">g(x)</span>
+    <span class="l-compo">(f∘g)(x)</span>
+  </div>
+
+  <div class="controls">
+    <label>f(x):
+      <select id="compF">
+        <option value="sq">x²</option>
+        <option value="sin">sin x</option>
+        <option value="exp">e^x</option>
+        <option value="abs">|x|</option>
+      </select>
+    </label>
+    <label>g(x):
+      <select id="compG">
+        <option value="lin">x + 1</option>
+        <option value="sin">sin x</option>
+        <option value="x2">x²</option>
+        <option value="neg">−x</option>
+      </select>
+    </label>
+    <label>Probe x:
+      <input type="range" id="compX" min="-4" max="4" step="0.1" value="1">
+      <span class="readout" id="compXRead">x = 1.0</span>
+    </label>
+  </div>
+
+  <div class="callout">
+    <strong>Trace the chain:</strong> at $x=1$, $g(1)=2$, then $f(g(1))=f(2)=4$. The green curve is the result of feeding every $x$ through this two-stage pipeline.
+  </div>
+</section>
+
+<!-- ============ 7. INVERSE ============ -->
+<section>
+  <h2><span class="num">7</span> Inverse Functions</h2>
+  <p>A function $f$ has an inverse $f^{-1}$ <em>if and only if</em> it is <strong>bijective</strong>. The graph of $f^{-1}$ is the <strong>reflection of $f$ across the line $y=x$</strong>.</p>
+
+  <canvas id="invCanvas" width="1100" height="500"></canvas>
+  <div class="legend">
+    <span class="l-f">f(x)</span>
+    <span class="l-inv">f⁻¹(x)</span>
+    <span style="display:inline-block;"><span style="display:inline-block;width:12px;height:2px;background:#f87171;margin-right:6px;vertical-align:middle;"></span>y = x</span>
+  </div>
+
+  <div class="controls">
+    <label>Function:
+      <select id="invSel">
+        <option value="exp">f(x) = eˣ  ↔  f⁻¹(x) = ln x</option>
+        <option value="x3">f(x) = x³  ↔  f⁻¹(x) = ∛x</option>
+        <option value="lin">f(x) = 2x + 1  ↔  f⁻¹(x) = (x−1)/2</option>
+        <option value="recip">f(x) = 1/x  ↔  f⁻¹(x) = 1/x</option>
+      </select>
+    </label>
+    <label>Probe point:
+      <input type="range" id="invX" min="-3" max="3" step="0.1" value="1">
+      <span class="readout" id="invXRead">x = 1.0</span>
+    </label>
+  </div>
+
+  <div class="math-block">
+    $$f^{-1}(f(x))=x\quad\text{and}\quad f(f^{-1}(y))=y$$
+  </div>
+</section>
+
+<!-- ============ 8. PERIODIC & PIECEWISE ============ -->
+<section>
+  <h2><span class="num">8</span> Periodic &amp; Piecewise Functions</h2>
+
+  <div class="two-col">
+    <div>
+      <h3 style="color:var(--accent);">Periodic Function</h3>
+      <p>A function is <strong>periodic</strong> with period $T$ if $f(x+T)=f(x)$ for all $x$.</p>
+      <div class="math-block">$$\sin(x+2\pi)=\sin x$$</div>
+      <canvas id="perCanvas" width="560" height="300"></canvas>
+      <div class="controls">
+        <label>Period T:
+          <input type="range" id="perT" min="0.5" max="6" step="0.1" value="2">
+          <span class="readout" id="perTRead">2.0</span>
+        </label>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--pink);">Piecewise Function</h3>
+      <p>Different formulas on different parts of the domain.</p>
+      <div class="math-block">
+        $$f(x)=\begin{cases} -x & x<0\\ x^2 & 0\le x<2\\ 4-(x-2) & x\ge 2\end{cases}$$
+      </div>
+      <canvas id="pwCanvas" width="560" height="300"></canvas>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Built with HTML, Canvas, and KaTeX · An interactive study note on functions.
+</footer>
+
+<script>
+/* ============================================================
+   Shared graph utilities
+   ============================================================ */
+const TAU = Math.PI*2;
+function setupCanvas(cv){
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth, h=cv.clientHeight;
+  cv.width=w*dpr; cv.height=h*dpr;
+  const ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,W:w,H:h};
+}
+function drawAxes(ctx,W,H,xmin,xmax,ymin,ymax,opts={}){
+  const pad={l:40,r:14,t:14,b:26};
+  const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
+  const mx=x=>pad.l+pw*(x-xmin)/(xmax-xmin);
+  const my=y=>pad.t+ph*(1-(y-ymin)/(ymax-ymin));
+  // grid
+  ctx.strokeStyle='#1a2040'; ctx.lineWidth=1;
+  const nx=8, ny=6;
+  for(let i=0;i<=nx;i++){
+    const x=xmin+(xmax-xmin)*i/nx;
+    const px=mx(x);
+    ctx.beginPath(); ctx.moveTo(px,pad.t); ctx.lineTo(px,H-pad.b); ctx.stroke();
+  }
+  for(let i=0;i<=ny;i++){
+    const y=ymin+(ymax-ymin)*i/ny;
+    const py=my(y);
+    ctx.beginPath(); ctx.moveTo(pad.l,py); ctx.lineTo(W-pad.r,py); ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle='#3a4270'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  if(ymin<=0 && ymax>=0){const y0=my(0); ctx.moveTo(pad.l,y0); ctx.lineTo(W-pad.r,y0);}
+  if(xmin<=0 && xmax>=0){const x0=mx(0); ctx.moveTo(x0,pad.t); ctx.lineTo(x0,H-pad.b);}
+  ctx.stroke();
+  // tick labels
+  ctx.fillStyle='#9aa3c7'; ctx.font='11px Inter, sans-serif';
+  ctx.textAlign='center';
+  for(let i=0;i<=nx;i++){
+    const x=xmin+(xmax-xmin)*i/nx;
+    if(Math.abs(x)<1e-9) continue;
+    ctx.fillText(x.toFixed(1), mx(x), H-pad.b+14);
+  }
+  ctx.textAlign='right';
+  for(let i=0;i<=ny;i++){
+    const y=ymin+(ymax-ymin)*i/ny;
+    if(Math.abs(y)<1e-9) continue;
+    ctx.fillText(y.toFixed(1), pad.l-6, my(y)+4);
+  }
+  return {mx,my,pad,pw,ph};
+}
+function plotCurve(ctx,mx,my,f,xmin,xmax,color='#7cc4ff',width=2.5,step=600){
+  ctx.strokeStyle=color; ctx.lineWidth=width;
+  ctx.beginPath();
+  let started=false;
+  for(let i=0;i<=step;i++){
+    const x=xmin+(xmax-xmin)*i/step;
+    const y=f(x);
+    if(!isFinite(y)||Math.abs(y)>1e6){started=false;continue;}
+    const px=mx(x), py=my(y);
+    if(!started){ctx.moveTo(px,py);started=true;}
+    else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+}
+
+/* ============================================================
+   Section 1 — Function machine
+   ============================================================ */
+(function(){
+  const slider=document.getElementById('machSlider');
+  const read=document.getElementById('machRead');
+  const inEl=document.getElementById('machIn');
+  const outEl=document.getElementById('machOut');
+  function update(){
+    const x=parseFloat(slider.value);
+    const y=x*x+1;
+    read.textContent=`x = ${x.toFixed(1)}`;
+    inEl.textContent=x.toFixed(1);
+    outEl.textContent=y.toFixed(2);
+  }
+  slider.addEventListener('input',update);
+  update();
+})();
+
+/* ============================================================
+   Section 2 — Mapping types
+   ============================================================ */
+(function(){
+  const cv=document.getElementById('mapCanvas');
+  const tabs=document.querySelectorAll('#mapTabs .tab');
+  const title=document.getElementById('mapTitle');
+  const def=document.getElementById('mapDef');
+  const math=document.getElementById('mapMath');
+  const test=document.getElementById('mapTest');
+
+  const info={
+    inj:{
+      title:'Injective (One-to-One)',
+      def:'Every element of the domain maps to a <strong>distinct</strong> element of the codomain. No two different inputs share the same output.',
+      math:'$$\\forall x_1,x_2\\in A:\\; f(x_1)=f(x_2)\\Rightarrow x_1=x_2$$',
+      test:'<strong style="color:var(--good)">Horizontal line test:</strong> Every horizontal line intersects the graph at most once.',
+      arrows:[[0,0],[1,1],[2,3]] // domain i -> codomain j
+    },
+    sur:{
+      title:'Surjective (Onto)',
+      def:'Every element of the codomain is hit by <strong>at least one</strong> element of the domain. The range equals the codomain.',
+      math:'$$\\forall y\\in B,\\;\\exists x\\in A:\\; f(x)=y$$',
+      test:'<strong style="color:var(--good)">Range = Codomain.</strong> Some inputs may share an output.',
+      arrows:[[0,0],[1,0],[2,1],[3,2]]
+    },
+    bij:{
+      title:'Bijective',
+      def:'Both injective and surjective. A perfect one-to-one pairing between domain and codomain. <strong>Only bijections have inverses.</strong>',
+      math:'$$f\\text{ is bijective}\\iff \\text{injective}\\wedge\\text{surjective}$$',
+      test:'<strong style="color:var(--good)">Horizontal line test:</strong> Every horizontal line intersects the graph exactly once.',
+      arrows:[[0,0],[1,1],[2,2]]
+    },
+    none:{
+      title:'Neither',
+      def:'Not injective (some outputs are hit twice) and not surjective (some codomain elements are never hit).',
+      math:'$$\\exists x_1\\neq x_2: f(x_1)=f(x_2)\\quad\\text{and}\\quad\\exists y\\in B\\setminus\\text{Range}(f)$$',
+      test:'<strong style="color:var(--warn)">Fails both tests.</strong>',
+      arrows:[[0,0],[1,0],[2,2]]
+    }
+  };
+
+  let current='inj';
+
+  function draw(){
+    const {ctx,W,H}=setupCanvas(cv);
+    ctx.clearRect(0,0,W,H);
+
+    const nDom = current==='sur'?4 : current==='none'?3 : 3;
+    const nCod = current==='sur'?3 : current==='none'?4 : 3;
+
+    const domX=100, codX=W-100;
+    const topY=60, botY=H-60;
+    const domPos=[], codPos=[];
+    for(let i=0;i<nDom;i++) domPos.push({x:domX, y:topY+(botY-topY)*i/(nDom-1||1)});
+    for(let j=0;j<nCod;j++) codPos.push({x:codX, y:topY+(botY-topY)*j/(nCod-1||1)});
+
+    // column labels
+    ctx.fillStyle='#9aa3c7'; ctx.font='13px Inter';
+    ctx.textAlign='center';
+    ctx.fillText('Domain A', domX, 30);
+    ctx.fillText('Codomain B', codX, 30);
+
+    // arrows
+    const arrows=info[current].arrows;
+    arrows.forEach(([i,j])=>{
+      const p1=domPos[i], p2=codPos[j];
+      const grad=ctx.createLinearGradient(p1.x,p1.y,p2.x,p2.y);
+      grad.addColorStop(0,'#7cc4ff'); grad.addColorStop(1,'#f472b6');
+      ctx.strokeStyle=grad; ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(p1.x+22, p1.y);
+      const cx=(p1.x+p2.x)/2;
+      ctx.bezierCurveTo(cx, p1.y, cx, p2.y, p2.x-22, p2.y);
+      ctx.stroke();
+      // arrowhead
+      const ang=Math.atan2(p2.y-(p2.y), (p2.x-22)-cx);
+      ctx.fillStyle='#f472b6';
+      ctx.beginPath();
+      ctx.moveTo(p2.x-22, p2.y);
+      ctx.lineTo(p2.x-30, p2.y-5);
+      ctx.lineTo(p2.x-30, p2.y+5);
+      ctx.closePath(); ctx.fill();
+    });
+
+    // nodes
+    domPos.forEach((p,i)=>{
+      ctx.fillStyle='#7cc4ff';
+      ctx.beginPath(); ctx.arc(p.x,p.y,18,0,TAU); ctx.fill();
+      ctx.fillStyle='#0a0e1a'; ctx.font='bold 14px Inter';
+      ctx.textAlign='center';
+      ctx.fillText(String.fromCharCode(97+i), p.x, p.y+5);
+    });
+    codPos.forEach((p,j)=>{
+      // highlight if hit
+      const hit=arrows.some(([i,k])=>k===j);
+      ctx.fillStyle=hit?'#f472b6':'#2a3058';
+      ctx.beginPath(); ctx.arc(p.x,p.y,18,0,TAU); ctx.fill();
+      ctx.strokeStyle=hit?'#f472b6':'#3a4270';
+      ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle=hit?'#0a0e1a':'#9aa3c7';
+      ctx.font='bold 14px Inter';
+      ctx.textAlign='center';
+      ctx.fillText(String.fromCharCode(49+j), p.x, p.y+5);
+    });
+  }
+
+  function setInfo(type){
+    current=type;
+    const I=info[type];
+    title.textContent=I.title;
+    def.innerHTML=I.def;
+    math.innerHTML=I.math;
+    test.innerHTML=I.test;
+    // re-render math
+    if(window.renderMathInElement) renderMathInElement(math,{delimiters:[{left:'$$',right:'$$',display:true}]});
+    draw();
+  }
+
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    setInfo(t.dataset.type);
+  }));
+
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* ============================================================
+   Section 3 — Function families
+   ============================================================ */
+const fnLibrary=[
+  {id:'lin', name:'Linear', formula:'f(x)=mx+b', f:x=>1.5*x+0.5, color:'#7cc4ff', note:'Straight line, constant rate of change.'},
+  {id:'quad', name:'Quadratic', formula:'f(x)=ax²+bx+c', f:x=>x*x-2, color:'#ffd166', note:'Parabola, U-shaped curve.'},
+  {id:'cubic', name:'Cubic', formula:'f(x)=x³', f:x=>x*x*x/4, color:'#6ee7b7', note:'S-shaped, odd symmetry.'},
+  {id:'abs', name:'Absolute Value', formula:'f(x)=|x|', f:x=>Math.abs(x), color:'#f472b6', note:'V-shaped, even function.'},
+  {id:'exp', name:'Exponential', formula:'f(x)=eˣ', f:x=>Math.exp(x/2), color:'#c084fc', note:'Rapid growth, always positive.'},
+  {id:'log', name:'Logarithmic', formula:'f(x)=ln x', f:x=>x>0?Math.log(x):NaN, color:'#f87171', note:'Inverse of exponential, slow growth.'},
+  {id:'sin', name:'Sine', formula:'f(x)=sin x', f:x=>Math.sin(x), color:'#7cc4ff', note:'Periodic, oscillates between −1 and 1.'},
+  {id:'cos', name:'Cosine', formula:'f(x)=cos x', f:x=>Math.cos(x), color:'#ffd166', note:'Periodic, phase-shifted sine.'},
+  {id:'tan', name:'Tangent', formula:'f(x)=tan x', f:x=>Math.tan(x), color:'#6ee7b7', note:'Periodic with vertical asymptotes.'},
+  {id:'recip', name:'Reciprocal', formula:'f(x)=1/x', f:x=>1/x, color:'#f472b6', note:'Hyperbola, odd function.'},
+  {id:'sqrt', name:'Square Root', formula:'f(x)=√x', f:x=>x>=0?Math.sqrt(x):NaN, color:'#c084fc', note:'Half-parabola on its side.'},
+  {id:'gauss', name:'Gaussian', formula:'f(x)=e^(−x²)', f:x=>Math.exp(-x*x), color:'#f87171', note:'Bell curve, even function.'},
+];
+
+let activeFn=fnLibrary[0];
+
+(function(){
+  const gallery=document.getElementById('fnGallery');
+  const mainCv=document.getElementById('mainGraph');
+  const zoom=document.getElementById('zoomSlider');
+  const panX=document.getElementById('panXSlider');
+  const panY=document.getElementById('panYSlider');
+  const resetBtn=document.getElementById('resetViewBtn');
+  const cursorRead=document.getElementById('cursorRead');
+
+  // build tiles
+  fnLibrary.forEach((fn,idx)=>{
+    const tile=document.createElement('div');
+    tile.className='fn-tile'+(idx===0?' active':'');
+    tile.innerHTML=`<canvas width="280" height="140"></canvas><h5>${fn.name}</h5><p>$${fn.formula}$</p>`;
+    tile.addEventListener('click',()=>{
+      document.querySelectorAll('.fn-tile').forEach(t=>t.classList.remove('active'));
+      tile.classList.add('active');
+      activeFn=fn;
+      drawMain();
+    });
+    gallery.appendChild(tile);
+    // draw mini graph
+    setTimeout(()=>{
+      const cv=tile.querySelector('canvas');
+      const {ctx,W,H}=setupCanvas(cv);
+      ctx.fillStyle='#0c0f1d'; ctx.fillRect(0,0,W,H);
+      // mini axes
+      ctx.strokeStyle='#2a3058'; ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(0,H/2); ctx.lineTo(W,H/2);
+      ctx.moveTo(W/2,0); ctx.lineTo(W/2,H);
+      ctx.stroke();
+      // curve
+      ctx.strokeStyle=fn.color; ctx.lineWidth=2;
+      ctx.beginPath();
+      let started=false;
+      for(let i=0;i<=W;i++){
+        const x=(i/W-0.5)*8;
+        const y=fn.f(x);
+        if(!isFinite(y)||Math.abs(y)>20){started=false;continue;}
+        const px=i, py=H/2-y*H/10;
+        if(!started){ctx.moveTo(px,py);started=true;}
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+    },100);
+  });
+
+  function drawMain(){
+    const {ctx,W,H}=setupCanvas(mainCv);
+    ctx.clearRect(0,0,W,H);
+    const z=parseFloat(zoom.value);
+    const px=parseFloat(panX.value);
+    const py=parseFloat(panY.value);
+    const span=8/z;
+    const xmin=-span+px, xmax=span+px;
+    const ymin=-span*z+py, ymax=span*z+py;
+    const {mx,my}=drawAxes(ctx,W,H,xmin,xmax,ymin,ymax);
+    plotCurve(ctx,mx,my,activeFn.f,xmin,xmax,activeFn.color,3);
+    // title
+    ctx.fillStyle=activeFn.color; ctx.font='bold 16px Inter';
+    ctx.textAlign='left';
+    ctx.fillText(activeFn.name+': '+activeFn.formula, 50, 30);
+  }
+
+  [zoom,panX,panY].forEach(s=>s.addEventListener('input',drawMain));
+  resetBtn.addEventListener('click',()=>{
+    zoom.value=1; panX.value=0; panY.value=0; drawMain();
+  });
+  mainCv.addEventListener('mousemove',e=>{
+    const rect=mainCv.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width;
+    const z=parseFloat(zoom.value);
+    const px=parseFloat(panX.value), py=parseFloat(panY.value);
+    const span=8/z;
+    const xv=-span+px + x*2*span;
+    const yv=activeFn.f(xv);
+    cursorRead.textContent=`x = ${xv.toFixed(2)}, f(x) = ${isFinite(yv)?yv.toFixed(3):'—'}`;
+  });
+
+  window.addEventListener('resize',drawMain);
+  setTimeout(()=>{
+    drawMain();
+    if(window.renderMathInElement) renderMathInElement(gallery);
+  },200);
+})();
+
+/* ============================================================
+   Section 4 — Even & Odd
+   ============================================================ */
+(function(){
+  const cvE=document.getElementById('evenCanvas');
+  const cvO=document.getElementById('oddCanvas');
+  const sel=document.getElementById('symSel');
+  const slider=document.getElementById('symSlider');
+  const read=document.getElementById('symRead');
+
+  const fns={
+    x2:{f:x=>x*x, name:'x²', parity:'even'},
+    x3:{f:x=>x*x*x/4, name:'x³/4', parity:'odd'},
+    cos:{f:x=>Math.cos(x), name:'cos x', parity:'even'},
+    sin:{f:x=>Math.sin(x), name:'sin x', parity:'odd'},
+    mix:{f:x=>x*x+x, name:'x²+x', parity:'neither'}
+  };
+
+  function drawOne(cv,fObj,xv){
+    const {ctx,W,H}=setupCanvas(cv);
+    ctx.clearRect(0,0,W,H);
+    const {mx,my}=drawAxes(ctx,W,H,-4,4,-3,3);
+    const color=fObj.parity==='even'?'#7cc4ff':fObj.parity==='odd'?'#f472b6':'#9aa3c7';
+    plotCurve(ctx,mx,my,fObj.f,-4,4,color,2.5);
+    // probe points
+    const y1=fObj.f(xv), y2=fObj.f(-xv);
+    // vertical lines
+    ctx.strokeStyle='#ffd166'; ctx.setLineDash([4,4]); ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.moveTo(mx(xv),my(0)); ctx.lineTo(mx(xv),my(y1));
+    ctx.moveTo(mx(-xv),my(0)); ctx.lineTo(mx(-xv),my(y2));
+    ctx.stroke(); ctx.setLineDash([]);
+    // points
+    [[xv,y1,'#ffd166'],[-xv,y2,'#6ee7b7']].forEach(([x,y,c])=>{
+      ctx.fillStyle=c;
+      ctx.beginPath(); ctx.arc(mx(x),my(y),6,0,TAU); ctx.fill();
+    });
+    // labels
+    ctx.fillStyle='#ffd166'; ctx.font='13px Inter'; ctx.textAlign='left';
+    ctx.fillText(`f(${xv.toFixed(1)}) = ${y1.toFixed(2)}`, 50, 28);
+    ctx.fillStyle='#6ee7b7';
+    ctx.fillText(`f(${(-xv).toFixed(1)}) = ${y2.toFixed(2)}`, 50, 48);
+    // symmetry line
+    if(fObj.parity==='even'){
+      ctx.strokeStyle='rgba(124,196,255,.4)'; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(mx(0),my(-3)); ctx.lineTo(mx(0),my(3)); ctx.stroke();
+      ctx.setLineDash([]);
+    } else if(fObj.parity==='odd'){
+      ctx.fillStyle='rgba(244,114,182,.5)';
+      ctx.beginPath(); ctx.arc(mx(0),my(0),6,0,TAU); ctx.fill();
+    }
+  }
+
+  function update(){
+    const key=sel.value;
+    const fObj=fns[key];
+    const xv=parseFloat(slider.value);
+    read.textContent=`x = ${xv.toFixed(1)}`;
+    drawOne(cvE,fObj,xv);
+    drawOne(cvO,fObj,xv);
+  }
+  sel.addEventListener('change',update);
+  slider.addEventListener('input',update);
+  window.addEventListener('resize',update);
+  update();
+})();
+
+/* ============================================================
+   Section 5 — Transformations
+   ============================================================ */
+(function(){
+  const cv=document.getElementById('transCanvas');
+  const base=document.getElementById('transBase');
+  const tA=document.getElementById('tA'), tB=document.getElementById('tB');
+  const tC=document.getElementById('tC'), tD=document.getElementById('tD');
+  const rA=document.getElementById('tARead'), rB=document.getElementById('tBRead');
+  const rC=document.getElementById('tCRead'), rD=document.getElementById('tDRead');
+
+  const bases={
+    x2:x=>x*x,
+    sin:x=>Math.sin(x),
+    abs:x=>Math.abs(x),
+    sqrt:x=>x>=0?Math.sqrt(x):NaN
+  };
+
+  function draw(){
+    const {ctx,W,H}=setupCanvas(cv);
+    ctx.clearRect(0,0,W,H);
+    const a=parseFloat(tA.value), b=parseFloat(tB.value);
+    const c=parseFloat(tC.value), d=parseFloat(tD.value);
+    rA.textContent=a.toFixed(1); rB.textContent=b.toFixed(1);
+    rC.textContent=c.toFixed(1); rD.textContent=d.toFixed(1);
+    const f=bases[base.value];
+    const g=x=>a*f(b*(x-c))+d;
+    const {mx,my}=drawAxes(ctx,W,H,-6,6,-5,5);
+    plotCurve(ctx,mx,my,f,-6,6,'#7cc4ff',2);
+    plotCurve(ctx,mx,my,g,-6,6,'#f472b6',2.8);
+    ctx.fillStyle='#7cc4ff'; ctx.font='bold 15px Inter'; ctx.textAlign='left';
+    ctx.fillText('original f(x)',50,30);
+    ctx.fillStyle='#f472b6';
+    ctx.fillText(`g(x) = ${a.toFixed(1)}·f(${b.toFixed(1)}·(x − ${c.toFixed(1)})) + ${d.toFixed(1)}`,50,50);
+  }
+  [base,tA,tB,tC,tD].forEach(el=>el.addEventListener('input',draw));
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* ============================================================
+   Section 6 — Composition
+   ============================================================ */
+(function(){
+  const cv=document.getElementById('compCanvas');
+  const selF=document.getElementById('compF');
+  const selG=document.getElementById('compG');
+  const xSlider=document.getElementById('compX');
+  const xRead=document.getElementById('compXRead');
+
+  const F={
+    sq:x=>x*x, sin:x=>Math.sin(x), exp:x=>Math.exp(x/2), abs:x=>Math.abs(x)
+  };
+  const G={
+    lin:x=>x+1, sin:x=>Math.sin(x), x2:x=>x*x, neg:x=>-x
+  };
+
+  function draw(){
+    const {ctx,W,H}=setupCanvas(cv);
+    ctx.clearRect(0,0,W,H);
+    const f=F[selF.value], g=G[selG.value];
+    const fg=x=>f(g(x));
+    const xv=parseFloat(xSlider.value);
+    xRead.textContent=`x = ${xv.toFixed(1)}`;
+    const {mx,my}=drawAxes(ctx,W,H,-5,5,-4,4);
+    plotCurve(ctx,mx,my,f,-5,5,'#7cc4ff',2);
+    plotCurve(ctx,mx,my,g,-5,5,'#f472b6',2);
+    plotCurve(ctx,mx,my,fg,-5,5,'#6ee7b7',2.8);
+    // probe
+    const gx=g(xv), fgx=fg(xv);
+    ctx.strokeStyle='#ffd166'; ctx.setLineDash([4,4]); ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.moveTo(mx(xv),my(0)); ctx.lineTo(mx(xv),my(fgx));
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#ffd166';
+    ctx.beginPath(); ctx.arc(mx(xv),my(fgx),6,0,TAU); ctx.fill();
+    // info box
+    ctx.fillStyle='#0b0e1c'; ctx.fillRect(W-280,20,260,90);
+    ctx.strokeStyle='#2a3058'; ctx.strokeRect(W-280,20,260,90);
+    ctx.fillStyle='#f472b6'; ctx.font='13px Inter'; ctx.textAlign='left';
+    ctx.fillText(`g(${xv.toFixed(1)}) = ${isFinite(gx)?gx.toFixed(3):'—'}`, W-270, 42);
+    ctx.fillStyle='#7cc4ff';
+    ctx.fillText(`f(g(x)) = f(${isFinite(gx)?gx.toFixed(2):'?'}) = ${isFinite(fgx)?fgx.toFixed(3):'—'}`, W-270, 64);
+    ctx.fillStyle='#6ee7b7'; ctx.font='bold 13px Inter';
+    ctx.fillText(`(f∘g)(${xv.toFixed(1)}) = ${isFinite(fgx)?fgx.toFixed(3):'—'}`, W-270, 90);
+  }
+  [selF,selG,xSlider].forEach(el=>el.addEventListener('input',draw));
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* ============================================================
+   Section 7 — Inverse
+   ============================================================ */
+(function(){
+  const cv=document.getElementById('invCanvas');
+  const sel=document.getElementById('invSel');
+  const slider=document.getElementById('invX');
+  const read=document.getElementById('invXRead');
+
+  const pairs={
+    exp:{f:x=>Math.exp(x), finv:x=>x>0?Math.log(x):NaN, domain:[-3,3], range:[-1,6]},
+    x3:{f:x=>x*x*x/3, finv:x=>Math.cbrt(3*x), domain:[-3,3], range:[-4,4]},
+    lin:{f:x=>2*x+1, finv:x=>(x-1)/2, domain:[-4,4], range:[-6,8]},
+    recip:{f:x=>1/x, finv:x=>1/x, domain:[-4,4], range:[-4,4]}
+  };
+
+  function draw(){
+    const {ctx,W,H}=setupCanvas(cv);
+    ctx.clearRect(0,0,W,H);
+    const p=pairs[sel.value];
+    const xv=parseFloat(slider.value);
+    read.textContent=`x = ${xv.toFixed(1)}`;
+    const {mx,my}=drawAxes(ctx,W,H,p.domain[0],p.domain[1],p.range[0],p.range[1]);
+    // y=x line
+    ctx.strokeStyle='#f87171'; ctx.setLineDash([6,4]); ctx.lineWidth=1.5;
+    ctx.beginPath();
+    const lo=Math.min(p.domain[0],p.range[0]), hi=Math.max(p.domain[1],p.range[1]);
+    ctx.moveTo(mx(lo),my(lo)); ctx.lineTo(mx(hi),my(hi));
+    ctx.stroke(); ctx.setLineDash([]);
+    // f
+    plotCurve(ctx,mx,my,p.f,p.domain[0],p.domain[1],'#7cc4ff',2.5);
+    // f^-1
+    plotCurve(ctx,mx,my,p.finv,p.range[0],p.range[1],'#ffd166',2.5);
+    // probe point and reflection
+    const yv=p.f(xv);
+    if(isFinite(yv)){
+      // point on f
+      ctx.fillStyle='#7cc4ff';
+      ctx.beginPath(); ctx.arc(mx(xv),my(yv),7,0,TAU); ctx.fill();
+      // reflected point on f^-1
+      ctx.fillStyle='#ffd166';
+      ctx.beginPath(); ctx.arc(mx(yv),my(xv),7,0,TAU); ctx.fill();
+      // connecting line
+      ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(mx(xv),my(yv)); ctx.lineTo(mx(yv),my(xv));
+      ctx.stroke(); ctx.setLineDash([]);
+      // labels
+      ctx.fillStyle='#7cc4ff'; ctx.font='13px Inter'; ctx.textAlign='left';
+      ctx.fillText(`(${xv.toFixed(1)}, ${yv.toFixed(2)}) on f`, 50, 30);
+      ctx.fillStyle='#ffd166';
+      ctx.fillText(`(${yv.toFixed(2)}, ${xv.toFixed(1)}) on f⁻¹`, 50, 50);
+    }
+  }
+  [sel,slider].forEach(el=>el.addEventListener('input',draw));
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* ============================================================
+   Section 8 — Periodic & Piecewise
+   ============================================================ */
+(function(){
+  const perCv=document.getElementById('perCanvas');
+  const perT=document.getElementById('perT');
+  const perTRead=document.getElementById('perTRead');
+
+  function drawPer(){
+    const {ctx,W,H}=setupCanvas(perCv);
+    ctx.clearRect(0,0,W,H);
+    const T=parseFloat(perT.value);
+    perTRead.textContent=T.toFixed(1);
+    const f=x=>Math.sin(TAU*x/T);
+    const {mx,my}=drawAxes(ctx,W,H,-6,6,-1.5,1.5);
+    plotCurve(ctx,mx,my,f,-6,6,'#7cc4ff',2.5);
+    // mark one period
+    ctx.strokeStyle='#ffd166'; ctx.setLineDash([4,4]); ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(mx(0),my(-1.5)); ctx.lineTo(mx(0),my(1.5));
+    ctx.moveTo(mx(T),my(-1.5)); ctx.lineTo(mx(T),my(1.5));
+    ctx.stroke(); ctx.setLineDash([]);
+    // bracket
+    ctx.strokeStyle='#ffd166'; ctx.lineWidth=2;
+    const by=my(-1.3);
+    ctx.beginPath();
+    ctx.moveTo(mx(0),by); ctx.lineTo(mx(T),by);
+    ctx.stroke();
+    ctx.fillStyle='#ffd166'; ctx.font='bold 13px Inter'; ctx.textAlign='center';
+    ctx.fillText(`period T = ${T.toFixed(1)}`, mx(T/2), by-6);
+  }
+  perT.addEventListener('input',drawPer);
+  window.addEventListener('resize',drawPer);
+  drawPer();
+
+  // piecewise
+  const pwCv=document.getElementById('pwCanvas');
+  function drawPW(){
+    const {ctx,W,H}=setupCanvas(pwCv);
+    ctx.clearRect(0,0,W,H);
+    const f=x=>{
+      if(x<0) return -x;
+      if(x<2) return x*x;
+      return 4-(x-2);
+    };
+    const {mx,my}=drawAxes(ctx,W,H,-3,5,-1,5);
+    // three pieces with gaps at boundaries
+    plotCurve(ctx,mx,my,x=>-x,-3,-0.01,'#f472b6',2.5);
+    plotCurve(ctx,mx,my,x=>x*x,0,1.99,'#7cc4ff',2.5);
+    plotCurve(ctx,mx,my,x=>4-(x-2),2,5,'#6ee7b7',2.5);
+    // boundary points
+    [[0,0,true],[0,0,false],[2,4,true],[2,2,false]].forEach(([x,y,filled],i)=>{
+      // piece 1 at x=0: f(0⁻)=0 open, piece 2 at x=0: f(0)=0 closed
+      // piece 2 at x=2: f(2⁻)=4 open, piece 3 at x=2: f(2)=2 closed
+      ctx.fillStyle=i%2===0?'#0c0f1d':(i===0?'#f472b6':i===1?'#7cc4ff':i===2?'#6ee7b7':'#6ee7b7');
+      ctx.strokeStyle=i===0?'#f472b6':i===1?'#7cc4ff':'#6ee7b7';
+      ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(mx(x),my(y),5,0,TAU);
+      if(i===0||i===2){ctx.stroke();} // open
+      else {ctx.fill(); ctx.stroke();} // closed
+    });
+    // simpler: re-draw cleanly
+    ctx.fillStyle='#f472b6'; ctx.beginPath(); ctx.arc(mx(0),my(0),5,0,TAU); ctx.fill(); // -x includes 0? let's say yes
+    ctx.fillStyle='#0c0f1d'; ctx.strokeStyle='#7cc4ff'; ctx.beginPath(); ctx.arc(mx(2),my(4),5,0,TAU); ctx.fill(); ctx.stroke();
+  }
+  window.addEventListener('resize',drawPW);
+  drawPW();
+})();
+</script>
+
+</body>
+</html>

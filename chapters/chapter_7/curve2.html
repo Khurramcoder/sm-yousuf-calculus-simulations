@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Curve Sketching Analyzer</title>
+    <!-- Include Math.js for parsing complex arbitrary mathematical equations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --accent-success: #10b981;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 30px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        .dashboard-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            display: block;
+        }
+
+        button {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .analysis-container {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .analysis-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .card-header {
+            font-weight: 700;
+            color: #c084fc;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-left: 5px;
+        }
+        .badge.yes { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge.no { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        canvas {
+            background: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 600px;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-header">
+        <h1>Universal Curve Analyzer</h1>
+        <p>Type any algebraic, trigonometric, or exponential equation to trace assets</p>
+    </div>
+
+    <div class="container">
+        <!-- Input Configurations -->
+        <div class="panel">
+            <h2>⚙️ Dynamic Equation Engine</h2>
+            
+            <div id="error-box" class="error-message"></div>
+
+            <div class="form-group">
+                <label for="equation">Input Equation f(x, y) = 0</label>
+                <input type="text" id="equation" value="y^2 - x^2 * (4 - x^2)">
+                <span class="hint">Supports any natural notation, e.g., <code>y^2 - x^3 + x</code>, <code>sin(x) - cos(y)</code>, <code>y - log(x)</code></span>
+            </div>
+
+            <div class="form-group">
+                <label for="const-a">Optional Constant Symbol (a)</label>
+                <input type="number" id="const-a" value="1" step="0.5">
+                <span class="hint">If your custom equation uses the character 'a', change this value to update scales dynamically.</span>
+            </div>
+
+            <button onclick="analyzeAndPlot()">Analyze & Generate Sketched Matrix</button>
+
+            <div class="analysis-container" id="analysis-output">
+                <!-- Calculated results will appear here -->
+            </div>
+        </div>
+
+        <!-- Visual Coordinate Plane -->
+        <div class="panel" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <h2>📈 Adaptive Grid Workspace</h2>
+            <canvas id="graphCanvas" width="600" height="600"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // High-precision evaluation using Math.js
+        function evaluateF(compiledExpr, xVal, yVal, aVal) {
+            try {
+                let scope = { x: xVal, y: yVal, a: aVal };
+                return compiledExpr.evaluate(scope);
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        function analyzeAndPlot() {
+            const rawExpr = document.getElementById('equation').value;
+            const a = parseFloat(document.getElementById('const-a').value);
+            const output = document.getElementById('analysis-output');
+            const errorBox = document.getElementById('error-box');
+            
+            errorBox.style.display = "none";
+            let compiledExpr;
+
+            // Compiling validation check
+            try {
+                compiledExpr = math.compile(rawExpr);
+                // Dry run validation test
+                let testVal = evaluateF(compiledExpr, 1, 1, a);
+                if (isNaN(testVal) && rawExpr.toLowerCase().includes('y')) {
+                    throw new Error("Equation parses into invalid math states.");
+                }
+            } catch (err) {
+                errorBox.innerText = "Syntax Error: Ensure expressions match formatting standards. (e.g., use '*' explicitly for multiplications, like '3*x' instead of '3x').";
+                errorBox.style.display = "block";
+                return;
+            }
+
+            let html = "";
+
+            // 1. SYMMETRY SOLVER
+            let symX = true, symY = true, symOrigin = true;
+            for(let i = -3; i <= 3; i += 0.3) {
+                for(let j = -3; j <= 3; j += 0.3) {
+                    let base = evaluateF(compiledExpr, i, j, a);
+                    if(isNaN(base)) continue;
+                    if(Math.abs(base - evaluateF(compiledExpr, i, -j, a)) > 1e-2) symX = false;
+                    if(Math.abs(base - evaluateF(compiledExpr, -i, j, a)) > 1e-2) symY = false;
+                    if(Math.abs(base - evaluateF(compiledExpr, -i, -j, a)) > 1e-2) symOrigin = false;
+                }
+            }
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">I. Geometric Symmetry Properties</div>
+                    <div class="card-body">
+                        Symmetric across X-Axis (Even functions of y): <span class="badge ${symX ? 'yes' : 'no'}">${symX ? 'YES' : 'NO'}</span><br>
+                        Symmetric across Y-Axis (Even functions of x): <span class="badge ${symY ? 'yes' : 'no'}">${symY ? 'YES' : 'NO'}</span><br>
+                        Symmetric across Origin (Odd functions): <span class="badge ${symOrigin ? 'yes' : 'no'}">${symOrigin ? 'YES' : 'NO'}</span>
+                    </div>
+                </div>`;
+
+            // 2. ORIGIN VERIFICATION
+            let originValue = evaluateF(compiledExpr, 0, 0, a);
+            let atOrigin = Math.abs(originValue) < 1e-3;
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">II. Intersection with Origin</div>
+                    <div class="card-body">
+                        Coordinates pass through point (0,0): <span class="badge ${atOrigin ? 'yes' : 'no'}">${atOrigin ? 'TRUE' : 'FALSE'}</span>
+                    </div>
+                </div>`;
+
+            // 3. GRAPHICAL INTERCEPTS ROOT MATRIX
+            let xIntercepts = [];
+            let yIntercepts = [];
+            for (let v = -10; v <= 10; v += 0.02) {
+                if(Math.abs(evaluateF(compiledExpr, v, 0, a)) < 0.02) {
+                    let rounded = Math.round(v * 100) / 100;
+                    if(!xIntercepts.includes(rounded)) xIntercepts.push(rounded);
+                }
+                if(Math.abs(evaluateF(compiledExpr, 0, v, a)) < 0.02) {
+                    let rounded = Math.round(v * 100) / 100;
+                    if(!yIntercepts.includes(rounded)) yIntercepts.push(rounded);
+                }
+            }
+            // Filter adjacent duplicates out
+            xIntercepts = xIntercepts.filter((v, idx, self) => Math.abs(self[idx - 1] - v) > 0.15 || idx === 0).slice(0, 5);
+            yIntercepts = yIntercepts.filter((v, idx, self) => Math.abs(self[idx - 1] - v) > 0.15 || idx === 0).slice(0, 5);
+
+            html += `
+                <div class="analysis-card">
+                    <div class="card-header">III. Coordinate Intercept Vectors</div>
+                    <div class="card-body">
+                        <b>X Axis Roots (y = 0):</b> { ${xIntercepts.length ? xIntercepts.join(', ') : 'None located within window'} }<br>
+                        <b>Y Axis Roots (x = 0):</b> { ${yIntercepts.length ? yIntercepts.join(', ') : 'None located within window'} }
+                    </div>
+                </div>`;
+
+            output.innerHTML = html;
+            drawGraph(compiledExpr, a);
+        }
+
+        function drawGraph(compiledExpr, a) {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Coordinate plane dimensions scale configuration (-10 to 10 view window)
+            const minX = -10, maxX = 10;
+            const minY = -10, maxY = 10;
+
+            function toX(x) { return ((x - minX) / (maxX - minX)) * w; }
+            function toY(y) { return h - ((y - minY) / (maxY - minY)) * h; }
+
+            // Grid lines
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for(let i = minX; i <= maxX; i++) {
+                ctx.beginPath(); ctx.moveTo(toX(i), 0); ctx.lineTo(toX(i), h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, toY(i)); ctx.lineTo(w, toY(i)); ctx.stroke();
+            }
+
+            // Target Axes lines
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(toX(0), 0); ctx.lineTo(toX(0), h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(w, toY(0)); ctx.stroke();
+
+            // High density continuous zero crossing sign analysis rendering engine
+            ctx.fillStyle = '#6366f1';
+            const gridResolution = 300; 
+            const stepX = (maxX - minX) / gridResolution;
+            const stepY = (maxY - minY) / gridResolution;
+
+            for(let xi = 0; xi < gridResolution; xi++) {
+                let x1 = minX + xi * stepX;
+                let x2 = x1 + stepX;
+                for(let yi = 0; yi < gridResolution; yi++) {
+                    let y1 = minY + yi * stepY;
+                    let y2 = y1 + stepY;
+
+                    let v00 = evaluateF(compiledExpr, x1, y1, a);
+                    let v10 = evaluateF(compiledExpr, x2, y1, a);
+                    let v01 = evaluateF(compiledExpr, x1, y2, a);
+                    let v11 = evaluateF(compiledExpr, x2, y2, a);
+
+                    if (isNaN(v00) || isNaN(v10) || isNaN(v01) || isNaN(v11)) continue;
+
+                    let min = Math.min(v00, v10, v01, v11);
+                    let max = Math.max(v00, v10, v01, v11);
+
+                    // Sign alternation means an equality point passes directly through this viewport block
+                    if (min <= 0 && max >= 0) {
+                        ctx.fillRect(toX(x1), toY(y2), w / gridResolution + 0.6, h / gridResolution + 0.6);
+                    }
+                }
+            }
+        }
+
+        // Run calculations directly on browser initiation
+        window.onload = analyzeAndPlot;
+    </script>
+</body>
+</html>

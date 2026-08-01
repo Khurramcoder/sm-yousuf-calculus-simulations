@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Fundamental Theorem of Calculus — An Interactive Exploration</title>
+
+<!-- KaTeX for beautiful math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+
+<style>
+  :root{
+    --bg:#0f1220;
+    --bg-2:#161a2e;
+    --panel:#1b2040;
+    --ink:#e9ecf7;
+    --muted:#9aa3c7;
+    --accent:#7cc4ff;
+    --accent-2:#ffd166;
+    --good:#6ee7b7;
+    --warn:#f87171;
+    --line:#2a3058;
+    --radius:14px;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+    line-height:1.65; -webkit-font-smoothing:antialiased;}
+  .serif{font-family:"Cormorant Garamond","EB Garamond",Georgia,serif;}
+  header{
+    padding:60px 24px 40px; text-align:center;
+    background:radial-gradient(1200px 500px at 50% -100px,#2a3468 0%,transparent 60%),var(--bg);
+    border-bottom:1px solid var(--line);
+  }
+  header h1{font-size:clamp(28px,4vw,48px);margin:0 0 10px;letter-spacing:.3px;}
+  header p{color:var(--muted);max-width:780px;margin:0 auto;font-size:17px;}
+  main{max-width:1100px;margin:0 auto;padding:32px 20px 80px;}
+  section{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px;margin:28px 0;box-shadow:var(--shadow);
+  }
+  section h2{margin-top:0;font-size:26px;color:var(--accent);}
+  section h3{color:var(--accent-2);margin-top:28px;}
+  .math-block{
+    background:var(--bg-2);border:1px solid var(--line);
+    border-left:4px solid var(--accent);
+    padding:18px 22px;border-radius:10px;margin:18px 0;
+    font-size:19px;overflow-x:auto;
+  }
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:860px){.two-col{grid-template-columns:1fr}}
+  canvas{
+    width:100%;height:auto;display:block;background:#0c0f1d;
+    border:1px solid var(--line);border-radius:10px;
+  }
+  .controls{
+    display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+    background:var(--bg-2);padding:14px 16px;border-radius:10px;
+    border:1px solid var(--line);margin-top:14px;
+  }
+  .controls label{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .controls input[type=range]{accent-color:var(--accent);width:180px;}
+  .controls select, .controls button{
+    background:var(--panel);color:var(--ink);border:1px solid var(--line);
+    padding:6px 12px;border-radius:8px;font-size:14px;cursor:pointer;
+  }
+  .controls button:hover{border-color:var(--accent);}
+  .readout{
+    font-variant-numeric:tabular-nums;font-size:14px;color:var(--ink);
+    background:#0b0e1c;border:1px solid var(--line);padding:4px 10px;border-radius:6px;
+  }
+  .tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;
+    background:#2a3058;color:var(--accent);margin-right:6px;letter-spacing:.5px;text-transform:uppercase;}
+  .callout{
+    border:1px dashed var(--accent);background:rgba(124,196,255,.06);
+    padding:14px 18px;border-radius:10px;margin:14px 0;
+  }
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-top:8px;}
+  .legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+  .l-f::before{background:#7cc4ff}
+  .l-F::before{background:#ffd166}
+  .l-area::before{background:rgba(110,231,183,.55)}
+  .l-tan::before{background:#f87171}
+  footer{text-align:center;color:var(--muted);padding:24px;font-size:13px;border-top:1px solid var(--line);}
+  details{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:10px 0;}
+  details summary{cursor:pointer;color:var(--accent);font-weight:600;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="serif">The Fundamental Theorem of Calculus</h1>
+  <p>A unified bridge between the two central operations of analysis — <em>differentiation</em> and <em>integration</em> — brought to life through interactive simulation.</p>
+</header>
+
+<main>
+
+<!-- ============== INTRO ============== -->
+<section>
+  <h2>1 · The Idea in One Sentence</h2>
+  <p>
+    If we define the <em>accumulated area</em> under a curve $f$ from a fixed point $a$ up to a variable point $x$,
+    then the <em>rate</em> at which that area grows is exactly the height of the curve at $x$.
+    In other words, <strong>integration and differentiation are inverse operations</strong>.
+  </p>
+  <div class="math-block">
+    $$F(x)=\int_a^x f(t)\,dt \quad\Longrightarrow\quad F'(x)=f(x)$$
+  </div>
+  <p>This is the <strong>First Fundamental Theorem of Calculus</strong>. The <strong>Second</strong> part tells us how to <em>evaluate</em> a definite integral using any antiderivative:</p>
+  <div class="math-block">
+    $$\int_a^b f(x)\,dx = F(b)-F(a),\qquad\text{where }F'=f.$$
+  </div>
+</section>
+
+<!-- ============== SIM 1: AREA ACCUMULATION ============== -->
+<section>
+  <h2>2 · Simulation — Area Accumulation &amp; the Derivative of the Integral</h2>
+  <p>
+    Drag the slider (or press <em>Play</em>) to move the upper limit $x$. The green shaded region is the integral
+    $F(x)=\int_a^x f(t)\,dt$. On the right panel we plot $F$ itself. The red tangent line on $F$ has slope $f(x)$ —
+    watch it match the height of the curve on the left.
+  </p>
+
+  <div class="two-col">
+    <div>
+      <canvas id="cvLeft" width="560" height="360"></canvas>
+      <div class="legend">
+        <span class="l-f">y = f(x)</span>
+        <span class="l-area">accumulated area F(x)</span>
+      </div>
+    </div>
+    <div>
+      <canvas id="cvRight" width="560" height="360"></canvas>
+      <div class="legend">
+        <span class="l-F">F(x) = ∫ₐˣ f(t) dt</span>
+        <span class="l-tan">tangent, slope = f(x)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>Function
+      <select id="fnSel">
+        <option value="0">f(t) = 1 + 0.5·sin(2t)</option>
+        <option value="1">f(t) = t</option>
+        <option value="2">f(t) = 1 + cos(t)</option>
+        <option value="3">f(t) = e^(−t/3)·sin(t) + 1</option>
+      </select>
+    </label>
+    <label>Upper limit x
+      <input id="xSlider" type="range" min="0" max="6.28" step="0.01" value="2.5">
+      <span class="readout" id="xRead">x = 2.50</span>
+    </label>
+    <button id="playBtn">▶ Play</button>
+    <button id="resetBtn">↺ Reset</button>
+  </div>
+
+  <div class="callout" style="margin-top:18px;">
+    <strong>What you are seeing.</strong>
+    Let $A(x)=\int_a^x f(t)\,dt$. Increasing $x$ by a tiny amount $\Delta x$ adds roughly a thin rectangle
+    of height $f(x)$ and width $\Delta x$, so $\Delta A \approx f(x)\,\Delta x$. Dividing and letting $\Delta x\to 0$:
+    <div class="math-block" style="margin:10px 0 0;">
+      $$\frac{d}{dx}\int_a^x f(t)\,dt = f(x).$$
+    </div>
+  </div>
+</section>
+
+<!-- ============== SIM 2: RIEMANN SUMS ============== -->
+<section>
+  <h2>3 · Simulation — From Riemann Sums to the Integral</h2>
+  <p>
+    Approximate $\int_a^b f(x)\,dx$ with $n$ rectangles. As $n\to\infty$, the sum converges to the true area —
+    which is also $F(b)-F(a)$ by the Second Fundamental Theorem.
+  </p>
+
+  <div class="two-col">
+    <div>
+      <canvas id="cvRiemann" width="560" height="360"></canvas>
+      <div class="legend">
+        <span class="l-f">f(x)</span>
+        <span class="l-area">Riemann rectangles</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="controls" style="margin-top:0;">
+        <label>n =
+          <input id="nSlider" type="range" min="1" max="200" step="1" value="8">
+          <span class="readout" id="nRead">8</span>
+        </label>
+        <label>Sample
+          <select id="sampleSel">
+            <option value="L">Left</option>
+            <option value="R">Right</option>
+            <option value="M" selected>Midpoint</option>
+          </select>
+        </label>
+      </div>
+      <div class="math-block" style="margin:0;">
+        $$S_n = \sum_{k=1}^{n} f(x_k^*)\,\Delta x$$
+      </div>
+      <div class="readout" id="sumRead" style="padding:12px 14px;font-size:15px;">—</div>
+      <div class="readout" id="exactRead" style="padding:12px 14px;font-size:15px;">—</div>
+      <div class="readout" id="errRead" style="padding:12px 14px;font-size:15px;">—</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== THEORY ============== -->
+<section>
+  <h2>4 · Formal Statements</h2>
+
+  <h3>Part I — Differentiation of an Integral</h3>
+  <p>Let $f:[a,b]\to\mathbb{R}$ be continuous. Define</p>
+  <div class="math-block">
+    $$F(x)=\int_a^x f(t)\,dt,\qquad x\in[a,b].$$
+  </div>
+  <p>Then $F$ is differentiable on $(a,b)$ and</p>
+  <div class="math-block">
+    $$F'(x)=f(x)\quad\text{for all }x\in(a,b).$$
+  </div>
+
+  <details>
+    <summary>Sketch of proof</summary>
+    <p>For small $h>0$,
+    $$\frac{F(x+h)-F(x)}{h}=\frac{1}{h}\int_x^{x+h}f(t)\,dt.$$
+    By continuity, $f(t)=f(x)+\varepsilon(t)$ with $\varepsilon(t)\to 0$ as $t\to x$. Hence the quotient equals
+    $f(x)+\frac{1}{h}\int_x^{x+h}\varepsilon(t)\,dt\to f(x)$.</p>
+  </details>
+
+  <h3>Part II — Evaluation of a Definite Integral</h3>
+  <p>If $F$ is any antiderivative of a continuous $f$ on $[a,b]$ (i.e. $F'=f$), then</p>
+  <div class="math-block">
+    $$\int_a^b f(x)\,dx = F(b)-F(a).$$
+  </div>
+
+  <details>
+    <summary>Why Part II follows from Part I</summary>
+    <p>Let $G(x)=\int_a^x f(t)\,dt$. By Part I, $G'=f=F'$. Hence $G$ and $F$ differ by a constant $C$.
+    Since $G(a)=0$, we have $C=-F(a)$, so $G(x)=F(x)-F(a)$. Evaluating at $x=b$ gives the result.</p>
+  </details>
+</section>
+
+<!-- ============== EXAMPLE ============== -->
+<section>
+  <h2>5 · A Worked Example</h2>
+  <p>Compute $\displaystyle\int_0^{\pi} \sin x\,dx$.</p>
+  <p>An antiderivative of $\sin x$ is $F(x)=-\cos x$. By Part II:</p>
+  <div class="math-block">
+    $$\int_0^{\pi}\sin x\,dx = \bigl[-\cos x\bigr]_0^{\pi} = (-\cos\pi)-(-\cos 0)=1+1=2.$$
+  </div>
+  <p>Check with Part I: the area function $A(x)=\int_0^x\sin t\,dt=1-\cos x$ satisfies $A'(x)=\sin x$, exactly as the theorem predicts.</p>
+</section>
+
+<!-- ============== WHY IT MATTERS ============== -->
+<section>
+  <h2>6 · Why the Theorem Matters</h2>
+  <ul>
+    <li>It turns the <em>limit of sums</em> (a hard object) into <em>evaluation of an antiderivative</em> (an algebraic task).</li>
+    <li>It guarantees that every continuous function has an antiderivative — namely $x\mapsto\int_a^x f(t)\,dt$.</li>
+    <li>It underlies virtually every application: physics (work, flux), probability (CDFs and PDFs), engineering (signal energy), and beyond.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  Built with HTML, Canvas, and KaTeX · An interactive study note on the Fundamental Theorem of Calculus.
+</footer>
+
+<script>
+/* ============================================================
+   Shared utilities
+   ============================================================ */
+const TAU = Math.PI*2;
+const funcs = [
+  t => 1 + 0.5*Math.sin(2*t),
+  t => t,
+  t => 1 + Math.cos(t),
+  t => Math.exp(-t/3)*Math.sin(t) + 1,
+];
+const fnNames = [
+  "1 + ½·sin(2t)",
+  "t",
+  "1 + cos(t)",
+  "e^(−t/3)·sin(t) + 1"
+];
+
+// Numerical integral via composite Simpson (very accurate for smooth f)
+function integrate(f,a,b,n=800){
+  if(b===a) return 0;
+  if(n%2) n++;
+  const h=(b-a)/n;
+  let s=f(a)+f(b);
+  for(let i=1;i<n;i++){
+    s += f(a+i*h)*(i%2?4:2);
+  }
+  return s*h/3;
+}
+
+// Build the area function F(x) = ∫_a^x f(t) dt as a sampled array
+function buildF(f,a,b,N=600){
+  const xs=new Float64Array(N+1), Fs=new Float64Array(N+1);
+  const h=(b-a)/N;
+  let acc=0;
+  xs[0]=a; Fs[0]=0;
+  // incremental Simpson-lite: use trapezoidal for smoothness at each step
+  let prev=f(a);
+  for(let i=1;i<=N;i++){
+    const x=a+i*h;
+    const cur=f(x);
+    acc += 0.5*(prev+cur)*h;
+    xs[i]=x; Fs[i]=acc;
+    prev=cur;
+  }
+  return {xs,Fs,h};
+}
+
+/* ============================================================
+   Simulation 1 — Area accumulation + derivative of integral
+   ============================================================ */
+(function(){
+  const cvL=document.getElementById('cvLeft');
+  const cvR=document.getElementById('cvRight');
+  const ctxL=cvL.getContext('2d');
+  const ctxR=cvR.getContext('2d');
+  const xSlider=document.getElementById('xSlider');
+  const xRead=document.getElementById('xRead');
+  const fnSel=document.getElementById('fnSel');
+  const playBtn=document.getElementById('playBtn');
+  const resetBtn=document.getElementById('resetBtn');
+
+  let a=0, b=TAU;
+  let f=funcs[0];
+  let Fdata=buildF(f,a,b);
+  let xVal=parseFloat(xSlider.value);
+  let playing=false, rafId=null, lastT=0;
+
+  function resize(){
+    [cvL,cvR].forEach(cv=>{
+      const dpr=window.devicePixelRatio||1;
+      const w=cv.clientWidth, h=cv.clientHeight;
+      cv.width=w*dpr; cv.height=h*dpr;
+      cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+    });
+  }
+  window.addEventListener('resize',()=>{resize();draw();});
+
+  function rebuild(){
+    Fdata=buildF(f,a,b);
+  }
+
+  function valueOfF(x){
+    // linear interp in Fdata
+    const idx=(x-a)/Fdata.h;
+    const i=Math.max(0,Math.min(Fdata.xs.length-2, Math.floor(idx)));
+    const t=idx-i;
+    return Fdata.Fs[i]*(1-t)+Fdata.Fs[i+1]*t;
+  }
+
+  function drawAxes(ctx,W,H,xmin,xmax,ymin,ymax,xLabel,yLabel){
+    ctx.strokeStyle='#2a3058'; ctx.lineWidth=1;
+    ctx.beginPath();
+    // x-axis
+    const y0=H-30;
+    ctx.moveTo(40,y0); ctx.lineTo(W-10,y0);
+    // y-axis
+    ctx.moveTo(40,20); ctx.lineTo(40,y0);
+    ctx.stroke();
+    // ticks
+    ctx.fillStyle='#9aa3c7'; ctx.font='11px Inter, sans-serif';
+    ctx.textAlign='center';
+    const nx=6;
+    for(let i=0;i<=nx;i++){
+      const xv=xmin+(xmax-xmin)*i/nx;
+      const px=40+(W-50)*i/nx;
+      ctx.fillText(xv.toFixed(1),px,y0+14);
+      ctx.beginPath(); ctx.moveTo(px,y0); ctx.lineTo(px,y0+3); ctx.stroke();
+    }
+    ctx.textAlign='right';
+    const ny=5;
+    for(let i=0;i<=ny;i++){
+      const yv=ymin+(ymax-ymin)*i/ny;
+      const py=y0-(H-50)*i/ny;
+      ctx.fillText(yv.toFixed(2),36,py+4);
+      ctx.beginPath(); ctx.moveTo(37,py); ctx.lineTo(40,py); ctx.stroke();
+    }
+    ctx.fillStyle='#9aa3c7';
+    ctx.textAlign='left';
+    ctx.fillText(xLabel,W-30,y0+14);
+    ctx.fillText(yLabel,44,16);
+  }
+
+  function mapX(x,W,xmin,xmax){return 40+(W-50)*(x-xmin)/(xmax-xmin);}
+  function mapY(y,H,ymin,ymax){return (H-30)-(H-50)*(y-ymin)/(ymax-ymin);}
+
+  function draw(){
+    const W=cvL.clientWidth, H=cvL.clientHeight;
+    // --- Left panel: f(x) with shaded area [a, xVal]
+    ctxL.clearRect(0,0,W,H);
+    // y-range for f
+    let fmin=Infinity,fmax=-Infinity;
+    for(let i=0;i<=400;i++){
+      const x=a+(b-a)*i/400;
+      const y=f(x);
+      if(y<fmin)fmin=y; if(y>fmax)fmax=y;
+    }
+    fmin=Math.min(0,fmin-0.2); fmax=Math.max(1,fmax+0.2);
+    drawAxes(ctxL,W,H,a,b,fmin,fmax,'x','f(x)');
+
+    // shaded area
+    ctxL.fillStyle='rgba(110,231,183,0.35)';
+    ctxL.beginPath();
+    ctxL.moveTo(mapX(a,W,a,b), mapY(0,H,fmin,fmax));
+    const steps=200;
+    for(let i=0;i<=steps;i++){
+      const x=a+(xVal-a)*i/steps;
+      ctxL.lineTo(mapX(x,W,a,b), mapY(f(x),H,fmin,fmax));
+    }
+    ctxL.lineTo(mapX(xVal,W,a,b), mapY(0,H,fmin,fmax));
+    ctxL.closePath(); ctxL.fill();
+
+    // f curve
+    ctxL.strokeStyle='#7cc4ff'; ctxL.lineWidth=2.2;
+    ctxL.beginPath();
+    for(let i=0;i<=400;i++){
+      const x=a+(b-a)*i/400;
+      const y=f(x);
+      const px=mapX(x,W,a,b), py=mapY(y,H,fmin,fmax);
+      if(i===0) ctxL.moveTo(px,py); else ctxL.lineTo(px,py);
+    }
+    ctxL.stroke();
+
+    // vertical line at xVal
+    ctxL.strokeStyle='#ffd166'; ctxL.setLineDash([4,4]); ctxL.lineWidth=1.2;
+    ctxL.beginPath();
+    ctxL.moveTo(mapX(xVal,W,a,b),20);
+    ctxL.lineTo(mapX(xVal,W,a,b),H-30);
+    ctxL.stroke(); ctxL.setLineDash([]);
+
+    // point (xVal, f(xVal))
+    ctxL.fillStyle='#ffd166';
+    ctxL.beginPath();
+    ctxL.arc(mapX(xVal,W,a,b), mapY(f(xVal),H,fmin,fmax),5,0,TAU);
+    ctxL.fill();
+
+    // label
+    ctxL.fillStyle='#e9ecf7'; ctxL.font='13px Inter, sans-serif';
+    ctxL.textAlign='left';
+    const Fx=valueOfF(xVal);
+    ctxL.fillText(`x = ${xVal.toFixed(2)}`, 50, 32);
+    ctxL.fillText(`f(x) = ${f(xVal).toFixed(3)}`, 50, 50);
+    ctxL.fillStyle='#6ee7b7';
+    ctxL.fillText(`F(x) = ∫ₐˣ f = ${Fx.toFixed(3)}`, 50, 68);
+
+    // --- Right panel: F(x) curve + tangent
+    const WR=cvR.clientWidth, HR=cvR.clientHeight;
+    ctxR.clearRect(0,0,WR,HR);
+    let Fmin=0, Fmax=Fdata.Fs[Fdata.Fs.length-1];
+    if(Fmax<=Fmin) Fmax=1;
+    Fmax*=1.1; Fmin=Math.min(0,Fmin-0.1);
+    drawAxes(ctxR,WR,HR,a,b,Fmin,Fmax,'x','F(x)');
+
+    // F curve
+    ctxR.strokeStyle='#ffd166'; ctxR.lineWidth=2.4;
+    ctxR.beginPath();
+    for(let i=0;i<=Fdata.xs.length-1;i++){
+      const px=mapX(Fdata.xs[i],WR,a,b);
+      const py=mapY(Fdata.Fs[i],HR,Fmin,Fmax);
+      if(i===0) ctxR.moveTo(px,py); else ctxR.lineTo(px,py);
+    }
+    ctxR.stroke();
+
+    // current point on F
+    const pxX=mapX(xVal,WR,a,b);
+    const pyY=mapY(Fx,HR,Fmin,Fmax);
+    ctxR.fillStyle='#ffd166';
+    ctxR.beginPath(); ctxR.arc(pxX,pyY,5,0,TAU); ctxR.fill();
+
+    // tangent line with slope f(xVal)
+    const slope=f(xVal);
+    const dx=0.8; // in x-units
+    const x1=xVal-dx, x2=xVal+dx;
+    const y1=Fx-slope*dx, y2=Fx+slope*dx;
+    ctxR.strokeStyle='#f87171'; ctxR.lineWidth=1.8;
+    ctxR.beginPath();
+    ctxR.moveTo(mapX(x1,WR,a,b), mapY(y1,HR,Fmin,Fmax));
+    ctxR.lineTo(mapX(x2,WR,a,b), mapY(y2,HR,Fmin,Fmax));
+    ctxR.stroke();
+
+    // vertical guide
+    ctxR.strokeStyle='#ffd166'; ctxR.setLineDash([4,4]); ctxR.lineWidth=1.2;
+    ctxR.beginPath();
+    ctxR.moveTo(pxX,20); ctxR.lineTo(pxX,HR-30);
+    ctxR.stroke(); ctxR.setLineDash([]);
+
+    // label
+    ctxR.fillStyle='#e9ecf7'; ctxR.font='13px Inter, sans-serif';
+    ctxR.textAlign='left';
+    ctxR.fillText(`F'(x) = f(x) = ${slope.toFixed(3)}`, 50, 32);
+    ctxR.fillStyle='#f87171';
+    ctxR.fillText(`tangent slope = f(x)`, 50, 50);
+  }
+
+  function update(){
+    xRead.textContent = `x = ${xVal.toFixed(2)}`;
+    draw();
+  }
+
+  xSlider.addEventListener('input',e=>{
+    xVal=parseFloat(e.target.value);
+    update();
+  });
+  fnSel.addEventListener('change',e=>{
+    f=funcs[+e.target.value];
+    rebuild();
+    update();
+  });
+  resetBtn.addEventListener('click',()=>{
+    xVal=0; xSlider.value=0; playing=false; playBtn.textContent='▶ Play';
+    update();
+  });
+  playBtn.addEventListener('click',()=>{
+    playing=!playing;
+    playBtn.textContent=playing?'⏸ Pause':'▶ Play';
+    if(playing){lastT=performance.now(); loop();}
+    else cancelAnimationFrame(rafId);
+  });
+  function loop(){
+    if(!playing) return;
+    const now=performance.now();
+    const dt=(now-lastT)/1000; lastT=now;
+    xVal += dt*0.8;
+    if(xVal>b){xVal=a;}
+    xSlider.value=xVal;
+    update();
+    rafId=requestAnimationFrame(loop);
+  }
+
+  resize(); rebuild(); update();
+})();
+
+/* ============================================================
+   Simulation 2 — Riemann sums
+   ============================================================ */
+(function(){
+  const cv=document.getElementById('cvRiemann');
+  const ctx=cv.getContext('2d');
+  const nSlider=document.getElementById('nSlider');
+  const nRead=document.getElementById('nRead');
+  const sampleSel=document.getElementById('sampleSel');
+  const sumRead=document.getElementById('sumRead');
+  const exactRead=document.getElementById('exactRead');
+  const errRead=document.getElementById('errRead');
+
+  const f = t => 1 + 0.5*Math.sin(2*t);
+  const a=0, b=Math.PI;
+
+  function resize(){
+    const dpr=window.devicePixelRatio||1;
+    const w=cv.clientWidth, h=cv.clientHeight;
+    cv.width=w*dpr; cv.height=h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize',()=>{resize();draw();});
+
+  function riemann(n,mode){
+    const dx=(b-a)/n;
+    let s=0;
+    for(let k=0;k<n;k++){
+      const xl=a+k*dx, xr=xl+dx;
+      let xs;
+      if(mode==='L') xs=xl;
+      else if(mode==='R') xs=xr;
+      else xs=0.5*(xl+xr);
+      s += f(xs)*dx;
+    }
+    return s;
+  }
+
+  function draw(){
+    const W=cv.clientWidth, H=cv.clientHeight;
+    ctx.clearRect(0,0,W,H);
+
+    // y range
+    let fmin=0, fmax=2;
+    for(let i=0;i<=200;i++){const y=f(a+(b-a)*i/200); if(y>fmax)fmax=y;}
+    fmax+=0.2;
+
+    // axes
+    ctx.strokeStyle='#2a3058'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(40,H-30); ctx.lineTo(W-10,H-30);
+    ctx.moveTo(40,20); ctx.lineTo(40,H-30);
+    ctx.stroke();
+    ctx.fillStyle='#9aa3c7'; ctx.font='11px Inter, sans-serif';
+    ctx.textAlign='center';
+    for(let i=0;i<=4;i++){
+      const xv=a+(b-a)*i/4;
+      const px=40+(W-50)*i/4;
+      ctx.fillText(xv.toFixed(2),px,H-14);
+    }
+    ctx.textAlign='right';
+    for(let i=0;i<=4;i++){
+      const yv=fmin+(fmax-fmin)*i/4;
+      const py=(H-30)-(H-50)*i/4;
+      ctx.fillText(yv.toFixed(2),36,py+4);
+    }
+
+    const n=+nSlider.value;
+    const mode=sampleSel.value;
+    const dx=(b-a)/n;
+
+    // rectangles
+    ctx.fillStyle='rgba(110,231,183,0.35)';
+    ctx.strokeStyle='rgba(110,231,183,0.9)';
+    ctx.lineWidth=1;
+    for(let k=0;k<n;k++){
+      const xl=a+k*dx, xr=xl+dx;
+      let xs;
+      if(mode==='L') xs=xl;
+      else if(mode==='R') xs=xr;
+      else xs=0.5*(xl+xr);
+      const h=f(xs);
+      const px1=40+(W-50)*(xl-a)/(b-a);
+      const px2=40+(W-50)*(xr-a)/(b-a);
+      const pyTop=(H-30)-(H-50)*(h-fmin)/(fmax-fmin);
+      const pyBot=(H-30)-(H-50)*(0-fmin)/(fmax-fmin);
+      ctx.fillRect(px1,pyTop,px2-px1,pyBot-pyTop);
+      ctx.strokeRect(px1,pyTop,px2-px1,pyBot-pyTop);
+    }
+
+    // curve
+    ctx.strokeStyle='#7cc4ff'; ctx.lineWidth=2.2;
+    ctx.beginPath();
+    for(let i=0;i<=400;i++){
+      const x=a+(b-a)*i/400;
+      const y=f(x);
+      const px=40+(W-50)*(x-a)/(b-a);
+      const py=(H-30)-(H-50)*(y-fmin)/(fmax-fmin);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+
+    // readouts
+    const Sn=riemann(n,mode);
+    const exact=integrate(f,a,b,1000);
+    const err=Math.abs(Sn-exact);
+    nRead.textContent=n;
+    sumRead.innerHTML=`<strong>Riemann sum S<sub>${n}</sub></strong> = ${Sn.toFixed(6)}`;
+    exactRead.innerHTML=`<strong>Exact ∫₀^π f(x) dx</strong> ≈ ${exact.toFixed(6)}`;
+    errRead.innerHTML=`<strong>Absolute error</strong> = ${err.toExponential(3)}`;
+  }
+
+  nSlider.addEventListener('input',draw);
+  sampleSel.addEventListener('change',draw);
+  resize(); draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proof: lim(n→∞) (1 + 1/n)ⁿ = e</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', 'Cambria', serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.7;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 2.2em;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 5px;
+  }
+  .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; }
+  .card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 14px;
+    padding: 28px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  h2 {
+    color: #60a5fa;
+    border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+    padding-bottom: 8px;
+    margin-top: 0;
+  }
+  .proof-step {
+    background: rgba(15, 23, 42, 0.6);
+    border-left: 3px solid #a78bfa;
+    padding: 14px 18px;
+    margin: 14px 0;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .note {
+    background: rgba(244, 114, 182, 0.1);
+    border-left: 3px solid #f472b6;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 6px;
+    font-style: italic;
+    color: #fbcfe8;
+  }
+  canvas {
+    background: #0b1220;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    display: block;
+    margin: 15px auto;
+    max-width: 100%;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .controls label { color: #cbd5e1; font-weight: bold; }
+  input[type=range] {
+    width: 300px;
+    accent-color: #60a5fa;
+  }
+  .value-box {
+    display: inline-block;
+    background: linear-gradient(135deg, #1e3a8a, #3b0764);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    margin: 5px;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-family: 'Courier New', monospace;
+  }
+  th, td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
+  th {
+    background: rgba(96, 165, 250, 0.15);
+    color: #93c5fd;
+  }
+  tr:nth-child(even) { background: rgba(15, 23, 42, 0.4); }
+  .qed {
+    text-align: right;
+    font-size: 1.5em;
+    color: #a78bfa;
+    margin-top: 15px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>lim<sub>n→∞</sub> (1 + 1/n)<sup>n</sup> = e</h1>
+  <p class="subtitle">A Mathematical & Graphical Proof</p>
+
+  <!-- ============ MATHEMATICAL PROOF ============ -->
+  <div class="card">
+    <h2>📘 Part I — Mathematical Proof (Binomial Expansion)</h2>
+
+    <p><strong>Theorem.</strong> $\displaystyle\lim_{n\to\infty}\left(1+\frac{1}{n}\right)^n = e$</p>
+
+    <p><strong>Proof.</strong> Expand $\left(1+\dfrac{1}{n}\right)^n$ using the Binomial Theorem:</p>
+
+    <div class="proof-step">
+      $$\left(1+\frac{1}{n}\right)^n = \sum_{k=0}^{n} \binom{n}{k}\left(\frac{1}{n}\right)^k$$
+    </div>
+
+    <p>Write out the first few terms explicitly:</p>
+
+    <div class="proof-step">
+      $$= \binom{n}{0}\frac{1}{n^0} + \binom{n}{1}\frac{1}{n^1} + \binom{n}{2}\frac{1}{n^2} + \binom{n}{3}\frac{1}{n^3} + \cdots + \binom{n}{n}\frac{1}{n^n}$$
+    </div>
+
+    <p>Since $\displaystyle\binom{n}{k} = \frac{n(n-1)(n-2)\cdots(n-k+1)}{k!}$, substitute and simplify each term:</p>
+
+    <div class="proof-step">
+      $$= 1 + 1 + \frac{1}{2!}\left(1-\frac{1}{n}\right) + \frac{1}{3!}\left(1-\frac{1}{n}\right)\left(1-\frac{2}{n}\right) + \cdots$$
+      $$\quad + \frac{1}{n!}\left(1-\frac{1}{n}\right)\left(1-\frac{2}{n}\right)\cdots\left(1-\frac{n-1}{n}\right)$$
+    </div>
+
+    <p>Now take the limit as $n \to \infty$. For each fixed $k$, every factor $\left(1 - \dfrac{j}{n}\right) \to 1$, so the $k$-th term converges to $\dfrac{1}{k!}$:</p>
+
+    <div class="proof-step">
+      $$\lim_{n\to\infty}\left(1+\frac{1}{n}\right)^n = 1 + 1 + \frac{1}{2!} + \frac{1}{3!} + \frac{1}{4!} + \cdots = \sum_{k=0}^{\infty}\frac{1}{k!}$$
+    </div>
+
+    <div class="note">
+      The right-hand side is precisely the <em>series definition</em> of Euler's number $e$.
+      Therefore,
+      $$\boxed{\lim_{n\to\infty}\left(1+\frac{1}{n}\right)^n = e \approx 2.718281828\ldots}$$
+    </div>
+
+    <div class="qed">∎</div>
+  </div>
+
+  <!-- ============ GRAPHICAL PROOF ============ -->
+  <div class="card">
+    <h2>📈 Part II — Graphical Proof</h2>
+    <p>The plot below shows $f(x)=\left(1+\dfrac{1}{x}\right)^x$ approaching the horizontal asymptote $y=e$ as $x\to\infty$.</p>
+
+    <canvas id="graph" width="1000" height="500"></canvas>
+
+    <div class="controls">
+      <label for="nSlider">n = <span id="nLabel">10</span></label>
+      <input type="range" id="nSlider" min="1" max="500" value="10" step="1">
+      <button id="animateBtn" style="padding:8px 18px;background:#60a5fa;color:#0f172a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">▶ Animate</button>
+    </div>
+
+    <div style="text-align:center">
+      <div class="value-box">n = <span id="currentN">10</span></div>
+      <div class="value-box">(1 + 1/n)<sup>n</sup> = <span id="currentVal">—</span></div>
+      <div class="value-box">e = <span id="eVal">2.718281828459045</span></div>
+      <div class="value-box">Error = <span id="errVal">—</span></div>
+    </div>
+  </div>
+
+  <!-- ============ NUMERICAL TABLE ============ -->
+  <div class="card">
+    <h2>🔢 Part III — Numerical Evidence</h2>
+    <div class="grid">
+      <div>
+        <h3 style="color:#a78bfa;margin-top:0">Discrete n (integers)</h3>
+        <table id="table1"></table>
+      </div>
+      <div>
+        <h3 style="color:#a78bfa;margin-top:0">Continuous x (real)</h3>
+        <table id="table2"></table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------- Utility ----------
+const e = Math.E;
+function f(x){ return Math.pow(1 + 1/x, x); }
+
+// ---------- Tables ----------
+function buildTable(id, rows){
+  const t = document.getElementById(id);
+  let html = '<tr><th>n</th><th>(1+1/n)ⁿ</th><th>Error</th></tr>';
+  rows.forEach(r => {
+    const v = f(r);
+    html += `<tr><td>${r}</td><td>${v.toFixed(10)}</td><td>${Math.abs(v-e).toExponential(3)}</td></tr>`;
+  });
+  t.innerHTML = html;
+}
+buildTable('table1', [1,2,5,10,50,100,1000,10000,100000,1000000]);
+buildTable('table2', [1.5, 2.7, 5.5, 10.2, 50.7, 100.3, 1000.8, 10000.1]);
+
+// ---------- Graph ----------
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = { l: 70, r: 30, t: 30, b: 50 };
+const plotW = W - pad.l - pad.r;
+const plotH = H - pad.t - pad.b;
+const xMax = 100, yMin = 0, yMax = 3.2;
+
+function xToPx(x){ return pad.l + (x/xMax)*plotW; }
+function yToPx(y){ return pad.t + plotH - ((y-yMin)/(yMax-yMin))*plotH; }
+
+function drawGraph(currentN){
+  ctx.clearRect(0,0,W,H);
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(148,163,184,0.1)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<=xMax; x+=10){
+    ctx.beginPath(); ctx.moveTo(xToPx(x), pad.t); ctx.lineTo(xToPx(x), pad.t+plotH); ctx.stroke();
+  }
+  for(let y=0; y<=yMax; y+=0.5){
+    ctx.beginPath(); ctx.moveTo(pad.l, yToPx(y)); ctx.lineTo(pad.l+plotW, yToPx(y)); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+plotH); ctx.lineTo(pad.l+plotW, pad.t+plotH);
+  ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '14px Georgia';
+  ctx.textAlign = 'center';
+  for(let x=0; x<=xMax; x+=20){
+    ctx.fillText(x, xToPx(x), pad.t+plotH+20);
+  }
+  ctx.textAlign = 'right';
+  for(let y=0; y<=yMax; y+=0.5){
+    ctx.fillText(y.toFixed(1), pad.l-8, yToPx(y)+4);
+  }
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'center';
+  ctx.fillText('n  →  ∞', pad.l+plotW/2, H-10);
+  ctx.save();
+  ctx.translate(20, pad.t+plotH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('(1 + 1/n)ⁿ', 0, 0);
+  ctx.restore();
+
+  // Curve f(x)
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for(let x=1; x<=xMax; x+=0.5){
+    const y = f(x);
+    if(x===1) ctx.moveTo(xToPx(x), yToPx(y));
+    else ctx.lineTo(xToPx(x), yToPx(y));
+  }
+  ctx.stroke();
+
+  // Asymptote y = e
+  ctx.strokeStyle = '#f472b6';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8,6]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, yToPx(e));
+  ctx.lineTo(pad.l+plotW, yToPx(e));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#f472b6';
+  ctx.font = 'bold 16px Georgia';
+  ctx.textAlign = 'left';
+  ctx.fillText('y = e ≈ 2.71828', pad.l+plotW-180, yToPx(e)-8);
+
+  // Current point marker
+  if(currentN && currentN <= xMax){
+    const cx = xToPx(currentN);
+    const cy = yToPx(f(currentN));
+
+    // Vertical dashed guide
+    ctx.strokeStyle = 'rgba(250,204,21,0.4)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(cx, pad.t+plotH);
+    ctx.lineTo(cx, cy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Point
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 13px Courier New';
+    ctx.textAlign = 'left';
+    ctx.fillText(`n=${currentN}`, cx+10, cy-10);
+    ctx.fillText(`≈ ${f(currentN).toFixed(6)}`, cx+10, cy+8);
+  }
+
+  // Legend
+  ctx.font = '13px Georgia';
+  ctx.fillStyle = '#60a5fa';
+  ctx.fillRect(pad.l+15, pad.t+10, 20, 3);
+  ctx.fillText('f(x) = (1+1/x)^x', pad.l+42, pad.t+15);
+  ctx.strokeStyle = '#f472b6';
+  ctx.setLineDash([6,4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l+15, pad.t+30);
+  ctx.lineTo(pad.l+35, pad.t+30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f472b6';
+  ctx.fillText('y = e (asymptote)', pad.l+42, pad.t+35);
+}
+
+// ---------- Interaction ----------
+const slider = document.getElementById('nSlider');
+const nLabel = document.getElementById('nLabel');
+const currentN = document.getElementById('currentN');
+const currentVal = document.getElementById('currentVal');
+const errVal = document.getElementById('errVal');
+
+function update(n){
+  n = Math.round(n);
+  nLabel.textContent = n;
+  currentN.textContent = n;
+  const v = f(n);
+  currentVal.textContent = v.toFixed(12);
+  errVal.textContent = Math.abs(v-e).toExponential(4);
+  drawGraph(n);
+}
+
+slider.addEventListener('input', e => update(e.target.value));
+
+// Animation
+const btn = document.getElementById('animateBtn');
+let animId = null;
+btn.addEventListener('click', () => {
+  if(animId){ cancelAnimationFrame(animId); animId = null; btn.textContent = '▶ Animate'; return; }
+  btn.textContent = '⏸ Pause';
+  let n = 1;
+  function step(){
+    update(n);
+    slider.value = n;
+    if(n < 10) n += 0.2;
+    else if(n < 50) n += 0.5;
+    else if(n < 200) n += 2;
+    else n += 5;
+    if(n > 500){ n = 1; }
+    animId = requestAnimationFrame(step);
+  }
+  step();
+});
+
+// Initial draw
+update(10);
+</script>
+</body>
+</html>

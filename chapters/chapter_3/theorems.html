@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rolle's, MVT, and Cauchy's Theorems Explained</title>
+    <!-- Google Fonts for clean typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --highlight: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .theorem-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .theorem-card h2 {
+            color: var(--secondary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .math-block {
+            background: var(--highlight);
+            padding: 12px 15px;
+            border-left: 4px solid var(--primary);
+            font-family: monospace;
+            font-size: 1.05rem;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            overflow-x: auto;
+        }
+
+        .proof-steps {
+            background: #fafafa;
+            border: 1px dashed var(--border-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Calculus Made Easy</h1>
+        <p>Geometrical, Algebraic, and Proof Explanations for Core Calculus Theorems</p>
+    </header>
+
+    <!-- 1. ROLLE'S THEOREM -->
+    <div class="theorem-card">
+        <h2>1. Rolle's Theorem</h2>
+        
+        <div class="section-title">Statement</div>
+        <p>If a real-valued function $f$ is continuous on a closed interval $[a, b]$, differentiable on the open interval $(x, y)$—or $(a, b)$—and $f(a) = f(b)$, then there exists at least one number $c$ in $(a, b)$ such that:</p>
+        <div class="math-block">f'(c) = 0</div>
+
+        <div class="section-title">Geometrical Explanation</div>
+        <p>Imagine walking along a smooth, continuous mountain path starting at horizontal position $x = a$ and ending at $x = b$. If your starting elevation equals your ending elevation ($f(a) = f(b)$), and the path has no sharp corners (differentiable), you must have reached at least one absolute peak or valley where the trail temporarily flattens out completely horizontal. At that peak/valley, the slope of the tangent line is zero ($f'(c) = 0$).</p>
+
+        <div class="section-title">Algebraic Explanation</div>
+        <p>Since $f$ is continuous on a closed bounded interval $[a, b]$, by the Extreme Value Theorem, $f$ must attain an absolute maximum $M$ and an absolute minimum $m$ on $[a, b]$. There are two cases:</p>
+        <ul>
+            <li><strong>Case 1:</strong> $M = m$. This means $f(x)$ is a constant function everywhere, so $f'(x) = 0$ for all $x$, meaning $f'(c) = 0$ is trivially true for any $c$.</li>
+            <li><strong>Case 2:</strong> $M \neq m$. Since $f(a) = f(b)$, at least one of these extreme values must occur at an internal point $c \in (a, b)$. By Fermat's Theorem on stationary points, the derivative at a local extremum inside the domain must be zero. Therefore, $f'(c) = 0$.</li>
+        </ul>
+
+        <div class="proof-steps">
+            <strong>Proof Outline:</strong>
+            <ol>
+                <li>Invoke Extreme Value Theorem: $f$ achieves bounds on $[a, b]$.</li>
+                <li>If bounds happen at endpoints where $f(a) = f(b)$, function is constant $\implies f'(c) = 0$.</li>
+                <li>If extremum occurs inside $(a, b)$ at point $c$, let's look at the limit definition of derivative from left and right. Since it's a maximum/minimum, one sided limits force $f'(c) \ge 0$ and $f'(c) \le 0$, forcing $f'(c) = 0$. Q.E.D.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- 2. MEAN VALUE THEOREM -->
+    <div class="theorem-card">
+        <h2>2. Lagrange's Mean Value Theorem (MVT)</h2>
+        
+        <div class="section-title">Statement</div>
+        <p>If a function $f$ is continuous on $[a, b]$ and differentiable on $(a, b)$, then there exists at least one number $c$ in $(a, b)$ such that:</p>
+        <div class="math-block">f'(c) = \frac{f(b) - f(a)}{b - a}</div>
+
+        <div class="section-title">Geometrical Explanation</div>
+        <p>The term $\frac{f(b) - f(a)}{b - a}$ represents the slope of the secant line connecting the endpoints $(a, f(a))$ and $(b, f(b))$. The derivative $f'(c)$ represents the slope of the tangent line at point $c$. MVT states that somewhere between $a$ and $b$, the curve's instantaneous tangent line runs completely <strong>parallel</strong> to the secant line connecting the two ends.</p>
+
+        <div class="section-title">Algebraic Explanation</div>
+        <p>MVT is a tilted/tilted generalization of Rolle's Theorem. We construct a new auxiliary function $g(x)$ that subtracts the linear secant line from our original function $f(x)$, forcing the endpoints to match zero:</p>
+        <div class="math-block">g(x) = f(x) - \left[ f(a) + \frac{f(b)-f(a)}{b-a}(x-a) \right]</div>
+        <p>Notice that $g(a) = 0$ and $g(b) = 0$. Because $g(x)$ satisfies all criteria of Rolle's Theorem, there exists a $c \in (a, b)$ such that $g'(c) = 0$, which cleanly yields the MVT formula when differentiated.</p>
+
+        <div class="proof-steps">
+            <strong>Proof Outline:</strong>
+            <ol>
+                <li>Define auxiliary function $g(x) = f(x) - mx$, where $m$ is the secant slope $\frac{f(b)-f(a)}{b-a}$.</li>
+                <li>Verify $g(x)$ is continuous on $[a, b]$ and differentiable on $(a, b)$.</li>
+                <li>Check boundary values: $g(a) = g(b)$.</li>
+                <li>Apply Rolle's Theorem to $g(x)$ to get $g'(c) = 0$.</li>
+                <li>Since $g'(x) = f'(x) - m$, evaluating at $c$ gives $f'(c) = m$. Done!</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- 3. CAUCHY'S MEAN VALUE THEOREM -->
+    <div class="theorem-card">
+        <h2>3. Cauchy's Mean Value Theorem (CMVT)</h2>
+        
+        <div class="section-title">Statement</div>
+        <p>If functions $f$ and $g$ are continuous on $[a, b]$ and differentiable on $(a, b)$, and $g'(x) \neq 0$ for any $x$ in $(a, b)$, then there exists at least one number $c$ in $(a, b)$ such that:</p>
+        <div class="math-block">\frac{f'(c)}{g'(c)} = \frac{f(b) - f(a)}{g(b) - g(a)}</div>
+
+        <div class="section-title">Geometrical Explanation</div>
+        <p>Think of a parametric curve defined by coordinates $(x(t), y(t)) = (g(t), f(t))$ for $t \in [a, b]$. The expression $\frac{f(b)-f(a)}{g(b)-g(a)}$ is the slope of the straight chord connecting the start and end points of this parametric path. Cauchy's theorem guarantees there is a point $t = c$ where the instantaneous slope vector or tangent slope of the curve ($\frac{dy}{dx} = \frac{f'(c)}{g'(c)}$) equals the average slope of the chord.</p>
+
+        <div class="section-title">Algebraic Explanation</div>
+        <p>Standard MVT deals with a single function against a linear baseline ($g(x) = x$). CMVT extends this concept to compare the relative rates of change of <em>two distinct functions</em> ($f$ and $g$). Notice that if you set $g(x) = x$, Cauchy's MVT collapses directly back into Lagrange's standard MVT.</p>
+
+        <div class="proof-steps">
+            <strong>Proof Outline:</strong>
+            <ol>
+                <li>Construct an auxiliary function combining both functions: 
+                    <br>$h(x) = f(x) - k \cdot g(x)$ where $k = \frac{f(b)-f(a)}{g(b)-g(a)}$.</li>
+                <li>Verify $h(a) = h(b)$.</li>
+                <li>Apply Rolle's Theorem to $h(x)$, finding a point $c \in (a, b)$ where $h'(c) = 0$.</li>
+                <li>Differentiate: $h'(c) = f'(c) - k \cdot g'(c) = 0$, leading straight to the target ratio.</li>
+            </ol>
+        </div>
+    </div>
+
+    <footer>
+        <p>Designed for mathematics students &bull; Use with standard modern web browsers</p>
+    </footer>
+</div>
+
+</body>
+</html>

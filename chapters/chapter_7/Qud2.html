@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Quadrature App</title>
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/dist/mathjax.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
+        .wrapper { max-width: 1100px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        @media(max-width: 850px) { .layout { grid-template-columns: 1fr; } }
+        label { font-weight: 600; display: block; margin-top: 15px; margin-bottom: 5px; }
+        input, select, button { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
+        button { background-color: #2563eb; color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; }
+        button:hover { background-color: #1d4ed8; }
+        .steps-card { background-color: #f1f5f9; border-left: 5px solid #3b82f6; padding: 20px; border-radius: 6px; margin-top: 20px; }
+        .graph-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; min-height: 400px; }
+        .presets { margin-bottom: 15px; }
+        .btn-preset { display: inline-block; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 6px 12px; margin: 4px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <h1>📐 Quadrature Definite Integration App</h1>
+    
+    <div class="presets">
+        <strong>Textbook System Presets:</strong>
+        <span class="btn-preset" onclick="applyPreset('cartesian', 'Math.sqrt(2*x - x*x)', '0', '2', '\\sqrt{2x - x^2}')">Example 34: Circle Arc</span>
+        <span class="btn-preset" onclick="applyPreset('polar', '1 - Math.cos(x)', '0', '2*Math.PI', '1 - \\cos(\\theta)')">Ex 19: Cardioid r=a(1-cosθ)</span>
+    </div>
+
+    <div class="layout">
+        <div>
+            <label for="calcMode">System Formula Mode</label>
+            <select id="calcMode" onchange="adjustInputs()">
+                <option value="cartesian">Cartesian Area: ∫ f(x) dx</option>
+                <option value="polar">Polar Sector Area: 0.5 * ∫ [r(θ)]² dθ</option>
+            </select>
+
+            <div id="wrapper-cartesian">
+                <label for="input-f">Function f(x) (JavaScript Syntax)</label>
+                <input type="text" id="input-f" value="Math.sqrt(2*x - x*x)">
+            </div>
+
+            <div id="wrapper-polar" style="display:none;">
+                <label for="input-r">Polar Function r(x) [Use 'x' as θ]</label>
+                <input type="text" id="input-r" value="1 - Math.cos(x)">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="limit-a">Lower Bound (a)</label>
+                    <input type="text" id="limit-a" value="0">
+                </div>
+                <div>
+                    <label for="limit-b">Upper Bound (b)</label>
+                    <input type="text" id="limit-b" value="2">
+                </div>
+            </div>
+
+            <button onclick="executeQuadrature()">Integrate and Draw Area</button>
+
+            <div class="steps-card">
+                <h3>Step-by-Step Derivation</h3>
+                <div id="steps-box">Click run to compute...</div>
+            </div>
+        </div>
+
+        <div class="graph-panel">
+            <canvas id="canvasChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeChart = null;
+    let currentLatex = '\\sqrt{2x - x^2}';
+
+    function adjustInputs() {
+        const mode = document.getElementById('calcMode').value;
+        document.getElementById('wrapper-cartesian').style.display = mode === 'cartesian' ? 'block' : 'none';
+        document.getElementById('wrapper-polar').style.display = mode === 'polar' ? 'block' : 'none';
+    }
+
+    function applyPreset(mode, expr, a, b, latex) {
+        document.getElementById('calcMode').value = mode;
+        adjustInputs();
+        currentLatex = latex;
+        if (mode === 'cartesian') document.getElementById('input-f').value = expr;
+        if (mode === 'polar') document.getElementById('input-r').value = expr;
+        document.getElementById('limit-a').value = a;
+        document.getElementById('limit-b').value = b;
+        executeQuadrature();
+    }
+
+    function executeQuadrature() {
+        const mode = document.getElementById('calcMode').value;
+        const numA = eval(document.getElementById('limit-a').value);
+        const numB = eval(document.getElementById('limit-b').value);
+        
+        let stepsHtml = "";
+        let points = [];
+        let area = 0;
+        const n = 1000; // Intervals for high precision integration
+        const h = (numB - numA) / n;
+
+        if (mode === 'cartesian') {
+            const fStr = document.getElementById('input-f').value;
+            const f = (x) => eval(fStr);
+
+            // Simpson's rule execution loop
+            let sum = f(numA) + f(numB);
+            for (let i = 1; i < n; i++) {
+                let x = numA + i * h;
+                sum += (i % 2 === 0) ? 2 * f(x) : 4 * f(x);
+            }
+            area = (h / 3) * sum;
+
+            stepsHtml = `
+                <p><strong>1. Area Quadrature Setup:</strong></p>
+                $$A = \\int_{a}^{b} f(x) \\, dx = \\int_{${document.getElementById('limit-a').value}}^{${document.getElementById('limit-b').value}} ${currentLatex} \\, dx$$
+                <p><strong>2. Definite Numerical Integration:</strong></p>
+                <p>Applying parabolic Simpson rules over $1000$ subintervals to handle the non-linear curve bounds cleanly.</p>
+                <p><strong>Calculated Area Value:</strong></p>
+                $$A \\approx ${area.toFixed(5)} \\text{ units}^2$$
+            `;
+
+            for (let i = 0; i <= 100; i++) {
+                let cx = numA + (i * (numB - numA) / 100);
+                let cy = f(cx);
+                if (!isNaN(cy)) points.push({ x: cx, y: cy });
+            }
+        } else {
+            const rStr = document.getElementById('input-r').value;
+            const r = (x) => eval(rStr);
+
+            let sum = (r(numA)**2) + (r(numB)**2);
+            for (let i = 1; i < n; i++) {
+                let x = numA + i * h;
+                sum += (i % 2 === 0) ? 2 * (r(x)**2) : 4 * (r(x)**2);
+            }
+            area = 0.5 * (h / 3) * sum;
+
+            stepsHtml = `
+                <p><strong>1. Polar Enclosed Area Setup:</strong></p>
+                $$A = \\frac{1}{2} \\int_{\\alpha}^{\\beta} [r(\\theta)]^2 \\, d\\theta = \\frac{1}{2} \\int_{0}^{2\\pi} (${currentLatex})^2 \\, d\\theta$$
+                <p><strong>Calculated Area Value:</strong></p>
+                $$A \\approx ${area.toFixed(5)} \\text{ units}^2$$
+            `;
+
+            for (let i = 0; i <= 200; i++) {
+                let theta = numA + (i * (numB - numA) / 200);
+                let radius = r(theta);
+                points.push({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) });
+            }
+        }
+
+        document.getElementById('steps-box').innerHTML = stepsHtml;
+        if (typeof MathJax !== 'undefined') MathJax.typesetPromise();
+        plotGraph(points);
+    }
+
+    function plotGraph(points) {
+        const ctx = document.getElementById('canvasChart').getContext('2d');
+        if (activeChart) activeChart.destroy();
+        activeChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Bounded Quadrature Space',
+                    data: points,
+                    showLine: true,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    fill: 'origin',
+                    pointRadius: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    window.onload = () => { executeQuadrature(); };
+</script>
+</body>
+</html>

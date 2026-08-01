@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Quadric Surface Explorer</title>
+    <!-- Include Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+        #sidebar {
+            width: 380px;
+            background-color: #242424;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            z-index: 10;
+            overflow-y: auto;
+        }
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            height: 100%;
+        }
+        h2 {
+            font-size: 1.4rem;
+            color: #ffffff;
+            border-bottom: 2px solid #3a3a3a;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        label {
+            font-size: 0.9rem;
+            color: #aaaaaa;
+            font-weight: 500;
+        }
+        select, input[type="range"] {
+            width: 100%;
+        }
+        select {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .slider-container {
+            background-color: #2d2d2d;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #3a3a3a;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+        .val-display {
+            color: #4cc9f0;
+            font-weight: bold;
+        }
+        #equation-box {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4cc9f0;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+        .instructions {
+            font-size: 0.8rem;
+            color: #777;
+            line-height: 1.4;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Quadric Surfaces</h2>
+        
+        <div class="control-group">
+            <label for="surface-type">Select Surface Type</label>
+            <select id="surface-type">
+                <option value="ellipsoid">Ellipsoid</option>
+                <option value="sphere">Sphere (a=b=c)</option>
+                <option value="cone">Elliptic Cone</option>
+                <option value="paraboloid">Elliptic Paraboloid</option>
+                <option value="hyperboloid1">Hyperboloid of One Sheet</option>
+                <option value="hyperboloid2">Hyperboloid of Two Sheets</option>
+                <option value="cylinder">Elliptic Cylinder</option>
+            </select>
+        </div>
+
+        <div id="equation-box"></div>
+
+        <div class="control-group">
+            <div class="slider-container" id="container-a">
+                <div class="slider-header">
+                    <span>Parameter <strong>a</strong> (x-axis)</span>
+                    <span id="val-a" class="val-display">2.0</span>
+                </div>
+                <input type="range" id="param-a" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container" id="container-b">
+                <div class="slider-header">
+                    <span>Parameter <strong>b</strong> (y-axis)</span>
+                    <span id="val-b" class="val-display">2.0</span>
+                </div>
+                <input type="range" id="param-b" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container" id="container-c">
+                <div class="slider-header">
+                    <span>Parameter <strong>c</strong> (z-axis)</span>
+                    <span id="val-c" class="val-display">2.0</span>
+                </div>
+                <input type="range" id="param-c" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>Controls:</strong><br>
+            • Left Click + Drag to Rotate 3D space.<br>
+            • Right Click + Drag to Pan.<br>
+            • Scroll to Zoom in/out.
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- Application State ---
+        let scene, camera, renderer, controls;
+        let surfaceMesh = null;
+        let gridHelper, axesHelper;
+
+        // UI Elements
+        const typeSelect = document.getElementById('surface-type');
+        const sliderA = document.getElementById('param-a');
+        const sliderB = document.getElementById('param-b');
+        const sliderC = document.getElementById('param-c');
+        const valA = document.getElementById('val-a');
+        const valB = document.getElementById('val-b');
+        const valC = document.getElementById('val-c');
+        const equationBox = document.getElementById('equation-box');
+
+        // --- Initialize Three.js Environment ---
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(7, 7, 7);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Ambient and Directional Lighting
+            const ambientLight = new THREE.AmbientLight(0x666666);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight1.position.set(5, 10, 7);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x4cc9f0, 0.3);
+            dirLight2.position.set(-5, -5, -5);
+            scene.add(dirLight2);
+
+            // Reference Elements (Grid and Axis lines)
+            gridHelper = new THREE.GridHelper(14, 28, 0x444444, 0x2b2b2b);
+            gridHelper.position.y = -4; 
+            scene.add(gridHelper);
+
+            axesHelper = new THREE.AxesHelper(5);
+            // Thickening axes lines conceptually via basic colors
+            scene.add(axesHelper);
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            [typeSelect, sliderA, sliderB, sliderC].forEach(el => el.addEventListener('input', updateSurface));
+
+            // Initial Build
+            updateSurface();
+            animate();
+        }
+
+        // --- Math Surface Generation Engines ---
+        function updateSurface() {
+            // Remove previous mesh if it exists
+            if (surfaceMesh) scene.remove(surfaceMesh);
+
+            const type = typeSelect.value;
+            let a = parseFloat(sliderA.value);
+            let b = parseFloat(sliderB.value);
+            let c = parseFloat(sliderC.value);
+
+            // Handle constraints
+            if (type === 'sphere') {
+                // Keep values synchronized for a sphere
+                b = a; c = a;
+                sliderB.value = a; valB.innerText = a.toFixed(1);
+                sliderC.value = a; valC.innerText = a.toFixed(1);
+                document.getElementById('container-b').style.opacity = "0.4";
+                document.getElementById('container-c').style.opacity = "0.4";
+            } else {
+                document.getElementById('container-b').style.opacity = "1";
+                document.getElementById('container-c').style.opacity = "1";
+            }
+
+            // Update UI Value Text
+            valA.innerText = a.toFixed(1);
+            valB.innerText = b.toFixed(1);
+            valC.innerText = c.toFixed(1);
+
+            // Generate geometry parametrically
+            let geometry;
+            const uSegments = 60;
+            const vSegments = 60;
+
+            updateEquationText(type, a, b, c);
+
+            switch (type) {
+                case 'ellipsoid':
+                case 'sphere':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const phi = v * Math.PI;
+                        const x = a * Math.sin(phi) * Math.cos(theta);
+                        const y = b * Math.sin(phi) * Math.sin(theta);
+                        const z = c * Math.cos(phi);
+                        target.set(x, z, y); // Swapping Y and Z to match textbook vertical orientation
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'cone':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 6; // Height boundary from -3 to 3
+                        const x = (a / c) * Math.abs(z) * Math.cos(theta);
+                        const y = (b / c) * Math.abs(z) * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'paraboloid':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = v * 4; // Max height 4
+                        const radius = Math.sqrt(z * c);
+                        const x = a * radius * Math.cos(theta);
+                        const y = b * radius * Math.sin(theta);
+                        target.set(x, z - 2, y); // Center it visually around plane
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperboloid1':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 5; 
+                        const cosh = Math.sqrt(1 + (z*z)/(c*c));
+                        const x = a * cosh * Math.cos(theta);
+                        const y = b * cosh * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperboloid2':
+                    // Generates two separate sheets safely bounded
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        // Map v to create top sheet or bottom sheet
+                        const isTop = v > 0.5;
+                        const localV = isTop ? (v - 0.5) * 2 : (0.5 - v) * 2;
+                        
+                        const zSign = isTop ? 1 : -1;
+                        const z = zSign * (c + localV * 3); // starts at c and extends out
+                        
+                        const sinh = Math.sqrt((z*z)/(c*c) - 1);
+                        const x = a * sinh * Math.cos(theta);
+                        const y = b * sinh * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'cylinder':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 6;
+                        const x = a * Math.cos(theta);
+                        const y = b * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+            }
+
+            // Material styling: double sided with wireframe layer to emphasize cross section contour
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x3f51b5,
+                side: THREE.DoubleSide,
+                flatShading: false,
+                shininess: 70,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Wireframe Overlay Setup
+            const wireframeMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
+            mesh.add(wireframeMesh);
+
+            surfaceMesh = mesh;
+            scene.add(surfaceMesh);
+        }
+
+        // --- Dynamic Equation Renderer (S.M Yusuf Textbook Syntax) ---
+        function updateEquationText(type, a, b, c) {
+            let eqText = "";
+            const a2 = (a*a).toFixed(2);
+            const b2 = (b*b).toFixed(2);
+            const c2 = (c*c).toFixed(2);
+
+            switch(type) {
+                case 'ellipsoid':
+                    eqText = `x²/(${a2}) + y²/(${b2}) + z²/(${c2}) = 1`;
+                    break;
+                case 'sphere':
+                    eqText = `x² + y² + z² = ${(a*a).toFixed(2)}`;
+                    break;
+                case 'cone':
+                    eqText = `x²/(${a2}) + y²/(${b2}) - z²/(${c2}) = 0`;
+                    break;
+                case 'paraboloid':
+                    eqText = `x²/(${a2}) + y²/(${b2}) = z / ${c.toFixed(1)}`;
+                    break;
+                case 'hyperboloid1':
+                    eqText = `x²/(${a2}) + y²/(${b2}) - z²/(${c2}) = 1`;
+                    break;
+                case 'hyperboloid2':
+                    eqText = `x²/(${a2}) - y²/(${b2}) - z²/(${c2}) = 1`;
+                    break;
+                case 'cylinder':
+                    eqText = `x²/(${a2}) + y²/(${b2}) = 1`;
+                    break;
+            }
+            equationBox.innerText = eqText;
+        }
+
+        // --- Window Layout Scaling ---
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // --- Render Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Fire Initialization on load
+        window.onload = init;
+    </script>
+</body>
+</html>

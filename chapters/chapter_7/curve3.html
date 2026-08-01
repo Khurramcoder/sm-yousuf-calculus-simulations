@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive 6-Step Curve Architect</title>
+    <!-- Math.js for parsing and algebraic manipulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 30px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        }
+
+        .analysis-container {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .step-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .step-num {
+            font-weight: 800;
+            color: #c084fc;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .badge.yes { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge.no { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        canvas {
+            background: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            aspect-ratio: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-header">
+        <h1>Rigorous 6-Step Curve Sketcher</h1>
+    </div>
+
+    <div class="container">
+        <!-- Control Box -->
+        <div class="panel">
+            <h2>⚙️ Inputs</h2>
+            <div class="form-group">
+                <label for="equation">Rearranged Equation f(x, y) = 0</label>
+                <input type="text" id="equation" value="3 * a * y^2 - x^2 * (x - a)">
+            </div>
+            <div class="form-group">
+                <label for="const-a">Constant (a)</label>
+                <input type="number" id="const-a" value="2" step="0.5">
+            </div>
+            <button onclick="execute6Steps()">Run 6-Step Verification</button>
+
+            <!-- Sequential Analysis Output -->
+            <div class="analysis-container" id="steps-output"></div>
+        </div>
+
+        <!-- Graph Panel -->
+        <div class="panel" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <h2>📈 Step 6: Visualized Curve</h2>
+            <canvas id="graphCanvas" width="600" height="600"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function evaluateF(compiledExpr, xVal, yVal, aVal) {
+            try { return compiledExpr.evaluate({ x: xVal, y: yVal, a: aVal }); } catch (e) { return NaN; }
+        }
+
+        function execute6Steps() {
+            const rawExpr = document.getElementById('equation').value;
+            const a = parseFloat(document.getElementById('const-a').value);
+            const container = document.getElementById('steps-output');
+            
+            let compiledExpr = math.compile(rawExpr);
+            let html = "";
+
+            // --- STEP 1: SYMMETRY ---
+            let symX = true, symY = true, symOrigin = true, symLine = true;
+            for(let i = -3; i <= 3; i += 0.5) {
+                for(let j = -3; j <= 3; j += 0.5) {
+                    let base = evaluateF(compiledExpr, i, j, a);
+                    if(isNaN(base)) continue;
+                    if(Math.abs(base - evaluateF(compiledExpr, i, -j, a)) > 1e-2) symX = false;
+                    if(Math.abs(base - evaluateF(compiledExpr, -i, j, a)) > 1e-2) symY = false;
+                    if(Math.abs(base - evaluateF(compiledExpr, -i, -j, a)) > 1e-2) symOrigin = false;
+                    if(Math.abs(base - evaluateF(compiledExpr, j, i, a)) > 1e-2) symLine = false;
+                }
+            }
+            html += `
+            <div class="step-card">
+                <div class="step-num">Step 1</div>
+                <div class="step-title">Symmetry Checks</div>
+                • About X-Axis: <span class="badge ${symX?'yes':'no'}">${symX?'Symmetric':'No'}</span> (powers of y are even)<br>
+                • About Y-Axis: <span class="badge ${symY?'yes':'no'}">${symY?'Symmetric':'No'}</span> (powers of x are even)<br>
+                • About Origin: <span class="badge ${symOrigin?'yes':'no'}">${symOrigin?'Symmetric':'No'}</span><br>
+                • About Line y=x: <span class="badge ${symLine?'yes':'no'}">${symLine?'Symmetric':'No'}</span>
+            </div>`;
+
+            // --- STEP 2: ORIGIN & TANGENTS ---
+            let passesOrigin = Math.abs(evaluateF(compiledExpr, 0, 0, a)) < 1e-4;
+            let tangentInfo = "Not applicable since the curve avoids the origin.";
+            if(passesOrigin) {
+                tangentInfo = "Evaluating lower-order terms to locate tangents. ";
+                // Rough structural check for loops/nodes
+                let sampleClose = Math.abs(evaluateF(compiledExpr, 0.1, 0.05, a));
+                tangentInfo += sampleClose < 0.5 ? "Real distinct/coincident tangents form a Node or Cusp at (0,0)." : "Passes cleanly.";
+            }
+            html += `
+            <div class="step-card">
+                <div class="step-num">Step 2</div>
+                <div class="step-title">Origin & Local Tangents</div>
+                • Passes through (0,0): <span class="badge ${passesOrigin?'yes':'no'}">${passesOrigin?'Yes':'No'}</span><br>
+                • Tangent Behavior: <span style="color:var(--text-secondary);">${tangentInfo}</span>
+            </div>`;
+
+            // --- STEP 3: INTERCEPTS ---
+            let xInts = [], yInts = [];
+            for (let v = -8; v <= 8; v += 0.01) {
+                if(Math.abs(evaluateF(compiledExpr, v, 0, a)) < 0.01) {
+                    let r = Math.round(v*100)/100; if(!xInts.includes(r)) xInts.push(r);
+                }
+                if(Math.abs(evaluateF(compiledExpr, 0, v, a)) < 0.01) {
+                    let r = Math.round(v*100)/100; if(!yInts.includes(r)) yInts.push(r);
+                }
+            }
+            xInts = xInts.filter((v, i, s) => i === 0 || Math.abs(v - s[i-1]) > 0.2);
+            yInts = yInts.filter((v, i, s) => i === 0 || Math.abs(v - s[i-1]) > 0.2);
+            html += `
+            <div class="step-card">
+                <div class="step-num">Step 3</div>
+                <div class="step-title">Coordinate Intercepts</div>
+                • X-intercepts (y=0): <b>{ ${xInts.join(', ') || 'None'} }</b><br>
+                • Y-intercepts (x=0): <b>{ ${yInts.join(', ') || 'None'} }</b>
+            </div>`;
+
+            // --- STEP 4: ASYMPTOTES ---
+            let hasAsymptote = false;
+            let asymList = [];
+            // Basic detection for infinite branches: checking if values divide by zero at boundaries
+            for(let xCheck = -5; xCheck <= 5; xCheck += 0.1) {
+                let vLarge = evaluateF(compiledExpr, xCheck, 100, a);
+                let vSmall = evaluateF(compiledExpr, xCheck, 0, a);
+                if(isNaN(vLarge) && !isNaN(vSmall)) {
+                    let fixed = Math.round(xCheck*10)/10;
+                    if(!asymList.includes(fixed)) asymList.push(`x = ${fixed}`);
+                    hasAsymptote = true;
+                }
+            }
+            html += `
+            <div class="step-card">
+                <div class="step-num">Step 4</div>
+                <div class="step-title">Asymptotes</div>
+                • Parallel Asymptotes Found: <span class="badge ${hasAsymptote?'yes':'no'}">${hasAsymptote ? asymList.join(', ') : 'None'}</span>
+            </div>`;
+
+            // --- STEP 5: REGION / EXTENT ---
+            let realDomainMin = null, realDomainMax = null;
+            for(let i = -10; i <= 10; i += 0.2) {
+                let hasRealY = false;
+                for(let j = -10; j <= 10; j += 0.2) {
+                    if(!isNaN(evaluateF(compiledExpr, i, j, a))) { hasRealY = true; break; }
+                }
+                if(hasRealY) {
+                    if(realDomainMin === null) realDomainMin = Math.round(i);
+                    realDomainMax = Math.round(i);
+                }
+            }
+            html += `
+            <div class="step-card">
+                <div class="step-num">Step 5</div>
+                <div class="step-title">Region of Existence (Extent)</div>
+                • The curve exists inside the real domain: <span style="color:#a855f7; font-weight:bold;">${realDomainMin ?? -10} ≤ x ≤ ${realDomainMax ?? 10}</span><br>
+                <span style="color:var(--text-secondary); font-size:0.85rem;">Points outside this scope yield imaginary results.</span>
+            </div>`;
+
+            container.innerHTML = html;
+            drawGraph(compiledExpr, a);
+        }
+
+        function drawGraph(compiledExpr, a) {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const minX = -8, maxX = 8, minY = -8, maxY = 8;
+            const toX = x => ((x - minX) / (maxX - minX)) * w;
+            const toY = y => h - ((y - minY) / (maxY - minY)) * h;
+
+            // Layout Matrix
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+            for(let i = minX; i <= maxX; i++) {
+                ctx.beginPath(); ctx.moveTo(toX(i), 0); ctx.lineTo(toX(i), h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, toY(i)); ctx.lineTo(w, toY(i)); ctx.stroke();
+            }
+            ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(toX(0), 0); ctx.lineTo(toX(0), h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(w, toY(0)); ctx.stroke();
+
+            // Trace implicit math paths via sign variations matrix grids
+            ctx.fillStyle = '#6366f1';
+            const res = 250;
+            const stepX = (maxX - minX) / res, stepY = (maxY - minY) / res;
+
+            for(let xi = 0; xi < res; xi++) {
+                let x1 = minX + xi * stepX, x2 = x1 + stepX;
+                for(let yi = 0; yi < res; yi++) {
+                    let y1 = minY + yi * stepY, y2 = y1 + stepY;
+                    let v00 = evaluateF(compiledExpr, x1, y1, a), v10 = evaluateF(compiledExpr, x2, y1, a);
+                    let v01 = evaluateF(compiledExpr, x1, y2, a), v11 = evaluateF(compiledExpr, x2, y2, a);
+
+                    if (isNaN(v00) || isNaN(v10) || isNaN(v01) || isNaN(v11)) continue;
+                    if (Math.min(v00, v10, v01, v11) <= 0 && Math.max(v00, v10, v01, v11) >= 0) {
+                        ctx.fillRect(toX(x1), toY(y2), w / res + 0.5, h / res + 0.5);
+                    }
+                }
+            }
+        }
+
+        window.onload = execute6Steps;
+    </script>
+</body>
+</html>

@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculus Theorems: Professional Interactive Simulations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-secant: #d97706;
+            --accent-tangent: #16a34a;
+            --accent-point: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+
+        .sim-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        .sim-container.active {
+            display: block;
+        }
+
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .sim-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #ffffff;
+        }
+
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .control-group h3 {
+            font-size: 1rem;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .slider-row {
+            margin-bottom: 12px;
+        }
+
+        .slider-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .slider-label span:last-child {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .metrics-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .metrics-box p {
+            margin-bottom: 4px;
+        }
+
+        .metrics-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .theorem-info {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Calculus Theorem Simulations</h1>
+        <p>Interactive visualizations exploring Rolle's Theorem, MVT, and Cauchy's MVT</p>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('rolle', event)">Rolle's Theorem</button>
+        <button class="tab-btn" onclick="switchTab('mvt', event)">Mean Value Theorem</button>
+        <button class="tab-btn" onclick="switchTab('cmvt', event)">Cauchy's MVT</button>
+    </div>
+
+    <!-- 1. ROLLE'S THEOREM SIMULATION -->
+    <div id="rolle" class="sim-container active">
+        <div class="sim-grid">
+            <div>
+                <div class="canvas-wrapper">
+                    <canvas id="rolleCanvas" width="550" height="400"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#2563eb;"></div>Function f(x)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#d97706;"></div>Secant Line (f(a)=f(b))</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#16a34a;"></div>Tangent at c (f'(c)=0)</div>
+                </div>
+            </div>
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Domain Bounds</h3>
+                    <div class="slider-row">
+                        <div class="slider-label"><span>Start (a)</span><span id="rolle-a-val">-2.0</span></div>
+                        <input type="range" id="rolleA" min="-3" max="0" step="0.1" value="-2">
+                    </div>
+                    <div class="slider-row">
+                        <div class="slider-label"><span>End (b)</span><span id="rolle-b-val">2.0</span></div>
+                        <input type="range" id="rolleB" min="0.5" max="4" step="0.1" value="2">
+                    </div>
+                </div>
+                <div class="metrics-box">
+                    <p><strong>Status:</strong> <span id="rolle-status">Checking conditions...</span></p>
+                    <p><strong>Found Point (c):</strong> <span id="rolle-c-val">--</span></p>
+                    <p><strong>Derivative f'(c):</strong> <span id="rolle-deriv-val">--</span></p>
+                </div>
+                <div class="theorem-info">
+                    Adjust bounds <em>a</em> and <em>b</em>. Notice how a horizontal tangent line ($f'(c) = 0$) is always guaranteed between any two points of equal height on a smooth curve.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MVT SIMULATION -->
+    <div id="mvt" class="sim-container">
+        <div class="sim-grid">
+            <div>
+                <div class="canvas-wrapper">
+                    <canvas id="mvtCanvas" width="550" height="400"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#2563eb;"></div>Function f(x)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#d97706;"></div>Secant Line</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#16a34a;"></div>Parallel Tangent Line</div>
+                </div>
+            </div>
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Interval Control</h3>
+                    <div class="slider-row">
+                        <div class="slider-label"><span>Start (a)</span><span id="mvt-a-val">-2.0</span></div>
+                        <input type="range" id="mvtA" min="-3" max="-0.5" step="0.1" value="-2">
+                    </div>
+                    <div class="slider-row">
+                        <div class="slider-label"><span>End (b)</span><span id="mvt-b-val">2.0</span></div>
+                        <input type="range" id="mvtB" min="0.5" max="3.5" step="0.1" value="2">
+                    </div>
+                </div>
+                <div class="metrics-box">
+                    <p><strong>Secant Slope:</strong> <span id="mvt-sec-slope">--</span></p>
+                    <p><strong>Point (c):</strong> <span id="mvt-c-val">--</span></p>
+                    <p><strong>Tangent Slope f'(c):</strong> <span id="mvt-tan-slope">--</span></p>
+                </div>
+                <div class="theorem-info">
+                    The green tangent line is forced to be completely parallel to the orange secant line crossing endpoints <em>a</em> and <em>b</em>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CMVT SIMULATION -->
+    <div id="cmvt" class="sim-container">
+        <div class="sim-grid">
+            <div>
+                <div class="canvas-wrapper">
+                    <canvas id="cmvtCanvas" width="550" height="400"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#2563eb;"></div>Parametric Curve (g(t), f(t))</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#d97706;"></div>Chord Line Ratio</div>
+                </div>
+            </div>
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Parameter Range</h3>
+                    <div class="slider-row">
+                        <div class="slider-label"><span>Start (a)</span><span id="cmvt-a-val">0.5</span></div>
+                        <input type="range" id="cmvtA" min="0.2" max="1.5" step="0.1" value="0.5">
+                    </div>
+                    <div class="slider-row">
+                        <div class="slider-label"><span>End (b)</span><span id="cmvt-b-val">3.0</span></div>
+                        <input type="range" id="cmvtB" min="2.0" max="4.0" step="0.1" value="3.0">
+                    </div>
+                </div>
+                <div class="metrics-box">
+                    <p><strong>Chord Ratio:</strong> <span id="cmvt-ratio-val">--</span></p>
+                    <p><strong>Value (c):</strong> <span id="cmvt-c-val">--</span></p>
+                    <p><strong>Derivative Ratio f'(c)/g'(c):</strong> <span id="cmvt-deriv-val">--</span></p>
+                </div>
+                <div class="theorem-info">
+                    Cauchy's Theorem equates the ratio of total changes across two functions to the ratio of their instantaneous rates at a matched point <em>c</em>.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Navigation Tab Switching
+    function switchTab(tabId, event) {
+        document.querySelectorAll('.sim-container').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        window.dispatchEvent(new Event('resize'));
+    }
+
+    // Common Graph Utilities
+    function setupCanvas(canvas) {
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Coordinate mapping setup (Cartesian Plane centered or custom)
+        return { ctx, width, height };
+    }
+
+    // Map mathematical coordinates to canvas pixel coordinates
+    function mapX(x, width, xMin, xMax) {
+        return ((x - xMin) / (xMax - xMin)) * width;
+    }
+
+    function mapY(y, height, yMin, yMax) {
+        return height - ((y - yMin) / (yMax - yMin)) * height;
+    }
+
+    function drawGrid(ctx, width, height, xMin, xMax, yMin, yMax) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+
+        // Grid lines X
+        for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+            const px = mapX(x, width, xMin, xMax);
+            ctx.beginPath();
+            ctx.moveTo(px, 0);
+            ctx.lineTo(px, height);
+            ctx.stroke();
+        }
+
+        // Grid lines Y
+        for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
+            const py = mapY(y, height, yMin, yMax);
+            ctx.beginPath();
+            ctx.moveTo(0, py);
+            ctx.lineTo(width, py);
+            ctx.stroke();
+        }
+
+        // Axes origin
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
+        const ox = mapX(0, width, xMin, xMax);
+        const oy = mapY(0, height, yMin, yMax);
+
+        if (ox >= 0 && ox <= width) {
+            ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, height); ctx.stroke();
+        }
+        if (oy >= 0 && oy <= height) {
+            ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(width, oy); ctx.stroke();
+        }
+    }
+
+    // 1. ROLLE'S THEOREM SIMULATION LOGIC
+    // Function: f(x) = -0.3 * x^3 + 1.2 * x  (Adjusted so endpoints can match cleanly)
+    function rolleFunc(x) {
+        return -0.25 * Math.pow(x, 3) + 1.25 * x;
+    }
+    function rolleDeriv(x) {
+        return -0.75 * Math.pow(x, 2) + 1.25;
+    }
+
+    function updateRolle() {
+        const canvas = document.getElementById('rolleCanvas');
+        const { ctx, width, height } = setupCanvas(canvas);
+        
+        let a = parseFloat(document.getElementById('rolleA').value);
+        let b = parseFloat(document.getElementById('rolleB').value);
+        if (a >= b) { a = b - 0.2; document.getElementById('rolleA').value = a; }
+
+        document.getElementById('rolle-a-val').innerText = a.toFixed(1);
+        document.getElementById('rolle-b-val').innerText = b.toFixed(1);
+
+        const xMin = -4, xMax = 4, yMin = -4, yMax = 4;
+        drawGrid(ctx, width, height, xMin, xMax, yMin, yMax);
+
+        // Adjust function offset so f(a) equals f(b) dynamically for standard textbook demo of Rolle's
+        // Let's use f(x) = -x^2 + (a+b)x - ab offset type, or simpler: keep curve fixed and shift endpoints via matching height simulation
+        // Let's shift function vertical offset so f(a) == f(b) for visualization:
+        // base function: f_base(x) = -x^2 + 2x + ... let's use standard parabola: f(x) = -(x - a)*(x - b)
+        // Parabola opening downwards: f(x) = (x - a)(b - x) has roots at a and b, so f(a)=f(b)=0! Perfect for Rolle's.
+        
+        const f = (x) => -0.5 * (x - a) * (x - b);
+        const df = (x) => -0.5 * ((b - x) - (x - a)); // derivative of -(0.5)(x^2 - (a+b)x + ab) => -0.5*(2x - (a+b)) = -(x - (a+b)/2)
+
+        // Plot function curve
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let px = 0; px <= width; px++) {
+            const x = xMin + (px / width) * (xMax - xMin);
+            const y = f(x);
+            const py = mapY(y, height, yMin, yMax);
+            if (px === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Endpoints markers
+        const fa = f(a), fb = f(b);
+        drawPoint(ctx, mapX(a, width, xMin, xMax), mapY(fa, height, yMin, yMax), '#d97706');
+        drawPoint(ctx, mapX(b, width, xMin, xMax), mapY(fb, height, yMin, yMax), '#d97706');
+
+        // Secant Line (Horizontal because f(a) = f(b) = 0 in this construction)
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(mapX(xMin, width, xMin, xMax), mapY(fa, height, yMin, yMax));
+        ctx.lineTo(mapX(xMax, width, xMin, xMax), mapY(fa, height, yMin, yMax));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Find c where derivative is 0 -> c = (a+b)/2 for this parabola
+        const c = (a + b) / 2;
+        const fc = f(c);
+        const derivAtC = df(c);
+
+        // Tangent line at c (slope 0)
+        ctx.strokeStyle = '#16a34a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mapX(a - 0.5, width, xMin, xMax), mapY(fc, height, yMin, yMax));
+        ctx.lineTo(mapX(b + 0.5, width, xMin, xMax), mapY(fc, height, yMin, yMax));
+        ctx.stroke();
+
+        drawPoint(ctx, mapX(c, width, xMin, xMax), mapY(fc, height, yMin, yMax), '#dc2626', 6);
+
+        // Update metrics
+        document.getElementById('rolle-status').innerText = "Satisfied (Continuous, Differentiable, f(a)=f(b))";
+        document.getElementById('rolle-c-val').innerText = c.toFixed(2);
+        document.getElementById('rolle-deriv-val').innerText = derivAtC.toFixed(4);
+    }
+
+    // 2. MVT SIMULATION LOGIC
+    function mvtFunc(x) {
+        return 0.2 * Math.pow(x, 3) - x;
+    }
+    function mvtDeriv(x) {
+        return 0.6 * Math.pow(x, 2) - 1;
+    }
+
+    function updateMVT() {
+        const canvas = document.getElementById('mvtCanvas');
+        const { ctx, width, height } = setupCanvas(canvas);
+
+        let a = parseFloat(document.getElementById('mvtA').value);
+        let b = parseFloat(document.getElementById('mvtB').value);
+        if (a >= b) { a = b - 0.2; document.getElementById('mvtA').value = a; }
+
+        document.getElementById('mvt-a-val').innerText = a.toFixed(1);
+        document.getElementById('mvt-b-val').innerText = b.toFixed(1);
+
+        const xMin = -4, xMax = 4, yMin = -4, yMax = 4;
+        drawGrid(ctx, width, height, xMin, xMax, yMin, yMax);
+
+        const f = mvtFunc;
+        const df = mvtDeriv;
+
+        // Plot function
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let px = 0; px <= width; px++) {
+            const x = xMin + (px / width) * (xMax - xMin);
+            const py = mapY(f(x), height, yMin, yMax);
+            if (px === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        const fa = f(a), fb = f(b);
+        const secSlope = (fb - fa) / (b - a);
+
+        // Secant Line
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const secY1 = fa + secSlope * (xMin - a);
+        const secY2 = fa + secSlope * (xMax - a);
+        ctx.moveTo(mapX(xMin, width, xMin, xMax), mapY(secY1, height, yMin, yMax));
+        ctx.lineTo(mapX(xMax, width, xMin, xMax), mapY(secY2, height, yMin, yMax));
+        ctx.stroke();
+
+        // Solve f'(c) = secSlope => 0.6*c^2 - 1 = secSlope => c = sqrt((secSlope + 1)/0.6)
+        // Pick root inside (a, b)
+        let c = Math.sqrt(Math.max(0, (secSlope + 1) / 0.6));
+        if (c < a || c > b) c = -c; // check other root if needed
+
+        const fc = f(c);
+        const tanSlope = df(c);
+
+        // Tangent Line at c (parallel to secant)
+        ctx.strokeStyle = '#16a34a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const tanY1 = fc + tanSlope * (xMin - c);
+        const tanY2 = fc + tanSlope * (xMax - c);
+        ctx.moveTo(mapX(xMin, width, xMin, xMax), mapY(tanY1, height, yMin, yMax));
+        ctx.lineTo(mapX(xMax, width, xMin, xMax), mapY(tanY2, height, yMin, yMax));
+        ctx.stroke();
+
+        drawPoint(ctx, mapX(a, width, xMin, xMax), mapY(fa, height, yMin, yMax), '#d97706');
+        drawPoint(ctx, mapX(b, width, xMin, xMax), mapY(fb, height, yMin, yMax), '#d97706');
+        drawPoint(ctx, mapX(c, width, xMin, xMax), mapY(fc, height, yMin, yMax), '#dc2626', 6);
+
+        document.getElementById('mvt-sec-slope').innerText = secSlope.toFixed(3);
+        document.getElementById('mvt-c-val').innerText = c.toFixed(2);
+        document.getElementById('mvt-tan-slope').innerText = tanSlope.toFixed(3);
+    }
+
+    // 3. CMVT SIMULATION LOGIC
+    function updateCMVT() {
+        const canvas = document.getElementById('cmvtCanvas');
+        const { ctx, width, height } = setupCanvas(canvas);
+
+        let a = parseFloat(document.getElementById('cmvtA').value);
+        let b = parseFloat(document.getElementById('cmvtB').value);
+        if (a >= b) { a = b - 0.2; document.getElementById('cmvtA').value = a; }
+
+        document.getElementById('cmvt-a-val').innerText = a.toFixed(1);
+        document.getElementById('cmvt-b-val').innerText = b.toFixed(1);
+
+        const xMin = -1, xMax = 6, yMin = -1, yMax = 6;
+        drawGrid(ctx, width, height, xMin, xMax, yMin, yMax);
+
+        // Parametric curve: g(t) = t^2 / 2, f(t) = t^3 / 3 - t
+        const g = t => 0.5 * Math.pow(t, 2);
+        const f = t => (1/3) * Math.pow(t, 3) - t;
+        const dg = t => t;
+        const df = t => Math.pow(t, 2) - 1;
+
+        // Plot parametric curve
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let t = 0.2; t <= 4.2; t += 0.05) {
+            const px = mapX(g(t), width, xMin, xMax);
+            const py = mapY(f(t), height, yMin, yMax);
+            if (t === 0.2) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        const ga = g(a), fa = f(a);
+        const gb = g(b), fb = f(b);
+        const ratio = (fb - fa) / (gb - ga);
+
+        // Chord line
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mapX(ga, width, xMin, xMax), mapY(fa, height, yMin, yMax));
+        ctx.lineTo(mapX(gb, width, xMin, xMax), mapY(fb, height, yMin, yMax));
+        ctx.stroke();
+
+        // Find c where df(c)/dg(c) = ratio => (c^2 - 1)/c = ratio => c^2 - ratio*c - 1 = 0
+        const discriminant = Math.pow(ratio, 2) + 4;
+        const c = (ratio + Math.sqrt(discriminant)) / 2; // positive root in range
+
+        const gc = g(c), fc = f(c);
+        const derivRatio = df(c) / dg(c);
+
+        drawPoint(ctx, mapX(ga, width, xMin, xMax), mapY(fa, height, yMin, yMax), '#d97706');
+        drawPoint(ctx, mapX(gb, width, xMin, xMax), mapY(fb, height, yMin, yMax), '#d97706');
+        drawPoint(ctx, mapX(gc, width, xMin, xMax), mapY(fc, height, yMin, yMax), '#dc2626', 6);
+
+        document.getElementById('cmvt-ratio-val').innerText = ratio.toFixed(3);
+        document.getElementById('cmvt-c-val').innerText = c.toFixed(2);
+        document.getElementById('cmvt-deriv-val').innerText = derivRatio.toFixed(3);
+    }
+
+    function drawPoint(ctx, x, y, color, radius = 5) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    // Event Listeners for Live Updates
+    document.getElementById('rolleA').addEventListener('input', updateRolle);
+    document.getElementById('rolleB').addEventListener('input', updateRolle);
+    document.getElementById('mvtA').addEventListener('input', updateMVT);
+    document.getElementById('mvtB').addEventListener('input', updateMVT);
+    document.getElementById('cmvtA').addEventListener('input', updateCMVT);
+    document.getElementById('cmvtB').addEventListener('input', updateCMVT);
+
+    // Initial render
+    window.onload = function() {
+        updateRolle();
+        updateMVT();
+        updateCMVT();
+    };
+</script>
+
+</body>
+</html>

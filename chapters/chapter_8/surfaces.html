@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced 3D Quadric Surface Explorer</title>
+    
+    <!-- Core Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- KaTeX for beautiful math equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-sidebar: rgba(17, 24, 39, 0.7);
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 360px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid var(--border);
+            padding: 30px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            z-index: 10;
+            overflow-y: auto;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            height: 100%;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: -16px;
+            margin-bottom: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        select {
+            padding: 12px 16px;
+            background-color: rgba(31, 41, 55, 0.5);
+            color: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .slider-container {
+            background: rgba(31, 41, 55, 0.3);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: opacity 0.3s ease;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .param-name {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .val-display {
+            color: var(--accent);
+            font-family: monospace;
+            font-weight: 600;
+            background: var(--accent-glow);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--accent);
+        }
+
+        #equation-container {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .katex {
+            font-size: 1.15rem !important;
+        }
+
+        .instructions {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-top: auto;
+            background: rgba(255,255,255,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* Custom Scrollbar for Sidebar */
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        #sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div>
+            <h2>Quadric Surfaces</h2>
+            <div class="subtitle">Interactive 3D Geometric Explorer</div>
+        </div>
+        
+        <div class="control-group">
+            <label for="surface-type">Surface Type</label>
+            <select id="surface-type">
+                <option value="ellipsoid">Ellipsoid</option>
+                <option value="sphere">Sphere</option>
+                <option value="cone">Elliptic Cone</option>
+                <option value="paraboloid">Elliptic Paraboloid</option>
+                <option value="hyperboloid1">Hyperboloid (1 Sheet)</option>
+                <option value="hyperboloid2">Hyperboloid (2 Sheets)</option>
+                <option value="cylinder">Elliptic Cylinder</option>
+            </select>
+        </div>
+
+        <div id="equation-container">
+            <div id="equation-box"></div>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container" id="container-a">
+                <div class="slider-header">
+                    <span class="param-name">Semi-axis <strong>a</strong> (x-axis)</span>
+                    <span id="val-a" class="val-display">2.0</span>
+                </div>
+                <input type="range" id="param-a" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container" id="container-b">
+                <div class="slider-header">
+                    <span class="param-name">Semi-axis <strong>b</strong> (y-axis)</span>
+                    <span id="val-b" class="val-display">2.0</span>
+                </div>
+                <input type="range" id="param-b" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container" id="container-c">
+                <div class="slider-header">
+                    <span class="param-name">Semi-axis <strong>c</strong> (z-axis)</span>
+                    <span id="val-c" class="val-display">2.0</span>
+                </div>
+                <input type="range" id="param-c" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>Viewport Navigation:</strong><br>
+            • Left Click + Drag to rotate canvas<br>
+            • Right Click + Drag to pan camera position<br>
+            • Scroll Wheel to zoom smoothly
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        let scene, camera, renderer, controls, surfaceMesh = null;
+
+        const typeSelect = document.getElementById('surface-type');
+        const sliderA = document.getElementById('param-a');
+        const sliderB = document.getElementById('param-b');
+        const sliderC = document.getElementById('param-c');
+        const valA = document.getElementById('val-a');
+        const valB = document.getElementById('val-b');
+        const valC = document.getElementById('val-c');
+        const equationBox = document.getElementById('equation-box');
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0f19);
+            scene.fog = new THREE.FogExp2(0x0b0f19, 0.03);
+
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(6, 5, 8);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 20;
+            controls.minDistance = 3;
+
+            // Soft Studio Lighting Scheme
+            const ambientLight = new THREE.AmbientLight(0x1f2937, 1.5);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            keyLight.position.set(10, 15, 10);
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0x3b82f6, 1.0);
+            fillLight.position.set(-10, 5, -10);
+            scene.add(fillLight);
+
+            const topLight = new THREE.HemisphereLight(0xffffff, 0x0b0f19, 1.0);
+            scene.add(topLight);
+
+            // Tech-Style Grid System
+            const gridHelper = new THREE.GridHelper(20, 40, 0x3b82f6, 0x1e293b);
+            gridHelper.position.y = -4;
+            gridHelper.material.opacity = 0.3;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            window.addEventListener('resize', onWindowResize);
+            [typeSelect, sliderA, sliderB, sliderC].forEach(el => el.addEventListener('input', updateSurface));
+
+            updateSurface();
+            animate();
+        }
+
+        function updateSurface() {
+            if (surfaceMesh) scene.remove(surfaceMesh);
+
+            const type = typeSelect.value;
+            let a = parseFloat(sliderA.value);
+            let b = parseFloat(sliderB.value);
+            let c = parseFloat(sliderC.value);
+
+            // Handle Component Visibility Constraints
+            if (type === 'sphere') {
+                b = a; c = a;
+                sliderB.value = a; valB.innerText = a.toFixed(1);
+                sliderC.value = a; valC.innerText = a.toFixed(1);
+                document.getElementById('container-b').style.opacity = "0.25";
+                document.getElementById('container-b').style.pointerEvents = "none";
+                document.getElementById('container-c').style.opacity = "0.25";
+                document.getElementById('container-c').style.pointerEvents = "none";
+            } else if (type === 'cylinder') {
+                document.getElementById('container-b').style.opacity = "1";
+                document.getElementById('container-b').style.pointerEvents = "auto";
+                document.getElementById('container-c').style.opacity = "0.25";
+                document.getElementById('container-c').style.pointerEvents = "none";
+            } else {
+                document.getElementById('container-b').style.opacity = "1";
+                document.getElementById('container-b').style.pointerEvents = "auto";
+                document.getElementById('container-c').style.opacity = "1";
+                document.getElementById('container-c').style.pointerEvents = "auto";
+            }
+
+            valA.innerText = a.toFixed(1);
+            valB.innerText = b.toFixed(1);
+            valC.innerText = c.toFixed(1);
+
+            let geometry;
+            const uSegments = 80;
+            const vSegments = 80;
+
+            renderLaTeXEquation(type, a, b, c);
+
+            switch (type) {
+                case 'ellipsoid':
+                case 'sphere':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const phi = v * Math.PI;
+                        const x = a * Math.sin(phi) * Math.cos(theta);
+                        const y = b * Math.sin(phi) * Math.sin(theta);
+                        const z = c * Math.cos(phi);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'cone':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 5; 
+                        const x = (a / c) * Math.abs(z) * Math.cos(theta);
+                        const y = (b / c) * Math.abs(z) * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'paraboloid':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = v * 4; 
+                        const radius = Math.sqrt(z * c);
+                        const x = a * radius * Math.cos(theta);
+                        const y = b * radius * Math.sin(theta);
+                        target.set(x, z - 2, y); 
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperboloid1':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 4; 
+                        const cosh = Math.sqrt(1 + (z*z)/(c*c));
+                        const x = a * cosh * Math.cos(theta);
+                        const y = b * cosh * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'hyperboloid2':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const isTop = v > 0.5;
+                        const localV = isTop ? (v - 0.5) * 2 : (0.5 - v) * 2;
+                        const zSign = isTop ? 1 : -1;
+                        const z = zSign * (c + localV * 2.5);
+                        const sinh = Math.sqrt(Math.max(0, (z*z)/(c*c) - 1));
+                        const x = a * sinh * Math.cos(theta);
+                        const y = b * sinh * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+
+                case 'cylinder':
+                    geometry = new THREE.ParametricGeometry((u, v, target) => {
+                        const theta = u * Math.PI * 2;
+                        const z = (v - 0.5) * 5;
+                        const x = a * Math.cos(theta);
+                        const y = b * Math.sin(theta);
+                        target.set(x, z, y);
+                    }, uSegments, vSegments);
+                    break;
+            }
+
+            // Beautiful Physical Material Setup (Glass/Glow Hybrid)
+            const material = new THREE.MeshPhysicalMaterial({
+                color: 0x3b82f6,
+                emissive: 0x1d4ed8,
+                emissiveIntensity: 0.15,
+                roughness: 0.2,
+                metalness: 0.1,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8,
+                transmission: 0.3,
+                ior: 1.5
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Subtle Contour Wireframe Grid
+            const wireframeMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.08
+            });
+            const wireframeMesh = new THREE.Mesh(geometry, wireframeMat);
+            mesh.add(wireframeMesh);
+
+            surfaceMesh = mesh;
+            scene.add(surfaceMesh);
+        }
+
+        function renderLaTeXEquation(type, a, b, c) {
+            let latexStr = "";
+            const a2 = (a*a).toFixed(1);
+            const b2 = (b*b).toFixed(1);
+            const c2 = (c*c).toFixed(1);
+
+            switch(type) {
+                case 'ellipsoid':
+                    latexStr = `\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} + \\frac{z^2}{${c2}} = 1`;
+                    break;
+                case 'sphere':
+                    latexStr = `x^2 + y^2 + z^2 = ${a2}`;
+                    break;
+                case 'cone':
+                    latexStr = `\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} - \\frac{z^2}{${c2}} = 0`;
+                    break;
+                case 'paraboloid':
+                    latexStr = `\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} = \\frac{z}{${c.toFixed(1)}}`;
+                    break;
+                case 'hyperboloid1':
+                    latexStr = `\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} - \\frac{z^2}{${c2}} = 1`;
+                    break;
+                case 'hyperboloid2':
+                    latexStr = `\\frac{x^2}{${a2}} - \\frac{y^2}{${b2}} - \\frac{z^2}{${c2}} = 1`;
+                    break;
+                case 'cylinder':
+                    latexStr = `\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} = 1`;
+                    break;
+            }
+            katex.render(latexStr, equationBox, { throwOnError: false });
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

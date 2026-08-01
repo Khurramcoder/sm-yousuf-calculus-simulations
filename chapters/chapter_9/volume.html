@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volume of Revolution & Cross-Section Visualizer</title>
+    <!-- Tailwind CSS for UI styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- math.js for safe math expression evaluation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- Three.js for 3D graphic rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for camera manipulation -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        canvas { display: block; width: 100%; height: 100%; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col p-4 md:p-8">
+
+    <header class="mb-6 max-w-6xl mx-auto w-full">
+        <h1 class="text-3xl font-extrabold text-indigo-400">Volume Visualizer & Calculator</h1>
+        <p class="text-slate-400 mt-1">Explore solids of revolution and volumes by known cross-sections in real-time 3D.</p>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full flex-1">
+        
+        <!-- Input & Control Panel -->
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col gap-5 shadow-xl h-fit">
+            <h2 class="text-xl font-bold border-b border-slate-700 pb-2 text-indigo-300">Parameters</h2>
+            
+            <!-- Functions Input -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-1">Top Function f(x)</label>
+                <input id="fx-input" type="text" value="sqrt(x)" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 font-mono">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-1">Bottom Function g(x)</label>
+                <input id="gx-input" type="text" value="0" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 font-mono">
+            </div>
+
+            <!-- Bounds -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1">Lower Bound (a)</label>
+                    <input id="a-input" type="number" value="0" step="0.1" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1">Upper Bound (b)</label>
+                    <input id="b-input" type="number" value="4" step="0.1" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <!-- Calculation Method -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-1">Method</label>
+                <select id="method-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <option value="washer">Disk / Washer Method</option>
+                    <option value="shell">Cylindrical Shell Method</option>
+                    <option value="cs_square">Cross-Section: Squares</option>
+                    <option value="cs_semicircle">Cross-Section: Semicircles</option>
+                    <option value="cs_triangle">Cross-Section: Equilateral Triangles</option>
+                </select>
+            </div>
+
+            <!-- Axis Configuration -->
+            <div id="axis-config-group">
+                <label class="block text-sm font-semibold text-slate-300 mb-1">Axis of Revolution</label>
+                <select id="axis-type" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 mb-2">
+                    <option value="horizontal">Horizontal (y = constant)</option>
+                    <option value="vertical">Vertical (x = constant)</option>
+                </select>
+                <div class="flex items-center gap-2">
+                    <span id="axis-var-label" class="text-sm font-mono text-slate-400">y =</span>
+                    <input id="axis-val" type="number" value="0" step="0.5" class="w-24 bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <button id="calculate-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md mt-2">
+                Calculate & Render
+            </button>
+        </div>
+
+        <!-- 3D Display & Output Panel -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+            <!-- Canvas Window -->
+            <div class="bg-slate-950 rounded-2xl border border-slate-800 shadow-xl overflow-hidden min-h-[450px] relative flex-1">
+                <div id="canvas-container" class="w-full h-full absolute inset-0"></div>
+                <!-- Interactive Overlay Legend -->
+                <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-xs px-3 py-2 rounded-lg text-xs text-slate-300 border border-slate-700 pointer-events-none">
+                    <p><span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span> X Axis (Red)</p>
+                    <p><span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span> Y Axis (Green)</p>
+                    <p><span class="inline-block w-2 h-2 bg-indigo-400 rounded-full mr-1"></span> Selected Axis (Cyan Stripe)</p>
+                    <p class="mt-1 text-[10px] text-slate-400">Drag to rotate • Scroll to zoom</p>
+                </div>
+            </div>
+
+            <!-- Mathematical Results Display -->
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+                <h3 class="text-lg font-bold text-indigo-300 mb-2">Calculated Results</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-mono">
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-750">
+                        <span class="text-slate-400 block text-xs font-sans">INTEGRAL SETUP:</span>
+                        <div id="integral-text" class="text-slate-200 mt-1 overflow-x-auto whitespace-nowrap">--</div>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-750 flex flex-col justify-center">
+                        <span class="text-slate-400 block text-xs font-sans">NUMERICAL VOLUME:</span>
+                        <div id="volume-text" class="text-2xl font-bold text-emerald-400 mt-0.5">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Globals & 3D Environment Setup ---
+        let scene, camera, renderer, controls, solidMeshGroup;
+        const container = document.getElementById('canvas-container');
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a); // slate-950
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(6, 6, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight1.position.set(10, 15, 10);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xa5b4fc, 0.4); // Subtle indigo tint
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
+
+            // Reference Grid/Axes
+            const axesHelper = new THREE.AxesHelper(8);
+            scene.add(axesHelper);
+
+            const gridHelper = new THREE.GridHelper(20, 20, 0x475569, 0x334155);
+            gridHelper.position.y = -0.01; 
+            scene.add(gridHelper);
+
+            solidMeshGroup = new THREE.Group();
+            scene.add(solidMeshGroup);
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // --- Math & Math.js Utilities ---
+        function safeEval(expr, xVal) {
+            try {
+                return math.evaluate(expr, { x: xVal });
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        // Numerical Integration using Simpson's Rule
+        function integrate(f_string, g_string, a, b, method, axisType, axisVal) {
+            const N = 200; // Intervals
+            const h = (b - a) / N;
+            
+            function evalIntegrand(x) {
+                const fx = safeEval(f_string, x);
+                const gx = safeEval(g_string, x);
+                const thickness = Math.max(0, fx - gx);
+
+                if (method === 'washer') {
+                    if (axisType === 'horizontal') {
+                        const R = Math.abs(fx - axisVal);
+                        const r = Math.abs(gx - axisVal);
+                        return Math.PI * (R * R - r * r);
+                    }
+                } else if (method === 'shell') {
+                    if (axisType === 'vertical') {
+                        const radius = Math.abs(x - axisVal);
+                        return 2 * Math.PI * radius * thickness;
+                    }
+                } else if (method === 'cs_square') {
+                    return thickness * thickness;
+                } else if (method === 'cs_semicircle') {
+                    return (Math.PI / 8) * (thickness * thickness);
+                } else if (method === 'cs_triangle') {
+                    return (Math.sqrt(3) / 4) * (thickness * thickness);
+                }
+                return 0;
+            }
+
+            let sum = evalIntegrand(a) + evalIntegrand(b);
+            for (let i = 1; i < N; i++) {
+                const x = a + i * h;
+                sum += evalIntegrand(x) * (i % 2 === 0 ? 2 : 4);
+            }
+            return (sum * h) / 3;
+        }
+
+        // --- Geometry Builders for the 3D Render ---
+        function updateVisualization() {
+            // Clear existing layout geometry
+            while(solidMeshGroup.children.length > 0){
+                const obj = solidMeshGroup.children[0];
+                solidMeshGroup.remove(obj);
+            }
+
+            const fx_str = document.getElementById('fx-input').value;
+            const gx_str = document.getElementById('gx-input').value;
+            const a = parseFloat(document.getElementById('a-input').value);
+            const b = parseFloat(document.getElementById('b-input').value);
+            const method = document.getElementById('method-select').value;
+            const axisType = document.getElementById('axis-type').value;
+            const axisVal = parseFloat(document.getElementById('axis-val').value);
+
+            if (isNaN(a) || isNaN(b) || a >= b) {
+                document.getElementById('volume-text').innerText = "Invalid Bounds";
+                return;
+            }
+
+            // Material Setup
+            const solidMaterial = new THREE.MeshStandardMaterial({
+                color: 0x6366f1, // Indigo
+                roughness: 0.4,
+                metalness: 0.1,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.75
+            });
+
+            const wireframeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x818cf8,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+
+            const axisLineMaterial = new THREE.LineBasicMaterial({ color: 0x22d3ee, linewidth: 2 });
+
+            // Render Selected Custom Axis lines
+            if (method === 'washer' || method === 'shell') {
+                const p1 = axisType === 'horizontal' ? new THREE.Vector3(a - 1, axisVal, 0) : new THREE.Vector3(axisVal, -2, 0);
+                const p2 = axisType === 'horizontal' ? new THREE.Vector3(b + 1, axisVal, 0) : new THREE.Vector3(axisVal, 5, 0);
+                const axisGeo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+                const axisLine = new THREE.Line(axisGeo, axisLineMaterial);
+                solidMeshGroup.add(axisLine);
+            }
+
+            const segments = 60;
+            const steps = 40;
+            const dx = (b - a) / steps;
+
+            // Generate Meshes depending on integration strategy
+            if (method === 'washer' && axisType === 'horizontal') {
+                // Revolving around y = axisVal
+                for (let i = 0; i < steps; i++) {
+                    const x1 = a + i * dx;
+                    const x2 = x1 + dx;
+                    const f_avg = (safeEval(fx_str, x1) + safeEval(fx_str, x2)) / 2;
+                    const g_avg = (safeEval(gx_str, x1) + safeEval(gx_str, x2)) / 2;
+
+                    const R = Math.abs(f_avg - axisVal);
+                    const r = Math.abs(g_avg - axisVal);
+
+                    const cylinderGeo = new THREE.CylinderGeometry(R, R, dx, segments, 1, true);
+                    cylinderGeo.rotateZ(Math.PI / 2); // Align along X axis
+                    cylinderGeo.translate((x1 + x2) / 2, axisVal, 0);
+
+                    const mesh = new THREE.Mesh(cylinderGeo, solidMaterial);
+                    const wire = new THREE.Mesh(cylinderGeo, wireframeMaterial);
+                    solidMeshGroup.add(mesh, wire);
+
+                    if (r > 0) {
+                        const innerCylinderGeo = new THREE.CylinderGeometry(r, r, dx, segments, 1, true);
+                        innerCylinderGeo.rotateZ(Math.PI / 2);
+                        innerCylinderGeo.translate((x1 + x2) / 2, axisVal, 0);
+                        solidMeshGroup.add(new THREE.Mesh(innerCylinderGeo, solidMaterial));
+                    }
+                }
+            } 
+            else if (method === 'shell' && axisType === 'vertical') {
+                // Shells revolving around x = axisVal
+                for (let i = 0; i < steps; i++) {
+                    const x = a + i * dx;
+                    const fx = safeEval(fx_str, x);
+                    const gx = safeEval(gx_str, x);
+                    const height = Math.max(0, fx - gx);
+                    const radius = Math.abs(x - axisVal);
+
+                    if (height <= 0 || radius <= 0) continue;
+
+                    const shellGeo = new THREE.CylinderGeometry(radius, radius, height, segments, 1, true);
+                    shellGeo.translate(0, (fx + gx) / 2, 0); // Position along real Y height
+                    // Move the system center to simulate rotation offset relative to x-axis origin
+                    shellGeo.translate(axisVal, 0, 0); 
+                    
+                    // Rotate standard alignment around the custom pivot offset
+                    const shellMesh = new THREE.Mesh(shellGeo, solidMaterial);
+                    shellMesh.position.set(-axisVal, 0, 0);
+                    shellMesh.rotation.x = 0; 
+                    
+                    // Emulate spatial radial shift manually via individual group nodes if rotating abstractly
+                    const pivotGroup = new THREE.Group();
+                    pivotGroup.position.set(axisVal, 0, 0);
+                    pivotGroup.add(shellMesh);
+                    solidMeshGroup.add(pivotGroup);
+                }
+            } 
+            else if (method.startsWith('cs_')) {
+                // Linear Base cross-sectional structures extruded out into Z
+                for (let i = 0; i < steps; i++) {
+                    const x = a + i * dx;
+                    const fx = safeEval(fx_str, x);
+                    const gx = safeEval(gx_str, x);
+                    const baseSide = Math.max(0, fx - gx);
+                    if (baseSide <= 0) continue;
+
+                    let shapeGeo;
+                    if (method === 'cs_square') {
+                        shapeGeo = new THREE.BoxGeometry(dx, baseSide, baseSide);
+                        shapeGeo.translate(x + dx/2, (fx + gx)/2, baseSide / 2);
+                    } else if (method === 'cs_semicircle') {
+                        shapeGeo = new THREE.CylinderGeometry(baseSide/2, baseSide/2, dx, segments, 1, false, 0, Math.PI);
+                        shapeGeo.rotateZ(Math.PI / 2);
+                        shapeGeo.rotateX(Math.PI / 2);
+                        shapeGeo.translate(x + dx/2, (fx + gx)/2, 0);
+                    } else if (method === 'cs_triangle') {
+                        const triHeight = (Math.sqrt(3) / 2) * baseSide;
+                        const prShape = new THREE.Shape();
+                        prShape.moveTo(gx, 0);
+                        prShape.lineTo(fx, 0);
+                        prShape.lineTo((fx+gx)/2, triHeight);
+                        prShape.closePath();
+
+                        const extrudeSettings = { depth: dx, bevelEnabled: false };
+                        shapeGeo = new THREE.ExtrudeGeometry(prShape, extrudeSettings);
+                        shapeGeo.rotateY(Math.PI / 2);
+                        shapeGeo.translate(x + dx, 0, 0);
+                    }
+
+                    if(shapeGeo) {
+                        solidMeshGroup.add(new THREE.Mesh(shapeGeo, solidMaterial));
+                        solidMeshGroup.add(new THREE.Mesh(shapeGeo, wireframeMaterial));
+                    }
+                }
+            }
+
+            // Update Calculations Panel Data Text Output
+            const volume = integrate(fx_str, gx_str, a, b, method, axisType, axisVal);
+            document.getElementById('volume-text').innerText = volume.toFixed(4);
+            
+            // Format descriptive standard text-based integral equations representation
+            let setupText = "";
+            if (method === 'washer') {
+                setupText = `π × ∫₀⁴ [ (${fx_str} - ${axisVal})² - (${gx_str} - ${axisVal})² ] dx`;
+            } else if (method === 'shell') {
+                setupText = `2π × ∫ [ |x - (${axisVal})| × (${fx_str} - ${gx_str}) ] dx`;
+            } else {
+                const factor = method === 'cs_square' ? '' : method === 'cs_semicircle' ? 'π/8 × ' : '√3/4 × ';
+                setupText = `${factor}∫ [ (${fx_str} - ${gx_str})² ] dx`;
+            }
+            document.getElementById('integral-text').innerText = setupText;
+        }
+
+        // --- Controller Visibility Management Logic ---
+        document.getElementById('method-select').addEventListener('change', (e) => {
+            const axisGroup = document.getElementById('axis-config-group');
+            if (e.target.value.startsWith('cs_')) {
+                axisGroup.style.display = 'none';
+            } else {
+                axisGroup.style.display = 'block';
+                const typeSelect = document.getElementById('axis-type');
+                if (e.target.value === 'shell') {
+                    typeSelect.value = 'vertical';
+                } else {
+                    typeSelect.value = 'horizontal';
+                }
+                typeSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        document.getElementById('axis-type').addEventListener('change', (e) => {
+            const label = document.getElementById('axis-var-label');
+            label.innerText = e.target.value === 'horizontal' ? 'y =' : 'x =';
+        });
+
+        document.getElementById('calculate-btn').addEventListener('click', updateVisualization);
+
+        // Run setup routine on view load
+        init3D();
+        updateVisualization();
+    </script>
+</body>
+</html>

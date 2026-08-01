@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Real Number System: Axioms & Properties</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #3b82f6;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #1e293b 100%);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 4rem 0;
+            background: radial-gradient(circle at top, rgba(59, 130, 246, 0.3) 0%, transparent 50%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        section {
+            margin: 4rem 0;
+            padding: 3rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: var(--secondary);
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .property-card {
+            background: rgba(30, 58, 138, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .property-name {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .property-formula {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            display: inline-block;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .interactive-demo {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        input[type="range"] {
+            width: 200px;
+            accent-color: var(--accent);
+        }
+
+        .number-line {
+            height: 80px;
+            position: relative;
+            margin: 2rem 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .axis {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: var(--secondary);
+            transform: translateY(-50%);
+        }
+
+        .point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+
+        .point:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        .point-label {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .spiral-container {
+            position: relative;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .proof-box {
+            border-left: 4px solid var(--accent);
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+            section { padding: 1.5rem; }
+        }
+
+        .theorem {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(245, 158, 11, 0.1));
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .theorem-title {
+            color: var(--secondary);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            color: var(--gray);
+        }
+
+        .value-display {
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .interval-viz {
+            height: 100px;
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .interval-bar {
+            position: absolute;
+            height: 20px;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            border-radius: 10px;
+            opacity: 0.8;
+            transition: all 0.5s;
+        }
+
+        .supremum-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--danger);
+            top: 0;
+        }
+
+        .supremum-label {
+            position: absolute;
+            top: -25px;
+            right: 0;
+            color: var(--danger);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <h1>The Real Number System</h1>
+        <p class="subtitle">Exploring the complete ordered field through axioms, properties, and interactive visualizations</p>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Axioms Section -->
+    <section id="axioms">
+        <h2>Field Axioms: Addition & Multiplication</h2>
+        <p>The real numbers $\mathbb{R}$ form a complete ordered field satisfying the following axioms:</p>
+        
+        <div class="grid-2">
+            <div>
+                <h3 style="color: var(--accent); margin: 1.5rem 0 1rem;">Addition Axioms</h3>
+                
+                <div class="property-card">
+                    <div class="property-name">A1: Closure under Addition</div>
+                    <div class="property-formula">$$\forall a,b \in \mathbb{R}: a + b \in \mathbb{R}$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">A2: Commutativity</div>
+                    <div class="property-formula">$$a + b = b + a$$</div>
+                    <div class="interactive-demo">
+                        <canvas id="commAddCanvas"></canvas>
+                        <div class="control-panel">
+                            <button onclick="animateAddition()">Visualize</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">A3: Associativity</div>
+                    <div class="property-formula">$$(a + b) + c = a + (b + c)$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">A4: Additive Identity</div>
+                    <div class="property-formula">$$\exists 0 \in \mathbb{R}: a + 0 = a$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">A5: Additive Inverse</div>
+                    <div class="property-formula">$$\forall a \in \mathbb{R}, \exists -a: a + (-a) = 0$$</div>
+                </div>
+            </div>
+
+            <div>
+                <h3 style="color: var(--accent); margin: 1.5rem 0 1rem;">Multiplication Axioms</h3>
+                
+                <div class="property-card">
+                    <div class="property-name">M1: Closure under Multiplication</div>
+                    <div class="property-formula">$$\forall a,b \in \mathbb{R}: a \cdot b \in \mathbb{R}$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">M2: Commutativity</div>
+                    <div class="property-formula">$$a \cdot b = b \cdot a$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">M3: Associativity</div>
+                    <div class="property-formula">$$(a \cdot b) \cdot c = a \cdot (b \cdot c)$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">M4: Multiplicative Identity</div>
+                    <div class="property-formula">$$\exists 1 \in \mathbb{R}, 1 \neq 0: a \cdot 1 = a$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">M5: Multiplicative Inverse</div>
+                    <div class="property-formula">$$\forall a \neq 0, \exists a^{-1}: a \cdot a^{-1} = 1$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">D: Distributive Law</div>
+                    <div class="property-formula">$$a \cdot (b + c) = a \cdot b + a \cdot c$$</div>
+                    <div class="interactive-demo">
+                        <canvas id="distribCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Irrational Numbers Section -->
+    <section id="irrationals">
+        <h2>Existence of Irrational Numbers</h2>
+        <p>Not all real numbers are rational. The set $\mathbb{R} \setminus \mathbb{Q}$ is uncountably infinite.</p>
+
+        <div class="grid-2">
+            <div>
+                <div class="theorem">
+                    <div class="theorem-title">Theorem: $\sqrt{2}$ is Irrational</div>
+                    <p>By contradiction: Assume $\sqrt{2} = \frac{p}{q}$ where $p, q \in \mathbb{Z}$ are coprime.</p>
+                    <p>Then $2q^2 = p^2$, implying $p$ is even. Let $p = 2k$.</p>
+                    <p>Then $2q^2 = 4k^2 \Rightarrow q^2 = 2k^2$, so $q$ is also even.</p>
+                    <p class="highlight">Contradiction: $p$ and $q$ share a common factor of 2.</p>
+                </div>
+
+                <div class="spiral-container">
+                    <canvas id="spiralCanvas"></canvas>
+                </div>
+                <p style="text-align: center; color: var(--gray); font-size: 0.9rem;">Spiral of Theodorus: Constructing $\sqrt{n}$ geometrically</p>
+            </div>
+
+            <div>
+                <h3 style="color: var(--accent); margin-bottom: 1rem;">Density of Irrationals</h3>
+                <p>Between any two rational numbers, there exists an irrational number, and vice versa.</p>
+                
+                <div class="interactive-demo">
+                    <div class="number-line" id="densityLine">
+                        <div class="axis"></div>
+                        <div class="point" style="left: 20%;" onclick="togglePoint(this, 'rational')">
+                            <div class="point-label">0.333... (rational)</div>
+                        </div>
+                        <div class="point" style="left: 60%; background: var(--danger);" onclick="togglePoint(this, 'irrational')">
+                            <div class="point-label">√2/4 (irrational)</div>
+                        </div>
+                        <div class="point" style="left: 80%;" onclick="togglePoint(this, 'rational')">
+                            <div class="point-label">0.75 (rational)</div>
+                        </div>
+                    </div>
+                    <div class="control-panel">
+                        <button onclick="addRandomPoint()">Insert Point Between</button>
+                        <span style="color: var(--gray); font-size: 0.9rem;">Click points to toggle rational/irrational</span>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Key Properties</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li style="margin: 0.5rem 0;">$\mathbb{Q}$ is countable, $\mathbb{R}$ is uncountable</li>
+                        <li style="margin: 0.5rem 0;">Measure of $\mathbb{Q}$ is 0, measure of irrationals is infinite</li>
+                        <li style="margin: 0.5rem 0;">Both sets are dense in $\mathbb{R}$</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Order Properties Section -->
+    <section id="order">
+        <h2>Order Properties of $\mathbb{R}$</h2>
+        <p>The real numbers form a totally ordered field with the following properties:</p>
+
+        <div class="grid-2">
+            <div>
+                <div class="property-card">
+                    <div class="property-name">O1: Trichotomy Law</div>
+                    <div class="property-formula">$$\forall a,b \in \mathbb{R}: \text{exactly one holds: } a < b, a = b, a > b$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">O2: Transitivity</div>
+                    <div class="property-formula">$$a < b \text{ and } b < c \Rightarrow a < c$$</div>
+                    <div class="interactive-demo">
+                        <canvas id="transCanvas"></canvas>
+                        <div class="control-panel">
+                            <button onclick="animateTransitivity()">Show Transitivity</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">O3: Translation Invariance</div>
+                    <div class="property-formula">$$a < b \Rightarrow a + c < b + c$$</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="property-card">
+                    <div class="property-name">O4: Multiplication by Positive</div>
+                    <div class="property-formula">$$a < b \text{ and } c > 0 \Rightarrow ac < bc$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">O5: Multiplication by Negative</div>
+                    <div class="property-formula">$$a < b \text{ and } c < 0 \Rightarrow ac > bc$$</div>
+                    <div class="interactive-demo">
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Multiply by c:</span>
+                                <span class="value-display" id="multVal">-2</span>
+                            </div>
+                            <input type="range" id="multSlider" min="-5" max="5" step="0.5" value="-2" oninput="updateMultDemo()">
+                        </div>
+                        <div class="number-line" id="multLine">
+                            <div class="axis"></div>
+                            <div class="point" id="multA" style="left: 30%; background: var(--secondary);">
+                                <div class="point-label">a = 2</div>
+                            </div>
+                            <div class="point" id="multB" style="left: 70%; background: var(--accent);">
+                                <div class="point-label">b = 4</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Archimedean Property</div>
+                    <div class="property-formula">$$\forall x \in \mathbb{R}, \exists n \in \mathbb{N}: n > x$$</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Absolute Value Section -->
+    <section id="absolute">
+        <h2>Absolute Value Properties</h2>
+        <p>The absolute value $|x|$ represents the distance from $x$ to 0 on the real line.</p>
+
+        <div class="grid-2">
+            <div>
+                <div class="interactive-demo">
+                    <canvas id="absCanvas"></canvas>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Value of x:</span>
+                            <span class="value-display" id="absX">3</span>
+                        </div>
+                        <input type="range" id="absSlider" min="-10" max="10" step="0.5" value="3" oninput="updateAbsDemo()">
+                    </div>
+                    <p style="text-align: center; margin-top: 1rem;">
+                        $|x| = <span id="absResult">3</span>$ (distance from 0)
+                    </p>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Definition</div>
+                    <div class="property-formula">$$|x| = \begin{cases} x & \text{if } x \geq 0 \\ -x & \text{if } x < 0 \end{cases}$$</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="property-card">
+                    <div class="property-name">Triangle Inequality</div>
+                    <div class="property-formula">$$|a + b| \leq |a| + |b|$$</div>
+                    <div class="interactive-demo">
+                        <canvas id="triangleCanvas"></canvas>
+                        <div class="control-panel">
+                            <button onclick="animateTriangle()">Visualize Inequality</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Reverse Triangle Inequality</div>
+                    <div class="property-formula">$$||a| - |b|| \leq |a - b|$$</div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Multiplicative Property</div>
+                    <div class="property-formula">$$|ab| = |a||b|$$</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Completeness Section -->
+    <section id="completeness">
+        <h2>Completeness Property</h2>
+        <p>This is the defining property that distinguishes $\mathbb{R}$ from $\mathbb{Q}$. Every non-empty set of real numbers that is bounded above has a least upper bound (supremum).</p>
+
+        <div class="grid-2">
+            <div>
+                <div class="theorem">
+                    <div class="theorem-title">Least Upper Bound Property</div>
+                    <p>If $S \subseteq \mathbb{R}$ is non-empty and bounded above, then $\sup(S)$ exists in $\mathbb{R}$.</p>
+                </div>
+
+                <div class="interactive-demo">
+                    <h3 style="color: var(--accent); margin-bottom: 1rem;">Visualizing Supremum</h3>
+                    <div class="interval-viz" id="supViz">
+                        <div class="supremum-line"></div>
+                        <div class="supremum-label">sup(S) = 5</div>
+                        <div class="interval-bar" style="width: 40%; bottom: 10px; left: 10%;"></div>
+                        <div class="interval-bar" style="width: 30%; bottom: 35px; left: 20%;"></div>
+                        <div class="interval-bar" style="width: 50%; bottom: 60px; left: 5%;"></div>
+                    </div>
+                    <div class="control-panel">
+                        <button onclick="addInterval()">Add Set Element</button>
+                        <button onclick="clearIntervals()">Clear</button>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Greatest Lower Bound</div>
+                    <div class="property-formula">$$\inf(S) = -\sup(-S)$$</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="property-card">
+                    <div class="property-name">Nested Intervals Theorem</div>
+                    <p>If $[a_1, b_1] \supseteq [a_2, b_2] \supseteq \cdots$ and $\lim_{n\to\infty}(b_n - a_n) = 0$, then $\bigcap_{n=1}^{\infty}[a_n, b_n]$ contains exactly one point.</p>
+                    <div class="interactive-demo">
+                        <canvas id="nestedCanvas"></canvas>
+                        <button onclick="animateNested()">Animate Convergence</button>
+                    </div>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-name">Cauchy Completeness</div>
+                    <div class="property-formula">$$\text{Every Cauchy sequence in } \mathbb{R} \text{ converges}$$</div>
+                    <div class="interactive-demo">
+                        <canvas id="cauchyCanvas"></canvas>
+                        <button onclick="simulateCauchy()">Generate Sequence</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<footer style="text-align: center; padding: 3rem; color: var(--gray); border-top: 1px solid var(--border); margin-top: 4rem;">
+    <p>The Real Number System: Foundation of Analysis</p>
+    <p style="font-size: 0.9rem; margin-top: 0.5rem;">Interactive Mathematical Visualization</p>
+</footer>
+
+<script>
+// Utility functions
+function drawArrow(ctx, fromX, fromY, toX, toY, color = '#3b82f6') {
+    const headlen = 10;
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const angle = Math.atan2(dy, dx);
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+}
+
+// Commutativity of Addition Visualization
+function animateAddition() {
+    const canvas = document.getElementById('commAddCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const a = 3, b = 5;
+    const startX = 50;
+    const y1 = 80, y2 = 150;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw a + b
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(startX, y1, a * 30, 40);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(startX + a * 30, y1, b * 30, 40);
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.fillText(`a + b = ${a + b}`, startX + (a+b) * 15, y1 + 60);
+    
+    // Draw b + a
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(startX, y2, b * 30, 40);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(startX + b * 30, y2, a * 30, 40);
+    ctx.fillStyle = 'white';
+    ctx.fillText(`b + a = ${b + a}`, startX + (a+b) * 15, y2 + 60);
+    
+    // Draw equality
+    ctx.strokeStyle = '#10b981';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(startX + (a+b) * 15, y1 + 70);
+    ctx.lineTo(startX + (a+b) * 15, y2 - 10);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+// Distributive Law Visualization
+function drawDistributive() {
+    const canvas = document.getElementById('distribCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const a = 3, b = 2, c = 4;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Left side: a(b+c)
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(50, 50, a * 40, (b+c) * 30);
+    ctx.fillStyle = 'white';
+    ctx.font = '14px Arial';
+    ctx.fillText(`a(b+c) = ${a*(b+c)}`, 50, 200);
+    
+    // Right side: ab + ac
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(350, 50, a * 40, b * 30);
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(350, 50 + b * 30, a * 40, c * 30);
+    ctx.fillStyle = 'white';
+    ctx.fillText(`ab + ac = ${a*b + a*c}`, 350, 200);
+    
+    // Labels
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText('a', 20, 50 + (b+c) * 15);
+    ctx.fillText('b+c', 50 + a * 20, 30);
+}
+
+// Spiral of Theodorus
+function drawSpiral() {
+    const canvas = document.getElementById('spiralCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const unit = 40;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    let x = centerX;
+    let y = centerY;
+    let angle = 0;
+    
+    for (let n = 1; n <= 17; n++) {
+        const hypotenuse = Math.sqrt(n);
+        const nextX = x + unit * Math.cos(angle);
+        const nextY = y + unit * Math.sin(angle);
+        
+        // Draw triangle
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.lineTo(nextX, nextY);
+        ctx.closePath();
+        
+        ctx.strokeStyle = `hsl(${n * 20}, 70%, 60%)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Label
+        if (n % 3 === 0) {
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.fillText(`√${n}`, nextX + 10, nextY);
+        }
+        
+        x = nextX;
+        y = nextY;
+        angle += Math.atan(1 / Math.sqrt(n));
+    }
+    
+    // Center point
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Transitivity Visualization
+function animateTransitivity() {
+    const canvas = document.getElementById('transCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const a = 2, b = 5, c = 8;
+    const y = 100;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw points
+    [a, b, c].forEach((val, i) => {
+        const x = 100 + val * 40;
+        ctx.fillStyle = i === 0 ? '#3b82f6' : i === 1 ? '#f59e0b' : '#10b981';
+        ctx.beginPath();
+        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText(['a', 'b', 'c'][i], x - 5, y + 5);
+        ctx.fillText(val, x - 5, y + 35);
+    });
+    
+    // Draw arrows
+    drawArrow(ctx, 100 + a * 40 + 15, y, 100 + b * 40 - 15, y, '#3b82f6');
+    drawArrow(ctx, 100 + b * 40 + 15, y, 100 + c * 40 - 15, y, '#f59e0b');
+    
+    // Conclusion
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 18px Arial';
+    ctx.fillText('a < c', 100 + (a+c) * 20, y + 80);
+}
+
+// Multiplication Demo
+function updateMultDemo() {
+    const slider = document.getElementById('multSlider');
+    const val = parseFloat(slider.value);
+    document.getElementById('multVal').textContent = val;
+    
+    const a = 2, b = 4;
+    const newA = a * val;
+    const newB = b * val;
+    
+    const pointA = document.getElementById('multA');
+    const pointB = document.getElementById('multB');
+    
+    const line = document.getElementById('multLine');
+    const width = line.offsetWidth;
+    const center = width / 2;
+    const scale = width / 20;
+    
+    pointA.style.left = `${50 + newA * scale}%`;
+    pointB.style.left = `${50 + newB * scale}%`;
+    
+    pointA.querySelector('.point-label').textContent = `a·c = ${newA}`;
+    pointB.querySelector('.point-label').textContent = `b·c = ${newB}`;
+    
+    // Change colors based on sign
+    if (val < 0) {
+        pointA.style.background = '#ef4444';
+        pointB.style.background = '#ef4444';
+    } else {
+        pointA.style.background = '#3b82f6';
+        pointB.style.background = '#f59e0b';
+    }
+}
+
+// Absolute Value Demo
+function updateAbsDemo() {
+    const slider = document.getElementById('absSlider');
+    const val = parseFloat(slider.value);
+    document.getElementById('absX').textContent = val;
+    document.getElementById('absResult').textContent = Math.abs(val);
+    
+    const canvas = document.getElementById('absCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const scale = 30;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw axis
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, centerY);
+    ctx.lineTo(canvas.width - 50, centerY);
+    ctx.stroke();
+    
+    // Draw zero
+    ctx.fillStyle = 'white';
+    ctx.font = '14px Arial';
+    ctx.fillText('0', centerX - 5, centerY + 25);
+    
+    // Draw point
+    const x = centerX + val * scale;
+    ctx.fillStyle = val >= 0 ? '#3b82f6' : '#ef4444';
+    ctx.beginPath();
+    ctx.arc(x, centerY, 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw distance line
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - 30);
+    ctx.lineTo(x, centerY - 30);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Label
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillText(`|${val}| = ${Math.abs(val)}`, (centerX + x) / 2 - 30, centerY - 40);
+}
+
+// Triangle Inequality
+function animateTriangle() {
+    const canvas = document.getElementById('triangleCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const a = 3, b = 4;
+    const x1 = 100, y1 = 150;
+    const x2 = x1 + a * 40, y2 = y1;
+    const x3 = x2 + b * 40 * Math.cos(Math.PI/4), y3 = y2 - b * 40 * Math.sin(Math.PI/4);
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw vectors
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 4;
+    drawArrow(ctx, x1, y1, x2, y2, '#3b82f6');
+    ctx.fillStyle = 'white';
+    ctx.fillText(`|a|=${a}`, x1 + a * 20, y1 - 10);
+    
+    ctx.strokeStyle = '#f59e0b';
+    drawArrow(ctx, x2, y2, x3, y3, '#f59e0b');
+    ctx.fillText(`|b|=${b}`, x2 + b * 20, y2 - b * 20);
+    
+    // Resultant
+    ctx.strokeStyle = '#10b981';
+    drawArrow(ctx, x1, y1, x3, y3, '#10b981');
+    const resultant = Math.sqrt((x3-x1)**2 + (y3-y1)**2) / 40;
+    ctx.fillText(`|a+b|=${resultant.toFixed(1)}`, x1 + (x3-x1)/2, y1 + (y3-y1)/2 + 20);
+    
+    // Inequality
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '16px Arial';
+    ctx.fillText(`|a+b| ≤ |a| + |b|`, 100, 250);
+    ctx.fillText(`${resultant.toFixed(1)} ≤ ${a + b}`, 100, 275);
+}
+
+// Supremum Visualization
+let intervalCount = 0;
+function addInterval() {
+    const viz = document.getElementById('supViz');
+    const bar = document.createElement('div');
+    bar.className = 'interval-bar';
+    const width = Math.random() * 60 + 10;
+    const left = Math.random() * (90 - width);
+    const bottom = 10 + intervalCount * 25;
+    
+    bar.style.width = width + '%';
+    bar.style.left = left + '%';
+    bar.style.bottom = bottom + 'px';
+    
+    viz.appendChild(bar);
+    intervalCount++;
+}
+
+function clearIntervals() {
+    const viz = document.getElementById('supViz');
+    const bars = viz.querySelectorAll('.interval-bar');
+    bars.forEach(bar => bar.remove());
+    intervalCount = 0;
+}
+
+// Nested Intervals
+function animateNested() {
+    const canvas = document.getElementById('nestedCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    for (let i = 0; i < 10; i++) {
+        const width = 300 * Math.pow(0.7, i);
+        const height = 20 + i * 8;
+        const x = centerX - width / 2;
+        const y = centerY - height / 2 + i * 5;
+        
+        ctx.fillStyle = `rgba(59, 130, 246, ${1 - i/10})`;
+        ctx.fillRect(x, y, width, height);
+        
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+    }
+    
+    // Limit point
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY + 45, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = 'white';
+    ctx.font = '14px Arial';
+    ctx.fillText('Unique limit point', centerX + 15, centerY + 50);
+}
+
+// Cauchy Sequence
+function simulateCauchy() {
+    const canvas = document.getElementById('cauchyCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Generate Cauchy sequence converging to sqrt(2)
+    const points = [];
+    let x = 1;
+    for (let i = 0; i < 20; i++) {
+        x = 0.5 * (x + 2/x); // Newton's method for sqrt(2)
+        points.push({x: i * 25 + 50, y: 200 - x * 50});
+    }
+    
+    // Draw points
+    ctx.fillStyle = '#3b82f6';
+    points.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        if (i > 0) {
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(points[i-1].x, points[i-1].y);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+        }
+    });
+    
+    // Limit line
+    const limitY = 200 - Math.sqrt(2) * 50;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(50, limitY);
+    ctx.lineTo(canvas.width - 50, limitY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '14px Arial';
+    ctx.fillText('lim = √2', canvas.width - 100, limitY - 10);
+}
+
+// Point toggle for density demo
+function togglePoint(element, type) {
+    if (type === 'rational') {
+        element.style.background = 'var(--danger)';
+        element.querySelector('.point-label').textContent = '√2/4 (irrational)';
+    } else {
+        element.style.background = 'var(--accent)';
+        element.querySelector('.point-label').textContent = '0.333... (rational)';
+    }
+}
+
+function addRandomPoint() {
+    const line = document.getElementById('densityLine');
+    const point = document.createElement('div');
+    point.className = 'point';
+    const left = 20 + Math.random() * 60;
+    point.style.left = left + '%';
+    point.style.background = Math.random() > 0.5 ? 'var(--accent)' : 'var(--danger)';
+    
+    const label = document.createElement('div');
+    label.className = 'point-label';
+    const isRational = Math.random() > 0.5;
+    label.textContent = isRational ? 
+        `${(left/100).toFixed(3)} (rational)` : 
+        `√2·${(left/200).toFixed(3)} (irrational)`;
+    
+    point.appendChild(label);
+    point.onclick = function() { togglePoint(this, isRational ? 'rational' : 'irrational'); };
+    
+    line.appendChild(point);
+}
+
+// Initialize
+window.onload = function() {
+    drawSpiral();
+    drawDistributive();
+    updateMultDemo();
+    updateAbsDemo();
+    
+    // Handle resize
+    window.addEventListener('resize', () => {
+        drawSpiral();
+        drawDistributive();
+        updateAbsDemo();
+    });
+};
+</script>
+
+</body>
+</html>

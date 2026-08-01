@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curve Sketching Solver</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid var(--border);
+        }
+
+        h1, h2, h3 { margin-top: 0; color: #0f172a; }
+        h1 { grid-column: 1 / -1; margin-bottom: 10px; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        button:hover { background-color: #1d4ed8; }
+
+        .analysis-step {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .analysis-step:last-child { border-bottom: none; }
+        .step-title { font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+
+        canvas {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center;">6-Step Curve Sketching Analyzer</h1>
+    <p style="text-align: center; margin-top:-10px; color:#64748b;">Select a problem from Exercise Set 7.4 or create your own</p>
+
+    <div class="container">
+        <!-- Left Panel: Input & Analysis -->
+        <div class="panel">
+            <h2>Curve Configuration</h2>
+            <div class="form-group">
+                <label for="preset">Choose a problem preset:</label>
+                <select id="preset" onchange="loadPreset()">
+                    <option value="ex1">Ex 1: 3*a*y^2 = x^2 * (x - a)</option>
+                    <option value="ex2">Ex 2: a*y^2 = x * (a^2 - x^2)</option>
+                    <option value="ex3">Ex 3: y^2 = x^2 * (4 - x^2)</option>
+                    <option value="ex6">Ex 6: y^2 * x = a * (x^2 - a^2)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="equation">Custom JavaScript Evaluator f(x, y) = 0:</label>
+                <input type="text" id="equation" value="3 * a * (y**2) - (x**2) * (x - a)">
+                <small style="color:#64748b; font-size:0.8rem;">Write your equation rearranged to equal 0. Use standard JS syntax like `**` for powers.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="const-a">Value of constant 'a':</label>
+                <input type="number" id="const-a" value="2" step="0.5">
+            </div>
+
+            <button onclick="analyzeAndPlot()">Analyze & Plot Curve</button>
+
+            <h2 style="margin-top: 30px;">Step-by-Step Analysis</h2>
+            <div id="analysis-output">
+                <!-- Javascript will inject analysis here -->
+            </div>
+        </div>
+
+        <!-- Right Panel: Graph -->
+        <div class="panel" style="display: flex; flex-direction: column; justify-content: center;">
+            <h2>Interactive Graph</h2>
+            <canvas id="graphCanvas" width="500" height="500"></canvas>
+            <p style="font-size: 0.85rem; color:#64748b; text-align:center; margin-top:10px;">
+                The graph dynamically scans coordinate pairs rendering where $f(x,y) \approx 0$.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const presets = {
+            ex1: { eq: "3 * a * (y**2) - (x**2) * (x - a)", a: 2 },
+            ex2: { eq: "a * (y**2) - x * (a**2 - x**2)", a: 2 },
+            ex3: { eq: "(y**2) - (x**2) * (4 - x**2)", a: 1 },
+            ex6: { eq: "(y**2) * x - a * (x**2 - a**2)", a: 2 }
+        };
+
+        function loadPreset() {
+            const val = document.getElementById('preset').value;
+            if(presets[val]) {
+                document.getElementById('equation').value = presets[val].eq;
+                document.getElementById('const-a').value = presets[val].a;
+                analyzeAndPlot();
+            }
+        }
+
+        // Numerical assessment Helper 
+        function evaluateF(expr, x, y, a) {
+            try {
+                // Safe evaluation wrapper via basic string replacement tricks or direct dynamic execution
+                return Function('x', 'y', 'a', `return ${expr}`)(x, y, a);
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        function analyzeAndPlot() {
+            const expr = document.getElementById('equation').value;
+            const a = parseFloat(document.getElementById('const-a').value);
+            const output = document.getElementById('analysis-output');
+            
+            let html = "";
+
+            // --- 1. SYMMETRY ---
+            let symX = true, symY = true, symOrigin = true;
+            for(let i = -5; i <= 5; i += 0.5) {
+                for(let j = -5; j <= 5; j += 0.5) {
+                    let base = evaluateF(expr, i, j, a);
+                    if(Math.abs(base - evaluateF(expr, i, -j, a)) > 1e-4) symX = false;
+                    if(Math.abs(base - evaluateF(expr, -i, j, a)) > 1e-4) symY = false;
+                    if(Math.abs(base - evaluateF(expr, -i, -j, a)) > 1e-4) symOrigin = false;
+                }
+            }
+            html += `<div class="analysis-step"><div class="step-title">I. Symmetry</div>`;
+            html += `• Symmetric about X-axis: <b>${symX ? 'Yes' : 'No'}</b><br>`;
+            html += `• Symmetric about Y-axis: <b>${symY ? 'Yes' : 'No'}</b><br>`;
+            html += `• Symmetric about Origin: <b>${symOrigin ? 'Yes' : 'No'}</b></div>`;
+
+            // --- 2. ORIGIN & TANGENTS ---
+            let atOrigin = Math.abs(evaluateF(expr, 0, 0, a)) < 1e-4;
+            html += `<div class="analysis-step"><div class="step-title">II. Origin & Tangents</div>`;
+            html += `• Passes through (0,0): <b>${atOrigin ? 'Yes' : 'No'}</b><br>`;
+            if(atOrigin) {
+                html += `• Node/Cusp Check: Multiple point exists at origin. Splitting lowest degree terms tracks local behavior.</div>`;
+            } else {
+                html += `• Origin is not on the curve.</div>`;
+            }
+
+            // --- 3. INTERCEPTS ---
+            let xIntercepts = [];
+            let yIntercepts = [];
+            for (let v = -10; v <= 10; v += 0.1) {
+                if(Math.abs(evaluateF(expr, v, 0, a)) < 0.05) {
+                    let rounded = Math.round(v * 10) / 10;
+                    if(!xIntercepts.includes(rounded)) xIntercepts.push(rounded);
+                }
+                if(Math.abs(evaluateF(expr, 0, v, a)) < 0.05) {
+                    let rounded = Math.round(v * 10) / 10;
+                    if(!yIntercepts.includes(rounded)) yIntercepts.push(rounded);
+                }
+            }
+            html += `<div class="analysis-step"><div class="step-title">III. Intercepts</div>`;
+            html += `• X-intercepts (y=0): <b>[${xIntercepts.join(', ')}]</b><br>`;
+            html += `• Y-intercepts (x=0): <b>[${yIntercepts.join(', ')}]</b></div>`;
+
+            // --- 4. TANGENTS / DERIVATIVES ---
+            html += `<div class="analysis-step"><div class="step-title">IV. Stationary Points (dy/dx)</div>`;
+            html += `• Handled via implicit differentiation rules. Points where lines turn vertically match $f'_y = 0$.</div>`;
+
+            // --- 5. ASYMPTOTES & REGION ---
+            let testAsymX = false;
+            if (evaluateF(expr, 0.01, 100, a) * evaluateF(expr, 0.01, -100, a) === NaN || Math.abs(evaluateF(expr, 0, 10, a)) > 100) {
+                 testAsymX = true;
+            }
+            html += `<div class="analysis-step"><div class="step-title">V & VI. Asymptotes & Bound Extents</div>`;
+            html += `• Imaginary regions exist where equation resolves into undefined operations.<br>`;
+            html += `• Check real boundaries visually on the dynamic right-hand canvas matrix grid.</div>`;
+
+            output.innerHTML = html;
+
+            // --- 6. PLOT GRAPH ---
+            drawGraph(expr, a);
+        }
+
+        function drawGraph(expr, a) {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Setup Coordinate System (-10 to 10 scale)
+            const minX = -10, maxX = 10;
+            const minY = -10, maxY = 10;
+
+            function toScreenX(x) { return ((x - minX) / (maxX - minX)) * width; }
+            function toScreenY(y) { return height - ((y - minY) / (maxY - minY)) * height; }
+
+            // Draw Grid lines
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            for(let i = minX; i <= maxX; i++) {
+                ctx.beginPath(); ctx.moveTo(toScreenX(i), 0); ctx.lineTo(toScreenX(i), height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, toScreenY(i)); ctx.lineTo(width, toScreenY(i)); ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(toScreenX(0), 0); ctx.lineTo(toScreenX(0), height); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, toScreenY(0)); ctx.lineTo(width, toScreenY(0)); ctx.stroke();
+
+            // Marching Grid Strategy to plot implicit curves f(x,y) = 0
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 3;
+            
+            const steps = 150;
+            const dx = (maxX - minX) / steps;
+            const dy = (maxY - minY) / steps;
+
+            for(let xi = 0; xi < steps; xi++) {
+                let rx1 = minX + xi * dx;
+                let rx2 = rx1 + dx;
+                for(let yi = 0; yi < steps; yi++) {
+                    let ry1 = minY + yi * dy;
+                    let ry2 = ry1 + dy;
+
+                    let v00 = evaluateF(expr, rx1, ry1, a);
+                    let v10 = evaluateF(expr, rx2, ry1, a);
+                    let v01 = evaluateF(expr, rx1, ry2, a);
+                    let v11 = evaluateF(expr, rx2, ry2, a);
+
+                    // Check if zero threshold crosses within the local pixel quadrant box
+                    let minVal = Math.min(v00, v10, v01, v11);
+                    let maxVal = Math.max(v00, v10, v01, v11);
+
+                    if (minVal <= 0 && maxVal >= 0) {
+                        ctx.fillStyle = 'rgba(37, 99, 235, 0.75)';
+                        ctx.fillRect(toScreenX(rx1), toScreenY(ry2), width/steps + 1, height/steps + 1);
+                    }
+                }
+            }
+        }
+
+        // Initialize on load
+        window.onload = analyzeAndPlot;
+    </script>
+</body>
+</html>

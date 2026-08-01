@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indeterminate Forms - Visual & Mathematical Guide</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .intro {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 3px solid #e9ecef;
+        }
+
+        .intro h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .intro-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tabs {
+            display: flex;
+            background: #e9ecef;
+            padding: 10px;
+            overflow-x: auto;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .content {
+            padding: 30px;
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-section {
+            margin-bottom: 40px;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-header h3 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .simulation-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .simulation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        input[type="range"] {
+            width: 200px;
+            cursor: pointer;
+        }
+
+        .value-display {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .graph-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        .math-explanation {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .math-explanation h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .example-box {
+            background: #e7f3ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .example-box h5 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .solution-step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .limit-value {
+            font-size: 1.5em;
+            color: #764ba2;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+            color: #856404;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+            color: #155724;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .approach-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .approaching {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .reached {
+            background: #dc3545;
+            color: white;
+        }
+
+        .stable {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Indeterminate Forms</h1>
+            <p>Visual & Mathematical Guide with Interactive Simulations</p>
+        </header>
+
+        <div class="intro">
+            <h2>What are Indeterminate Forms?</h2>
+            <div class="intro-box">
+                <p><strong>Indeterminate forms</strong> are expressions that arise when evaluating limits, where the direct substitution leads to an undefined or ambiguous result. These forms require special techniques (like L'Hôpital's Rule, algebraic manipulation, or series expansion) to evaluate the actual limit.</p>
+                <p style="margin-top: 10px;"><strong>Common indeterminate forms:</strong> 0/0, ∞/∞, 0·, ∞-∞, 0⁰, 1^∞, ∞⁰</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('form00')">0/0 Form</button>
+            <button class="tab" onclick="showTab('formInfInf')">∞/∞ Form</button>
+            <button class="tab" onclick="showTab('form0Inf')">0·∞ Form</button>
+            <button class="tab" onclick="showTab('formInfInf2')">∞-∞ Form</button>
+            <button class="tab" onclick="showTab('form00pow')">0⁰ Form</button>
+            <button class="tab" onclick="showTab('form1Inf')">1^∞ Form</button>
+            <button class="tab" onclick="showTab('formInf0')">∞⁰ Form</button>
+        </div>
+
+        <!-- 0/0 Form -->
+        <div id="form00" class="content active">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form 0/0</h3>
+                    <p>When both numerator and denominator approach zero</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="x00" min="-2" max="2" step="0.001" value="1">
+                            </div>
+                            <div class="value-display" id="val00">x = 1.000</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvas00"></canvas>
+                        <div class="limit-value" id="limit00">lim<sub>x→1</sub> (x²-1)/(x-1) = 2</div>
+                    </div>
+
+                    <div class="warning">
+                        <strong>️ At x = 1:</strong> Direct substitution gives 0/0 (undefined), but the limit exists!
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4> Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→1</sub> (x²-1)/(x-1)</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Direct substitution:</strong> (1²-1)/(1-1) = 0/0 (Indeterminate!)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            <strong>Factor numerator:</strong> x²-1 = (x-1)(x+1)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            <strong>Cancel common factor:</strong> lim<sub>x→1</sub> [(x-1)(x+1)]/(x-1) = lim<sub>x→1</sub> (x+1)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">4</span>
+                            <strong>Evaluate:</strong> 1+1 = <strong>2</strong>
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <h5>Using L'Hôpital's Rule:</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            Differentiate numerator and denominator:
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            lim<sub>x→1</sub> (2x)/(1) = 2(1)/1 = <strong>2</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- /∞ Form -->
+        <div id="formInfInf" class="content">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form /∞</h3>
+                    <p>When both numerator and denominator approach infinity</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="xInfInf" min="1" max="100" step="0.1" value="10">
+                            </div>
+                            <div class="value-display" id="valInfInf">x = 10.0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvasInfInf"></canvas>
+                        <div class="limit-value" id="limitInfInf">lim<sub>x→</sub> (3x²+2x)/(x²+1) = 3</div>
+                    </div>
+
+                    <div class="success">
+                        <strong>✓ Result:</strong> As x→∞, both → ∞, but the ratio approaches 3
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4>📐 Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→∞</sub> (3x²+2x)/(x²+1)</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Direct substitution:</strong> ∞/∞ (Indeterminate!)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            <strong>Divide by highest power (x²):</strong>
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            lim<sub>x→∞</sub> (3 + 2/x)/(1 + 1/x²) = (3+0)/(1+0) = <strong>3</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 0·∞ Form -->
+        <div id="form0Inf" class="content">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form 0·∞</h3>
+                    <p>When one factor approaches 0 and the other approaches ∞</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="x0Inf" min="0.01" max="10" step="0.01" value="0.1">
+                            </div>
+                            <div class="value-display" id="val0Inf">x = 0.10</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvas0Inf"></canvas>
+                        <div class="limit-value" id="limit0Inf">lim<sub>x→0⁺</sub> x·ln(x) = 0</div>
+                    </div>
+
+                    <div class="warning">
+                        <strong>⚠️ Challenge:</strong> 0 × ∞ can be 0, , or any real number depending on which "wins"
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4>📐 Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→0⁺</sub> x·ln(x)</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Rewrite as fraction:</strong> lim<sub>x→0⁺</sub> ln(x)/(1/x) = -∞/∞
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            <strong>Apply L'Hôpital's Rule:</strong>
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            lim<sub>x→0⁺</sub> (1/x)/(-1/x²) = lim<sub>x→0⁺</sub> (-x) = <strong>0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ∞- Form -->
+        <div id="formInfInf2" class="content">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form ∞-∞</h3>
+                    <p>When two terms both approach infinity but with opposite signs</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="xInfInf2" min="1" max="100" step="0.1" value="10">
+                            </div>
+                            <div class="value-display" id="valInfInf2">x = 10.0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvasInfInf2"></canvas>
+                        <div class="limit-value" id="limitInfInf2">lim<sub>x→∞</sub> (√(x²+x) - x) = 1/2</div>
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4>📐 Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→∞</sub> (√(x²+x) - x)</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Multiply by conjugate:</strong>
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            lim<sub>x→∞</sub> [(√(x²+x) - x)(√(x²+x) + x)]/(√(x²+x) + x)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            = lim<sub>x→∞</sub> (x²+x-x²)/(√(x²+x) + x) = lim<sub>x→∞</sub> x/(√(x²+x) + x)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">4</span>
+                            Divide by x: lim<sub>x→∞</sub> 1/(√(1+1/x) + 1) = 1/(1+1) = <strong>1/2</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 0⁰ Form -->
+        <div id="form00pow" class="content">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form 0⁰</h3>
+                    <p>When base approaches 0 and exponent approaches 0</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="x00pow" min="0.001" max="1" step="0.001" value="0.1">
+                            </div>
+                            <div class="value-display" id="val00pow">x = 0.100</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvas00pow"></canvas>
+                        <div class="limit-value" id="limit00pow">lim<sub>x→0⁺</sub> x^x = 1</div>
+                    </div>
+
+                    <div class="warning">
+                        <strong>️ Note:</strong> 0 is indeterminate but often defined as 1 in combinatorics
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4>📐 Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→0⁺</sub> x^x</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Take natural log:</strong> Let y = x^x, then ln(y) = x·ln(x)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            lim<sub>x→0⁺</sub> x·ln(x) = 0 (from previous form)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            So lim<sub>x→0⁺</sub> ln(y) = 0, therefore lim<sub>x→0⁺</sub> y = e = <strong>1</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1^∞ Form -->
+        <div id="form1Inf" class="content">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form 1^∞</h3>
+                    <p>When base approaches 1 and exponent approaches ∞</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="x1Inf" min="1" max="1000" step="1" value="100">
+                            </div>
+                            <div class="value-display" id="val1Inf">x = 100</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvas1Inf"></canvas>
+                        <div class="limit-value" id="limit1Inf">lim<sub>x→∞</sub> (1 + 1/x)^x = e ≈ 2.718</div>
+                    </div>
+
+                    <div class="success">
+                        <strong>✓ Famous limit:</strong> This is the definition of e!
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4>📐 Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→∞</sub> (1 + 1/x)^x</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Take natural log:</strong> Let y = (1 + 1/x)^x
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            ln(y) = x·ln(1 + 1/x) = ln(1 + 1/x)/(1/x)
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            <strong>L'Hôpital's Rule:</strong> lim<sub>x→</sub> [1/(1+1/x)·(-1/x²)]/(-1/x²) = lim<sub>x→∞</sub> 1/(1+1/x) = 1
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">4</span>
+                            So lim<sub>x→∞</sub> y = e¹ = <strong>e</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ⁰ Form -->
+        <div id="formInf0" class="content">
+            <div class="form-section">
+                <div class="form-header">
+                    <h3>Form ∞⁰</h3>
+                    <p>When base approaches ∞ and exponent approaches 0</p>
+                </div>
+
+                <div class="simulation-container">
+                    <div class="simulation-header">
+                        <h4>🎮 Interactive Simulation</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>x approaching:</label>
+                                <input type="range" id="xInf0" min="1" max="100" step="0.1" value="10">
+                            </div>
+                            <div class="value-display" id="valInf0">x = 10.0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-container">
+                        <canvas id="canvasInf0"></canvas>
+                        <div class="limit-value" id="limitInf0">lim<sub>x→∞</sub> x^(1/x) = 1</div>
+                    </div>
+                </div>
+
+                <div class="math-explanation">
+                    <h4>📐 Mathematical Explanation</h4>
+                    <div class="example-box">
+                        <h5>Example: lim<sub>x→∞</sub> x^(1/x)</h5>
+                        <div class="solution-step">
+                            <span class="step-number">1</span>
+                            <strong>Take natural log:</strong> Let y = x^(1/x), then ln(y) = (1/x)·ln(x) = ln(x)/x
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">2</span>
+                            <strong>L'Hôpital's Rule:</strong> lim<sub>x→∞</sub> (1/x)/1 = lim<sub>x→∞</sub> 1/x = 0
+                        </div>
+                        <div class="solution-step">
+                            <span class="step-number">3</span>
+                            So lim<sub>x→∞</sub> y = e⁰ = <strong>1</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align: center; padding: 30px; background: #f8f9fa; border-top: 3px solid #e9ecef;">
+            <p style="color: #667eea; font-weight: 600;">🎓 Master Indeterminate Forms with Visual Learning!</p>
+            <p style="color: #6c757d; margin-top: 10px;">Use the sliders to see how functions behave near indeterminate points</p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Initialize graph for this tab
+            setTimeout(() => {
+                initGraphs();
+            }, 100);
+        }
+
+        // Canvas setup and drawing functions
+        function setupCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 400;
+            
+            return { canvas, ctx };
+        }
+
+        function drawAxes(ctx, width, height, padding = 40) {
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 1;
+            
+            // X axis
+            ctx.beginPath();
+            ctx.moveTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+            
+            // Y axis
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#495057';
+            ctx.font = '12px Arial';
+            ctx.fillText('x', width - padding + 10, height - padding);
+            ctx.fillText('y', padding - 20, padding);
+        }
+
+        // 0/0 Form Graph
+        function drawForm00(x) {
+            const { canvas, ctx } = setupCanvas('canvas00');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: (x²-1)/(x-1) = x+1 (except at x=1)
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = -1;
+            const xMax = 3;
+            const yMin = -1;
+            const yMax = 5;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                let yv;
+                
+                if (Math.abs(xv - 1) < 0.01) {
+                    // Hole at x=1
+                    continue;
+                } else {
+                    yv = (xv*xv - 1)/(xv - 1);
+                }
+                
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Draw hole at (1, 2)
+            const holeX = padding + (1 - xMin) / (xMax - xMin) * (width - 2*padding);
+            const holeY = height - padding - (2 - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(holeX, holeY, 6, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw current point
+            const currY = (x*x - 1)/(x - 1);
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            // Labels
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = (x²-1)/(x-1)', width/2 - 80, 30);
+            ctx.fillText('(1, 2)', holeX + 10, holeY - 10);
+        }
+
+        // ∞/∞ Form Graph
+        function drawFormInfInf(x) {
+            const { canvas, ctx } = setupCanvas('canvasInfInf');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: (3x²+2x)/(x²+1)
+            ctx.strokeStyle = '#764ba2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = 0;
+            const xMax = 20;
+            const yMin = 0;
+            const yMax = 5;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                const yv = (3*xv*xv + 2*xv)/(xv*xv + 1);
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Asymptote at y=3
+            const asymptoteY = height - padding - (3 - yMin) / (yMax - yMin) * (height - 2*padding);
+            ctx.strokeStyle = '#ffc107';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding, asymptoteY);
+            ctx.lineTo(width - padding, asymptoteY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#ffc107';
+            ctx.fillText('y = 3', width - padding - 40, asymptoteY - 5);
+            
+            // Current point
+            const currY = (3*x*x + 2*x)/(x*x + 1);
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = (3x²+2x)/(x²+1)', width/2 - 90, 30);
+        }
+
+        // 0·∞ Form Graph
+        function drawForm0Inf(x) {
+            const { canvas, ctx } = setupCanvas('canvas0Inf');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: x·ln(x)
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = 0;
+            const xMax = 2;
+            const yMin = -1;
+            const yMax = 1;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                if (xv <= 0) continue;
+                const yv = xv * Math.log(xv);
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding || xv <= 0.001) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Current point
+            const currY = x * Math.log(x);
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = x·ln(x)', width/2 - 60, 30);
+        }
+
+        // ∞-∞ Form Graph
+        function drawFormInfInf2(x) {
+            const { canvas, ctx } = setupCanvas('canvasInfInf2');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: (x²+x) - x
+            ctx.strokeStyle = '#764ba2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = 0;
+            const xMax = 20;
+            const yMin = 0;
+            const yMax = 1;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                const yv = Math.sqrt(xv*xv + xv) - xv;
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Asymptote at y=0.5
+            const asymptoteY = height - padding - (0.5 - yMin) / (yMax - yMin) * (height - 2*padding);
+            ctx.strokeStyle = '#ffc107';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding, asymptoteY);
+            ctx.lineTo(width - padding, asymptoteY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#ffc107';
+            ctx.fillText('y = 0.5', width - padding - 50, asymptoteY - 5);
+            
+            // Current point
+            const currY = Math.sqrt(x*x + x) - x;
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = √(x²+x) - x', width/2 - 80, 30);
+        }
+
+        // 0⁰ Form Graph
+        function drawForm00pow(x) {
+            const { canvas, ctx } = setupCanvas('canvas00pow');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: x^x
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = 0;
+            const xMax = 1;
+            const yMin = 0;
+            const yMax = 1.5;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                if (xv <= 0) continue;
+                const yv = Math.pow(xv, xv);
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Point at (0,1) - limit
+            ctx.fillStyle = '#dc3545';
+            ctx.beginPath();
+            ctx.arc(padding, height - padding - (1 - yMin) / (yMax - yMin) * (height - 2*padding), 6, 0, 2*Math.PI);
+            ctx.fill();
+            
+            // Current point
+            const currY = Math.pow(x, x);
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = x^x', width/2 - 40, 30);
+        }
+
+        // 1^∞ Form Graph
+        function drawForm1Inf(x) {
+            const { canvas, ctx } = setupCanvas('canvas1Inf');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: (1 + 1/x)^x
+            ctx.strokeStyle = '#764ba2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = 1;
+            const xMax = 100;
+            const yMin = 2;
+            const yMax = 3.5;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                const yv = Math.pow(1 + 1/xv, xv);
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Asymptote at y=e
+            const e = Math.E;
+            const asymptoteY = height - padding - (e - yMin) / (yMax - yMin) * (height - 2*padding);
+            ctx.strokeStyle = '#ffc107';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding, asymptoteY);
+            ctx.lineTo(width - padding, asymptoteY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#ffc107';
+            ctx.fillText('y = e ≈ 2.718', width - padding - 90, asymptoteY - 5);
+            
+            // Current point
+            const currY = Math.pow(1 + 1/x, x);
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = (1 + 1/x)^x', width/2 - 70, 30);
+        }
+
+        // ∞⁰ Form Graph
+        function drawFormInf0(x) {
+            const { canvas, ctx } = setupCanvas('canvasInf0');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            drawAxes(ctx, width, height);
+            
+            // Function: x^(1/x)
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xMin = 1;
+            const xMax = 20;
+            const yMin = 0;
+            const yMax = 2;
+            
+            for (let px = padding; px < width - padding; px++) {
+                const xv = xMin + (px - padding) / (width - 2*padding) * (xMax - xMin);
+                const yv = Math.pow(xv, 1/xv);
+                const py = height - padding - (yv - yMin) / (yMax - yMin) * (height - 2*padding);
+                
+                if (px === padding) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            
+            // Asymptote at y=1
+            const asymptoteY = height - padding - (1 - yMin) / (yMax - yMin) * (height - 2*padding);
+            ctx.strokeStyle = '#ffc107';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding, asymptoteY);
+            ctx.lineTo(width - padding, asymptoteY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#ffc107';
+            ctx.fillText('y = 1', width - padding - 40, asymptoteY - 5);
+            
+            // Current point
+            const currY = Math.pow(x, 1/x);
+            const currX = padding + (x - xMin) / (xMax - xMin) * (width - 2*padding);
+            const currPY = height - padding - (currY - yMin) / (yMax - yMin) * (height - 2*padding);
+            
+            ctx.fillStyle = '#28a745';
+            ctx.beginPath();
+            ctx.arc(currX, currPY, 8, 0, 2*Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#495057';
+            ctx.font = '14px Arial';
+            ctx.fillText('f(x) = x^(1/x)', width/2 - 50, 30);
+        }
+
+        // Initialize all graphs
+        function initGraphs() {
+            const activeTab = document.querySelector('.content.active');
+            if (!activeTab) return;
+            
+            if (activeTab.id === 'form00') {
+                const x = parseFloat(document.getElementById('x00').value);
+                drawForm00(x);
+            } else if (activeTab.id === 'formInfInf') {
+                const x = parseFloat(document.getElementById('xInfInf').value);
+                drawFormInfInf(x);
+            } else if (activeTab.id === 'form0Inf') {
+                const x = parseFloat(document.getElementById('x0Inf').value);
+                drawForm0Inf(x);
+            } else if (activeTab.id === 'formInfInf2') {
+                const x = parseFloat(document.getElementById('xInfInf2').value);
+                drawFormInfInf2(x);
+            } else if (activeTab.id === 'form00pow') {
+                const x = parseFloat(document.getElementById('x00pow').value);
+                drawForm00pow(x);
+            } else if (activeTab.id === 'form1Inf') {
+                const x = parseFloat(document.getElementById('x1Inf').value);
+                drawForm1Inf(x);
+            } else if (activeTab.id === 'formInf0') {
+                const x = parseFloat(document.getElementById('xInf0').value);
+                drawFormInf0(x);
+            }
+        }
+
+        // Event listeners for sliders
+        document.getElementById('x00').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('val00').textContent = `x = ${x.toFixed(3)}`;
+            drawForm00(x);
+            
+            const val = Math.abs(x - 1) < 0.001 ? "Undefined (0/0)" : ((x*x-1)/(x-1)).toFixed(4);
+            document.getElementById('limit00').innerHTML = `f(${x.toFixed(3)}) = ${val}`;
+        });
+
+        document.getElementById('xInfInf').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('valInfInf').textContent = `x = ${x.toFixed(1)}`;
+            drawFormInfInf(x);
+            
+            const val = ((3*x*x + 2*x)/(x*x + 1)).toFixed(4);
+            document.getElementById('limitInfInf').innerHTML = `f(${x.toFixed(1)}) = ${val} (approaching 3)`;
+        });
+
+        document.getElementById('x0Inf').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('val0Inf').textContent = `x = ${x.toFixed(2)}`;
+            drawForm0Inf(x);
+            
+            const val = (x * Math.log(x)).toFixed(4);
+            document.getElementById('limit0Inf').innerHTML = `f(${x.toFixed(2)}) = ${val} (approaching 0)`;
+        });
+
+        document.getElementById('xInfInf2').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('valInfInf2').textContent = `x = ${x.toFixed(1)}`;
+            drawFormInfInf2(x);
+            
+            const val = (Math.sqrt(x*x + x) - x).toFixed(4);
+            document.getElementById('limitInfInf2').innerHTML = `f(${x.toFixed(1)}) = ${val} (approaching 0.5)`;
+        });
+
+        document.getElementById('x00pow').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('val00pow').textContent = `x = ${x.toFixed(3)}`;
+            drawForm00pow(x);
+            
+            const val = Math.pow(x, x).toFixed(4);
+            document.getElementById('limit00pow').innerHTML = `f(${x.toFixed(3)}) = ${val} (approaching 1)`;
+        });
+
+        document.getElementById('x1Inf').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('val1Inf').textContent = `x = ${x.toFixed(0)}`;
+            drawForm1Inf(x);
+            
+            const val = Math.pow(1 + 1/x, x).toFixed(4);
+            document.getElementById('limit1Inf').innerHTML = `f(${x.toFixed(0)}) = ${val} (approaching e ≈ 2.718)`;
+        });
+
+        document.getElementById('xInf0').addEventListener('input', function(e) {
+            const x = parseFloat(e.target.value);
+            document.getElementById('valInf0').textContent = `x = ${x.toFixed(1)}`;
+            drawFormInf0(x);
+            
+            const val = Math.pow(x, 1/x).toFixed(4);
+            document.getElementById('limitInf0').innerHTML = `f(${x.toFixed(1)}) = ${val} (approaching 1)`;
+        });
+
+        // Initial draw
+        window.addEventListener('load', () => {
+            initGraphs();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            initGraphs();
+        });
+    </script>
+</body>
+</html>

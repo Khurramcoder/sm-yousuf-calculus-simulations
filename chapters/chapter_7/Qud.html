@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadrature Step-by-Step Solver</title>
+    
+    <!-- MathJax Configuration to prevent startup race conditions -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            startup: {
+                ready: () => {
+                    MathJax.startup.defaultReady();
+                    // Automatically run the first calculation once MathJax is fully ready
+                    if (typeof executeQuadrature === 'function') {
+                        executeQuadrature();
+                    }
+                }
+            }
+        };
+    </script>
+    <!-- LaTeX Rendering Engine -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/dist/mathjax.js"></script>
+    <!-- Charting Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Symbolic Math Engine for Derivatives & Integrals -->
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/nerdamer.core.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Calculus.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/Algebra.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
+        .wrapper { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #0f172a; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        @media(max-width: 850px) { .layout { grid-template-columns: 1fr; } }
+        label { font-weight: 600; display: block; margin-top: 15px; margin-bottom: 5px; color: #334155; }
+        input, select, button { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        button { background-color: #2563eb; color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .steps-card { background-color: #f1f5f9; border-left: 5px solid #3b82f6; padding: 20px; border-radius: 6px; margin-top: 20px; }
+        .graph-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
+        .presets { margin-bottom: 15px; }
+        .btn-preset { display: inline-block; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 6px 12px; margin: 4px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-preset:hover { background: #dbeafe; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <h1>📐 Quadrature Definite Integration App</h1>
+    
+    <div class="presets">
+        <strong>Textbook Bookmarks:</strong>
+        <span class="btn-preset" onclick="applyPreset('cartesian', 'sqrt(2*x - x^2)', '0', '2')">Example 34: Circle Arc</span>
+        <span class="btn-preset" onclick="applyPreset('polar', '1 - cos(x)', '0', '2*pi')">Ex 19: Cardioid r=a(1-cosθ)</span>
+        <span class="btn-preset" onclick="applyPreset('parametric', 'x - sin(x)', '1 - cos(x)', '0', '2*pi')">Ex 14: Cycloid Arch</span>
+    </div>
+
+    <div class="layout">
+        <div>
+            <label for="calcMode">System Formula Mode</label>
+            <select id="calcMode" onchange="adjustInputs()">
+                <option value="cartesian">Cartesian Area: ∫ f(x) dx</option>
+                <option value="polar">Polar Sector Area: 0.5 * ∫ [r(θ)]² dθ</option>
+                <option value="parametric">Parametric Quadrature: ∫ y(t) * x'(t) dt</option>
+            </select>
+
+            <div id="wrapper-cartesian">
+                <label for="input-f">Function f(x)</label>
+                <input type="text" id="input-f" value="sqrt(2*x - x^2)">
+            </div>
+
+            <div id="wrapper-polar" style="display:none;">
+                <label for="input-r">Polar Function r(x) [Use 'x' as θ]</label>
+                <input type="text" id="input-r" value="1 - cos(x)">
+            </div>
+
+            <div id="wrapper-parametric" style="display:none;">
+                <label for="input-xt">x(t)</label>
+                <input type="text" id="input-xt" value="x - sin(x)">
+                <label for="input-yt">y(t) [Use 'x' as parameter variable t]</label>
+                <input type="text" id="input-yt" value="1 - cos(x)">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label id="lbl-low" for="limit-a">Lower Bound (a)</label>
+                    <input type="text" id="limit-a" value="0">
+                </div>
+                <div>
+                    <label id="lbl-upp" for="limit-b">Upper Bound (b)</label>
+                    <input type="text" id="limit-b" value="2">
+                </div>
+            </div>
+
+            <button onclick="executeQuadrature()">Integrate and Draw Area</button>
+
+            <div class="steps-card">
+                <h3>Step-by-Step Derivation</h3>
+                <div id="steps-box">Click run to verify calculations...</div>
+            </div>
+        </div>
+
+        <div class="graph-panel">
+            <canvas id="canvasChart" style="width:100%; height:400px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeChart = null;
+
+    function adjustInputs() {
+        const mode = document.getElementById('calcMode').value;
+        document.getElementById('wrapper-cartesian').style.display = mode === 'cartesian' ? 'block' : 'none';
+        document.getElementById('wrapper-polar').style.display = mode === 'polar' ? 'block' : 'none';
+        document.getElementById('wrapper-parametric').style.display = mode === 'parametric' ? 'block' : 'none';
+        
+        if (mode === 'polar') {
+            document.getElementById('lbl-low').innerText = "Lower angle α";
+            document.getElementById('lbl-upp').innerText = "Upper angle β";
+        } else if (mode === 'parametric') {
+            document.getElementById('lbl-low').innerText = "Lower time limit t1";
+            document.getElementById('lbl-upp').innerText = "Upper time limit t2";
+        } else {
+            document.getElementById('lbl-low').innerText = "Lower limit a";
+            document.getElementById('lbl-upp').innerText = "Upper limit b";
+        }
+    }
+
+    function applyPreset(mode, p1, p2, p3) {
+        document.getElementById('calcMode').value = mode;
+        adjustInputs();
+        if (mode === 'cartesian') document.getElementById('input-f').value = p1;
+        if (mode === 'polar') document.getElementById('input-r').value = p1;
+        if (mode === 'parametric') {
+            document.getElementById('input-xt').value = p1;
+            document.getElementById('input-yt').value = p2;
+        }
+        document.getElementById('limit-a').value = mode === 'parametric' ? p3 : p2;
+        document.getElementById('limit-b').value = mode === 'parametric' ? '2*pi' : p3;
+        executeQuadrature();
+    }
+
+    function evaluateLimitStr(str) {
+        let clean = str.replace(/pi/g, Math.PI);
+        return eval(clean);
+    }
+
+    function executeQuadrature() {
+        const mode = document.getElementById('calcMode').value;
+        const lowBoundStr = document.getElementById('limit-a').value;
+        const uppBoundStr = document.getElementById('limit-b').value;
+        
+        const numA = evaluateLimitStr(lowBoundStr);
+        const numB = evaluateLimitStr(uppBoundStr);
+
+        let stepsHtml = "";
+        let coordinatesPoints = [];
+
+        try {
+            if (mode === 'cartesian') {
+                let exprStr = document.getElementById('input-f').value;
+                
+                let integrand = nerdamer(exprStr);
+                let antiderivative = nerdamer.integrate(integrand, 'x');
+                let definiteInt = nerdamer(`defint(${exprStr}, ${lowBoundStr}, ${uppBoundStr}, x)`);
+
+                stepsHtml = `
+                    <p><strong>1. Area Quadrature setup:</strong></p>
+                    $$A = \\int_{a}^{b} f(x) \\, dx = \\int_{${lowBoundStr}}^{${uppBoundStr}} ${integrand.toTeX()} \\, dx$$
+                    <p><strong>2. Find the Antiderivative $F(x)$:</strong></p>
+                    $$F(x) = ${antiderivative.toTeX()} + C$$
+                    <p><strong>3. Evaluate Definite Integral bounds:</strong></p>
+                    $$A = F(${uppBoundStr}) - F(${lowBoundStr}) = ${definiteInt.toTeX()}$$
+                    <p><strong>Approximate Decimal Value:</strong> ${parseFloat(definiteInt.text()).toFixed(5)} units²</p>
+                `;
+
+                let stepSize = (numB - numA) / 100;
+                for(let i=0; i<=100; i++) {
+                    let cx = numA + (i * stepSize);
+                    let cy = parseFloat(nerdamer(exprStr).evaluate({x: cx}).text());
+                    if(!isNaN(cy)) coordinatesPoints.push({x: cx, y: cy});
+                }
+
+            } else if (mode === 'polar') {
+                let rStr = document.getElementById('input-r').value;
+                let squaredExpr = `(${rStr})^2`;
+                
+                let antiderivative = nerdamer.integrate(`0.5 * ${squaredExpr}`, 'x');
+                let definiteInt = nerdamer(`defint(0.5 * ${squaredExpr}, ${lowBoundStr}, ${uppBoundStr}, x)`);
+
+                stepsHtml = `
+                    <p><strong>1. Polar Area Integral Framework:</strong></p>
+                    $$A = \\frac{1}{2} \\int_{\\alpha}^{\\beta} [r(\\theta)]^2 \\, d\\theta = \\frac{1}{2} \\int_{${lowBoundStr}}^{${uppBoundStr}} \\left(${nerdamer(rStr).toTeX()}\\right)^2 \\, dx$$
+                    <p><strong>2. Indefinite Form Evaluation:</strong></p>
+                    $$\\int \\frac{1}{2} r^2 \\, dx = ${antiderivative.toTeX()}$$
+                    <p><strong>3. Calculated Enclosed Sector Result:</strong></p>
+                    $$A = ${definiteInt.toTeX()}$$
+                    <p><strong>Approximate Decimal Value:</strong> ${parseFloat(definiteInt.text()).toFixed(5)} units²</p>
+                `;
+
+                let stepSize = (numB - numA) / 150;
+                for(let i=0; i<=150; i++) {
+                    let theta = numA + (i * stepSize);
+                    let radius = parseFloat(nerdamer(rStr).evaluate({x: theta}).text());
+                    let cx = radius * Math.cos(theta);
+                    let cy = radius * Math.sin(theta);
+                    coordinatesPoints.push({x: cx, y: cy});
+                }
+
+            } else if (mode === 'parametric') {
+                let xtStr = document.getElementById('input-xt').value;
+                let ytStr = document.getElementById('input-yt').value;
+
+                let dxdt = nerdamer.diff(xtStr, 'x');
+                let combinedIntegrand = `(${ytStr}) * (${dxdt.text()})`;
+                let antiderivative = nerdamer.integrate(combinedIntegrand, 'x');
+                let definiteInt = nerdamer(`defint(${combinedIntegrand}, ${lowBoundStr}, ${uppBoundStr}, x)`);
+
+                stepsHtml = `
+                    <p><strong>1. Parametric Line Path Integral Form:</strong></p>
+                    $$A = \\int_{t_1}^{t_2} y(t) \\cdot \\frac{dx}{dt} \\, dt$$
+                    <p><strong>2. Compute Vector Path Derivative:</strong></p>
+                    $$\\frac{dx}{dt} = ${dxdt.toTeX()}$$
+                    <p><strong>3. Combined Indefinite Steps Area Evaluation:</strong></p>
+                    $$A = \\int_{${lowBoundStr}}^{${uppBoundStr}} \\left(${nerdamer(ytStr).toTeX()}\\right) \\cdot \\left(${dxdt.toTeX()}\\right) \\, dx$$
+                    $$F(t) = ${antiderivative.toTeX()}$$
+                    $$A = ${definiteInt.toTeX()}$$
+                    <p><strong>Approximate Decimal Value:</strong> ${parseFloat(definiteInt.text()).toFixed(5)} units²</p>
+                `;
+
+                let stepSize = (numB - numA) / 150;
+                for(let i=0; i<=150; i++) {
+                    let t = numA + (i * stepSize);
+                    let cx = parseFloat(nerdamer(xtStr).evaluate({x: t}).text());
+                    let cy = parseFloat(nerdamer(ytStr).evaluate({x: t}).text());
+                    coordinatesPoints.push({x: cx, y: cy});
+                }
+            }
+
+            document.getElementById('steps-box').innerHTML = stepsHtml;
+            
+            // Safely trigger MathJax typesetting only if it is completely ready in window namespace
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+            plotCanvasGraph(coordinatesPoints, mode);
+
+        } catch (err) {
+            document.getElementById('steps-box').innerHTML = `<b style="color:#ef4444;">Processing Error:</b> Invalid syntax expression match. ${err.message}`;
+        }
+    }
+
+    function plotCanvasGraph(pointsArr, mode) {
+        const ctx = document.getElementById('canvasChart').getContext('2d');
+        if (activeChart) activeChart.destroy();
+
+        if (mode === 'cartesian') pointsArr.sort((m, n) => m.x - n.x);
+
+        activeChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Quadrature Integration Region Bound',
+                    data: pointsArr,
+                    showLine: true,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    fill: 'origin',
+                    pointRadius: 0.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { type: 'linear', position: 'bottom' },
+                    y: { type: 'linear' }
+                }
+            }
+        });
+    }
+
+    // Backup execution hook if script finishes loading after DOM content
+    window.onload = () => { 
+        if (typeof MathJax !== 'undefined' && MathJax.startup) {
+            executeQuadrature(); 
+        }
+    };
+</script>
+
+</body>
+</html>

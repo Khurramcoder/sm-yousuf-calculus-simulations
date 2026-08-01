@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polar Coordinates Curve Sketcher</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .app-layout {
+            display: flex;
+            gap: 25px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .controls-panel {
+            flex: 1;
+            min-width: 320px;
+        }
+        .visualizer-panel {
+            flex: 1;
+            min-width: 360px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .presets {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+        .btn-preset {
+            background: #e1e8ed;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-preset:hover {
+            background: #d0dbe5;
+        }
+        button.action-btn {
+            width: 100%;
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        button.action-btn:hover {
+            background: #2980b9;
+        }
+        canvas {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        }
+        .analysis-box {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 6px 6px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .analysis-box h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+        th {
+            background-color: #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Polar Coordinate Curve Explorer</h1>
+    
+    <div class="app-layout">
+        <!-- Controls & Analytical Panel -->
+        <div class="controls-panel">
+            <div class="input-group">
+                <label for="eqInput">Equation: r(θ) =</label>
+                <input type="text" id="eqInput" value="2 * (1 - cos(t))" placeholder="e.g., 2 * (1 - cos(t))">
+                <small style="color: #7f8c8d;">Use <b>t</b> for θ. Functions: sin(), cos(), tan(), sqrt(), PI.</small>
+                
+                <div class="presets">
+                    <button class="btn-preset" onclick="loadPreset('2 * (1 - cos(t))', 3)">Cardioid</button>
+                    <button class="btn-preset" onclick="loadPreset('3 * cos(3 * t)', 4)">3-Leaf Rose</button>
+                    <button class="btn-preset" onclick="loadPreset('2 * cos(2 * t)', 3)">4-Leaf Rose</button>
+                    <button class="btn-preset" onclick="loadPreset('0.2 * t', 15)">Archimedean Spiral</button>
+                    <button class="btn-preset" onclick="loadPreset('2 / (1 - cos(t))', 10)">Parabola</button>
+                </div>
+            </div>
+
+            <div class="input-group" style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label for="scaleInput">Max Radius (Grid Scale):</label>
+                    <input type="number" id="scaleInput" value="4" step="0.5">
+                </div>
+            </div>
+
+            <button class="action-btn" onclick="processAndPlot()">Analyze & Plot Curve</button>
+            <div id="errorMessage" class="error"></div>
+
+            <!-- Analytical Properties output based on textbook checklist -->
+            <div class="analysis-box" id="analysisResult">
+                <h3>Curve Properties Checklist</h3>
+                <div id="propertiesContent">Enter an equation and hit Analyze.</div>
+            </div>
+        </div>
+
+        <!-- Graphical Visualizer Panel -->
+        <div class="visualizer-panel">
+            <canvas id="polarCanvas" width="450" height="450"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('polarCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Helper math environment mapping
+    const mathEnv = {
+        sin: Math.sin,
+        cos: Math.cos,
+        tan: Math.tan,
+        sqrt: Math.sqrt,
+        abs: Math.abs,
+        pi: Math.PI,
+        PI: Math.PI
+    };
+
+    // Evaluate user equation safely via Function constructor
+    function evaluateR(expression, tValue) {
+        try {
+            // Standardize expression syntax
+            let parsed = expression.toLowerCase()
+                                   .replace(/sin/g, 'Math.sin')
+                                   .replace(/cos/g, 'Math.cos')
+                                   .replace(/tan/g, 'Math.tan')
+                                   .replace(/sqrt/g, 'Math.sqrt')
+                                   .replace(/abs/g, 'Math.abs')
+                                   .replace(/pi/g, 'Math.PI');
+            
+            // Allow variable 't' or 'θ' 
+            const evaluator = new Function('t', `with(Math) { return ${parsed}; }`);
+            return evaluator(tValue);
+        } catch (e) {
+            return NaN;
+        }
+    }
+
+    function loadPreset(eq, scale) {
+        document.getElementById('eqInput').value = eq;
+        document.getElementById('scaleInput').value = scale;
+        processAndPlot();
+    }
+
+    function drawGrid(maxRadius) {
+        const width = canvas.width;
+        const height = canvas.height;
+        const cx = width / 2;
+        const cy = height / 2;
+        const screenRadius = width / 2 - 20;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw radial concentric circles
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 1;
+        const circles = 4;
+        for (let i = 1; i <= circles; i++) {
+            let r = (screenRadius / circles) * i;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Label concentric grid values
+            ctx.fillStyle = '#95a5a6';
+            ctx.font = '10px sans-serif';
+            ctx.fillText(((maxRadius / circles) * i).toFixed(1), cx + r + 2, cy - 4);
+        }
+
+        // Draw angular spoke lines (every 30 degrees)
+        for (let degree = 0; degree < 360; degree += 30) {
+            let rad = (degree * Math.PI) / 180;
+            let x = cx + screenRadius * Math.cos(rad);
+            let y = cy - screenRadius * Math.sin(rad); // canvas inversion
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = degree % 90 === 0 ? '#cccccc' : '#f0f0f0';
+            ctx.stroke();
+
+            // Label angles
+            if (degree % 30 === 0) {
+                let labelX = cx + (screenRadius + 12) * Math.cos(rad);
+                let labelY = cy - (screenRadius + 12) * Math.sin(rad);
+                ctx.fillStyle = '#7f8c8d';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(degree + '°', labelX, labelY);
+            }
+        }
+
+        // Highlight Main Axes (Initial line and vertical line)
+        ctx.strokeStyle = '#7f8c8d';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - screenRadius, cy); ctx.lineTo(cx + screenRadius, cy);
+        ctx.moveTo(cx, cy - screenRadius); ctx.lineTo(cx, cy + screenRadius);
+        ctx.stroke();
+    }
+
+    function processAndPlot() {
+        const expr = document.getElementById('eqInput').value;
+        const maxRadius = parseFloat(document.getElementById('scaleInput').value) || 5;
+        const errDiv = document.getElementById('errorMessage');
+        errDiv.innerText = '';
+
+        // Validate function output test
+        if (isNaN(evaluateR(expr, 0))) {
+            errDiv.innerText = "Error: Invalid equation syntax.";
+            return;
+        }
+
+        // 1. Draw background coordinates
+        drawGrid(maxRadius);
+
+        // 2. Generate curve points and trace
+        const width = canvas.width;
+        const height = canvas.height;
+        const cx = width / 2;
+        const cy = height / 2;
+        const screenRadius = width / 2 - 20;
+        const scaleFactor = screenRadius / maxRadius;
+
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+
+        let firstPoint = true;
+        // Step tightly through 0 to 4pi to catch multi-loop structures
+        const steps = 400;
+        for (let i = 0; i <= steps; i++) {
+            let t = (i / steps) * 4 * Math.PI;
+            let r = evaluateR(expr, t);
+
+            if (isNaN(r) || !isFinite(r)) continue;
+
+            // Deal with negative r values natively by shifting direction by pi
+            let adjustedT = t;
+            if (r < 0) {
+                r = Math.abs(r);
+                adjustedT = t + Math.PI;
+            }
+
+            let x = cx + r * Math.cos(adjustedT) * scaleFactor;
+            let y = cy - r * Math.sin(adjustedT) * scaleFactor; // flip y axis for screen coordinates
+
+            if (firstPoint) {
+                ctx.moveTo(x, y);
+                firstPoint = false;
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+
+        // 3. Automated Check of Textbook Analytical Properties
+        analyzeProperties(expr);
+    }
+
+    function analyzeProperties(expr) {
+        const eps = 0.001;
+        // Test points for symmetry
+        const testAngles = [0.2, 0.5, 1.0, 1.5, 2.3];
+        
+        let symInitialLine = true;
+        let symYAxis = true;
+        let symPole = true;
+
+        testAngles.forEach(t => {
+            let r_base = evaluateR(expr, t);
+            
+            // Check Initial line symmetry: r(θ) == r(-θ)
+            if (Math.abs(Math.abs(r_base) - Math.abs(evaluateR(expr, -t))) > eps) {
+                symInitialLine = false;
+            }
+            // Check Y-Axis symmetry: r(θ) == r(π - θ)
+            if (Math.abs(Math.abs(r_base) - Math.abs(evaluateR(expr, Math.PI - t))) > eps) {
+                symYAxis = false;
+            }
+            // Check Pole symmetry: r(θ) == r(π + θ)
+            if (Math.abs(Math.abs(r_base) - Math.abs(evaluateR(expr, Math.PI + t))) > eps) {
+                symPole = false;
+            }
+        });
+
+        // Check if curve passes through the Pole (does r = 0 for some theta?)
+        let passesPole = "No matching root found in standard interval [0, 2π]";
+        for (let deg = 0; deg <= 360; deg += 1) {
+            let rad = (deg * Math.PI) / 180;
+            if (Math.abs(evaluateR(expr, rad)) < 0.05) {
+                passesPole = `Yes, passes through pole when θ ≈ ${deg}°`;
+                break;
+            }
+        }
+
+        // Generate dynamic table of values
+        let tableRows = '';
+        const sampleDegrees = [0, 30, 45, 60, 90, 120, 180, 270, 360];
+        sampleDegrees.forEach(deg => {
+            let rad = (deg * Math.PI) / 180;
+            let rVal = evaluateR(expr, rad);
+            let displayR = (isNaN(rVal) || !isFinite(rVal)) ? "Undefined" : rVal.toFixed(2);
+            tableRows += `<tr><td>${deg}°</td><td>${displayR}</td></tr>`;
+        });
+
+        // Render data back to display box
+        document.getElementById('propertiesContent').innerHTML = `
+            <p><b>1. Symmetry Analysis:</b></p>
+            <ul>
+                <li><b>About the Initial Line (x-axis):</b> ${symInitialLine ? '<span style="color:green">Symmetric [r(θ) = r(-θ)]</span>' : 'Not symmetric'}</li>
+                <li><b>About the y-axis:</b> ${symYAxis ? '<span style="color:green">Symmetric [r(θ) = r(π-θ)]</span>' : 'Not symmetric'}</li>
+                <li><b>About the Pole (Origin):</b> ${symPole ? '<span style="color:green">Symmetric [r(θ) = r(π+θ)]</span>' : 'Not symmetric'}</li>
+            </ul>
+            <p><b>2. Position of Pole:</b><br> ${passesPole}</p>
+            <p><b>3. Automated Table of Values:</b></p>
+            <table>
+                <thead><tr><th>θ (Degrees)</th><th>Calculated Radius (r)</th></tr></thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+        `;
+    }
+
+    // Initial default render on page load
+    window.onload = () => { processAndPlot(); };
+</script>
+
+</body>
+</html>
