@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legendre Polynomials Interactive Simulation</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: var(--dark-color);
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--secondary-color);
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .graph-container {
+            width: 100%;
+            height: 400px;
+            margin: 1.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        label {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+        }
+        
+        .polynomial-display {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .formula {
+            font-size: 1.1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .property-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid var(--secondary-color);
+        }
+        
+        .property-card h3 {
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+        }
+        
+        .examples {
+            margin-top: 2rem;
+        }
+        
+        .example {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                text-align: left;
+            }
+            
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Legendre Polynomials Interactive Simulation</h1>
+        <p>Explore the properties and visualizations of Legendre polynomials</p>
+    </header>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="introduction">Introduction</button>
+            <button class="tab" data-tab="visualization">Visualization</button>
+            <button class="tab" data-tab="properties">Properties</button>
+            <button class="tab" data-tab="applications">Applications</button>
+        </div>
+        
+        <div class="tab-content active" id="introduction">
+            <h2>Legendre Polynomials</h2>
+            <p>Legendre polynomials are solutions to Legendre's differential equation:</p>
+            <div class="formula">
+                (1 - x²)y'' - 2xy' + n(n+1)y = 0
+            </div>
+            <p>where n is a non-negative integer.</p>
+            
+            <p>These polynomials form an orthogonal system on the interval [-1, 1] and have numerous applications in physics and engineering, particularly in problems with spherical symmetry.</p>
+            
+            <div class="polynomial-display">
+                <h3>First Few Legendre Polynomials:</h3>
+                <p>P₀(x) = 1</p>
+                <p>P₁(x) = x</p>
+                <p>P₂(x) = ½(3x² - 1)</p>
+                <p>P₃(x) = ½(5x³ - 3x)</p>
+                <p>P₄(x) = ⅛(35x⁴ - 30x² + 3)</p>
+                <p>P₅(x) = ⅛(63x⁵ - 70x³ + 15x)</p>
+            </div>
+            
+            <div class="examples">
+                <h3>Example: Expressing a Polynomial in Legendre Basis</h3>
+                <div class="example">
+                    <p>Express f(x) = x⁴ + 2x³ + 2x² - x - 3 in terms of Legendre polynomials.</p>
+                    <p>Using the expressions above, we can write:</p>
+                    <div class="polynomial-display">
+                        f(x) = (8/35)P₄(x) + (4/5)P₃(x) + (40/21)P₂(x) + (1/5)P₁(x) - (224/105)P₀(x)
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="visualization">
+            <h2>Legendre Polynomials Visualization</h2>
+            <p>Select different values of n to see how the Legendre polynomials change:</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="n-value">Polynomial Degree (n):</label>
+                    <input type="range" id="n-value" min="0" max="10" value="2">
+                    <span id="n-display">2</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="show-multiple">Show Multiple Polynomials:</label>
+                    <input type="checkbox" id="show-multiple">
+                </div>
+                
+                <div class="control-group">
+                    <label for="multiple-range">Range of n values (if multiple selected):</label>
+                    <input type="range" id="multiple-range" min="0" max="5" value="3">
+                    <span id="range-display">0 to 3</span>
+                </div>
+            </div>
+            
+            <div class="graph-container">
+                <canvas id="legendre-chart"></canvas>
+            </div>
+            
+            <div class="polynomial-display" id="current-polynomial">
+                P₂(x) = ½(3x² - 1)
+            </div>
+            
+            <div class="examples">
+                <h3>Orthogonality Demonstration</h3>
+                <div class="example">
+                    <p>Select two different polynomials to visualize their orthogonality:</p>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label for="ortho-n1">First Polynomial (n):</label>
+                            <input type="range" id="ortho-n1" min="0" max="5" value="1">
+                            <span id="ortho-n1-display">1</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="ortho-n2">Second Polynomial (n):</label>
+                            <input type="range" id="ortho-n2" min="0" max="5" value="2">
+                            <span id="ortho-n2-display">2</span>
+                        </div>
+                    </div>
+                    
+                    <div class="polynomial-display" id="orthogonality-result">
+                        ∫ P₁(x)P₂(x) dx from -1 to 1 = 0
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="properties">
+            <h2>Properties of Legendre Polynomials</h2>
+            
+            <div class="properties-grid">
+                <div class="property-card">
+                    <h3>Orthogonality</h3>
+                    <p>Legendre polynomials are orthogonal on the interval [-1, 1]:</p>
+                    <div class="formula">
+                        ∫ Pₘ(x)Pₙ(x) dx = 0 if m ≠ n
+                    </div>
+                    <div class="formula">
+                        ∫ [Pₙ(x)]² dx = 2/(2n+1)
+                    </div>
+                </div>
+                
+                <div class="property-card">
+                    <h3>Recurrence Relations</h3>
+                    <p>Legendre polynomials satisfy several recurrence relations:</p>
+                    <div class="formula">
+                        (2n+1)xPₙ(x) = (n+1)Pₙ₊₁(x) + nPₙ₋₁(x)
+                    </div>
+                    <div class="formula">
+                        nPₙ(x) = xPₙ'(x) - Pₙ₋₁'(x)
+                    </div>
+                </div>
+                
+                <div class="property-card">
+                    <h3>Rodrigues' Formula</h3>
+                    <p>Legendre polynomials can be expressed as:</p>
+                    <div class="formula">
+                        Pₙ(x) = 1/(2ⁿn!) dⁿ/dxⁿ [(x²-1)ⁿ]
+                    </div>
+                </div>
+                
+                <div class="property-card">
+                    <h3>Generating Function</h3>
+                    <p>The generating function for Legendre polynomials is:</p>
+                    <div class="formula">
+                        (1 - 2xh + h²)⁻¹ᐟ² = Σ hⁿPₙ(x)
+                    </div>
+                </div>
+                
+                <div class="property-card">
+                    <h3>Special Values</h3>
+                    <p>Pₙ(1) = 1</p>
+                    <p>Pₙ(-1) = (-1)ⁿ</p>
+                    <p>P₂ₙ₊₁(0) = 0</p>
+                    <p>P₂ₙ(0) = (-1)ⁿ(2n)!/(2²ⁿ(n!)²)</p>
+                </div>
+                
+                <div class="property-card">
+                    <h3>Laplace's Integrals</h3>
+                    <p>Laplace's first integral:</p>
+                    <div class="formula">
+                        Pₙ(x) = 1/π ∫ [x ± √(x²-1)cosφ]ⁿ dφ
+                    </div>
+                    <p>Laplace's second integral:</p>
+                    <div class="formula">
+                        Pₙ(x) = 1/π ∫ dφ/[x ± √(x²-1)cosφ]ⁿ⁺¹
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="applications">
+            <h2>Applications of Legendre Polynomials</h2>
+            
+            <div class="property-card">
+                <h3>Physics - Electrostatics</h3>
+                <p>In problems with spherical symmetry, such as the electric potential around a charged sphere, solutions to Laplace's equation are expressed in terms of Legendre polynomials.</p>
+            </div>
+            
+            <div class="property-card">
+                <h3>Quantum Mechanics</h3>
+                <p>The angular part of the wavefunction for the hydrogen atom involves Legendre polynomials, specifically in the spherical harmonics.</p>
+            </div>
+            
+            <div class="property-card">
+                <h3>Geophysics</h3>
+                <p>Legendre polynomials are used in representing the Earth's gravitational field and in geodesy.</p>
+            </div>
+            
+            <div class="property-card">
+                <h3>Signal Processing</h3>
+                <p>In some filter design problems, Legendre polynomials are used due to their orthogonal properties.</p>
+            </div>
+            
+            <div class="examples">
+                <h3>Example: Solving Laplace's Equation in Spherical Coordinates</h3>
+                <div class="example">
+                    <p>In spherical coordinates (r, θ, φ), Laplace's equation ∇²V = 0 has solutions of the form:</p>
+                    <div class="formula">
+                        V(r, θ) = Σ [Aₙrⁿ + Bₙr⁻⁽ⁿ⁺¹⁾] Pₙ(cosθ)
+                    </div>
+                    <p>where Pₙ(cosθ) are Legendre polynomials.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Legendre Polynomials Interactive Simulation | Based on mathematical concepts by Adrien-Marie Legendre</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Legendre polynomial calculation
+        function legendre(n, x) {
+            if (n === 0) return 1;
+            if (n === 1) return x;
+            
+            let p0 = 1;
+            let p1 = x;
+            let p2;
+            
+            for (let i = 2; i <= n; i++) {
+                p2 = ((2*i - 1) * x * p1 - (i - 1) * p0) / i;
+                p0 = p1;
+                p1 = p2;
+            }
+            
+            return p2;
+        }
+        
+        // Get polynomial expression as string
+        function getPolynomialExpression(n) {
+            const polynomials = [
+                "P₀(x) = 1",
+                "P₁(x) = x",
+                "P₂(x) = ½(3x² - 1)",
+                "P₃(x) = ½(5x³ - 3x)",
+                "P₄(x) = ⅛(35x⁴ - 30x² + 3)",
+                "P₅(x) = ⅛(63x⁵ - 70x³ + 15x)",
+                "P₆(x) = ¹⁄₁₆(231x⁶ - 315x⁴ + 105x² - 5)",
+                "P₇(x) = ¹⁄₁₆(429x⁷ - 693x⁵ + 315x³ - 35x)",
+                "P₈(x) = ¹⁄₁₂₈(6435x⁸ - 12012x⁶ + 6930x⁴ - 1260x² + 35)",
+                "P₉(x) = ¹⁄₁₂₈(12155x⁹ - 25740x⁷ + 18018x⁵ - 4620x³ + 315x)",
+                "P₁₀(x) = ¹⁄₂₅₆(46189x¹⁰ - 109395x⁸ + 90090x⁶ - 30030x⁴ + 3465x² - 63)"
+            ];
+            
+            return n < polynomials.length ? polynomials[n] : `P${n}(x) = [Calculated using recurrence]`;
+        }
+        
+        // Initialize chart
+        const ctx = document.getElementById('legendre-chart').getContext('2d');
+        let legendreChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min: -1,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'x'
+                        }
+                    },
+                    y: {
+                        min: -1.2,
+                        max: 1.2,
+                        title: {
+                            display: true,
+                            text: 'Pₙ(x)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Legendre Polynomials'
+                    },
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+        
+        // Update chart based on controls
+        function updateChart() {
+            const n = parseInt(document.getElementById('n-value').value);
+            const showMultiple = document.getElementById('show-multiple').checked;
+            const multipleRange = parseInt(document.getElementById('multiple-range').value);
+            
+            // Generate x values from -1 to 1
+            const xValues = [];
+            for (let x = -1; x <= 1; x += 0.02) {
+                xValues.push(x);
+            }
+            
+            // Update datasets
+            const datasets = [];
+            
+            if (showMultiple) {
+                // Show multiple polynomials
+                for (let i = 0; i <= multipleRange; i++) {
+                    const yValues = xValues.map(x => legendre(i, x));
+                    datasets.push({
+                        label: `P${i}(x)`,
+                        data: yValues,
+                        borderColor: `hsl(${i * 60}, 70%, 50%)`,
+                        backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.1)`,
+                        tension: 0.4,
+                        fill: false
+                    });
+                }
+            } else {
+                // Show single polynomial
+                const yValues = xValues.map(x => legendre(n, x));
+                datasets.push({
+                    label: `P${n}(x)`,
+                    data: yValues,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                });
+            }
+            
+            // Update chart
+            legendreChart.data.labels = xValues;
+            legendreChart.data.datasets = datasets;
+            legendreChart.update();
+            
+            // Update polynomial display
+            if (!showMultiple) {
+                document.getElementById('current-polynomial').textContent = getPolynomialExpression(n);
+            } else {
+                document.getElementById('current-polynomial').textContent = 
+                    `Showing polynomials P₀(x) to P${multipleRange}(x)`;
+            }
+        }
+        
+        // Initialize controls and chart
+        document.getElementById('n-value').addEventListener('input', function() {
+            document.getElementById('n-display').textContent = this.value;
+            updateChart();
+        });
+        
+        document.getElementById('show-multiple').addEventListener('change', updateChart);
+        
+        document.getElementById('multiple-range').addEventListener('input', function() {
+            document.getElementById('range-display').textContent = `0 to ${this.value}`;
+            updateChart();
+        });
+        
+        // Initialize orthogonality controls
+        document.getElementById('ortho-n1').addEventListener('input', function() {
+            document.getElementById('ortho-n1-display').textContent = this.value;
+            updateOrthogonality();
+        });
+        
+        document.getElementById('ortho-n2').addEventListener('input', function() {
+            document.getElementById('ortho-n2-display').textContent = this.value;
+            updateOrthogonality();
+        });
+        
+        // Calculate orthogonality
+        function updateOrthogonality() {
+            const n1 = parseInt(document.getElementById('ortho-n1').value);
+            const n2 = parseInt(document.getElementById('ortho-n2').value);
+            
+            // Numerical integration of P_n1(x) * P_n2(x) from -1 to 1
+            let integral = 0;
+            const step = 0.001;
+            
+            for (let x = -1; x <= 1; x += step) {
+                integral += legendre(n1, x) * legendre(n2, x) * step;
+            }
+            
+            // Round to avoid floating point precision issues
+            integral = Math.round(integral * 1000) / 1000;
+            
+            const result = n1 === n2 ? 
+                `∫ [P${n1}(x)]² dx from -1 to 1 = ${integral} (Theoretical: ${(2/(2*n1+1)).toFixed(3)})` :
+                `∫ P${n1}(x)P${n2}(x) dx from -1 to 1 = ${integral}`;
+            
+            document.getElementById('orthogonality-result').textContent = result;
+        }
+        
+        // Initial setup
+        updateChart();
+        updateOrthogonality();
+    </script>
+</body>
+</html>

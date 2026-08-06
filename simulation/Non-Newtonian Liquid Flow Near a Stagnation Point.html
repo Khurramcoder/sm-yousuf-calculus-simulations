@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Newtonian Flow Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffcc00;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .data-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+        
+        .explanation {
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        
+        .key-point {
+            background: rgba(255, 204, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ffcc00;
+        }
+        
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Non-Newtonian Liquid Flow Near a Stagnation Point</h1>
+            <p class="subtitle">Interactive simulation based on the 1958 paper by A.C. Srivastava, visualizing the effect of cross-viscosity on boundary layer thickness and flow characteristics.</p>
+        </header>
+        
+        <div class="content">
+            <div class="card">
+                <h2>Flow Visualization</h2>
+                
+                <div class="controls">
+                    <div class="slider-container">
+                        <label for="k-slider">Cross-Viscosity Parameter (K = μ₀a/μ):</label>
+                        <input type="range" id="k-slider" min="0" max="0.3" step="0.01" value="0">
+                        <div class="value-display" id="k-value">K = 0.00</div>
+                    </div>
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="flow-canvas"></canvas>
+                </div>
+                
+                <div class="key-point">
+                    <strong>Observation:</strong> The boundary layer thickness decreases as K increases from 0 to ~0.15, then increases with further increase in K.
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Parameter Analysis</h2>
+                
+                <div class="canvas-container">
+                    <canvas id="chart-canvas"></canvas>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>K</th>
+                            <th>δ (Boundary Layer)</th>
+                            <th>φ''(0) (Shear)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+                
+                <div class="explanation">
+                    <p>The non-dimensional parameter <strong>K = μ₀a/μ</strong> represents the ratio of cross-viscosity (μ₀) to viscosity (μ), scaled by the flow constant (a).</p>
+                    
+                    <div class="formula">
+                        δ (Boundary Layer Thickness) and φ''(0) (Wall Shear) vs K
+                    </div>
+                    
+                    <p>As K increases, the shearing stress at the wall decreases, while the normal stress remains independent of both viscosity and cross-viscosity.</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Simulation based on: "The Flow of a Non-Newtonian Liquid Near a Stagnation Point" by Abinash Chandra Srivastava (1958)</p>
+            <p>ZAMP Vol. IX, 1958 - Interactive visualization created for educational purposes</p>
+        </footer>
+    </div>
+
+    <script>
+        // Data from Srivastava's paper
+        const paperData = [
+            { K: 0.00, delta: 1.8684, phiDoublePrime: 1.2699 },
+            { K: 0.02, delta: 1.8086, phiDoublePrime: 1.2670 },
+            { K: 0.04, delta: 1.7567, phiDoublePrime: 1.2649 },
+            { K: 0.06, delta: 1.7107, phiDoublePrime: 1.2635 },
+            { K: 0.08, delta: 1.6688, phiDoublePrime: 1.2628 },
+            { K: 0.10, delta: 1.6307, phiDoublePrime: 1.2625 },
+            { K: 0.12, delta: 1.5963, phiDoublePrime: 1.2625 },
+            { K: 0.14, delta: 1.5752, phiDoublePrime: 1.2587 },
+            { K: 0.16, delta: 1.5630, phiDoublePrime: 1.2523 },
+            { K: 0.18, delta: 1.6250, phiDoublePrime: 1.2208 },
+            { K: 0.20, delta: 1.7141, phiDoublePrime: 1.1836 },
+            { K: 0.22, delta: 1.8061, phiDoublePrime: 1.1506 },
+            { K: 0.24, delta: 1.8978, phiDoublePrime: 1.1216 },
+            { K: 0.26, delta: 1.9887, phiDoublePrime: 1.0961 },
+            { K: 0.28, delta: 2.0790, phiDoublePrime: 1.0735 },
+            { K: 0.30, delta: 2.1688, phiDoublePrime: 1.0534 }
+        ];
+
+        // Get DOM elements
+        const kSlider = document.getElementById('k-slider');
+        const kValue = document.getElementById('k-value');
+        const flowCanvas = document.getElementById('flow-canvas');
+        const chartCanvas = document.getElementById('chart-canvas');
+        const dataTableBody = document.getElementById('data-table-body');
+
+        // Set up flow canvas
+        const flowCtx = flowCanvas.getContext('2d');
+        flowCanvas.width = flowCanvas.offsetWidth;
+        flowCanvas.height = flowCanvas.offsetHeight;
+
+        // Set up chart
+        const chart = new Chart(chartCanvas, {
+            type: 'line',
+            data: {
+                labels: paperData.map(d => d.K.toFixed(2)),
+                datasets: [
+                    {
+                        label: 'Boundary Layer Thickness (δ)',
+                        data: paperData.map(d => d.delta),
+                        borderColor: '#4dc9f6',
+                        backgroundColor: 'rgba(77, 201, 246, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Wall Shear Stress (φ\'\'(0))',
+                        data: paperData.map(d => d.phiDoublePrime),
+                        borderColor: '#f67019',
+                        backgroundColor: 'rgba(246, 112, 25, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Cross-Viscosity Parameter (K)',
+                            color: 'white'
+                        },
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Boundary Layer Thickness (δ)',
+                            color: '#4dc9f6'
+                        },
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Wall Shear Stress (φ\'\'(0))',
+                            color: '#f67019'
+                        },
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Populate data table
+        function populateDataTable() {
+            dataTableBody.innerHTML = '';
+            paperData.forEach(data => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${data.K.toFixed(2)}</td>
+                    <td>${data.delta.toFixed(4)}</td>
+                    <td>${data.phiDoublePrime.toFixed(4)}</td>
+                `;
+                dataTableBody.appendChild(row);
+            });
+        }
+
+        // Draw flow visualization
+        function drawFlow(kValue) {
+            const width = flowCanvas.width;
+            const height = flowCanvas.height;
+            
+            // Clear canvas
+            flowCtx.clearRect(0, 0, width, height);
+            
+            // Find the closest data point for the current K value
+            const dataPoint = paperData.reduce((prev, curr) => {
+                return Math.abs(curr.K - kValue) < Math.abs(prev.K - kValue) ? curr : prev;
+            });
+            
+            const delta = dataPoint.delta;
+            const phiDoublePrime = dataPoint.phiDoublePrime;
+            
+            // Draw wall (stagnation point)
+            flowCtx.fillStyle = '#666';
+            flowCtx.fillRect(0, height - 20, width, 20);
+            
+            // Draw stagnation point
+            flowCtx.fillStyle = '#ff0000';
+            flowCtx.beginPath();
+            flowCtx.arc(width / 2, height - 20, 8, 0, Math.PI * 2);
+            flowCtx.fill();
+            
+            // Draw boundary layer
+            const boundaryLayerHeight = (delta / 2.2) * (height - 40); // Normalize to fit canvas
+            flowCtx.strokeStyle = '#4dc9f6';
+            flowCtx.lineWidth = 2;
+            flowCtx.setLineDash([5, 5]);
+            flowCtx.beginPath();
+            flowCtx.moveTo(0, height - 20 - boundaryLayerHeight);
+            flowCtx.lineTo(width, height - 20 - boundaryLayerHeight);
+            flowCtx.stroke();
+            flowCtx.setLineDash([]);
+            
+            // Draw flow lines
+            flowCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            flowCtx.lineWidth = 1.5;
+            
+            const numStreamlines = 7;
+            const streamlineSpacing = width / (numStreamlines + 1);
+            
+            for (let i = 1; i <= numStreamlines; i++) {
+                const x = i * streamlineSpacing;
+                
+                // Draw incoming flow (above boundary layer)
+                flowCtx.beginPath();
+                flowCtx.moveTo(x, 0);
+                flowCtx.bezierCurveTo(
+                    x, height - 20 - boundaryLayerHeight - 50,
+                    x, height - 20 - boundaryLayerHeight - 20,
+                    x, height - 20 - boundaryLayerHeight
+                );
+                flowCtx.stroke();
+                
+                // Draw flow along wall (within boundary layer)
+                flowCtx.beginPath();
+                flowCtx.moveTo(x, height - 20 - boundaryLayerHeight);
+                
+                if (x < width / 2) {
+                    // Flow to the left of stagnation point
+                    flowCtx.bezierCurveTo(
+                        x - 50, height - 20 - boundaryLayerHeight / 2,
+                        x - 100, height - 20,
+                        width / 2 - 20, height - 10
+                    );
+                } else if (x > width / 2) {
+                    // Flow to the right of stagnation point
+                    flowCtx.bezierCurveTo(
+                        x + 50, height - 20 - boundaryLayerHeight / 2,
+                        x + 100, height - 20,
+                        width / 2 + 20, height - 10
+                    );
+                } else {
+                    // Directly at stagnation point
+                    flowCtx.lineTo(x, height - 20);
+                }
+                
+                flowCtx.stroke();
+            }
+            
+            // Draw labels
+            flowCtx.fillStyle = 'white';
+            flowCtx.font = '14px Arial';
+            flowCtx.fillText('Stagnation Point', width / 2 - 40, height - 35);
+            flowCtx.fillText(`Boundary Layer (δ = ${delta.toFixed(3)})`, 10, height - 20 - boundaryLayerHeight - 10);
+            flowCtx.fillText(`K = ${kValue.toFixed(2)}`, 10, 20);
+            flowCtx.fillText(`φ''(0) = ${phiDoublePrime.toFixed(4)}`, 10, 40);
+            
+            // Draw arrows to indicate flow direction
+            drawArrow(flowCtx, width / 4, height - 100, -1, 0, 10);
+            drawArrow(flowCtx, 3 * width / 4, height - 100, 1, 0, 10);
+            drawArrow(flowCtx, width / 2, 50, 0, 1, 10);
+        }
+        
+        // Helper function to draw arrows
+        function drawArrow(ctx, x, y, dx, dy, size) {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - dx * size - dy * size / 2, y - dy * size - dx * size / 2);
+            ctx.lineTo(x - dx * size + dy * size / 2, y - dy * size + dx * size / 2);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Update visualization when slider changes
+        kSlider.addEventListener('input', function() {
+            const k = parseFloat(this.value);
+            kValue.textContent = `K = ${k.toFixed(2)}`;
+            drawFlow(k);
+        });
+
+        // Initialize
+        populateDataTable();
+        drawFlow(0);
+    </script>
+</body>
+</html>

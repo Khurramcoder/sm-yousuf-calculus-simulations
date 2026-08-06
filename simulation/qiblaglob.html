@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Spherical Qibla Engine</title>
+    <!-- Tailwind CSS for UI Layout -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Three.js for 3D Graphics Engine Component -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden font-sans">
+
+    <!-- Dashboard Header -->
+    <header class="max-w-7xl w-full mx-auto mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+        <div>
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 rounded">Calculus & Geodesy 3D</span>
+            <h1 class="text-2xl font-black tracking-tight text-white">Spherical Qibla Globe Visualizer</h1>
+        </div>
+        
+        <!-- Location Selection Presets directly from SM Yusaf text -->
+        <div class="flex flex-wrap gap-2">
+            <button onclick="updatePosition(31.5925, 74.3119, 'Lahore (Ex 41)')" class="px-3 py-1.5 bg-slate-900 hover:bg-emerald-600 rounded-lg border border-slate-800 text-xs transition cursor-pointer">Lahore[span_1](start_span)[span_1](end_span)</button>
+            <button onclick="updatePosition(23.7000, 90.3667, 'Dhaka (Ex 42)')" class="px-3 py-1.5 bg-slate-900 hover:bg-emerald-600 rounded-lg border border-slate-800 text-xs transition cursor-pointer">Dhaka[span_2](start_span)[span_2](end_span)</button>
+            <button onclick="updatePosition(33.6667, 73.1333, 'Islamabad (Q 5a)')" class="px-3 py-1.5 bg-slate-900 hover:bg-emerald-600 rounded-lg border border-slate-800 text-xs transition cursor-pointer">Islamabad[span_3](start_span)[span_3](end_span)</button>
+            <button onclick="updatePosition(40.8167, -74.0000, 'New York (Q 5e)')" class="px-3 py-1.5 bg-slate-900 hover:bg-emerald-600 rounded-lg border border-slate-800 text-xs transition cursor-pointer">New York[span_4](start_span)[span_4](end_span)</button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Framework Layout -->
+    <main class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
+        
+        <!-- Interactive 3D WebGL Viewport (7 Columns) -->
+        <div class="lg:col-span-7 bg-slate-900 rounded-2xl border border-slate-800 relative min-h-[400px] lg:min-h-[580px] overflow-hidden flex items-center justify-center group shadow-2xl">
+            <div id="canvas3d-container" class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"></div>
+            
+            <!-- Floating Indicator Overlays -->
+            <div class="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur border border-slate-800 p-3 rounded-xl pointer-events-none flex flex-wrap justify-between text-xs text-slate-400 gap-2">
+                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-amber-400 rounded-full"></span> Target City</div>
+                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> Khana-e-Ka'ba</div>
+                <div class="flex items-center gap-1.5"><span class="w-4 h-0.5 bg-emerald-400 inline-block"></span> Great Circle Vector Path</div>
+            </div>
+            <div class="absolute top-4 left-4 text-xs font-mono bg-slate-950/50 backdrop-blur px-2.5 py-1 rounded text-slate-400 pointer-events-none">
+                💡 Click & drag to rotate the 3D Globe
+            </div>
+        </div>
+
+        <!-- Analytical Panel Controls & Mathematical Output (5 Columns) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Geo-Location Variable Controls -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Coordinate Engine Overrides</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 font-medium mb-1">Latitude (°N/S)</label>
+                        <input type="number" id="lat-field" step="0.01" value="31.59" oninput="manualInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 font-medium mb-1">Longitude (°E/W)</label>
+                        <input type="number" id="lng-field" step="0.01" value="74.31" oninput="manualInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculated Math Output Trace Node -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Spherical Trigonometry Data</h3>
+                    <div class="p-4 bg-slate-950 rounded-xl border border-slate-850 font-mono text-xs space-y-3 text-slate-300">
+                        <div class="flex justify-between"><span>Location Profile:</span> <span id="lbl-name" class="text-white font-bold">Lahore (Ex 41)</span></div>
+                        <div class="flex justify-between"><span>Delta Longitude ($l$):</span> <span id="lbl-l" class="text-amber-400">34.49°</span></div>
+                        <div class="flex justify-between"><span>Calculated Angle ($i$):</span> <span id="lbl-i" class="text-emerald-400">9.77°</span></div>
+                        <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
+                            Formula used: <br>
+                            $$\tan(i) = \frac{\sin\phi \cos l - \cos\phi \tan\phi_0}{\sin l}$$[span_5](start_span)[span_5](end_span)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vector Result Compass Orientation Output -->
+                <div class="mt-6 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest block">Geodetic True Azimuth</span>
+                        <h2 id="lbl-azimuth" class="text-2xl font-black text-emerald-400 font-mono">260.2° N</h2>
+                    </div>
+                    <div class="w-16 h-16 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center relative">
+                        <div id="mini-needle" class="w-1 h-10 bg-emerald-400 rounded-full transform transition-transform duration-300" style="transform: rotate(260deg);"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-600 pointer-events-none">N</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- 3D Graphics Engine Runtime Script -->
+    <script>
+        // Set fixed coordinates for the Ka'ba target reference axis
+        const KABA_LAT = 21.4200; //[span_6](start_span)[span_6](end_span)
+        const KABA_LNG = 39.8200; //[span_7](start_span)[span_7](end_span)
+
+        let scene, camera, renderer, globe, targetMarker, kabaMarker, arcLine;
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        const GLOBE_RADIUS = 5;
+
+        // Boot up Three.js WebGL Environment Pipeline
+        function init3DSpace() {
+            const container = document.getElementById('canvas3d-container');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 13;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Add Lighting Architecture
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 3, 5);
+            scene.add(directionalLight);
+
+            // Build Wireframe / Segmented Sphere Globe Mesh
+            const geometry = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+
+            // Create solid visual bands for Equator and Prime Meridian reference
+            const ringGeo = new THREE.RingGeometry(GLOBE_RADIUS - 0.02, GLOBE_RADIUS + 0.02, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide, transparent: true, opacity: 0.3 });
+            
+            const equator = new THREE.Mesh(ringGeo, ringMat);
+            equator.rotation.x = Math.PI / 2;
+            globe.add(equator);
+
+            // Place Reference Markers
+            kabaMarker = createPointMarker(0x10b981);
+            targetMarker = createPointMarker(0xfbbf24);
+            globe.add(kabaMarker);
+            globe.add(targetMarker);
+
+            // Bind Drag Interaction Physics
+            container.addEventListener('mousedown', (e) => { isDragging = true; });
+            container.addEventListener('mousemove', (e) => {
+                const deltaMove = { x: e.offsetX - previousMousePosition.x, y: e.offsetY - previousMousePosition.y };
+                if (isDragging) {
+                    globe.rotation.y += deltaMove.x * 0.007;
+                    globe.rotation.x += deltaMove.y * 0.007;
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            // Window resize responsive adjustment
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            animateScene();
+        }
+
+        function createPointMarker(color) {
+            const mesh = new THREE.Mesh(
+                new THREE.SphereGeometry(0.12, 16, 16),
+                new THREE.MeshBasicMaterial({ color: color })
+            );
+            return mesh;
+        }
+
+        // Convert geodetic degree positions to 3D spherical local spatial vectors
+        function latLngToVector(lat, lng) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+
+            return new THREE.Vector3(
+                -(GLOBE_RADIUS * Math.sin(phi) * Math.sin(theta)),
+                GLOBE_RADIUS * Math.cos(phi),
+                (GLOBE_RADIUS * Math.sin(phi) * Math.cos(theta))
+            );
+        }
+
+        // Analytical Math Processing Framework
+        function updatePosition(lat, lng, nameText) {
+            document.getElementById('lat-field').value = lat.toFixed(4);
+            document.getElementById('lng-field').value = lng.toFixed(4);
+            document.getElementById('lbl-name').innerText = nameText;
+
+            const rad = Math.PI / 180;
+            const phiRad = lat * rad;
+            const phi0Rad = KABA_LAT * rad;
+
+            let lDeg = lng - KABA_LNG; //[span_8](start_span)[span_8](end_span)
+            document.getElementById('lbl-l').innerText = `${lDeg.toFixed(2)}°`;
+            
+            // Standard Spherical analytical execution model[span_9](start_span)[span_9](end_span)
+            const numerator = (Math.sin(phiRad) * Math.cos(lDeg * rad)) - (Math.cos(phiRad) * Math.tan(phi0Rad));
+            const denominator = Math.sin(lDeg * rad);
+            let iDeg = Math.atan2(numerator, denominator) / rad;
+            document.getElementById('lbl-i').innerText = `${iDeg.toFixed(2)}°`;
+
+            // Dynamic Compass Calculation Output 
+            const dLon = (KABA_LNG - lng) * rad;
+            const y = Math.sin(dLon);
+            const x = Math.cos(phiRad) * Math.tan(phi0Rad) - Math.sin(phiRad) * Math.cos(dLon);
+            let bearing = (Math.atan2(y, x) / rad + 360) % 360;
+
+            document.getElementById('lbl-azimuth').innerText = `${bearing.toFixed(1)}° N`;
+            document.getElementById('mini-needle').style.transform = `rotate(${bearing}deg)`;
+
+            // Update 3D Geometry Positions
+            const vKaba = latLngToVector(KABA_LAT, KABA_LNG);
+            const vTarget = latLngToVector(lat, lng);
+
+            kabaMarker.position.copy(vKaba);
+            targetMarker.position.copy(vTarget);
+
+            // Reconstruct the 3D great-circle arc vector path geometry
+            if (arcLine) globe.remove(arcLine);
+
+            const points = [];
+            for (let i = 0; i <= 50; i++) {
+                const t = i / 50;
+                // Use spherical linear interpolation (Slerp) to trace path tightly over the globe surface
+                const p = new THREE.Vector3();
+                THREE.Vector3.prototype.lerpVectors(vTarget, vKaba, t);
+                p.normalize().multiplyScalar(GLOBE_RADIUS + 0.02); // Elevate slightly above wireframe layer
+                points.push(p);
+            }
+
+            const arcGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const arcMaterial = new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 3 });
+            arcLine = new THREE.Line(arcGeometry, arcMaterial);
+            globe.add(arcLine);
+
+            // Gently orient the 3D target viewport vector toward the active calculation field area
+            if(!isDragging) {
+                globe.rotation.x = phiRad * 0.5;
+                globe.rotation.y = -(lng + 60) * rad;
+            }
+        }
+
+        function manualInput() {
+            const lat = parseFloat(document.getElementById('lat-field').value) || 0;
+            const lng = parseFloat(document.getElementById('lng-field').value) || 0;
+            updatePosition(lat, lng, "Custom Input Coordinates");
+        }
+
+        function animateScene() {
+            requestAnimationFrame(animateScene);
+            
+            // Slow ambient spin active when idle to display volumetric depth
+            if (!isDragging) {
+                globe.rotation.y += 0.001;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Initialize Pipeline Execution Context
+        window.onload = () => {
+            init3DSpace();
+            // Start centered over the first problem dataset parameters (Lahore)[span_10](start_span)[span_10](end_span)
+            updatePosition(31.5925, 74.3119, 'Lahore (Ex 41)')[span_11](start_span)[span_11](end_span);
+        };
+    </script>
+</body>
+</html>

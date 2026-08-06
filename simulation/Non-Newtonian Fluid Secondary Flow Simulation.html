@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Newtonian Fluid Secondary Flow Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            text-align: right;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+            border: none;
+            margin-bottom: 10px;
+        }
+        
+        .simulation {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .canvas-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            background: #000;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .method-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: #fdbb2d;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #ffcc44;
+            transform: translateY(-2px);
+        }
+        
+        button.active {
+            background: #b21f1f;
+            color: white;
+        }
+        
+        .comparison {
+            grid-column: 1 / -1;
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .model-card {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .model-card h3 {
+            color: #fdbb2d;
+            margin-bottom: 10px;
+        }
+        
+        .model-card p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .highlight {
+            color: #fdbb2d;
+            font-weight: bold;
+        }
+        
+        .key-equation {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Non-Newtonian Fluid Secondary Flow Simulation</h1>
+            <p class="subtitle">Comparative study of constitutive equations by Rivlin-Ericksen, Oldroyd, and Walters characterizing non-Newtonian fluids</p>
+        </header>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <h2>Simulation Parameters</h2>
+                    
+                    <div class="slider-container">
+                        <label for="alpha">Non-Newtonian Parameter (α)</label>
+                        <input type="range" id="alpha" min="0" max="1" step="0.01" value="0.5">
+                        <div class="value-display">Value: <span id="alpha-value">0.5</span></div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="reynolds">Reynolds Number (R)</label>
+                        <input type="range" id="reynolds" min="0.1" max="10" step="0.1" value="1">
+                        <div class="value-display">Value: <span id="reynolds-value">1</span></div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="geometry">Geometry</label>
+                        <select id="geometry">
+                            <option value="cylindrical">Cylindrical Coordinates</option>
+                            <option value="spherical">Spherical Coordinates</option>
+                        </select>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="boundary">Boundary Configuration</label>
+                        <select id="boundary">
+                            <option value="single">Single Rotating Boundary</option>
+                            <option value="double">Double Rotating Boundaries</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Numerical Method</h2>
+                    <div class="method-buttons">
+                        <button id="fdm-btn" class="active">Finite Difference Method (FDM)</button>
+                        <button id="fvm-btn">Finite Volume Method (FVM)</button>
+                        <button id="fem-btn">Finite Element Method (FEM)</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Constitutive Model</h2>
+                    <select id="model">
+                        <option value="all">Compare All Models</option>
+                        <option value="re">Rivlin-Ericksen (R-E)</option>
+                        <option value="oldroyd">Oldroyd (O)</option>
+                        <option value="walters">Walters (W)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="simulation">
+                <h2>Flow Visualization</h2>
+                <div class="canvas-container">
+                    <canvas id="flow-canvas" width="500" height="500"></canvas>
+                </div>
+                
+                <div class="info-panel">
+                    <p>The secondary flow is governed by a differential equation involving a single parameter <span class="highlight">α</span> which can be explicitly expressed in terms of the non-Newtonian parameters in each constitutive equation.</p>
+                    <p>For a given value of <span class="highlight">α</span>, all three fluids have identical secondary flows. The models differ only in their normal stress components.</p>
+                </div>
+            </div>
+            
+            <div class="comparison">
+                <h2>Constitutive Equation Comparison</h2>
+                <div class="comparison-grid">
+                    <div class="model-card">
+                        <h3>Rivlin-Ericksen (R-E)</h3>
+                        <div class="key-equation">T = -pI + 2ηE + Φ₂D + 4Φ₃E²</div>
+                        <p>Includes cross-viscosity and viscoelasticity through acceleration-gradient tensor.</p>
+                        <p>Can be distinguished from other models by studying normal stress components.</p>
+                    </div>
+                    
+                    <div class="model-card">
+                        <h3>Oldroyd (O)</h3>
+                        <div class="key-equation">S + τ₁(δS/δt - SE - ES) + μ₀(tr S)E = 2η[E + τ₂(δE/δt - 2E²)]</div>
+                        <p>Incorporates elasticity through relaxation times τ₁ and τ₂.</p>
+                        <p>Indistinguishable from Walters fluid for same α value in secondary flows.</p>
+                    </div>
+                    
+                    <div class="model-card">
+                        <h3>Walters (W)</h3>
+                        <div class="key-equation">S = 2∫[N(τ)/τ]∫exp((t'-t)/τ)(∂x/∂x')E(x',t') dt' dτ</div>
+                        <p>Memory effects through integral over relaxation time spectrum.</p>
+                        <p>Indistinguishable from Oldroyd fluid for same α value in secondary flows.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Based on "Comparative Study of Some Constitutive Equations Characterising Non-Newtonian Fluids" by P. L. Bhatnagar</p>
+            <p>Department of Applied Mathematics, Indian Institute of Science, Bangalore</p>
+        </footer>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const alphaSlider = document.getElementById('alpha');
+        const alphaValue = document.getElementById('alpha-value');
+        const reynoldsSlider = document.getElementById('reynolds');
+        const reynoldsValue = document.getElementById('reynolds-value');
+        const geometrySelect = document.getElementById('geometry');
+        const boundarySelect = document.getElementById('boundary');
+        const modelSelect = document.getElementById('model');
+        const fdmBtn = document.getElementById('fdm-btn');
+        const fvmBtn = document.getElementById('fvm-btn');
+        const femBtn = document.getElementById('fem-btn');
+        const canvas = document.getElementById('flow-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Simulation parameters
+        let alpha = parseFloat(alphaSlider.value);
+        let reynolds = parseFloat(reynoldsSlider.value);
+        let geometry = geometrySelect.value;
+        let boundary = boundarySelect.value;
+        let model = modelSelect.value;
+        let method = 'fdm';
+        
+        // Initialize simulation
+        updateSimulation();
+        
+        // Event listeners
+        alphaSlider.addEventListener('input', function() {
+            alpha = parseFloat(this.value);
+            alphaValue.textContent = alpha.toFixed(2);
+            updateSimulation();
+        });
+        
+        reynoldsSlider.addEventListener('input', function() {
+            reynolds = parseFloat(this.value);
+            reynoldsValue.textContent = reynolds.toFixed(1);
+            updateSimulation();
+        });
+        
+        geometrySelect.addEventListener('change', function() {
+            geometry = this.value;
+            updateSimulation();
+        });
+        
+        boundarySelect.addEventListener('change', function() {
+            boundary = this.value;
+            updateSimulation();
+        });
+        
+        modelSelect.addEventListener('change', function() {
+            model = this.value;
+            updateSimulation();
+        });
+        
+        fdmBtn.addEventListener('click', function() {
+            setActiveMethod('fdm');
+        });
+        
+        fvmBtn.addEventListener('click', function() {
+            setActiveMethod('fvm');
+        });
+        
+        femBtn.addEventListener('click', function() {
+            setActiveMethod('fem');
+        });
+        
+        function setActiveMethod(selectedMethod) {
+            method = selectedMethod;
+            
+            // Update button states
+            fdmBtn.classList.remove('active');
+            fvmBtn.classList.remove('active');
+            femBtn.classList.remove('active');
+            
+            if (selectedMethod === 'fdm') {
+                fdmBtn.classList.add('active');
+            } else if (selectedMethod === 'fvm') {
+                fvmBtn.classList.add('active');
+            } else if (selectedMethod === 'fem') {
+                femBtn.classList.add('active');
+            }
+            
+            updateSimulation();
+        }
+        
+        function updateSimulation() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw coordinate system based on geometry
+            if (geometry === 'cylindrical') {
+                drawCylindricalFlow();
+            } else {
+                drawSphericalFlow();
+            }
+            
+            // Draw method indicator
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Method: ${method.toUpperCase()} | α: ${alpha.toFixed(2)} | R: ${reynolds.toFixed(1)}`, 10, 20);
+        }
+        
+        function drawCylindricalFlow() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) * 0.4;
+            
+            // Draw cylindrical coordinate system
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            
+            // Draw radial lines
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI) / 4;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            
+            // Draw concentric circles
+            for (let i = 1; i <= 4; i++) {
+                const r = (radius * i) / 4;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, r, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+            
+            // Draw secondary flow pattern based on alpha and Reynolds number
+            drawSecondaryFlow(centerX, centerY, radius, 'cylindrical');
+        }
+        
+        function drawSphericalFlow() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) * 0.4;
+            
+            // Draw spherical coordinate system
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            
+            // Draw meridians
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI) / 4;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, angle, angle + Math.PI);
+                ctx.stroke();
+            }
+            
+            // Draw parallels
+            for (let i = 1; i <= 4; i++) {
+                const r = (radius * i) / 4;
+                const y = centerY - radius + (2 * r);
+                
+                ctx.beginPath();
+                ctx.arc(centerX, y, Math.sqrt(r * (2 * radius - r)), 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+            
+            // Draw secondary flow pattern based on alpha and Reynolds number
+            drawSecondaryFlow(centerX, centerY, radius, 'spherical');
+        }
+        
+        function drawSecondaryFlow(centerX, centerY, radius, coordSystem) {
+            // Parameters for flow visualization
+            const flowStrength = alpha * 50;
+            const cellSize = 20;
+            
+            // Draw flow vectors
+            for (let x = 0; x < canvas.width; x += cellSize) {
+                for (let y = 0; y < canvas.height; y += cellSize) {
+                    // Calculate distance from center
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < radius * 0.9) {
+                        // Calculate flow direction based on coordinate system and parameters
+                        let vx, vy;
+                        
+                        if (coordSystem === 'cylindrical') {
+                            // In cylindrical coordinates, secondary flow is orthogonal to primary flow
+                            // and lies in planes passing through the axis of rotation
+                            const angle = Math.atan2(dy, dx);
+                            const r = dist / radius;
+                            
+                            // Stream function from equation (3.6) in the paper
+                            const streamFunc = reynolds * Math.sin(2 * angle) * r * (1 - r) + 
+                                              alpha * Math.cos(angle) * r * r * (1 - r);
+                            
+                            // Velocity components from stream function
+                            vx = -flowStrength * Math.sin(angle) * streamFunc;
+                            vy = flowStrength * Math.cos(angle) * streamFunc;
+                        } else {
+                            // In spherical coordinates, secondary flow lies in meridian planes
+                            const theta = Math.atan2(dy, dx);
+                            const r = dist / radius;
+                            
+                            // Simplified representation of equation (4.6)
+                            const streamFunc = reynolds * Math.sin(theta) * r * (1 - r) + 
+                                              alpha * Math.cos(theta) * r * r * (1 - r);
+                            
+                            // Velocity components from stream function
+                            vx = -flowStrength * Math.sin(theta) * streamFunc;
+                            vy = flowStrength * Math.cos(theta) * streamFunc;
+                        }
+                        
+                        // Normalize and scale vector
+                        const vectorLength = Math.sqrt(vx * vx + vy * vy);
+                        if (vectorLength > 0) {
+                            const scale = Math.min(cellSize * 0.4 / vectorLength, 1);
+                            vx *= scale;
+                            vy *= scale;
+                            
+                            // Draw vector
+                            ctx.strokeStyle = `hsl(${200 + alpha * 100}, 100%, 70%)`;
+                            ctx.lineWidth = 2;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(x, y);
+                            ctx.lineTo(x + vx, y + vy);
+                            ctx.stroke();
+                            
+                            // Draw arrowhead
+                            const arrowSize = 4;
+                            const angle = Math.atan2(vy, vx);
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(x + vx, y + vy);
+                            ctx.lineTo(
+                                x + vx - arrowSize * Math.cos(angle - Math.PI/6),
+                                y + vy - arrowSize * Math.sin(angle - Math.PI/6)
+                            );
+                            ctx.lineTo(
+                                x + vx - arrowSize * Math.cos(angle + Math.PI/6),
+                                y + vy - arrowSize * Math.sin(angle + Math.PI/6)
+                            );
+                            ctx.closePath();
+                            ctx.fillStyle = `hsl(${200 + alpha * 100}, 100%, 70%)`;
+                            ctx.fill();
+                        }
+                    }
+                }
+            }
+            
+            // Draw boundaries based on configuration
+            ctx.strokeStyle = '#fdbb2d';
+            ctx.lineWidth = 3;
+            
+            if (boundary === 'single') {
+                // Single rotating boundary at center
+                if (coordSystem === 'cylindrical') {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius * 0.2, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else {
+                    // For spherical, draw a circle representing the rotating sphere
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius * 0.2, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            } else {
+                // Double rotating boundaries
+                if (coordSystem === 'cylindrical') {
+                    // Inner and outer cylinders
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius * 0.2, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius * 0.9, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else {
+                    // Inner and outer spheres
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius * 0.2, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius * 0.9, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

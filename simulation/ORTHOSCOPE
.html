@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ORTHOSCOPE — Orthogonal Polynomials in 3D</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<style>
+:root{
+  --bg:#0a0e16;
+  --bg-panel:#0e1420;
+  --bg-panel-2:#131b2a;
+  --bg-input:#0b1119;
+  --border:#1e2636;
+  --border-soft:#171e2c;
+  --text:#e7eaf2;
+  --text-dim:#8a93a8;
+  --text-faint:#5a6478;
+  --amber:#e3a857;
+  --amber-dim:#8a6a3a;
+  --cyan:#3fd0c9;
+  --cyan-dim:#245e5a;
+  --violet:#9188d8;
+  --red:#e2606a;
+  --radius:8px;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; height:100%; background:var(--bg); color:var(--text); font-family:var(--font-body); overflow:hidden; }
+
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:#232c3d; border-radius:4px; }
+::-webkit-scrollbar-thumb:hover{ background:#2e394e; }
+
+button, select, input{ font-family:inherit; }
+
+:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+/* ---------- App shell ---------- */
+#app{ display:grid; grid-template-columns:340px 1fr; grid-template-rows:56px 1fr 44px; height:100vh; width:100vw; }
+
+/* ---------- Header ---------- */
+header{
+  grid-column:1 / 3; grid-row:1;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px; border-bottom:1px solid var(--border); background:linear-gradient(180deg, #0d1220, #0a0e16);
+  z-index:20;
+}
+.brand{ display:flex; align-items:baseline; gap:10px; }
+.brand .mark{ font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:0.5px; color:var(--text); }
+.brand .mark span{ color:var(--amber); }
+.brand .tagline{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); letter-spacing:0.3px; display:none; }
+@media (min-width:760px){ .brand .tagline{ display:inline; } }
+
+.header-actions{ display:flex; align-items:center; gap:8px; }
+.icon-btn{
+  background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text-dim);
+  width:34px; height:34px; border-radius:var(--radius); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:15px;
+  transition:border-color .15s, color .15s;
+}
+.icon-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+.icon-btn.active{ color:var(--amber); border-color:var(--amber-dim); background:#1a1509; }
+#sidebarToggle{ display:none; }
+
+/* ---------- Sidebar ---------- */
+#sidebar{
+  grid-column:1; grid-row:2; overflow-y:auto; background:var(--bg-panel);
+  border-right:1px solid var(--border); padding:14px 14px 30px;
+}
+.panel-section{ margin-bottom:18px; }
+.panel-section h3{
+  font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:1.4px;
+  color:var(--text-faint); margin:0 0 10px; display:flex; align-items:center; gap:8px;
+}
+.panel-section h3::after{ content:''; flex:1; height:1px; background:var(--border-soft); }
+
+.field{ margin-bottom:12px; }
+.field-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.field label{ font-size:12.5px; color:var(--text-dim); font-weight:500; }
+.field .val{ font-family:var(--font-mono); font-size:12px; color:var(--amber); background:var(--bg-input); padding:1px 7px; border-radius:4px; border:1px solid var(--border-soft); min-width:34px; text-align:center; }
+
+input[type="range"]{
+  -webkit-appearance:none; width:100%; height:4px; border-radius:2px;
+  background:linear-gradient(90deg, var(--cyan-dim), var(--border-soft)); outline:none; cursor:pointer;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+  background:var(--cyan); border:2px solid #0a0e16; cursor:pointer; box-shadow:0 0 6px rgba(63,208,201,.5);
+}
+input[type="range"]::-moz-range-thumb{
+  width:14px; height:14px; border-radius:50%; background:var(--cyan); border:2px solid #0a0e16; cursor:pointer;
+}
+
+select{
+  width:100%; background:var(--bg-input); color:var(--text); border:1px solid var(--border);
+  border-radius:var(--radius); padding:8px 10px; font-size:13px; cursor:pointer;
+}
+select:hover{ border-color:var(--cyan-dim); }
+
+.segmented{ display:flex; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.segmented button{
+  flex:1; background:transparent; border:none; color:var(--text-dim); padding:8px 4px; font-size:12px;
+  cursor:pointer; font-weight:500; border-right:1px solid var(--border-soft); transition:.15s;
+}
+.segmented button:last-child{ border-right:none; }
+.segmented button.active{ background:#1a2333; color:var(--cyan); }
+.segmented button:hover:not(.active){ color:var(--text); }
+
+.toggle-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; }
+.toggle-row label{ font-size:12.5px; color:var(--text-dim); }
+.switch{ position:relative; width:36px; height:20px; flex-shrink:0; }
+.switch input{ opacity:0; width:0; height:0; }
+.switch .slider{ position:absolute; inset:0; background:var(--bg-input); border:1px solid var(--border); border-radius:20px; cursor:pointer; transition:.15s; }
+.switch .slider::before{ content:''; position:absolute; width:14px; height:14px; left:2px; top:2px; background:var(--text-faint); border-radius:50%; transition:.15s; }
+.switch input:checked + .slider{ background:#123a37; border-color:var(--cyan-dim); }
+.switch input:checked + .slider::before{ transform:translateX(16px); background:var(--cyan); }
+
+.btn{
+  width:100%; background:var(--bg-panel-2); color:var(--text); border:1px solid var(--border);
+  padding:9px; border-radius:var(--radius); font-size:12.5px; font-weight:500; cursor:pointer; transition:.15s;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.btn:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+.btn.primary{ background:#1c1509; border-color:var(--amber-dim); color:var(--amber); }
+.btn.primary:hover{ background:#241a0c; }
+.btn-row{ display:flex; gap:8px; }
+
+.family-desc{ font-size:11.5px; color:var(--text-faint); line-height:1.5; margin-top:2px; }
+
+/* ---------- Viewport ---------- */
+#viewport{ grid-column:2; grid-row:2; position:relative; background:radial-gradient(ellipse at 50% 40%, #0d1524 0%, #080b12 75%); overflow:hidden; }
+#canvasHost{ position:absolute; inset:0; }
+#canvasHost canvas{ display:block; }
+
+.float-panel{
+  position:absolute; background:rgba(14,20,32,0.88); backdrop-filter:blur(6px);
+  border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+
+#mathPanel{ top:14px; right:14px; width:300px; max-width:calc(100vw - 28px); max-height:calc(100% - 60px); overflow-y:auto; padding:14px 16px; transition:transform .2s, opacity .2s; }
+#mathPanel.collapsed{ transform:translateY(-8px); opacity:0; pointer-events:none; }
+#mathPanel h4{ font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--cyan); margin:14px 0 6px; }
+#mathPanel h4:first-of-type{ margin-top:0; }
+#mathPanel .eq-block{ background:var(--bg-input); border:1px solid var(--border-soft); border-radius:6px; padding:10px; overflow-x:auto; }
+#mathPanel .katex{ font-size:0.92em; color:var(--text); }
+#mathPanel p.note{ font-size:11.5px; color:var(--text-faint); margin:6px 0 0; line-height:1.5; }
+
+#statsPanel{ top:14px; left:14px; width:230px; padding:12px 14px; font-family:var(--font-mono); font-size:11.5px; }
+#statsPanel .stat-row{ display:flex; justify-content:space-between; padding:3px 0; color:var(--text-dim); }
+#statsPanel .stat-row b{ color:var(--text); font-weight:500; }
+#statsPanel .stat-title{ color:var(--text-faint); text-transform:uppercase; font-size:10px; letter-spacing:1px; margin-bottom:6px; }
+
+#hoverTip{
+  position:absolute; pointer-events:none; background:rgba(10,14,22,0.95); border:1px solid var(--cyan-dim);
+  color:var(--cyan); font-family:var(--font-mono); font-size:11px; padding:5px 8px; border-radius:5px;
+  transform:translate(12px, 12px); display:none; white-space:nowrap; z-index:10;
+}
+
+.viewport-tools{ position:absolute; bottom:14px; right:14px; display:flex; flex-direction:column; gap:6px; }
+
+/* ---------- Bottom ticker (signature element) ---------- */
+#ticker{
+  grid-column:1 / 3; grid-row:3; background:#070a10; border-top:1px solid var(--border);
+  display:flex; align-items:center; padding:0 16px; font-family:var(--font-mono); font-size:12px; gap:18px; overflow:hidden;
+}
+#ticker .lamp{ width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); flex-shrink:0; animation:pulse 2.4s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+#tickerFormula{ color:var(--amber); flex-shrink:0; }
+#tickerReadout{ color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+#tickerReadout .k{ color:var(--text-faint); }
+#tickerReadout .v{ color:var(--cyan); }
+
+/* ---------- Responsive ---------- */
+@media (max-width:880px){
+  #app{ grid-template-columns:1fr; grid-template-rows:56px 1fr 44px; }
+  #sidebar{
+    grid-column:1; grid-row:2; position:fixed; top:56px; left:0; bottom:44px; width:300px; max-width:85vw;
+    transform:translateX(-100%); transition:transform .22s ease; z-index:30; box-shadow:12px 0 30px rgba(0,0,0,.45);
+  }
+  #sidebar.open{ transform:translateX(0); }
+  #viewport{ grid-column:1; }
+  #sidebarToggle{ display:flex; }
+  #mathPanel{ width:min(300px, calc(100vw - 28px)); }
+  #statsPanel{ width:180px; }
+  .brand .mark{ font-size:16px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .lamp{ animation:none; }
+}
+
+.reduced-motion *{ transition:none !important; animation:none !important; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button id="sidebarToggle" class="icon-btn" aria-label="Toggle controls" title="Toggle controls">☰</button>
+      <div class="brand">
+        <div class="mark">ORTHO<span>SCOPE</span></div>
+        <div class="tagline">// classical orthogonal polynomials, rendered live</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="mathToggle" class="icon-btn" title="Toggle theory panel">Σ</button>
+      <button id="statsToggle" class="icon-btn active" title="Toggle readout panel">#</button>
+    </div>
+  </header>
+
+  <aside id="sidebar">
+
+    <div class="panel-section">
+      <h3>Family</h3>
+      <select id="familySelect">
+        <option value="legendre">Legendre — P(x) / Spherical Harmonics</option>
+        <option value="bessel">Bessel — J(x) / Membrane Modes</option>
+        <option value="hermite">Hermite — H(x) / Oscillator States</option>
+        <option value="laguerre">Laguerre — L(x) / Hydrogen Orbitals</option>
+        <option value="chebyshev">Chebyshev — T(x), U(x)</option>
+        <option value="gegenbauer">Gegenbauer — C(x), α-deformation</option>
+      </select>
+      <div class="family-desc" id="familyDesc"></div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Parameters</h3>
+
+      <div class="field" id="field_n">
+        <div class="field-row"><label id="label_n">Degree n</label><span class="val" id="val_n">3</span></div>
+        <input type="range" id="slider_n" min="0" max="10" step="1" value="3">
+      </div>
+
+      <div class="field" id="field_m">
+        <div class="field-row"><label id="label_m">Order m</label><span class="val" id="val_m">0</span></div>
+        <input type="range" id="slider_m" min="0" max="10" step="1" value="0">
+      </div>
+
+      <div class="field" id="field_alpha">
+        <div class="field-row"><label id="label_alpha">α</label><span class="val" id="val_alpha">1.0</span></div>
+        <input type="range" id="slider_alpha" min="0.1" max="4" step="0.1" value="1">
+      </div>
+
+      <div class="field" id="field_kind">
+        <div class="field-row"><label>Kind</label></div>
+        <div class="segmented" id="kindSeg">
+          <button data-kind="T" class="active">Tₙ (1st kind)</button>
+          <button data-kind="U">Uₙ (2nd kind)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Domain &amp; Mesh</h3>
+      <div class="field">
+        <div class="field-row"><label>Domain scale L</label><span class="val" id="val_domain">1.0</span></div>
+        <input type="range" id="slider_domain" min="0.3" max="3" step="0.1" value="1">
+      </div>
+      <div class="field">
+        <div class="field-row"><label>Mesh resolution</label><span class="val" id="val_res">50</span></div>
+        <input type="range" id="slider_res" min="12" max="110" step="1" value="50">
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Appearance</h3>
+      <div class="field">
+        <div class="field-row"><label>Colormap</label></div>
+        <select id="colormapSelect">
+          <option value="viridis">Viridis</option>
+          <option value="plasma">Plasma</option>
+          <option value="coolwarm">Coolwarm (diverging)</option>
+          <option value="phase">Phase angle</option>
+          <option value="height">Height (rainbow)</option>
+        </select>
+      </div>
+      <div class="toggle-row"><label>Wireframe</label><label class="switch"><input type="checkbox" id="toggleWireframe"><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Grid helper</label><label class="switch"><input type="checkbox" id="toggleGrid" checked><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Axis triad</label><label class="switch"><input type="checkbox" id="toggleAxes" checked><span class="slider"></span></label></div>
+      <div class="toggle-row"><label>Bounding box</label><label class="switch"><input type="checkbox" id="toggleBBox"><span class="slider"></span></label></div>
+    </div>
+
+    <div class="panel-section" id="animSection">
+      <h3>Simulation</h3>
+      <div class="toggle-row"><label id="animateLabel">Animate time (t)</label><label class="switch"><input type="checkbox" id="toggleAnimate"><span class="slider"></span></label></div>
+      <div class="field">
+        <div class="field-row"><label>Speed</label><span class="val" id="val_speed">1.0</span></div>
+        <input type="range" id="slider_speed" min="0.1" max="3" step="0.1" value="1">
+      </div>
+      <div class="toggle-row"><label>Auto-rotate camera</label><label class="switch"><input type="checkbox" id="toggleAutoRotate"><span class="slider"></span></label></div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Camera</h3>
+      <div class="btn-row">
+        <button class="btn" id="resetCamera">⟲ Reset view</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <div id="viewport">
+    <div id="canvasHost"></div>
+
+    <div class="float-panel" id="statsPanel">
+      <div class="stat-title">Readout</div>
+      <div id="statsBody"></div>
+    </div>
+
+    <div class="float-panel" id="mathPanel">
+      <div id="mathBody"></div>
+    </div>
+
+    <div id="hoverTip"></div>
+
+    <div class="viewport-tools">
+      <button class="icon-btn" id="zoomIn" title="Zoom in">+</button>
+      <button class="icon-btn" id="zoomOut" title="Zoom out">−</button>
+    </div>
+  </div>
+
+  <div id="ticker">
+    <div class="lamp"></div>
+    <div id="tickerFormula">P₃(x)</div>
+    <div id="tickerReadout"><span class="k">hover the surface for a live readout →</span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================================
+   SPECIAL FUNCTIONS — stable recurrences, no factorial overflow
+   ========================================================================= */
+
+const factCache = [1];
+function factorial(n){
+  n = Math.max(0, Math.round(n));
+  for(let i = factCache.length; i <= n; i++) factCache[i] = factCache[i-1]*i;
+  return factCache[n];
+}
+
+function gammaLn(x){
+  const g = 7;
+  const c = [0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x < 0.5) return Math.log(Math.PI/Math.sin(Math.PI*x)) - gammaLn(1-x);
+  x -= 1;
+  let a = c[0];
+  const t = x + g + 0.5;
+  for(let i=1;i<9;i++) a += c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI) + (x+0.5)*Math.log(t) - t + Math.log(a);
+}
+function gammaFn(x){
+  if(x < 0.5) return Math.PI/(Math.sin(Math.PI*x)*gammaFn(1-x));
+  return Math.exp(gammaLn(x));
+}
+
+// ---- Legendre ----
+function legendreP(n, x){
+  if(n===0) return 1;
+  if(n===1) return x;
+  let p0=1, p1=x;
+  for(let k=1;k<n;k++){
+    const p2 = ((2*k+1)*x*p1 - k*p0)/(k+1);
+    p0=p1; p1=p2;
+  }
+  return p1;
+}
+// Associated Legendre P_l^m(x), m>=0, |x|<=1  (Numerical-Recipes style)
+function legendrePlm(l, m, x){
+  m = Math.abs(m);
+  if(m > l) return 0;
+  let pmm = 1;
+  if(m > 0){
+    const somx2 = Math.sqrt(Math.max(0,(1-x)*(1+x)));
+    let fact = 1;
+    for(let i=1;i<=m;i++){ pmm *= -fact*somx2; fact += 2; }
+  }
+  if(l === m) return pmm;
+  let pmmp1 = x*(2*m+1)*pmm;
+  if(l === m+1) return pmmp1;
+  let pll = 0;
+  for(let ll=m+2; ll<=l; ll++){
+    pll = ((2*ll-1)*x*pmmp1 - (ll+m-1)*pmm)/(ll-m);
+    pmm = pmmp1; pmmp1 = pll;
+  }
+  return pll;
+}
+function sphericalHarmonicReal(l, m, theta, phi){
+  const am = Math.abs(m);
+  if(am > l) return 0;
+  const P = legendrePlm(l, am, Math.cos(theta));
+  const norm = Math.sqrt((2*l+1)/(4*Math.PI) * factorial(l-am)/factorial(l+am));
+  let val = norm*P;
+  if(m > 0) val *= Math.SQRT2*Math.cos(m*phi);
+  else if(m < 0) val *= Math.SQRT2*Math.sin(am*phi);
+  return val;
+}
+
+// ---- Bessel (first kind, series expansion, real order) ----
+function besselJRaw(v, x){
+  if(x < 0) return NaN;
+  if(x === 0) return v===0 ? 1 : 0;
+  let term = Math.pow(x/2, v) / gammaFn(v+1);
+  let sum = term;
+  for(let k=1;k<80;k++){
+    term *= -(x*x/4)/(k*(v+k));
+    sum += term;
+    if(Math.abs(term) < 1e-13*Math.abs(sum) + 1e-300) break;
+  }
+  return sum;
+}
+function besselJFast(v, x, invGamma1){
+  if(x === 0) return v===0 ? 1 : 0;
+  let term = Math.pow(x/2, v) * invGamma1;
+  let sum = term;
+  for(let k=1;k<50;k++){
+    term *= -(x*x/4)/(k*(v+k));
+    sum += term;
+    if(Math.abs(term) < 1e-12) break;
+  }
+  return sum;
+}
+const besselZeroCache = {};
+function besselZeros(order, count){
+  const key = order+'_'+count;
+  if(besselZeroCache[key]) return besselZeroCache[key];
+  const zeros = [];
+  const step = 0.02;
+  let x = 1e-4, fPrev = besselJRaw(order, x);
+  while(zeros.length < count && x < 260){
+    const xNext = x + step;
+    const fNext = besselJRaw(order, xNext);
+    if(fPrev*fNext < 0){
+      let a=x, b=xNext, fa=fPrev;
+      for(let i=0;i<50;i++){
+        const mid=(a+b)/2, fm=besselJRaw(order, mid);
+        if(fa*fm <= 0){ b=mid; } else { a=mid; fa=fm; }
+      }
+      zeros.push((a+b)/2);
+    }
+    x = xNext; fPrev = fNext;
+  }
+  besselZeroCache[key] = zeros;
+  return zeros;
+}
+
+// ---- Hermite (physicists') ----
+function hermiteH(n, x){
+  if(n===0) return 1;
+  if(n===1) return 2*x;
+  let h0=1, h1=2*x;
+  for(let k=1;k<n;k++){
+    const h2 = 2*x*h1 - 2*k*h0;
+    h0=h1; h1=h2;
+  }
+  return h1;
+}
+function hermitePsi(n, x){
+  const norm = 1/Math.sqrt(Math.pow(2,n)*factorial(n)*Math.sqrt(Math.PI));
+  return norm*hermiteH(n,x)*Math.exp(-x*x/2);
+}
+
+// ---- Laguerre (generalized) ----
+function laguerreL(n, alpha, x){
+  if(n===0) return 1;
+  let l0=1, l1=1+alpha-x;
+  if(n===1) return l1;
+  for(let k=1;k<n;k++){
+    const l2 = ((2*k+1+alpha-x)*l1 - (k+alpha)*l0)/(k+1);
+    l0=l1; l1=l2;
+  }
+  return l1;
+}
+
+// ---- Chebyshev ----
+function chebyshevT(n, x){
+  if(n===0) return 1;
+  if(n===1) return x;
+  let t0=1, t1=x;
+  for(let k=1;k<n;k++){ const t2=2*x*t1-t0; t0=t1; t1=t2; }
+  return t1;
+}
+function chebyshevU(n, x){
+  if(n===0) return 1;
+  if(n===1) return 2*x;
+  let u0=1, u1=2*x;
+  for(let k=1;k<n;k++){ const u2=2*x*u1-u0; u0=u1; u1=u2; }
+  return u1;
+}
+
+// ---- Gegenbauer (ultraspherical) ----
+function gegenbauerC(n, alpha, x){
+  if(Math.abs(alpha) < 1e-6) alpha = 1e-6;
+  if(n===0) return 1;
+  let c0=1, c1=2*alpha*x;
+  if(n===1) return c1;
+  for(let k=2;k<=n;k++){
+    const c2 = (2*(k+alpha-1)*x*c1 - (k+2*alpha-2)*c0)/k;
+    c0=c1; c1=c2;
+  }
+  return c1;
+}
+
+/* =========================================================================
+   COLORMAPS
+   ========================================================================= */
+
+const CMAP = {
+  viridis: [[0.267,0.005,0.329],[0.283,0.141,0.458],[0.254,0.265,0.530],[0.207,0.372,0.553],
+            [0.164,0.471,0.558],[0.128,0.567,0.551],[0.135,0.659,0.518],[0.267,0.749,0.441],
+            [0.478,0.821,0.318],[0.741,0.873,0.150],[0.993,0.906,0.144]],
+  plasma:  [[0.050,0.030,0.528],[0.286,0.010,0.629],[0.491,0.011,0.657],[0.665,0.140,0.577],
+            [0.798,0.280,0.469],[0.902,0.413,0.361],[0.972,0.554,0.243],[0.988,0.729,0.115],
+            [0.940,0.975,0.131]],
+  coolwarm:[[0.230,0.299,0.754],[0.552,0.690,0.996],[0.865,0.865,0.865],[0.957,0.647,0.510],[0.706,0.016,0.150]],
+  height:  [[0.10,0.10,0.55],[0.10,0.55,0.85],[0.15,0.75,0.35],[0.95,0.85,0.15],[0.90,0.20,0.15]]
+};
+function lerpStops(stops, t){
+  t = Math.min(1, Math.max(0, t));
+  const n = stops.length-1;
+  const idx = Math.min(n-1, Math.floor(t*n));
+  const f = t*n - idx;
+  const a = stops[idx], b = stops[idx+1];
+  return { r: a[0]+(b[0]-a[0])*f, g: a[1]+(b[1]-a[1])*f, b: a[2]+(b[2]-a[2])*f };
+}
+function hslToRgb(h,s,l){
+  s/=100; l/=100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0;} else if(h<120){r=x;g=c;b=0;} else if(h<180){r=0;g=c;b=x;}
+  else if(h<240){r=0;g=x;b=c;} else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
+  return {r:r+m, g:g+m, b:b+m};
+}
+function colormap(name, t){
+  t = Math.min(1, Math.max(0, isFinite(t) ? t : 0));
+  switch(name){
+    case 'viridis': return lerpStops(CMAP.viridis, t);
+    case 'plasma': return lerpStops(CMAP.plasma, t);
+    case 'coolwarm': return lerpStops(CMAP.coolwarm, t);
+    case 'phase': return hslToRgb(t*300, 75, 55);
+    case 'height': return lerpStops(CMAP.height, t);
+    default: return lerpStops(CMAP.viridis, t);
+  }
+}
+
+/* =========================================================================
+   APP STATE
+   ========================================================================= */
+
+const state = {
+  family: 'legendre',
+  n: 3, m: 0, alpha: 1.0, domainL: 1.0, resolution: 50,
+  cmap: 'viridis', wireframe: false, showGrid: true, showAxes: true, showBBox: false,
+  animate: false, speed: 1.0, autoRotate: false, chebyKind: 'T'
+};
+
+const FAMILY_META = {
+  legendre:  { n:{min:0,max:10,label:'Degree l'}, m:{min:0,max:10,label:'Order m'}, alpha:false, kind:false,
+    desc:'Zonal &amp; tesseral spherical harmonics built from associated Legendre functions. Set m = 0 for a surface of revolution of Pₙ(x); m &gt; 0 reveals Yₗᵐ(θ,φ).' },
+  bessel:    { n:{min:1,max:6,label:'Radial mode n'}, m:{min:0,max:8,label:'Angular mode m'}, alpha:false, kind:false,
+    desc:'A circular drumhead vibrating in mode (m, n). Height = Jₘ(k_{mn}·r)·cos(mθ)·cos(ωt) — toggle Animate to set it vibrating.' },
+  hermite:   { n:{min:0,max:12,label:'Quantum no. nₓ'}, m:{min:0,max:12,label:'Quantum no. nᵧ'}, alpha:false, kind:false,
+    desc:'2‑D quantum harmonic oscillator eigenstate ψₙₓ(x)·ψₙᵧ(y). Animate shows an illustrative beat between adjacent modes.' },
+  laguerre:  { n:{min:1,max:6,label:'Principal n'}, m:{min:0,max:5,label:'Angular ℓ'}, alpha:false, kind:false,
+    desc:'Hydrogen-atom radial probability density r²|R_{nℓ}(r)|², revolved into a 3‑D orbital envelope (ℓ is clamped to n−1).' },
+  chebyshev: { n:{min:1,max:16,label:'Degree n'}, m:false, alpha:false, kind:true,
+    desc:'Minimax polynomials rendered as a ribbon: Tₙ oscillates within ±1, Uₙ grows toward the endpoints.' },
+  gegenbauer:{ n:{min:0,max:8,label:'Degree n'}, m:false, alpha:true, kind:false,
+    desc:'Ultraspherical polynomials Cₙ^(α)(x); the surface sweeps α continuously from 0 to the slider value to show the deformation.' }
+};
+
+const FORMULAS = {
+  legendre: {
+    title: 'Legendre Polynomials',
+    eqs: [
+      ['Rodrigues formula', 'P_n(x)=\\frac{1}{2^n n!}\\frac{d^n}{dx^n}\\big[(x^2-1)^n\\big]'],
+      ['ODE', "(1-x^2)y''-2xy'+n(n+1)y=0"],
+      ['Weight / domain', 'w(x)=1,\\quad x\\in[-1,1]'],
+      ['Orthogonality', '\\int_{-1}^{1}P_nP_m\\,dx=\\frac{2}{2n+1}\\delta_{nm}'],
+      ['Spherical harmonic', 'Y_l^m(\\theta,\\phi)=\\sqrt{\\tfrac{2l+1}{4\\pi}\\tfrac{(l-m)!}{(l+m)!}}\\,P_l^m(\\cos\\theta)\\,e^{im\\phi}']
+    ]
+  },
+  bessel: {
+    title: 'Bessel Functions',
+    eqs: [
+      ['Series definition', 'J_\\nu(x)=\\sum_{k=0}^{\\infty}\\frac{(-1)^k}{k!\\,\\Gamma(\\nu+k+1)}\\Big(\\frac{x}{2}\\Big)^{2k+\\nu}'],
+      ['ODE', "x^2y''+xy'+(x^2-\\nu^2)y=0"],
+      ['Weight / domain', 'w(x)=x,\\quad x\\in[0,1]'],
+      ['Membrane mode', 'z(r,\\theta,t)=J_m(k_{mn}r)\\cos(m\\theta)\\cos(\\omega_{mn}t)']
+    ]
+  },
+  hermite: {
+    title: 'Hermite Polynomials',
+    eqs: [
+      ['Rodrigues formula', 'H_n(x)=(-1)^ne^{x^2}\\frac{d^n}{dx^n}e^{-x^2}'],
+      ['ODE', "y''-2xy'+2ny=0"],
+      ['Weight / domain', 'w(x)=e^{-x^2},\\quad x\\in(-\\infty,\\infty)'],
+      ['Oscillator wavefunction', '\\psi_n(x)=\\frac{1}{\\sqrt{2^n n!\\sqrt{\\pi}}}H_n(x)\\,e^{-x^2/2}']
+    ]
+  },
+  laguerre: {
+    title: 'Generalized Laguerre Polynomials',
+    eqs: [
+      ['Rodrigues formula', 'L_n^{(\\alpha)}(x)=\\frac{x^{-\\alpha}e^x}{n!}\\frac{d^n}{dx^n}\\big(e^{-x}x^{n+\\alpha}\\big)'],
+      ['ODE', "xy''+(\\alpha+1-x)y'+ny=0"],
+      ['Weight / domain', 'w(x)=x^{\\alpha}e^{-x},\\quad x\\in[0,\\infty)'],
+      ['Hydrogen radial fn.', 'R_{n\\ell}(r)\\propto e^{-r/n}\\Big(\\tfrac{2r}{n}\\Big)^{\\ell}L_{n-\\ell-1}^{(2\\ell+1)}\\Big(\\tfrac{2r}{n}\\Big)']
+    ]
+  },
+  chebyshev: {
+    title: 'Chebyshev Polynomials',
+    eqs: [
+      ['1st kind (trig. form)', 'T_n(\\cos\\theta)=\\cos(n\\theta)'],
+      ['2nd kind (trig. form)', 'U_n(\\cos\\theta)=\\frac{\\sin\\big((n+1)\\theta\\big)}{\\sin\\theta}'],
+      ['ODE (Tₙ)', "(1-x^2)y''-xy'+n^2y=0"],
+      ['Weight (Tₙ / Uₙ)', 'w(x)=\\frac{1}{\\sqrt{1-x^2}}\\;\\;/\\;\\;w(x)=\\sqrt{1-x^2}']
+    ]
+  },
+  gegenbauer: {
+    title: 'Gegenbauer (Ultraspherical) Polynomials',
+    eqs: [
+      ['Generating function', '\\frac{1}{(1-2xt+t^2)^{\\alpha}}=\\sum_{n=0}^{\\infty}C_n^{(\\alpha)}(x)\\,t^n'],
+      ['ODE', "(1-x^2)y''-(2\\alpha+1)xy'+n(n+2\\alpha)y=0"],
+      ['Weight / domain', 'w(x)=(1-x^2)^{\\alpha-1/2},\\quad x\\in[-1,1]']
+    ]
+  }
+};
+
+/* =========================================================================
+   THREE.JS SCENE
+   ========================================================================= */
+
+let scene, camera, renderer, controls, raycaster, mouse, clock;
+let currentMesh = null, boundLines = [];
+let gridHelper, axesHelper, bboxHelper;
+const canvasHost = document.getElementById('canvasHost');
+const hoverTip = document.getElementById('hoverTip');
+
+function initScene(){
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(48, canvasHost.clientWidth/canvasHost.clientHeight, 0.05, 500);
+  camera.position.set(9, 6.5, 10.5);
+
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(canvasHost.clientWidth, canvasHost.clientHeight);
+  canvasHost.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 2;
+  controls.maxDistance = 60;
+
+  const hemi = new THREE.HemisphereLight(0x9db4ff, 0x0b0e16, 0.55);
+  scene.add(hemi);
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir1.position.set(6, 10, 8);
+  scene.add(dir1);
+  const dir2 = new THREE.DirectionalLight(0x3fd0c9, 0.35);
+  dir2.position.set(-8, -4, -6);
+  scene.add(dir2);
+  scene.add(new THREE.AmbientLight(0x223047, 0.5));
+
+  gridHelper = new THREE.GridHelper(24, 24, 0x27364a, 0x151d2a);
+  gridHelper.position.y = -4.2;
+  scene.add(gridHelper);
+
+  axesHelper = new THREE.AxesHelper(6);
+  scene.add(axesHelper);
+
+  bboxHelper = new THREE.Box3Helper(new THREE.Box3(new THREE.Vector3(-1,-1,-1), new THREE.Vector3(1,1,1)), 0xe3a857);
+  bboxHelper.visible = false;
+  scene.add(bboxHelper);
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2(-10,-10);
+  clock = new THREE.Clock();
+
+  window.addEventListener('resize', onResize);
+  renderer.domElement.addEventListener('pointermove', onPointerMove);
+  renderer.domElement.addEventListener('pointerleave', ()=>{ hoverTip.style.display='none'; });
+}
+
+function onResize(){
+  const w = canvasHost.clientWidth, h = canvasHost.clientHeight;
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+}
+
+function onPointerMove(e){
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  lastPointerClient = { x: e.clientX-rect.left, y: e.clientY-rect.top };
+}
+let lastPointerClient = {x:-100,y:-100};
+
+function clearMesh(){
+  if(currentMesh){
+    scene.remove(currentMesh);
+    if(currentMesh.geometry) currentMesh.geometry.dispose();
+    if(currentMesh.material) currentMesh.material.dispose();
+    currentMesh = null;
+  }
+  boundLines.forEach(l=>{ scene.remove(l); l.geometry.dispose(); l.material.dispose(); });
+  boundLines = [];
+}
+
+function makeMaterial(){
+  return new THREE.MeshStandardMaterial({
+    vertexColors:true, wireframe:state.wireframe, side:THREE.DoubleSide,
+    metalness:0.12, roughness:0.55, flatShading:false
+  });
+}
+
+/* ---- generic parametric surface builder ---- */
+function buildParametricMesh(resU, resV, mapFn, diverging){
+  const positions=[], colors=[], indices=[];
+  const values=new Float32Array((resU+1)*(resV+1));
+  const domainInfo = new Array((resU+1)*(resV+1));
+  let k=0;
+  for(let j=0;j<=resV;j++){
+    const v=j/resV;
+    for(let i=0;i<=resU;i++){
+      const u=i/resU;
+      const p = mapFn(u,v);
+      positions.push(p.x,p.y,p.z);
+      values[k]=p.value;
+      domainInfo[k]=p.domain;
+      k++;
+    }
+  }
+  let minV=Infinity,maxV=-Infinity;
+  for(let i=0;i<values.length;i++){ if(values[i]<minV)minV=values[i]; if(values[i]>maxV)maxV=values[i]; }
+  const maxAbs = Math.max(Math.abs(minV),Math.abs(maxV)) || 1;
+  for(let i=0;i<values.length;i++){
+    let t;
+    if(diverging) t=(values[i]/maxAbs+1)/2;
+    else t=(values[i]-minV)/((maxV-minV)||1);
+    const c = colormap(state.cmap, t);
+    colors.push(c.r,c.g,c.b);
+  }
+  for(let j=0;j<resV;j++){
+    for(let i=0;i<resU;i++){
+      const a=j*(resU+1)+i, b=a+1, c=a+(resU+1), d=c+1;
+      indices.push(a,b,c, b,d,c);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return { geo, values, domainInfo, minV, maxV, resU, resV };
+}
+
+function estimateMaxAbs(valueFn, samples){
+  samples = samples || 26;
+  let maxAbs = 1e-9;
+  for(let i=0;i<=samples;i++){
+    for(let j=0;j<=samples;j++){
+      const v = Math.abs(valueFn(i/samples, j/samples));
+      if(isFinite(v) && v>maxAbs) maxAbs=v;
+    }
+  }
+  return maxAbs;
+}
+
+/* =========================================================================
+   FAMILY BUILDERS
+   ========================================================================= */
+
+function buildLegendre(){
+  const { n, m, domainL } = state;
+  const res = state.resolution;
+  let mapFn, diverging;
+  if(m === 0){
+    diverging = true;
+    mapFn = (u,v)=>{
+      const s = u;
+      const xx = s*2-1;
+      const h = legendreP(n, xx);
+      const theta = v*Math.PI*2;
+      const radius = s*domainL*3.2;
+      return { x:radius*Math.cos(theta), y:h*1.6, z:radius*Math.sin(theta), value:h, domain:{x:xx, h} };
+    };
+  } else {
+    diverging = true;
+    mapFn = (u,v)=>{
+      const theta = u*Math.PI;
+      const phi = v*Math.PI*2;
+      const Y = sphericalHarmonicReal(n, m, theta, phi);
+      const r = Math.abs(Y)*7.5*domainL + 0.25;
+      const x = r*Math.sin(theta)*Math.cos(phi);
+      const y = r*Math.cos(theta);
+      const z = r*Math.sin(theta)*Math.sin(phi);
+      return { x, y, z, value:Y, domain:{theta, phi, Y} };
+    };
+  }
+  const built = buildParametricMesh(res, Math.max(10,Math.round(res*0.65)), mapFn, diverging);
+  currentMesh = new THREE.Mesh(built.geo, makeMaterial());
+  currentMesh.userData = built;
+  scene.add(currentMesh);
+}
+
+function buildBessel(){
+  const { m, n, domainL } = state;
+  const res = state.resolution;
+  const zeros = besselZeros(m, Math.max(n,1));
+  const k = zeros[n-1] || (n*Math.PI);
+  const invGamma1 = 1/gammaFn(m+1);
+  const mapFn = (u,v)=>{
+    const r = u;
+    const theta = v*Math.PI*2;
+    const val = besselJFast(m, k*r, invGamma1)*Math.cos(m*theta);
+    const x = r*Math.cos(theta)*domainL*3.2;
+    const z = r*Math.sin(theta)*domainL*3.2;
+    return { x, y: val*2.4, z, value: val, domain:{r, theta} };
+  };
+  const built = buildParametricMesh(res, Math.max(10,Math.round(res*0.7)), mapFn, true);
+  currentMesh = new THREE.Mesh(built.geo, makeMaterial());
+  currentMesh.userData = built;
+  // cache per-vertex r,theta for fast animation update
+  const rArr = new Float32Array(built.domainInfo.length);
+  const thArr = new Float32Array(built.domainInfo.length);
+  for(let i=0;i<built.domainInfo.length;i++){ rArr[i]=built.domainInfo[i].r; thArr[i]=built.domainInfo[i].theta; }
+  currentMesh.userData.rArr = rArr;
+  currentMesh.userData.thArr = thArr;
+  currentMesh.userData.k = k;
+  currentMesh.userData.m = m;
+  currentMesh.userData.invGamma1 = invGamma1;
+  scene.add(currentMesh);
+}
+
+function updateBesselAnimation(t){
+  if(!currentMesh || state.family!=='bessel') return;
+  const ud = currentMesh.userData;
+  const pos = currentMesh.geometry.attributes.position;
+  const col = currentMesh.geometry.attributes.color;
+  const count = ud.rArr.length;
+  const vals = new Float32Array(count);
+  let maxAbs = 1e-9;
+  const phase = Math.cos(t*state.speed*1.6);
+  for(let i=0;i<count;i++){
+    const val = besselJFast(ud.m, ud.k*ud.rArr[i], ud.invGamma1)*Math.cos(ud.m*ud.thArr[i])*phase;
+    vals[i]=val;
+    const av=Math.abs(val); if(av>maxAbs) maxAbs=av;
+  }
+  for(let i=0;i<count;i++){
+    pos.array[i*3+1] = vals[i]*2.4;
+    const t01 = (vals[i]/maxAbs+1)/2;
+    const c = colormap(state.cmap, t01);
+    col.array[i*3]=c.r; col.array[i*3+1]=c.g; col.array[i*3+2]=c.b;
+  }
+  pos.needsUpdate = true; col.needsUpdate = true;
+  currentMesh.geometry.computeVertexNormals();
+}
+
+function buildHermite(){
+  const { n, m, domainL } = state;
+  const res = state.resolution;
+  const rawFn = (u,v)=>{
+    const x=(u*2-1)*domainL*3.0;
+    const y=(v*2-1)*domainL*3.0;
+    return hermitePsi(n,x)*hermitePsi(m,y);
+  };
+  const maxAbs = estimateMaxAbs(rawFn, 22) || 1;
+  const scale = 2.6/maxAbs;
+  const mapFn = (u,v)=>{
+    const x=(u*2-1)*domainL*3.0;
+    const y=(v*2-1)*domainL*3.0;
+    const val = hermitePsi(n,x)*hermitePsi(m,y);
+    return { x, y: val*scale, z:y, value:val, domain:{x,y} };
+  };
+  const built = buildParametricMesh(res, res, mapFn, true);
+  currentMesh = new THREE.Mesh(built.geo, makeMaterial());
+  currentMesh.userData = built;
+  currentMesh.userData.scale = scale;
+  currentMesh.userData.n = n; currentMesh.userData.m = m; currentMesh.userData.domainL = domainL;
+  scene.add(currentMesh);
+}
+
+function updateHermiteAnimation(t){
+  if(!currentMesh || state.family!=='hermite') return;
+  const ud = currentMesh.userData;
+  const res = ud.resU;
+  const n = ud.n, m = ud.m, domainL = ud.domainL;
+  const n2 = Math.min(n+1, 14);
+  const a = Math.cos(t*state.speed*0.9), b = Math.sin(t*state.speed*0.9);
+  const pos = currentMesh.geometry.attributes.position;
+  const col = currentMesh.geometry.attributes.color;
+  let maxAbs=1e-9;
+  const vals = new Float32Array(ud.values.length);
+  let k=0;
+  for(let j=0;j<=res;j++){
+    for(let i=0;i<=res;i++){
+      const u=i/res, v=j/res;
+      const x=(u*2-1)*domainL*3.0, y=(v*2-1)*domainL*3.0;
+      const val = a*hermitePsi(n,x)*hermitePsi(m,y) + b*hermitePsi(n2,x)*hermitePsi(m,y);
+      vals[k]=val; const av=Math.abs(val); if(av>maxAbs) maxAbs=av;
+      k++;
+    }
+  }
+  k=0;
+  for(let j=0;j<=res;j++){
+    for(let i=0;i<=res;i++){
+      pos.array[k*3+1] = vals[k]*ud.scale;
+      const t01=(vals[k]/maxAbs+1)/2;
+      const c=colormap(state.cmap, t01);
+      col.array[k*3]=c.r; col.array[k*3+1]=c.g; col.array[k*3+2]=c.b;
+      k++;
+    }
+  }
+  pos.needsUpdate=true; col.needsUpdate=true;
+  currentMesh.geometry.computeVertexNormals();
+}
+
+function buildLaguerre(){
+  let { n, m } = state;
+  const res = state.resolution;
+  const l = Math.min(m, n-1);
+  const alpha = 2*l+1;
+  const Rmax = n*n*1.3 + 4;
+  const samples = 240;
+  const Rvals = new Float32Array(samples+1);
+  let maxP = 1e-9;
+  for(let i=0;i<=samples;i++){
+    const r = i/samples*Rmax;
+    const rho = 2*r/n;
+    const R = Math.exp(-rho/2)*Math.pow(rho, l)*laguerreL(n-l-1, alpha, rho);
+    const P = R*R*r*r;
+    Rvals[i]=P;
+    if(P>maxP) maxP=P;
+  }
+  const mapFn = (u,v)=>{
+    const idx = u*samples;
+    const i0 = Math.floor(idx), i1 = Math.min(samples,i0+1), f = idx-i0;
+    const P = (Rvals[i0]*(1-f)+Rvals[i1]*f)/maxP;
+    const theta = v*Math.PI*2;
+    const radius = P*3.6;
+    return { x: radius*Math.cos(theta), y:(u*2-1)*4.4, z: radius*Math.sin(theta), value:P, domain:{r:u*Rmax, P} };
+  };
+  const built = buildParametricMesh(res, Math.max(10,Math.round(res*0.65)), mapFn, false);
+  currentMesh = new THREE.Mesh(built.geo, makeMaterial());
+  currentMesh.userData = built;
+  currentMesh.userData.l = l; currentMesh.userData.alpha = alpha; currentMesh.userData.Rmax = Rmax;
+  scene.add(currentMesh);
+}
+
+function buildChebyshev(){
+  const { n, domainL } = state;
+  const res = state.resolution;
+  const fn = state.chebyKind === 'T' ? chebyshevT : chebyshevU;
+  let maxAbs = 1e-9;
+  const steps = 240;
+  for(let i=0;i<=steps;i++){ const x=(i/steps*2-1)*domainL; maxAbs = Math.max(maxAbs, Math.abs(fn(n,x))); }
+  const desiredH = 3.0;
+
+  function ChebCurve(){ THREE.Curve.call(this); }
+  ChebCurve.prototype = Object.create(THREE.Curve.prototype);
+  ChebCurve.prototype.constructor = ChebCurve;
+  ChebCurve.prototype.getPoint = function(t, target){
+    const x = (t*2-1)*domainL;
+    const y = fn(n,x)/maxAbs*desiredH;
+    const p = target || new THREE.Vector3();
+    return p.set(x*3.0, y, 0);
+  };
+  const curve = new ChebCurve();
+  const tubularSegments = Math.max(48, Math.round(res*1.4));
+  const tubeGeo = new THREE.TubeGeometry(curve, tubularSegments, 0.14, 10, false);
+  const posAttr = tubeGeo.attributes.position;
+  const colors = new Float32Array(posAttr.count*3);
+  for(let i=0;i<posAttr.count;i++){
+    const y = posAttr.getY(i);
+    const t01 = (y/desiredH+1)/2;
+    const c = colormap(state.cmap, t01);
+    colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
+  }
+  tubeGeo.setAttribute('color', new THREE.BufferAttribute(colors,3));
+  currentMesh = new THREE.Mesh(tubeGeo, makeMaterial());
+  currentMesh.userData = { isTube:true, fn, n, domainL, maxAbs, desiredH };
+  scene.add(currentMesh);
+
+  // minimax bound guide lines (only meaningful for Tn, bounded by +-1)
+  if(state.chebyKind === 'T'){
+    [1,-1].forEach(sign=>{
+      const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-domainL*3.0, sign*desiredH,0), new THREE.Vector3(domainL*3.0, sign*desiredH,0)]);
+      const mat = new THREE.LineDashedMaterial({ color:0xe3a857, dashSize:0.25, gapSize:0.18, transparent:true, opacity:0.55 });
+      const line = new THREE.Line(g, mat);
+      line.computeLineDistances();
+      scene.add(line);
+      boundLines.push(line);
+    });
+  }
+}
+
+function buildGegenbauer(){
+  const { n, alpha, domainL } = state;
+  const res = state.resolution;
+  const alphaMax = Math.max(alpha, 0.15);
+  const rawFn = (u,v)=>{
+    const x=(u*2-1)*domainL;
+    const a = 0.05 + v*(alphaMax-0.05);
+    return gegenbauerC(n, a, x);
+  };
+  const maxAbs = estimateMaxAbs(rawFn, 26) || 1;
+  const scale = 3.0/maxAbs;
+  const mapFn = (u,v)=>{
+    const x=(u*2-1)*domainL;
+    const a = 0.05 + v*(alphaMax-0.05);
+    const val = gegenbauerC(n, a, x);
+    return { x:x*3.0, y: val*scale, z:(v-0.5)*7.5, value:val, domain:{x, alpha:a} };
+  };
+  const built = buildParametricMesh(res, Math.max(10,Math.round(res*0.55)), mapFn, true);
+  currentMesh = new THREE.Mesh(built.geo, makeMaterial());
+  currentMesh.userData = built;
+  currentMesh.userData.scale = scale; currentMesh.userData.alphaMax = alphaMax;
+  scene.add(currentMesh);
+}
+
+function rebuild(){
+  clearMesh();
+  switch(state.family){
+    case 'legendre': buildLegendre(); break;
+    case 'bessel': buildBessel(); break;
+    case 'hermite': buildHermite(); break;
+    case 'laguerre': buildLaguerre(); break;
+    case 'chebyshev': buildChebyshev(); break;
+    case 'gegenbauer': buildGegenbauer(); break;
+  }
+  updateBBox();
+  updateStats();
+  updateTickerFormula();
+}
+
+function updateBBox(){
+  if(!currentMesh){ bboxHelper.visible=false; return; }
+  const box = new THREE.Box3().setFromObject(currentMesh);
+  bboxHelper.box.copy(box);
+  bboxHelper.visible = state.showBBox;
+}
+
+/* =========================================================================
+   ROOTS / NORM DIAGNOSTICS
+   ========================================================================= */
+
+function sampleRootsAndNorm(fn, weightFn, domain, samples){
+  samples = samples || 1400;
+  const [a,b] = domain;
+  const xs = new Float32Array(samples+1), ys = new Float32Array(samples+1);
+  for(let i=0;i<=samples;i++){
+    const x = a + (b-a)*i/samples;
+    xs[i]=x; ys[i]=fn(x);
+  }
+  const roots=[];
+  for(let i=0;i<samples;i++){
+    if(ys[i]===0) roots.push(xs[i]);
+    else if(ys[i]*ys[i+1] < 0){
+      let lo=xs[i], hi=xs[i+1], flo=ys[i];
+      for(let k=0;k<40;k++){
+        const mid=(lo+hi)/2, fm=fn(mid);
+        if(flo*fm<=0) hi=mid; else { lo=mid; flo=fm; }
+      }
+      roots.push((lo+hi)/2);
+    }
+  }
+  let norm=0;
+  for(let i=0;i<samples;i++){
+    const x0=xs[i], x1=xs[i+1];
+    const g0=weightFn(x0)*ys[i]*ys[i], g1=weightFn(x1)*ys[i+1]*ys[i+1];
+    if(isFinite(g0) && isFinite(g1)) norm += 0.5*(g0+g1)*(x1-x0);
+  }
+  return { roots, norm };
+}
+
+function updateStats(){
+  const body = document.getElementById('statsBody');
+  let html = '';
+  const push = (k,v)=> html += `<div class="stat-row"><span>${k}</span><b>${v}</b></div>`;
+
+  if(state.family==='legendre'){
+    const { n, m } = state;
+    push('l, m', `${n}, ${m}`);
+    if(m===0){
+      const r = sampleRootsAndNorm(x=>legendreP(n,x), x=>1, [-1,1]);
+      push('real roots', r.roots.length);
+      push('∫P²dx ≈', r.norm.toFixed(4));
+      push('theory 2/(2n+1)', (2/(2*n+1)).toFixed(4));
+    } else {
+      push('range |Y|', 'sampled per-frame');
+      push('parity', (n-m)%2===0 ? 'even' : 'odd');
+    }
+  } else if(state.family==='bessel'){
+    const { m, n } = state;
+    const zeros = besselZeros(m, Math.max(n,3));
+    push('order m', m);
+    push(`k_{m,${n}}`, (zeros[n-1]||0).toFixed(4));
+    push('first zeros', zeros.slice(0,4).map(z=>z.toFixed(2)).join(', '));
+  } else if(state.family==='hermite'){
+    const { n, m } = state;
+    push('nₓ, nᵧ', `${n}, ${m}`);
+    const r = sampleRootsAndNorm(x=>hermiteH(n,x), x=>Math.exp(-x*x), [-6,6], 2000);
+    push('roots of Hₙ', r.roots.length);
+    push('∫ψₙ²dx ≈', (function(){
+      const rr = sampleRootsAndNorm(x=>hermitePsi(n,x), x=>1, [-8,8], 2000); return rr.norm.toFixed(4);
+    })());
+  } else if(state.family==='laguerre'){
+    const { n, m } = state;
+    const l = Math.min(m, n-1);
+    push('n, ℓ', `${n}, ${l}`);
+    push('α = 2ℓ+1', 2*l+1);
+    push('radial nodes', Math.max(0, n-l-1));
+  } else if(state.family==='chebyshev'){
+    const { n, chebyKind, domainL } = state;
+    const fn = chebyKind==='T'?chebyshevT:chebyshevU;
+    const wfn = chebyKind==='T' ? (x=>1/Math.sqrt(Math.max(1e-6,1-x*x))) : (x=>Math.sqrt(Math.max(0,1-x*x)));
+    const r = sampleRootsAndNorm(x=>fn(n,x), wfn, [-domainL*0.999, domainL*0.999], 3000);
+    push('kind', chebyKind+'ₙ');
+    push('real roots', r.roots.length);
+    push('extrema in [-1,1]', chebyKind==='T' ? (n+1) : n);
+  } else if(state.family==='gegenbauer'){
+    const { n, alpha, domainL } = state;
+    const r = sampleRootsAndNorm(x=>gegenbauerC(n, alpha, x), x=>Math.pow(Math.max(1e-6,1-x*x), alpha-0.5), [-domainL*0.999, domainL*0.999], 2000);
+    push('n, α', `${n}, ${alpha.toFixed(2)}`);
+    push('real roots', r.roots.length);
+  }
+  body.innerHTML = html;
+}
+
+/* =========================================================================
+   MATH PANEL (KaTeX)
+   ========================================================================= */
+
+function updateMathPanel(){
+  const meta = FORMULAS[state.family];
+  const body = document.getElementById('mathBody');
+  let html = `<h4 style="margin-top:0; color:var(--amber);">${meta.title}</h4>`;
+  meta.eqs.forEach(([label, tex])=>{
+    html += `<h4>${label}</h4><div class="eq-block"><span data-tex="${encodeURIComponent(tex)}"></span></div>`;
+  });
+  body.innerHTML = html;
+  body.querySelectorAll('[data-tex]').forEach(el=>{
+    const tex = decodeURIComponent(el.getAttribute('data-tex'));
+    try{ katex.render(tex, el, { throwOnError:false, displayMode:true }); }
+    catch(e){ el.textContent = tex; }
+  });
+}
+
+function updateTickerFormula(){
+  const map = {
+    legendre: state.m===0 ? `P<sub>${state.n}</sub>(x)` : `Y<sub>${state.n}</sub><sup>${state.m}</sup>(θ,φ)`,
+    bessel: `J<sub>${state.m}</sub>(k<sub>${state.m},${state.n}</sub>·r)`,
+    hermite: `ψ<sub>${state.n}</sub>(x)·ψ<sub>${state.m}</sub>(y)`,
+    laguerre: `R<sub>${state.n},${Math.min(state.m,state.n-1)}</sub>(r)`,
+    chebyshev: `${state.chebyKind}<sub>${state.n}</sub>(x)`,
+    gegenbauer: `C<sub>${state.n}</sub><sup>(${state.alpha.toFixed(1)})</sup>(x)`
+  };
+  document.getElementById('tickerFormula').innerHTML = map[state.family];
+}
+
+/* =========================================================================
+   UI WIRING
+   ========================================================================= */
+
+function el(id){ return document.getElementById(id); }
+
+function clampControls(){
+  const meta = FAMILY_META[state.family];
+  if(meta.n) state.n = Math.min(meta.n.max, Math.max(meta.n.min, state.n));
+  if(meta.m) state.m = Math.min(meta.m.max, Math.max(meta.m.min, state.m));
+  if(state.family==='legendre' && state.m>state.n) state.m = state.n;
+  if(state.family==='laguerre' && state.m>state.n-1) state.m = Math.max(0,state.n-1);
+}
+
+function syncUIFromState(){
+  const meta = FAMILY_META[state.family];
+
+  el('field_n').style.display = meta.n ? '' : 'none';
+  el('field_m').style.display = meta.m ? '' : 'none';
+  el('field_alpha').style.display = meta.alpha ? '' : 'none';
+  el('field_kind').style.display = meta.kind ? '' : 'none';
+  el('animSection').style.display = (state.family==='bessel'||state.family==='hermite') ? '' : 'none';
+
+  if(meta.n){
+    el('label_n').textContent = meta.n.label;
+    el('slider_n').min = meta.n.min; el('slider_n').max = meta.n.max;
+    el('slider_n').value = state.n; el('val_n').textContent = state.n;
+  }
+  if(meta.m){
+    el('label_m').textContent = meta.m.label;
+    el('slider_m').min = meta.m.min; el('slider_m').max = meta.m.max;
+    el('slider_m').value = state.m; el('val_m').textContent = state.m;
+  }
+  el('slider_alpha').value = state.alpha; el('val_alpha').textContent = state.alpha.toFixed(1);
+  el('slider_domain').value = state.domainL; el('val_domain').textContent = state.domainL.toFixed(1);
+  el('slider_res').value = state.resolution; el('val_res').textContent = state.resolution;
+  el('slider_speed').value = state.speed; el('val_speed').textContent = state.speed.toFixed(1);
+  el('familyDesc').innerHTML = meta.desc;
+  el('animateLabel').textContent = state.family==='bessel' ? 'Animate membrane (t)' : 'Animate mode beat (t)';
+
+  document.querySelectorAll('#kindSeg button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.kind===state.chebyKind);
+  });
+}
+
+function initUI(){
+  el('familySelect').addEventListener('change', e=>{
+    state.family = e.target.value;
+    clampControls();
+    syncUIFromState();
+    updateMathPanel();
+    rebuild();
+  });
+
+  el('slider_n').addEventListener('input', e=>{
+    state.n = parseInt(e.target.value,10);
+    clampControls();
+    el('val_n').textContent = state.n;
+    el('slider_m').value = state.m; el('val_m').textContent = state.m;
+    rebuild();
+  });
+  el('slider_m').addEventListener('input', e=>{
+    state.m = parseInt(e.target.value,10);
+    clampControls();
+    el('val_m').textContent = state.m;
+    rebuild();
+  });
+  el('slider_alpha').addEventListener('input', e=>{
+    state.alpha = parseFloat(e.target.value);
+    el('val_alpha').textContent = state.alpha.toFixed(1);
+    rebuild();
+  });
+  el('slider_domain').addEventListener('input', e=>{
+    state.domainL = parseFloat(e.target.value);
+    el('val_domain').textContent = state.domainL.toFixed(1);
+    rebuild();
+  });
+  el('slider_res').addEventListener('input', e=>{
+    state.resolution = parseInt(e.target.value,10);
+    el('val_res').textContent = state.resolution;
+    rebuild();
+  });
+  el('slider_speed').addEventListener('input', e=>{
+    state.speed = parseFloat(e.target.value);
+    el('val_speed').textContent = state.speed.toFixed(1);
+  });
+
+  document.querySelectorAll('#kindSeg button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.chebyKind = b.dataset.kind;
+      document.querySelectorAll('#kindSeg button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      rebuild();
+    });
+  });
+
+  el('colormapSelect').addEventListener('change', e=>{ state.cmap = e.target.value; rebuild(); });
+
+  el('toggleWireframe').addEventListener('change', e=>{
+    state.wireframe = e.target.checked;
+    if(currentMesh) currentMesh.material.wireframe = state.wireframe;
+  });
+  el('toggleGrid').addEventListener('change', e=>{ state.showGrid=e.target.checked; gridHelper.visible=state.showGrid; });
+  el('toggleAxes').addEventListener('change', e=>{ state.showAxes=e.target.checked; axesHelper.visible=state.showAxes; });
+  el('toggleBBox').addEventListener('change', e=>{ state.showBBox=e.target.checked; updateBBox(); });
+  el('toggleAnimate').addEventListener('change', e=>{ state.animate=e.target.checked; clock.start(); });
+  el('toggleAutoRotate').addEventListener('change', e=>{ state.autoRotate=e.target.checked; controls.autoRotate=state.autoRotate; controls.autoRotateSpeed=1.2; });
+
+  el('resetCamera').addEventListener('click', ()=>{
+    camera.position.set(9,6.5,10.5);
+    controls.target.set(0,0,0);
+    controls.update();
+  });
+  el('zoomIn').addEventListener('click', ()=>{ camera.position.multiplyScalar(0.85); });
+  el('zoomOut').addEventListener('click', ()=>{ camera.position.multiplyScalar(1.18); });
+
+  el('sidebarToggle').addEventListener('click', ()=>{ el('sidebar').classList.toggle('open'); });
+  el('mathToggle').addEventListener('click', ()=>{
+    el('mathPanel').classList.toggle('collapsed');
+    el('mathToggle').classList.toggle('active');
+  });
+  el('statsToggle').addEventListener('click', ()=>{
+    const p = el('statsPanel');
+    p.style.display = (p.style.display==='none') ? '' : 'none';
+    el('statsToggle').classList.toggle('active');
+  });
+
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    document.body.classList.add('reduced-motion');
+  }
+}
+
+/* =========================================================================
+   HOVER READOUT
+   ========================================================================= */
+
+function updateHover(){
+  if(!currentMesh || currentMesh.userData.isTube){ hoverTip.style.display='none'; return; }
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObject(currentMesh);
+  if(hits.length===0){ hoverTip.style.display='none'; document.getElementById('tickerReadout').innerHTML='<span class="k">hover the surface for a live readout →</span>'; return; }
+  const hit = hits[0];
+  const idx = hit.face.a;
+  const domain = currentMesh.userData.domainInfo ? currentMesh.userData.domainInfo[idx] : null;
+  if(!domain){ hoverTip.style.display='none'; return; }
+
+  let txt = '';
+  let tickerTxt = '';
+  if(state.family==='legendre'){
+    if(state.m===0){ txt = `x=${domain.x.toFixed(3)}  P=${domain.h.toFixed(4)}`; tickerTxt = `<span class="k">x=</span><span class="v">${domain.x.toFixed(3)}</span> <span class="k">P&nbsp;=</span><span class="v">${domain.h.toFixed(4)}</span>`; }
+    else { txt = `θ=${domain.theta.toFixed(2)} φ=${domain.phi.toFixed(2)}  Y=${domain.Y.toFixed(4)}`; tickerTxt = `<span class="k">Y=</span><span class="v">${domain.Y.toFixed(4)}</span>`; }
+  } else if(state.family==='bessel'){
+    txt = `r=${domain.r.toFixed(3)} θ=${domain.theta.toFixed(2)}`;
+    tickerTxt = `<span class="k">r=</span><span class="v">${domain.r.toFixed(3)}</span>`;
+  } else if(state.family==='hermite'){
+    txt = `x=${domain.x.toFixed(2)} y=${domain.y.toFixed(2)}`;
+    tickerTxt = `<span class="k">x,y=</span><span class="v">${domain.x.toFixed(2)}, ${domain.y.toFixed(2)}</span>`;
+  } else if(state.family==='laguerre'){
+    txt = `r=${domain.r.toFixed(3)}  |ψ|²∝${domain.P.toFixed(4)}`;
+    tickerTxt = `<span class="k">r=</span><span class="v">${domain.r.toFixed(3)}</span>`;
+  } else if(state.family==='gegenbauer'){
+    txt = `x=${domain.x.toFixed(3)} α=${domain.alpha.toFixed(2)}`;
+    tickerTxt = `<span class="k">α=</span><span class="v">${domain.alpha.toFixed(2)}</span>`;
+  }
+  hoverTip.style.display = 'block';
+  hoverTip.style.left = lastPointerClient.x+'px';
+  hoverTip.style.top = lastPointerClient.y+'px';
+  hoverTip.textContent = txt;
+  document.getElementById('tickerReadout').innerHTML = tickerTxt;
+}
+
+/* =========================================================================
+   RENDER LOOP
+   ========================================================================= */
+
+function animateLoop(){
+  requestAnimationFrame(animateLoop);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+  if(state.animate){
+    if(state.family==='bessel') updateBesselAnimation(t);
+    else if(state.family==='hermite') updateHermiteAnimation(t);
+  }
+  controls.update();
+  updateHover();
+  renderer.render(scene, camera);
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  initScene();
+  initUI();
+  syncUIFromState();
+  updateMathPanel();
+  rebuild();
+  animateLoop();
+});
+
+})();
+</script>
+</body>
+</html>

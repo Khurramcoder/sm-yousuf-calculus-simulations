@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oldroyd-B Fluid Flow Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .controls {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #fdbb2d;
+        }
+        
+        .scenario-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px;
+            background: rgba(253, 187, 45, 0.8);
+            border: none;
+            border-radius: 8px;
+            color: #1a2a6c;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #fdbb2d;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button.active {
+            background: #fdbb2d;
+            box-shadow: 0 0 0 2px #1a2a6c;
+        }
+        
+        .visualization {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .reference {
+            font-size: 0.8rem;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Oldroyd-B Fluid Flow Simulation</h1>
+            <p class="subtitle">Interactive visualization of non-Newtonian fluid flows based on the research by T. Hayat, A.M. Siddiqui, and S. Asghar. Explore different flow scenarios with adjustable parameters.</p>
+        </header>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <h2>Fluid Parameters</h2>
+                    
+                    <div class="slider-container">
+                        <label for="relaxation">Relaxation Time (λ₁): <span id="relaxation-value" class="value-display">0.5</span></label>
+                        <input type="range" id="relaxation" min="0" max="2" step="0.1" value="0.5">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="retardation">Retardation Time (λ₂): <span id="retardation-value" class="value-display">0.2</span></label>
+                        <input type="range" id="retardation" min="0" max="1" step="0.1" value="0.2">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="viscosity">Kinematic Viscosity (ν): <span id="viscosity-value" class="value-display">0.01</span></label>
+                        <input type="range" id="viscosity" min="0.001" max="0.1" step="0.001" value="0.01">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="frequency">Oscillation Frequency (ω₀): <span id="frequency-value" class="value-display">1.0</span></label>
+                        <input type="range" id="frequency" min="0.1" max="5" step="0.1" value="1.0">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Flow Scenarios</h2>
+                    <div class="scenario-buttons">
+                        <button id="scenario1" class="active">Oscillating Plate</button>
+                        <button id="scenario2">Parallel Plates (Fixed)</button>
+                        <button id="scenario3">Parallel Plates (Free)</button>
+                        <button id="scenario4">Poiseuille Flow</button>
+                        <button id="scenario5">Sudden Motion</button>
+                        <button id="scenario6">Symmetric Flow</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Visualization</h2>
+                    
+                    <div class="slider-container">
+                        <label for="time">Time: <span id="time-value" class="value-display">0.0</span></label>
+                        <input type="range" id="time" min="0" max="10" step="0.1" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="amplitude">Velocity Amplitude: <span id="amplitude-value" class="value-display">1.0</span></label>
+                        <input type="range" id="amplitude" min="0.1" max="2" step="0.1" value="1.0">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization">
+                <h2>Flow Visualization</h2>
+                <div class="canvas-container">
+                    <canvas id="flowCanvas"></canvas>
+                </div>
+                
+                <div class="info-panel">
+                    <h3 id="scenario-title">Oscillating Plate Flow</h3>
+                    <p id="scenario-description">Fluid motion induced by an oscillating plate. The velocity decreases exponentially with distance from the plate.</p>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #1a2a6c;"></div>
+                            <span>Zero Velocity</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fdbb2d;"></div>
+                            <span>Maximum Velocity</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Based on: "Some simple flows of an Oldroyd-B fluid" by T. Hayat, A.M. Siddiqui, and S. Asghar</p>
+            <p class="reference">International Journal of Engineering Science 39 (2001) 135–147</p>
+        </footer>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const canvas = document.getElementById('flowCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Parameters
+        let params = {
+            relaxation: 0.5,
+            retardation: 0.2,
+            viscosity: 0.01,
+            frequency: 1.0,
+            time: 0.0,
+            amplitude: 1.0,
+            scenario: 'scenario1'
+        };
+        
+        // Set canvas size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            drawFlow();
+        }
+        
+        // Initialize event listeners
+        function initEventListeners() {
+            // Parameter sliders
+            document.getElementById('relaxation').addEventListener('input', function() {
+                params.relaxation = parseFloat(this.value);
+                document.getElementById('relaxation-value').textContent = this.value;
+                drawFlow();
+            });
+            
+            document.getElementById('retardation').addEventListener('input', function() {
+                params.retardation = parseFloat(this.value);
+                document.getElementById('retardation-value').textContent = this.value;
+                drawFlow();
+            });
+            
+            document.getElementById('viscosity').addEventListener('input', function() {
+                params.viscosity = parseFloat(this.value);
+                document.getElementById('viscosity-value').textContent = this.value;
+                drawFlow();
+            });
+            
+            document.getElementById('frequency').addEventListener('input', function() {
+                params.frequency = parseFloat(this.value);
+                document.getElementById('frequency-value').textContent = this.value;
+                drawFlow();
+            });
+            
+            document.getElementById('time').addEventListener('input', function() {
+                params.time = parseFloat(this.value);
+                document.getElementById('time-value').textContent = this.value;
+                drawFlow();
+            });
+            
+            document.getElementById('amplitude').addEventListener('input', function() {
+                params.amplitude = parseFloat(this.value);
+                document.getElementById('amplitude-value').textContent = this.value;
+                drawFlow();
+            });
+            
+            // Scenario buttons
+            const scenarioButtons = document.querySelectorAll('.scenario-buttons button');
+            scenarioButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    scenarioButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    params.scenario = this.id;
+                    updateScenarioInfo();
+                    drawFlow();
+                });
+            });
+            
+            // Window resize
+            window.addEventListener('resize', resizeCanvas);
+        }
+        
+        // Update scenario information
+        function updateScenarioInfo() {
+            const title = document.getElementById('scenario-title');
+            const description = document.getElementById('scenario-description');
+            
+            switch(params.scenario) {
+                case 'scenario1':
+                    title.textContent = 'Oscillating Plate Flow';
+                    description.textContent = 'Fluid motion induced by an oscillating plate. The velocity decreases exponentially with distance from the plate.';
+                    break;
+                case 'scenario2':
+                    title.textContent = 'Flow Between Parallel Plates (Fixed)';
+                    description.textContent = 'Fluid confined between two parallel plates, with one oscillating and the other fixed.';
+                    break;
+                case 'scenario3':
+                    title.textContent = 'Flow Between Parallel Plates (Free)';
+                    description.textContent = 'Fluid between two plates, with one oscillating and the other being a free surface.';
+                    break;
+                case 'scenario4':
+                    title.textContent = 'Time-Periodic Poiseuille Flow';
+                    description.textContent = 'Flow driven by an oscillating pressure gradient between two fixed plates.';
+                    break;
+                case 'scenario5':
+                    title.textContent = 'Sudden Motion Flow';
+                    description.textContent = 'Flow induced by a plate suddenly set into motion.';
+                    break;
+                case 'scenario6':
+                    title.textContent = 'Symmetric Flow';
+                    description.textContent = 'Symmetric flow between parallel plates with arbitrary initial velocity.';
+                    break;
+            }
+        }
+        
+        // Calculate flow parameters
+        function calculateFlowParameters(k) {
+            const ω = k * params.frequency;
+            const a1k = (ω * ω * (params.retardation - params.relaxation)) / 
+                       ((1 + params.retardation * params.retardation * ω * ω) * params.viscosity);
+            const a2k = (ω * (1 + params.relaxation * params.retardation * ω * ω)) / 
+                       ((1 + params.retardation * params.retardation * ω * ω) * params.viscosity);
+            
+            const ζk = Math.sqrt((a1k + Math.sqrt(a1k * a1k + a2k * a2k)) / 2);
+            const ηk = Math.sqrt(a2k / (2 * (a1k + Math.sqrt(a1k * a1k + a2k * a2k))));
+            
+            return { ζk, ηk };
+        }
+        
+        // Calculate velocity for different scenarios
+        function calculateVelocity(y, t) {
+            let velocity = 0;
+            
+            switch(params.scenario) {
+                case 'scenario1': // Oscillating plate
+                    const { ζk, ηk } = calculateFlowParameters(1);
+                    velocity = params.amplitude * Math.exp(-ζk * y) * 
+                              Math.cos(params.frequency * t - ηk * y);
+                    break;
+                    
+                case 'scenario2': // Parallel plates (fixed)
+                    const { ζk: ζk2, ηk: ηk2 } = calculateFlowParameters(1);
+                    const d = 1.0; // Distance between plates
+                    const βk = Math.sqrt(ζk2 * ζk2 + ηk2 * ηk2);
+                    velocity = params.amplitude * Math.sinh(βk * (d - y)) / Math.sinh(βk * d) * 
+                              Math.cos(params.frequency * t);
+                    break;
+                    
+                case 'scenario3': // Parallel plates (free)
+                    const { ζk: ζk3, ηk: ηk3 } = calculateFlowParameters(1);
+                    const d3 = 1.0;
+                    const βk3 = Math.sqrt(ζk3 * ζk3 + ηk3 * ηk3);
+                    velocity = params.amplitude * Math.cosh(βk3 * (d3 - y)) / Math.cosh(βk3 * d3) * 
+                              Math.cos(params.frequency * t);
+                    break;
+                    
+                case 'scenario4': // Poiseuille flow
+                    const h = 0.5;
+                    const yNorm = y / h;
+                    velocity = params.amplitude * (1 - yNorm * yNorm) * 
+                              Math.cos(params.frequency * t);
+                    break;
+                    
+                case 'scenario5': // Sudden motion
+                    const d5 = 1.0;
+                    const nTerms = 5;
+                    let sum = 0;
+                    for (let n = 1; n <= nTerms; n++) {
+                        const a = 1 / (2 * params.relaxation) * 
+                                 (1 + params.retardation * n * n * Math.PI * Math.PI * params.viscosity / (d5 * d5));
+                        const c2 = Math.PI * Math.PI * params.viscosity / (params.relaxation * d5 * d5);
+                        
+                        let Tn;
+                        if (n < a / Math.sqrt(c2)) {
+                            Tn = Math.exp(-a * t) * (Math.cosh(Math.sqrt(a * a - n * n * c2) * t) + 
+                                  a / Math.sqrt(a * a - n * n * c2) * Math.sinh(Math.sqrt(a * a - n * n * c2) * t));
+                        } else {
+                            Tn = Math.exp(-a * t) * (Math.cos(Math.sqrt(n * n * c2 - a * a) * t) + 
+                                  a / Math.sqrt(n * n * c2 - a * a) * Math.sin(Math.sqrt(n * n * c2 - a * a) * t));
+                        }
+                        
+                        sum += (1 / n) * Math.sin(n * Math.PI * y / d5) * Tn;
+                    }
+                    velocity = params.amplitude * (1 - y / d5) - (2 * params.amplitude / Math.PI) * sum;
+                    break;
+                    
+                case 'scenario6': // Symmetric flow
+                    const h6 = 0.5;
+                    const nTerms6 = 5;
+                    let sum6 = 0;
+                    for (let n = 1; n <= nTerms6; n++) {
+                        const m = (2 * n - 1) * Math.PI / (2 * h6);
+                        const a2 = 1 / (2 * params.relaxation) * (1 + params.retardation * m * m * params.viscosity);
+                        const c2 = m * m * params.viscosity / params.relaxation;
+                        
+                        let Tn;
+                        if (c2 < a2) {
+                            Tn = Math.exp(-a2 * t) * (Math.cosh(Math.sqrt(a2 * a2 - c2) * t) + 
+                                  a2 / Math.sqrt(a2 * a2 - c2) * Math.sinh(Math.sqrt(a2 * a2 - c2) * t));
+                        } else {
+                            Tn = Math.exp(-a2 * t) * (Math.cos(Math.sqrt(c2 - a2 * a2) * t) + 
+                                  a2 / Math.sqrt(c2 - a2 * a2) * Math.sin(Math.sqrt(c2 - a2 * a2) * t));
+                        }
+                        
+                        sum6 += Math.cos(m * y) * Tn;
+                    }
+                    velocity = params.amplitude * sum6;
+                    break;
+            }
+            
+            return velocity;
+        }
+        
+        // Draw the flow visualization
+        function drawFlow() {
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw background
+            ctx.fillStyle = 'rgba(26, 42, 108, 0.3)';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw flow field
+            const maxY = 1.0;
+            const resolution = 100;
+            
+            for (let i = 0; i < resolution; i++) {
+                const y = (i / resolution) * maxY;
+                const velocity = calculateVelocity(y, params.time);
+                
+                // Normalize velocity to [-1, 1] range
+                const normalizedVelocity = Math.max(-1, Math.min(1, velocity / params.amplitude));
+                
+                // Calculate color based on velocity
+                let r, g, b;
+                if (normalizedVelocity >= 0) {
+                    // Positive velocity - yellow to blue
+                    r = 253 - normalizedVelocity * (253 - 26);
+                    g = 187 - normalizedVelocity * (187 - 42);
+                    b = 45 + normalizedVelocity * (108 - 45);
+                } else {
+                    // Negative velocity - red to blue
+                    const absVel = Math.abs(normalizedVelocity);
+                    r = 178 + absVel * (26 - 178);
+                    g = 31 + absVel * (42 - 31);
+                    b = 31 + absVel * (108 - 31);
+                }
+                
+                ctx.fillStyle = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+                
+                // Draw a horizontal line segment
+                const segmentHeight = height / resolution;
+                const segmentWidth = width * 0.8 * (0.2 + 0.8 * Math.abs(normalizedVelocity));
+                const xStart = (width - segmentWidth) / 2;
+                
+                ctx.fillRect(xStart, i * segmentHeight, segmentWidth, segmentHeight);
+            }
+            
+            // Draw plate/boundary
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillRect(0, 0, width, height / resolution);
+            
+            if (params.scenario === 'scenario2' || params.scenario === 'scenario3' || 
+                params.scenario === 'scenario5') {
+                // Draw top plate for scenarios with two boundaries
+                ctx.fillRect(0, height - height / resolution, width, height / resolution);
+            }
+            
+            // Draw time indicator
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText(`Time: ${params.time.toFixed(1)}`, 20, 30);
+            
+            // Draw scenario name
+            ctx.fillText(params.scenario.replace('scenario', 'Scenario '), 20, height - 20);
+        }
+        
+        // Animation loop
+        function animate() {
+            if (document.getElementById('time').value == 10) {
+                document.getElementById('time').value = 0;
+                params.time = 0;
+                document.getElementById('time-value').textContent = '0.0';
+            } else {
+                params.time += 0.1;
+                document.getElementById('time').value = params.time;
+                document.getElementById('time-value').textContent = params.time.toFixed(1);
+            }
+            
+            drawFlow();
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize the application
+        function init() {
+            resizeCanvas();
+            initEventListeners();
+            updateScenarioInfo();
+            drawFlow();
+            animate();
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Evolute & Centre of Curvature Classroom App</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+body{margin:0;background:#f4f1e8;font-family:Georgia,serif;color:#222}
+.container{max-width:1400px;margin:auto;padding:20px}
+h1{text-align:center}
+.layout{display:grid;grid-template-columns:420px 1fr;gap:20px}
+.panel{background:white;border:1px solid #cfc7b5;border-radius:8px;padding:18px}
+svg{width:100%;height:700px;background:#fffdf7;border:1px solid #d8d1c2}
+.theorem{background:#faf7ef;padding:12px;border-left:5px solid #8b6f47}
+.formula{margin:10px 0}
+input[type=range]{width:100%}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Centre of Curvature, Osculating Circle & Evolute Explorer</h1>
+
+<div class="layout">
+<div class="panel">
+<div class="theorem">
+<h3>Theorem</h3>
+For a curve \(y=f(x)\),
+\[
+h=x-\frac{y'(1+y'^2)}{y''}, \qquad
+k=y+\frac{1+y'^2}{y''}
+\]
+give the coordinates of the centre of curvature.
+</div>
+
+<h3>Interactive Example</h3>
+<p>Curve: \(y=x^2/8\)</p>
+
+<label>Point on curve</label>
+<input id="slider" type="range" min="-8" max="8" step="0.05" value="1">
+
+<div id="values"></div>
+
+<h3>Proof Outline</h3>
+<ol>
+<li>Find tangent slope \(y'\).</li>
+<li>Construct the normal line.</li>
+<li>Compute curvature:
+\[
+\kappa=\frac{|y''|}{(1+y'^2)^{3/2}}
+\]</li>
+<li>Radius:
+\[
+\rho=\frac1\kappa
+\]</li>
+<li>Move distance \(\rho\) along the normal.</li>
+<li>The locus of centres is the evolute.</li>
+</ol>
+</div>
+
+<div class="panel">
+<svg id="svg"></svg>
+</div>
+</div>
+</div>
+
+<script>
+const svg=document.getElementById("svg");
+
+function S(x,y){
+ return {x:500+x*40,y:600-y*40};
+}
+
+function draw(){
+ svg.innerHTML="";
+ let x=parseFloat(document.getElementById("slider").value);
+
+ let y=x*x/8;
+ let yp=x/4;
+ let ypp=0.25;
+
+ let kappa=Math.abs(ypp)/Math.pow(1+yp*yp,1.5);
+ let rho=1/kappa;
+
+ let nx=-yp;
+ let ny=1;
+ let len=Math.sqrt(nx*nx+ny*ny);
+ nx/=len; ny/=len;
+
+ let h=x+rho*nx;
+ let k=y+rho*ny;
+
+ let curve="";
+ for(let t=-8;t<=8;t+=0.03){
+   let p=S(t,t*t/8);
+   curve+=(curve?" L ":"M ")+p.x+" "+p.y;
+ }
+
+ const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+ path.setAttribute("d",curve);
+ path.setAttribute("fill","none");
+ path.setAttribute("stroke","#0a7");
+ path.setAttribute("stroke-width","4");
+ svg.appendChild(path);
+
+ let P=S(x,y);
+ let C=S(h,k);
+
+ function line(x1,y1,x2,y2,color){
+   let L=document.createElementNS("http://www.w3.org/2000/svg","line");
+   L.setAttribute("x1",x1);L.setAttribute("y1",y1);
+   L.setAttribute("x2",x2);L.setAttribute("y2",y2);
+   L.setAttribute("stroke",color);
+   L.setAttribute("stroke-width","3");
+   svg.appendChild(L);
+ }
+
+ line(P.x-150,P.y+150*yp,P.x+150,P.y-150*yp,"#06f");
+ line(P.x,P.y,C.x,C.y,"#d22");
+
+ let cp=document.createElementNS("http://www.w3.org/2000/svg","circle");
+ cp.setAttribute("cx",P.x); cp.setAttribute("cy",P.y);
+ cp.setAttribute("r",6); cp.setAttribute("fill","black");
+ svg.appendChild(cp);
+
+ let cc=document.createElementNS("http://www.w3.org/2000/svg","circle");
+ cc.setAttribute("cx",C.x); cc.setAttribute("cy",C.y);
+ cc.setAttribute("r",6); cc.setAttribute("fill","red");
+ svg.appendChild(cc);
+
+ let osc=document.createElementNS("http://www.w3.org/2000/svg","circle");
+ osc.setAttribute("cx",C.x);
+ osc.setAttribute("cy",C.y);
+ osc.setAttribute("r",rho*40);
+ osc.setAttribute("fill","none");
+ osc.setAttribute("stroke","#f80");
+ osc.setAttribute("stroke-width","2");
+ svg.appendChild(osc);
+
+ document.getElementById("values").innerHTML=`
+ <div class="formula">P = (${x.toFixed(3)}, ${y.toFixed(3)})</div>
+ <div class="formula">κ = ${kappa.toFixed(5)}</div>
+ <div class="formula">ρ = ${rho.toFixed(3)}</div>
+ <div class="formula">Centre = (${h.toFixed(3)}, ${k.toFixed(3)})</div>`;
+}
+
+document.getElementById("slider").oninput=draw;
+draw();
+</script>
+</body>
+</html>

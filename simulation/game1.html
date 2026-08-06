@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic City Loop</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        /* Vertical Video Container (9:16) */
+        #canvas-container {
+            position: relative;
+            width: 100vh;
+            height: 177.77vh; /* Maintains 9:16 ratio */
+            max-width: 100vw;
+            max-height: 177.77vw;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            border: 2px solid #1a1a1a;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(0, 212, 255, 0.5);
+            font-size: 12px;
+            letter-spacing: 2px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="cityCanvas"></canvas>
+        <div class="overlay">SECTOR_7 // NIGHT_MODE</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('cityCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set internal resolution
+        const W = 1080;
+        const H = 1920;
+        canvas.width = W;
+        canvas.height = H;
+
+        let frame = 0;
+
+        // Configuration
+        const COLORS = {
+            bg: '#020205',
+            buildings: ['#0a0a12', '#0f0f1a', '#141425'],
+            lights: ['#00d4ff', '#ff00ff', '#7000ff', '#ffffff'],
+            sky: '#050510'
+        };
+
+        class Building {
+            constructor(x, y, width, height, layer) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.layer = layer; // 1 = far, 2 = mid, 3 = near
+                this.windows = [];
+                this.generateWindows();
+            }
+
+            generateWindows() {
+                const rows = Math.floor(this.height / 20);
+                const cols = Math.floor(this.width / 15);
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (Math.random() > 0.6) {
+                            this.windows.push({
+                                rx: c * 15 + 5,
+                                ry: r * 20 + 5,
+                                color: COLORS.lights[Math.floor(Math.random() * COLORS.lights.length)],
+                                blink: Math.random() > 0.8
+                            });
+                        }
+                    }
+                }
+            }
+
+            draw(offset) {
+                const moveX = (this.x - offset * this.layer) % (W + this.width + 200);
+                const actualX = moveX < -this.width ? moveX + (W + this.width + 400) : moveX;
+
+                // Draw Building Shape
+                ctx.fillStyle = COLORS.buildings[this.layer - 1];
+                ctx.fillRect(actualX, this.y, this.width, this.height);
+
+                // Draw Windows
+                this.windows.forEach(win => {
+                    let alpha = 0.7;
+                    if (win.blink) {
+                        alpha = Math.abs(Math.sin(frame * 0.05 + win.rx));
+                    }
+                    ctx.fillStyle = win.color;
+                    ctx.globalAlpha = alpha;
+                    ctx.fillRect(actualX + win.rx, this.y + win.ry, 4, 6);
+                });
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        class Vehicle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.layer = Math.random() * 3 + 1;
+                this.x = W + 100;
+                this.y = Math.random() * (H * 0.6);
+                this.speed = (Math.random() * 5 + 2) * this.layer;
+                this.color = COLORS.lights[Math.floor(Math.random() * COLORS.lights.length)];
+                this.size = this.layer * 2;
+            }
+
+            update() {
+                this.x -= this.speed;
+                if (this.x < -100) this.reset();
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fillRect(this.x, this.y, this.size * 4, this.size);
+                
+                // Trail
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(this.x + 5, this.y, this.size * 10, this.size);
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Initialize objects
+        const buildings = [];
+        for (let i = 0; i < 40; i++) {
+            const layer = Math.floor(Math.random() * 3) + 1;
+            const w = 100 + Math.random() * 150;
+            const h = 300 + Math.random() * 600;
+            buildings.push(new Building(Math.random() * W * 2, H - h, w, h, layer));
+        }
+
+        const vehicles = Array.from({ length: 15 }, () => new Vehicle());
+
+        function drawSky() {
+            let grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, '#000000');
+            grad.addColorStop(0.5, '#050510');
+            grad.addColorStop(1, '#100020');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Stars
+            ctx.fillStyle = "#fff";
+            for(let i=0; i<50; i++) {
+                let x = (Math.sin(i) * 10000) % W;
+                let y = (Math.cos(i) * 10000) % (H/2);
+                ctx.globalAlpha = Math.random();
+                ctx.fillRect(x, y, 2, 2);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function animate() {
+            frame++;
+            ctx.clearRect(0, 0, W, H);
+            
+            drawSky();
+
+            // Camera panning simulation
+            const cameraOffset = frame * 1.5;
+
+            // Sort buildings by layer for correct depth rendering
+            const sortedBuildings = [...buildings].sort((a, b) => a.layer - b.layer);
+
+            // Draw vehicles behind the closest buildings
+            vehicles.forEach(v => {
+                v.update();
+                v.draw();
+            });
+
+            sortedBuildings.forEach(b => b.draw(cameraOffset));
+
+            // Atmospheric haze
+            ctx.fillStyle = "rgba(10, 0, 30, 0.3)";
+            ctx.fillRect(0, H - 400, W, 400);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

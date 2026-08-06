@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Differential Geometry Lab V4</title>
+<style>
+body{margin:0;background:#0b1020;color:#fff;font-family:Segoe UI,sans-serif}
+#app{display:grid;grid-template-columns:360px 1fr;height:100vh}
+.sidebar{background:#111827;padding:14px;overflow:auto}
+.card{background:#1f2937;padding:12px;border-radius:12px;margin-bottom:12px}
+.main{position:relative}
+svg{width:100%;height:100%}
+select,button,input{width:100%;padding:8px;margin:5px 0}
+.info{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.75);padding:12px;border-radius:10px;width:340px}
+#lecture{line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="sidebar">
+<h2>Differential Geometry Lab V4</h2>
+
+<div class="card">
+<label>Module</label>
+<select id="module">
+<option value="evolute">Evolute Explorer</option>
+<option value="envelope">Envelope Explorer</option>
+</select>
+</div>
+
+<div class="card">
+<label>Curve / Family</label>
+<select id="selector"></select>
+<button id="play">Play / Pause</button>
+<button id="reset">Reset</button>
+<input id="slider" type="range" min="0" max="100" value="0">
+</div>
+
+<div class="card">
+<h3>Lecture Mode</h3>
+<button id="prev">Previous Step</button>
+<button id="next">Next Step</button>
+<div id="lecture"></div>
+</div>
+
+<div class="card" id="theory"></div>
+</div>
+
+<div class="main">
+<svg id="svg"></svg>
+<div class="info" id="info"></div>
+</div>
+</div>
+
+<script>
+const svg=document.getElementById("svg");
+let w,h,param=0,playing=false,moduleType="evolute",evolute=[];
+
+const lessons=[
+"1. Curve Geometry",
+"2. Tangent Vector",
+"3. Normal Vector",
+"4. Curvature",
+"5. Radius of Curvature",
+"6. Center of Curvature",
+"7. Evolute / Envelope"
+];
+let lessonIndex=0;
+
+const curves={
+parabola:{name:"Parabola",min:-8,max:8,x:t=>t,y:t=>t*t/8,dx:t=>1,dy:t=>t/4,ddx:t=>0,ddy:t=>0.25},
+circle:{name:"Circle",min:0,max:2*Math.PI,x:t=>5*Math.cos(t),y:t=>5*Math.sin(t),dx:t=>-5*Math.sin(t),dy:t=>5*Math.cos(t),ddx:t=>-5*Math.cos(t),ddy:t=>-5*Math.sin(t)},
+ellipse:{name:"Ellipse",min:0,max:2*Math.PI,x:t=>7*Math.cos(t),y:t=>4*Math.sin(t),dx:t=>-7*Math.sin(t),dy:t=>4*Math.cos(t),ddx:t=>-7*Math.cos(t),ddy:t=>-4*Math.sin(t)},
+cycloid:{name:"Cycloid",min:0,max:4*Math.PI,x:t=>t-Math.sin(t),y:t=>1-Math.cos(t),dx:t=>1-Math.cos(t),dy:t=>Math.sin(t),ddx:t=>Math.sin(t),ddy:t=>Math.cos(t)},
+astroid:{name:"Astroid",min:0,max:2*Math.PI,x:t=>5*Math.pow(Math.cos(t),3),y:t=>5*Math.pow(Math.sin(t),3),
+dx:t=>-15*Math.cos(t)*Math.cos(t)*Math.sin(t),
+dy:t=>15*Math.sin(t)*Math.sin(t)*Math.cos(t),
+ddx:t=>30*Math.cos(t)*Math.sin(t)*Math.sin(t)-15*Math.pow(Math.cos(t),3),
+ddy:t=>30*Math.sin(t)*Math.cos(t)*Math.cos(t)-15*Math.pow(Math.sin(t),3)}
+};
+
+let current="parabola";
+
+function fillSelector(){
+ const s=document.getElementById("selector");
+ s.innerHTML="";
+ if(moduleType==="evolute"){
+   Object.keys(curves).forEach(k=>{
+      let o=document.createElement("option");
+      o.value=k;o.textContent=curves[k].name;s.appendChild(o);
+   });
+ }else{
+   ["lineFamily","parabolaFamily","circleFamily"].forEach(k=>{
+      let o=document.createElement("option");
+      o.value=k;o.textContent=k;s.appendChild(o);
+   });
+ }
+}
+fillSelector();
+
+function updateLecture(){
+ document.getElementById("lecture").innerHTML="<b>"+lessons[lessonIndex]+"</b>";
+}
+updateLecture();
+
+function S(x,y){return{x:w/2+x*30,y:h/2-y*30};}
+function add(tag,a){let e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(let k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e;}
+function curve(){return curves[current]}
+function tval(){let c=curve();return c.min+(c.max-c.min)*param;}
+
+function curvature(){
+ let c=curve(),t=tval();
+ let dx=c.dx(t),dy=c.dy(t),ddx=c.ddx(t),ddy=c.ddy(t);
+ let den=Math.pow(dx*dx+dy*dy,1.5);
+ if(den<1e-6) return 0.0001;
+ return Math.abs(dx*ddy-dy*ddx)/den;
+}
+function rho(){return Math.min(40,1/Math.max(curvature(),0.0001));}
+
+function center(){
+ let c=curve(),t=tval();
+ let x=c.x(t),y=c.y(t),dx=c.dx(t),dy=c.dy(t);
+ let s=Math.sqrt(dx*dx+dy*dy);
+ if(s<1e-6) s=1;
+ let r=rho();
+ return {x:x-r*(dy/s),y:y+r*(dx/s)};
+}
+
+function grid(){
+ for(let x=0;x<w;x+=40)add("line",{x1:x,y1:0,x2:x,y2:h,stroke:"#1e293b"});
+ for(let y=0;y<h;y+=40)add("line",{x1:0,y1:y,x2:w,y2:y,stroke:"#1e293b"});
+}
+
+function drawEvolute(){
+ let c=curve(),d="";
+ for(let i=0;i<=800;i++){
+  let t=c.min+(c.max-c.min)*i/800,p=S(c.x(t),c.y(t));
+  d+=(i?" L ":"M ")+p.x+" "+p.y;
+ }
+ add("path",{d,fill:"none",stroke:"#22c55e","stroke-width":4});
+
+ let t=tval(),x=c.x(t),y=c.y(t),dx=c.dx(t),dy=c.dy(t);
+ let p=S(x,y);
+
+ add("line",{x1:p.x-dx*25,y1:p.y+dy*25,x2:p.x+dx*25,y2:p.y-dy*25,stroke:"#38bdf8","stroke-width":3});
+ add("line",{x1:p.x+dy*25,y1:p.y+dx*25,x2:p.x-dy*25,y2:p.y-dx*25,stroke:"#f59e0b","stroke-width":3});
+
+ let cc=center(),cp=S(cc.x,cc.y);
+ add("line",{x1:p.x,y1:p.y,x2:cp.x,y2:cp.y,stroke:"#ef4444"});
+ add("circle",{cx:p.x,cy:p.y,r:6,fill:"white"});
+ add("circle",{cx:cp.x,cy:cp.y,r:5,fill:"#ef4444"});
+ add("circle",{cx:cp.x,cy:cp.y,r:rho()*30,fill:"none",stroke:"#f59e0b"});
+
+ if(evolute.length>1){
+   let d2="";
+   evolute.forEach((q,i)=>{
+      let s=S(q.x,q.y);
+      d2+=(i?" L ":"M ")+s.x+" "+s.y;
+   });
+   add("path",{d:d2,fill:"none",stroke:"#ff3355","stroke-width":4});
+ }
+
+ document.getElementById("theory").innerHTML=
+ "<b>Evolute:</b> Locus of centers of curvature.";
+ document.getElementById("info").innerHTML=
+ "Curve: "+curves[current].name+"<br>"+
+ "κ = "+curvature().toFixed(5)+"<br>"+
+ "ρ = "+rho().toFixed(3)+"<br>"+
+ "Evolute points = "+evolute.length;
+}
+
+function drawEnvelope(){
+ const family=document.getElementById("selector").value;
+
+ if(family==="lineFamily"){
+   for(let m=-3;m<=3;m+=0.25){
+     if(Math.abs(m)<0.05) continue;
+     let d="";
+     for(let x=-2;x<=10;x+=0.1){
+       let y=m*x+1/m,p=S(x,y);
+       d+=(d?" L ":"M ")+p.x+" "+p.y;
+     }
+     add("path",{d,fill:"none",stroke:"#64748b"});
+   }
+   let up="",lo="";
+   for(let x=0.01;x<=10;x+=0.05){
+     let y=2*Math.sqrt(x);
+     let p=S(x,y),q=S(x,-y);
+     up+=(up?" L ":"M ")+p.x+" "+p.y;
+     lo+=(lo?" L ":"M ")+q.x+" "+q.y;
+   }
+   add("path",{d:up,fill:"none",stroke:"#ef4444","stroke-width":4});
+   add("path",{d:lo,fill:"none",stroke:"#ef4444","stroke-width":4});
+ }
+
+ document.getElementById("theory").innerHTML=
+ "<b>Envelope:</b> F(x,y,c)=0 and ∂F/∂c=0";
+ document.getElementById("info").innerHTML=
+ "Envelope family visualization";
+}
+
+function render(){
+ svg.innerHTML="";
+ w=svg.clientWidth;h=svg.clientHeight;
+ grid();
+ if(moduleType==="evolute") drawEvolute(); else drawEnvelope();
+}
+
+document.getElementById("module").onchange=e=>{
+ moduleType=e.target.value;
+ fillSelector();
+ render();
+};
+
+document.getElementById("selector").onchange=e=>{
+ current=e.target.value;
+ evolute=[];
+ render();
+};
+
+document.getElementById("slider").oninput=e=>{
+ param=e.target.value/100;
+ render();
+};
+
+document.getElementById("play").onclick=()=>playing=!playing;
+document.getElementById("reset").onclick=()=>{param=0;evolute=[];render();};
+
+document.getElementById("next").onclick=()=>{
+ lessonIndex=Math.min(lessons.length-1,lessonIndex+1);
+ updateLecture();
+};
+document.getElementById("prev").onclick=()=>{
+ lessonIndex=Math.max(0,lessonIndex-1);
+ updateLecture();
+};
+
+function animate(){
+ if(playing){
+   param+=0.002;
+   if(param>1) param=0;
+   if(moduleType==="evolute") evolute.push(center());
+   document.getElementById("slider").value=param*100;
+   render();
+ }
+ requestAnimationFrame(animate);
+}
+
+window.onresize=render;
+render();
+animate();
+</script>
+</body>
+</html>

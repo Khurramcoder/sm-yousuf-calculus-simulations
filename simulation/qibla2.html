@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Qibla Spherical Calculus Lab</title>
+    <!-- Tailwind CSS for modern UI layout -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Three.js for immersive 3D visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden font-sans">
+
+    <!-- Header Frame -->
+    <header class="max-w-7xl w-full mx-auto mb-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-800 pb-4">
+        <div>
+            <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">Interactive Student Lab</span>
+            <h1 class="text-3xl font-black tracking-tight text-white mt-1">Spherical Trigonometry & Qibla Geodesy</h1>
+        </div>
+        
+        <!-- Interactive Textbook Case Studies Selector -->
+        <div class="flex flex-wrap gap-2 bg-slate-900/60 p-1.5 rounded-xl border border-slate-800">
+            <button onclick="loadCaseStudy(31.5925, 74.3119, 'E', 'Lahore', 'Example 41')" class="px-3 py-1.5 bg-slate-800 hover:bg-emerald-600 rounded-lg text-xs font-semibold transition cursor-pointer">Lahore[span_2](start_span)[span_2](end_span)</button>
+            <button onclick="loadCaseStudy(23.7000, 90.3667, 'E', 'Dhaka', 'Example 42')" class="px-3 py-1.5 bg-slate-800 hover:bg-emerald-600 rounded-lg text-xs font-semibold transition cursor-pointer">Dhaka[span_3](start_span)[span_3](end_span)</button>
+            <button onclick="loadCaseStudy(33.6667, 73.1333, 'E', 'Islamabad', 'Exercise 8.13 (a)')" class="px-3 py-1.5 bg-slate-800 hover:bg-emerald-600 rounded-lg text-xs font-semibold transition cursor-pointer">Islamabad[span_4](start_span)[span_4](end_span)</button>
+            <button onclick="loadCaseStudy(40.8167, -74.0000, 'W', 'New York', 'Exercise 8.13 (e)')" class="px-3 py-1.5 bg-slate-800 hover:bg-emerald-600 rounded-lg text-xs font-semibold transition cursor-pointer">New York[span_5](start_span)[span_5](end_span)</button>
+            <button onclick="loadCaseStudy(-35.2833, 149.1333, 'E', 'Canberra', 'Exercise 8.13 (f)')" class="px-3 py-1.5 bg-slate-800 hover:bg-emerald-600 rounded-lg text-xs font-semibold transition cursor-pointer">Canberra[span_6](start_span)[span_6](end_span)</button>
+        </div>
+    </header>
+
+    <!-- Main Grid Workspace -->
+    <main class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
+        
+        <!-- Left Side: Interactive 3D World Space (7 Columns) -->
+        <div class="lg:col-span-7 bg-slate-900/40 rounded-2xl border border-slate-800 relative min-h-[450px] lg:min-h-[620px] overflow-hidden flex flex-col shadow-2xl">
+            <!-- 3D Canvas Canvas container -->
+            <div id="canvas3d-container" class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"></div>
+            
+            <!-- Dynamic Map Orientation Overlay Heads-up Display -->
+            <div class="absolute top-4 left-4 bg-slate-950/80 backdrop-blur border border-slate-800 p-4 rounded-xl pointer-events-none shadow-xl">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active Target Space</span>
+                <h2 id="hud-name" class="text-xl font-black text-white">Lahore[span_7](start_span)[span_7](end_span)</h2>
+                <p id="hud-coords" class="text-xs font-mono text-emerald-400 mt-0.5">31.35° N, 74.18° E[span_8](start_span)[span_8](end_span)</p>
+            </div>
+
+            <!-- Legends Map Info bottom sheet overlay -->
+            <div class="absolute bottom-4 left-4 right-4 bg-slate-950/85 backdrop-blur border border-slate-800 p-3.5 rounded-xl pointer-events-none flex flex-wrap justify-between items-center text-xs text-slate-400 gap-3">
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-amber-400 rounded-full"></span> Student Target</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> Khana-e-Ka'ba</div>
+                    <div class="flex items-center gap-1.5"><span class="w-4 h-0.5 bg-emerald-400 inline-block"></span> Great-Circle Arc Vector</div>
+                </div>
+                <div class="text-[11px] bg-slate-900 px-2 py-1 rounded text-slate-500 font-medium">💡 Drag to rotate globe orbit</div>
+            </div>
+        </div>
+
+        <!-- Right Side: Step-by-Step Computational Math Panel (5 Columns) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Mathematical Analytical Parameter Trace Box -->
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex flex-col justify-between flex-1 shadow-xl">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Step-by-Step Calculation Trace</h3>
+                        <span id="textbook-ref" class="text-[11px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-slate-850">Example 41[span_9](start_span)[span_9](end_span)</span>
+                    </div>
+
+                    <div class="space-y-3 font-mono text-xs">
+                        <!-- Condition Step -->
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-850">
+                            <span class="text-[10px] text-slate-500 font-bold block uppercase mb-1">Step 1: Longitude Condition Analysis</span>
+                            <div id="step-condition" class="text-slate-300">If λ > λ₀ → l = λ - λ₀ (Central East)</div>
+                            <div class="mt-1.5 text-amber-400 font-bold text-sm">l = <span id="val-l">34.49°</span></div>
+                        </div>
+
+                        <!-- Components Step -->
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-850 grid grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">Component p</span>
+                                <div class="text-[10px] text-slate-500">sin φ / tan l</div>
+                                <div id="val-p" class="text-white font-bold text-sm mt-1">0.7622</div>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-bold block uppercase mb-0.5">Component q</span>
+                                <div class="text-[10px] text-slate-500">cos φ tan φ₀ / sin l</div>
+                                <div id="val-q" class="text-white font-bold text-sm mt-1">0.5900</div>
+                            </div>
+                        </div>
+
+                        <!-- Final Ratio Step -->
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-850">
+                            <span class="text-[10px] text-slate-500 font-bold block uppercase mb-1">Step 2: Solve Directional Inclination</span>
+                            <div class="text-[11px] text-slate-400">tan(i) = p - q = <span id="val-sub" class="text-slate-300">0.1722</span></div>
+                            <div class="mt-1.5 text-emerald-400 font-bold text-sm">i = <span id="val-i">9.77°</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Descriptive Output Orientation Frame -->
+                <div class="mt-6 pt-5 border-t border-slate-800/80 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest block">Geographical Quadrant Verdict</span>
+                        <h2 id="val-verdict" class="text-xl font-black text-white mt-0.5">South of West[span_10](start_span)[span_10](end_span)</h2>
+                        <span id="val-azimuth" class="text-xs font-mono text-emerald-400 mt-1 block">Bearing: 260.2° True North</span>
+                    </div>
+                    
+                    <!-- Dynamic mini Compass Graphic dial component -->
+                    <div class="w-16 h-16 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center relative shadow-inner">
+                        <div id="compass-needle" class="w-1 h-11 bg-gradient-to-t from-emerald-500 to-rose-500 rounded-full transform transition-transform duration-500 ease-out" style="transform: rotate(260deg);"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-slate-600 pointer-events-none">N</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Application Script Execution Core Architecture -->
+    <script>
+        // Textbook constants for Khana-e-Ka'ba coordinates[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span)
+        const KABA_LAT = 21.4200; // 21° 25.2' N[span_13](start_span)[span_13](end_span)
+        const KABA_LNG = 39.8200; // 39° 49.2' E[span_14](start_span)[span_14](end_span)
+
+        let scene, camera, renderer, globe, targetPoint, kabaPoint, vectorArcPath;
+        let isUserInteracting = false;
+        let lastPointerCoords = { x: 0, y: 0 };
+        const BALL_RADIUS = 5;
+
+        // Initialize 3D Vector Engine Context Workspace
+        function init3DLaboratory() {
+            const viewport = document.getElementById('canvas3d-container');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(40, viewport.clientWidth / viewport.clientHeight, 0.1, 1000);
+            camera.position.z = 14;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            viewport.appendChild(renderer.domElement);
+
+            // Studio Lighting Nodes setup
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const spotlight = new THREE.DirectionalLight(0xffffff, 0.8);
+            spotlight.position.set(6, 4, 8);
+            scene.add(spotlight);
+
+            // Construct structured wireframe Earth sphere representation
+            const sphereGeometry = new THREE.SphereGeometry(BALL_RADIUS, 30, 30);
+            const sphereMaterial = new THREE.MeshStandardMaterial({
+                color: 0x334155,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.12
+            });
+            globe = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            scene.add(globe);
+
+            // Overlay Equator Line boundary for reference
+            const geoRing = new THREE.RingGeometry(BALL_RADIUS - 0.02, BALL_RADIUS + 0.02, 64);
+            const matRing = new THREE.MeshBasicMaterial({ color: 0x475569, side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
+            const boundaryEquator = new THREE.Mesh(geoRing, matRing);
+            boundaryEquator.rotation.x = Math.PI / 2;
+            globe.add(boundaryEquator);
+
+            // Allocate pinpoint visual mesh nodes
+            kabaPoint = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+            targetPoint = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshBasicMaterial({ color: 0xfbbf24 }));
+            globe.add(kabaPoint);
+            globe.add(targetPoint);
+
+            // Bind Vector rotation mechanics drag handlers
+            viewport.addEventListener('mousedown', () => { isUserInteracting = true; });
+            viewport.addEventListener('mousemove', (e) => {
+                const deltaX = e.offsetX - lastPointerCoords.x;
+                const deltaY = e.offsetY - lastPointerCoords.y;
+                if (isUserInteracting) {
+                    globe.rotation.y += deltaX * 0.006;
+                    globe.rotation.x += deltaY * 0.006;
+                }
+                lastPointerCoords = { x: e.offsetX, y: e.offsetY };
+            });
+            window.addEventListener('mouseup', () => { isUserInteracting = false; });
+
+            // Responsive auto sizing resize listener
+            window.addEventListener('resize', () => {
+                camera.aspect = viewport.clientWidth / viewport.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+            });
+
+            renderLoop();
+        }
+
+        // Trigonometric utility to convert geographic space coordinates to local 3D vector paths
+        function convertSpaceCoordinates(lat, lng) {
+            const radPhi = (90 - lat) * (Math.PI / 180);
+            const radTheta = (lng + 180) * (Math.PI / 180);
+            return new THREE.Vector3(
+                -(BALL_RADIUS * Math.sin(radPhi) * Math.sin(radTheta)),
+                BALL_RADIUS * Math.cos(radPhi),
+                BALL_RADIUS * Math.sin(radPhi) * Math.cos(radTheta)
+            );
+        }
+
+        // Analytical Engine Processing Logic mapping Handout Formulas directly
+        function loadCaseStudy(lat, lng, regionFlag, cityTitle, textbookCode) {
+            document.getElementById('hud-name').innerText = cityTitle;
+            document.getElementById('hud-coords').innerText = `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(2)}° ${lng >= 0 ? 'E' : 'W'}`;
+            document.getElementById('textbook-ref').innerText = textbookCode;
+
+            const rad = Math.PI / 180;
+            const phiRad = lat * rad;
+            const phi0Rad = KABA_LAT * rad;
+
+            // Longitude structural routing analysis conditions block according to Shehzad Ali[span_15](start_span)[span_15](end_span)
+            let classicalL = 0;
+            let conditionString = "";
+            
+            if (regionFlag === 'E') {
+                if (lng > KABA_LNG) {
+                    classicalL = lng - KABA_LNG; //[span_16](start_span)[span_16](end_span)[span_17](start_span)[span_17](end_span)
+                    conditionString = "λ > λ₀ → l = λ - λ₀ (Central East)[span_18](start_span)[span_18](end_span)";
+                } else {
+                    classicalL = KABA_LNG - lng; //[span_19](start_span)[span_19](end_span)
+                    conditionString = "0 < λ < λ₀ → l = λ₀ - λ (Central West)[span_20](start_span)[span_20](end_span)";
+                }
+            } else { // Hemisphere West cases[span_21](start_span)[span_21](end_span)
+                const absLng = Math.abs(lng);
+                if (absLng < (180 - KABA_LNG)) {
+                    classicalL = absLng + KABA_LNG; //[span_22](start_span)[span_22](end_span)
+                    conditionString = "0 < λ < 180°-λ₀ → l = λ + λ₀ (Central West)[span_23](start_span)[span_23](end_span)";
+                } else {
+                    classicalL = 360 - (absLng + KABA_LNG); //[span_24](start_span)[span_24](end_span)
+                    conditionString = "180°-λ₀ < λ < 180° → l = 360 - (λ+λ₀) (Central East)[span_25](start_span)[span_25](end_span)";
+                }
+            }
+
+            const lRad = classicalL * rad;
+            document.getElementById('step-condition').innerText = conditionString;
+            document.getElementById('val-l').innerText = `${classicalL.toFixed(2)}°`;
+
+            // Calculate component blocks p and q from handout definitions[span_26](start_span)[span_26](end_span)
+            const compP = Math.sin(phiRad) / Math.tan(lRad); //[span_27](start_span)[span_27](end_span)
+            const compQ = (Math.cos(phiRad) * Math.tan(phi0Rad)) / Math.sin(lRad); //[span_28](start_span)[span_28](end_span)
+            const tanI = compP - compQ; //[span_29](start_span)[span_29](end_span)
+            let iDeg = Math.atan(tanI) / rad;
+
+            document.getElementById('val-p').innerText = compP.toFixed(4);
+            document.getElementById('val-q').innerText = compQ.toFixed(4);
+            document.getElementById('val-sub').innerText = tanI.toFixed(4);
+            document.getElementById('val-i').innerText = `${Math.abs(iDeg).toFixed(2)}°`;
+
+            // Determine geographical quadrant string verdict remarks[span_30](start_span)[span_30](end_span)
+            let verdict = "";
+            if (regionFlag === 'E' && lng > KABA_LNG) {
+                verdict = tanI >= 0 ? "South of West[span_31](start_span)[span_31](end_span)" : "North of West[span_32](start_span)[span_32](end_span)";
+            } else if (regionFlag === 'W') {
+                verdict = tanI >= 0 ? "South of East" : "North of East[span_33](start_span)[span_33](end_span)";
+            } else {
+                verdict = tanI >= 0 ? "South of East" : "North of East";
+            }
+            document.getElementById('val-verdict').innerText = verdict;
+
+            // Compute true absolute geodetic azimuth for spatial alignment
+            const dLon = (KABA_LNG - lng) * rad;
+            const y = Math.sin(dLon);
+            const x = Math.cos(phiRad) * Math.tan(phi0Rad) - Math.sin(phiRad) * Math.cos(dLon);
+            let targetBearing = (Math.atan2(y, x) / rad + 360) % 360;
+
+            document.getElementById('val-azimuth').innerText = `Bearing: ${targetBearing.toFixed(1)}° from True North`;
+            document.getElementById('compass-needle').style.transform = `rotate(${targetBearing}deg)`;
+
+            // Update 3D Point Matrices positions
+            const vecKaba = convertSpaceCoordinates(KABA_LAT, KABA_LNG);
+            const vecTarget = convertSpaceCoordinates(lat, lng);
+
+            kabaPoint.position.copy(vecKaba);
+            targetPoint.position.copy(vecTarget);
+
+            // Reconstruct geodesic path trajectory lines overlay over vector model
+            if (vectorArcPath) globe.remove(vectorArcPath);
+
+            const arcVertices = [];
+            for (let index = 0; index <= 60; index++) {
+                const interpolantFraction = index / 60;
+                const pathVectorNode = new THREE.Vector3();
+                THREE.Vector3.prototype.lerpVectors(vecTarget, vecKaba, interpolantFraction);
+                pathVectorNode.normalize().multiplyScalar(BALL_RADIUS + 0.03); // push outward above mesh shell
+                arcVertices.push(pathVectorNode);
+            }
+
+            const arcGeom = new THREE.BufferGeometry().setFromPoints(arcVertices);
+            vectorArcPath = new THREE.Line(arcGeom, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 3.5 }));
+            globe.add(vectorArcPath);
+
+            // Automatically animate rotation look-at positions towards computed zone fields
+            if (!isUserInteracting) {
+                globe.rotation.x = phiRad * 0.4;
+                globe.rotation.y = -(lng + 55) * rad;
+            }
+        }
+
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
+            if (!isUserInteracting) {
+                globe.rotation.y += 0.0008; // smooth baseline inertia crawl
+            }
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            init3DLaboratory();
+            // Fire up default problem scenario (Lahore) on initialization sequence[span_34](start_span)[span_34](end_span)
+            loadCaseStudy(31.5925, 74.3119, 'E', 'Lahore', 'Example 41')[span_35](start_span)[span_35](end_span);
+        };
+    </script>
+</body>
+</html>

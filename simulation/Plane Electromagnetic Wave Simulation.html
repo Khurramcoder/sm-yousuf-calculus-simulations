@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plane Electromagnetic Wave Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2a4a7c);
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0c8ff;
+            margin-bottom: 15px;
+        }
+        
+        .description {
+            max-width: 800px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+        
+        .simulation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        #waveCanvas {
+            width: 100%;
+            height: 400px;
+            background: #0a1526;
+            border-radius: 5px;
+            display: block;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #6eb6ff;
+            border-bottom: 1px solid rgba(110, 182, 255, 0.3);
+            padding-bottom: 5px;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: #2a3a5a;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4a9cff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            display: inline-block;
+            width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #4a9cff;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px;
+            background: #2a5ca7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3a6cb7;
+        }
+        
+        button.active {
+            background: #4a9cff;
+            box-shadow: 0 0 10px rgba(74, 156, 255, 0.5);
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .equations {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: 'Cambria Math', serif;
+            overflow-x: auto;
+        }
+        
+        .key-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .point {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4a9cff;
+        }
+        
+        .point h3 {
+            color: #6eb6ff;
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            color: #a0c8ff;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .simulation-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Plane Electromagnetic Wave Simulation</h1>
+            <p class="subtitle">Visualizing solutions to Maxwell's equations in different media</p>
+            <p class="description">
+                This interactive simulation demonstrates the propagation of plane electromagnetic waves in vacuum and conducting media, 
+                based on the mathematical framework described in the research paper.
+            </p>
+        </header>
+        
+        <div class="simulation-container">
+            <div class="canvas-container">
+                <h2>Wave Propagation Visualization</h2>
+                <canvas id="waveCanvas"></canvas>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h2>Simulation Parameters</h2>
+                    
+                    <div class="slider-container">
+                        <label for="frequency">Frequency (ω): <span id="freqValue" class="value-display">1.0</span> rad/s</label>
+                        <input type="range" id="frequency" min="0.1" max="3.0" step="0.1" value="1.0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="conductivity">Conductivity (σ): <span id="condValue" class="value-display">0.0</span> S/m</label>
+                        <input type="range" id="conductivity" min="0" max="2" step="0.1" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="permittivity">Permittivity (ε): <span id="permValue" class="value-display">1.0</span> ε₀</label>
+                        <input type="range" id="permittivity" min="0.5" max="5.0" step="0.1" value="1.0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="permeability">Permeability (μ): <span id="permValue2" class="value-display">1.0</span> μ₀</label>
+                        <input type="range" id="permeability" min="0.5" max="5.0" step="0.1" value="1.0">
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="vacuumBtn" class="active">Vacuum</button>
+                        <button id="conductorBtn">Conductor</button>
+                        <button id="dielectricBtn">Dielectric</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Visualization Options</h2>
+                    
+                    <div class="slider-container">
+                        <label for="waveAmplitude">Wave Amplitude: <span id="ampValue" class="value-display">1.0</span></label>
+                        <input type="range" id="waveAmplitude" min="0.1" max="2.0" step="0.1" value="1.0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="propagationSpeed">Propagation Speed: <span id="speedValue" class="value-display">1.0</span> c</label>
+                        <input type="range" id="propagationSpeed" min="0.1" max="2.0" step="0.1" value="1.0">
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="showEField">Show E Field</button>
+                        <button id="showBField">Show B Field</button>
+                        <button id="showBoth">Show Both</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>Mathematical Background</h2>
+            
+            <div class="equations">
+                <p><strong>Maxwell's Equations in Vacuum:</strong></p>
+                <p>∇·E = 0, ∇·B = 0, ∇×E = -∂B/∂t, ∇×B = μ₀ε₀ ∂E/∂t</p>
+                <p><strong>Wave Equations:</strong></p>
+                <p>∇²E - (1/c²) ∂²E/∂t² = 0, ∇²B - (1/c²) ∂²B/∂t² = 0</p>
+                <p><strong>Plane Wave Solutions:</strong></p>
+                <p>E(r,t) = E₀ exp[i(k·r - ωt)], B(r,t) = B₀ exp[i(k·r - ωt)]</p>
+                <p><strong>Conducting Medium:</strong></p>
+                <p>∇²E - εμ ∂²E/∂t² - μσ ∂E/∂t = 0</p>
+            </div>
+            
+            <div class="key-points">
+                <div class="point">
+                    <h3>Transverse Nature</h3>
+                    <p>Electromagnetic waves are transverse: both E and B fields are perpendicular to the direction of propagation.</p>
+                </div>
+                
+                <div class="point">
+                    <h3>Mutual Perpendicularity</h3>
+                    <p>The E and B fields are perpendicular to each other, forming a right-handed coordinate system with the propagation direction.</p>
+                </div>
+                
+                <div class="point">
+                    <h3>Phase Relationship</h3>
+                    <p>In vacuum, E and B oscillate in phase. In conductors, they may have a phase difference due to attenuation.</p>
+                </div>
+                
+                <div class="point">
+                    <h3>Wave Impedance</h3>
+                    <p>The ratio |E|/|B| equals the speed of light in vacuum, and the wave impedance in a medium is Z = √(μ/ε).</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Based on the paper: "Plane-wave solutions of Maxwell's equations: An educational note" by C. J. Papachristou</p>
+            <p>Interactive Simulation created for educational purposes</p>
+        </footer>
+    </div>
+
+    <script>
+        // Get canvas and context
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Simulation parameters
+        let params = {
+            frequency: 1.0,
+            conductivity: 0.0,
+            permittivity: 1.0,
+            permeability: 1.0,
+            amplitude: 1.0,
+            speed: 1.0,
+            medium: 'vacuum',
+            showField: 'both',
+            time: 0
+        };
+        
+        // DOM elements
+        const frequencySlider = document.getElementById('frequency');
+        const conductivitySlider = document.getElementById('conductivity');
+        const permittivitySlider = document.getElementById('permittivity');
+        const permeabilitySlider = document.getElementById('permeability');
+        const amplitudeSlider = document.getElementById('waveAmplitude');
+        const speedSlider = document.getElementById('propagationSpeed');
+        
+        const freqValue = document.getElementById('freqValue');
+        const condValue = document.getElementById('condValue');
+        const permValue = document.getElementById('permValue');
+        const permValue2 = document.getElementById('permValue2');
+        const ampValue = document.getElementById('ampValue');
+        const speedValue = document.getElementById('speedValue');
+        
+        const vacuumBtn = document.getElementById('vacuumBtn');
+        const conductorBtn = document.getElementById('conductorBtn');
+        const dielectricBtn = document.getElementById('dielectricBtn');
+        
+        const showEField = document.getElementById('showEField');
+        const showBField = document.getElementById('showBField');
+        const showBoth = document.getElementById('showBoth');
+        
+        // Update parameter displays
+        function updateDisplays() {
+            freqValue.textContent = params.frequency.toFixed(1);
+            condValue.textContent = params.conductivity.toFixed(1);
+            permValue.textContent = params.permittivity.toFixed(1);
+            permValue2.textContent = params.permeability.toFixed(1);
+            ampValue.textContent = params.amplitude.toFixed(1);
+            speedValue.textContent = params.speed.toFixed(1);
+        }
+        
+        // Event listeners for sliders
+        frequencySlider.addEventListener('input', function() {
+            params.frequency = parseFloat(this.value);
+            updateDisplays();
+        });
+        
+        conductivitySlider.addEventListener('input', function() {
+            params.conductivity = parseFloat(this.value);
+            updateDisplays();
+        });
+        
+        permittivitySlider.addEventListener('input', function() {
+            params.permittivity = parseFloat(this.value);
+            updateDisplays();
+        });
+        
+        permeabilitySlider.addEventListener('input', function() {
+            params.permeability = parseFloat(this.value);
+            updateDisplays();
+        });
+        
+        amplitudeSlider.addEventListener('input', function() {
+            params.amplitude = parseFloat(this.value);
+            updateDisplays();
+        });
+        
+        speedSlider.addEventListener('input', function() {
+            params.speed = parseFloat(this.value);
+            updateDisplays();
+        });
+        
+        // Event listeners for medium buttons
+        vacuumBtn.addEventListener('click', function() {
+            params.medium = 'vacuum';
+            params.conductivity = 0;
+            conductivitySlider.value = 0;
+            updateDisplays();
+            setActiveButton(this);
+        });
+        
+        conductorBtn.addEventListener('click', function() {
+            params.medium = 'conductor';
+            params.conductivity = 1.0;
+            conductivitySlider.value = 1.0;
+            updateDisplays();
+            setActiveButton(this);
+        });
+        
+        dielectricBtn.addEventListener('click', function() {
+            params.medium = 'dielectric';
+            params.conductivity = 0;
+            conductivitySlider.value = 0;
+            updateDisplays();
+            setActiveButton(this);
+        });
+        
+        // Event listeners for field display buttons
+        showEField.addEventListener('click', function() {
+            params.showField = 'e';
+            setActiveButton(this, [showEField, showBField, showBoth]);
+        });
+        
+        showBField.addEventListener('click', function() {
+            params.showField = 'b';
+            setActiveButton(this, [showEField, showBField, showBoth]);
+        });
+        
+        showBoth.addEventListener('click', function() {
+            params.showField = 'both';
+            setActiveButton(this, [showEField, showBField, showBoth]);
+        });
+        
+        // Helper function to set active button
+        function setActiveButton(activeBtn, buttonGroup = null) {
+            if (buttonGroup) {
+                buttonGroup.forEach(btn => btn.classList.remove('active'));
+            } else {
+                [vacuumBtn, conductorBtn, dielectricBtn].forEach(btn => btn.classList.remove('active'));
+            }
+            activeBtn.classList.add('active');
+        }
+        
+        // Initialize active buttons
+        setActiveButton(vacuumBtn);
+        setActiveButton(showBoth, [showEField, showBField, showBoth]);
+        
+        // Wave simulation
+        function drawWave() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerY = height / 2;
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(100, 100, 150, 0.2)';
+            ctx.lineWidth = 1;
+            
+            // Vertical grid lines
+            for (let x = 0; x < width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            
+            // Horizontal grid lines
+            for (let y = 0; y < height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            
+            // Draw coordinate axes
+            ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+            ctx.lineWidth = 2;
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(width / 2, 0);
+            ctx.lineTo(width / 2, height);
+            ctx.stroke();
+            
+            // Draw propagation direction indicator
+            ctx.fillStyle = '#6eb6ff';
+            ctx.font = '14px Arial';
+            ctx.fillText('Propagation Direction (k)', width - 150, 30);
+            
+            ctx.beginPath();
+            ctx.moveTo(width - 50, 50);
+            ctx.lineTo(width - 20, 50);
+            ctx.lineTo(width - 30, 45);
+            ctx.moveTo(width - 20, 50);
+            ctx.lineTo(width - 30, 55);
+            ctx.stroke();
+            
+            // Calculate wave parameters based on medium
+            let wavelength, attenuation = 0;
+            
+            if (params.medium === 'vacuum') {
+                wavelength = (2 * Math.PI) / params.frequency;
+            } else if (params.medium === 'conductor') {
+                // In conductors, waves are attenuated
+                wavelength = (2 * Math.PI) / params.frequency;
+                attenuation = params.conductivity * 0.1;
+            } else { // dielectric
+                wavelength = (2 * Math.PI) / (params.frequency * Math.sqrt(params.permittivity));
+            }
+            
+            // Draw E field (red)
+            if (params.showField === 'e' || params.showField === 'both') {
+                ctx.strokeStyle = '#ff4d4d';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let x = 0; x < width; x++) {
+                    const waveX = (x / width) * 4 * Math.PI;
+                    let yOffset;
+                    
+                    if (params.medium === 'conductor') {
+                        // Attenuated wave in conductor
+                        yOffset = Math.exp(-attenuation * waveX) * 
+                                 Math.sin(waveX / wavelength - params.time * params.frequency * params.speed);
+                    } else {
+                        // Standard sine wave in vacuum/dielectric
+                        yOffset = Math.sin(waveX / wavelength - params.time * params.frequency * params.speed);
+                    }
+                    
+                    const y = centerY + yOffset * 80 * params.amplitude;
+                    
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.stroke();
+                
+                // Draw E field vector indicators
+                ctx.fillStyle = 'rgba(255, 77, 77, 0.7)';
+                for (let x = 0; x < width; x += 60) {
+                    const waveX = (x / width) * 4 * Math.PI;
+                    let yOffset;
+                    
+                    if (params.medium === 'conductor') {
+                        yOffset = Math.exp(-attenuation * waveX) * 
+                                 Math.sin(waveX / wavelength - params.time * params.frequency * params.speed);
+                    } else {
+                        yOffset = Math.sin(waveX / wavelength - params.time * params.frequency * params.speed);
+                    }
+                    
+                    const y = centerY + yOffset * 80 * params.amplitude;
+                    
+                    // Draw arrow representing E field
+                    ctx.beginPath();
+                    ctx.moveTo(x, centerY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    
+                    if (y < centerY) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - 5, y + 8);
+                        ctx.lineTo(x + 5, y + 8);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - 5, y - 8);
+                        ctx.lineTo(x + 5, y - 8);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Draw B field (blue)
+            if (params.showField === 'b' || params.showField === 'both') {
+                ctx.strokeStyle = '#4d94ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let x = 0; x < width; x++) {
+                    const waveX = (x / width) * 4 * Math.PI;
+                    let yOffset;
+                    
+                    if (params.medium === 'conductor') {
+                        // In conductors, B field may have phase shift relative to E
+                        yOffset = Math.exp(-attenuation * waveX) * 
+                                 Math.cos(waveX / wavelength - params.time * params.frequency * params.speed);
+                    } else {
+                        // In phase with E in vacuum, 90° phase shift in dielectrics
+                        if (params.medium === 'dielectric') {
+                            yOffset = Math.cos(waveX / wavelength - params.time * params.frequency * params.speed);
+                        } else {
+                            yOffset = Math.sin(waveX / wavelength - params.time * params.frequency * params.speed);
+                        }
+                    }
+                    
+                    const y = centerY + yOffset * 80 * params.amplitude;
+                    
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.stroke();
+                
+                // Draw B field vector indicators
+                ctx.fillStyle = 'rgba(77, 148, 255, 0.7)';
+                for (let x = 40; x < width; x += 60) {
+                    const waveX = (x / width) * 4 * Math.PI;
+                    let yOffset;
+                    
+                    if (params.medium === 'conductor') {
+                        yOffset = Math.exp(-attenuation * waveX) * 
+                                 Math.cos(waveX / wavelength - params.time * params.frequency * params.speed);
+                    } else {
+                        if (params.medium === 'dielectric') {
+                            yOffset = Math.cos(waveX / wavelength - params.time * params.frequency * params.speed);
+                        } else {
+                            yOffset = Math.sin(waveX / wavelength - params.time * params.frequency * params.speed);
+                        }
+                    }
+                    
+                    const y = centerY + yOffset * 80 * params.amplitude;
+                    
+                    // Draw arrow representing B field
+                    ctx.beginPath();
+                    ctx.moveTo(x, centerY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    
+                    if (y < centerY) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - 5, y + 8);
+                        ctx.lineTo(x + 5, y + 8);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - 5, y - 8);
+                        ctx.lineTo(x + 5, y - 8);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Draw labels
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px Arial';
+            
+            if (params.showField === 'e' || params.showField === 'both') {
+                ctx.fillStyle = '#ff4d4d';
+                ctx.fillText('E Field', 20, 30);
+            }
+            
+            if (params.showField === 'b' || params.showField === 'both') {
+                ctx.fillStyle = '#4d94ff';
+                ctx.fillText('B Field', 20, 50);
+            }
+            
+            // Draw medium info
+            ctx.fillStyle = '#6eb6ff';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Medium: ${params.medium.charAt(0).toUpperCase() + params.medium.slice(1)}`, 20, height - 20);
+            
+            // Update time for animation
+            params.time += 0.02;
+        }
+        
+        // Animation loop
+        function animate() {
+            drawWave();
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taylor Series Interactive Visualizer</title>
+    <!-- Tailwind CSS for modern layout & UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for smooth, interactive graphing -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MathJax for rendering gorgeous math equations -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Banner -->
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-6 px-8 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">📐 Taylor Series Visualizer</h1>
+                <p class="text-blue-100 text-sm mt-1">Derivatives at one point stack into a power series that rebuilds the whole function.</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 text-xs font-mono max-w-md">
+                $$f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x - a)^n$$
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Sidebar Controls Dashboard -->
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6 h-fit">
+            <h2 class="text-xl font-bold border-b pb-2 flex items-center gap-2 text-gray-700">
+                <span>🛠️</span> Configuration
+            </h2>
+
+            <!-- Function Selector -->
+            <div>
+                <label for="fx-select" class="block text-sm font-semibold text-gray-600 mb-2">Target Function $f(x)$</label>
+                <select id="fx-select" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <option value="sin">Sine: sin(x)</option>
+                    <option value="cos">Cosine: cos(x)</option>
+                    <option value="exp">Exponential: e^x</option>
+                    <option value="ln">Natural Log: ln(1 + x)</option>
+                </select>
+            </div>
+
+            <!-- Order Slider (n) -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label for="order-range" class="text-sm font-semibold text-gray-600">Maximum Order ($n$)</label>
+                    <span id="order-val" class="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full">4</span>
+                </div>
+                <input type="range" id="order-range" min="0" max="10" value="4" class="w-full accent-blue-600 cursor-pointer">
+            </div>
+
+            <!-- Expansion Point Slider (a) -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label for="center-range" class="text-sm font-semibold text-gray-600">Expansion Point ($a$)</label>
+                    <span id="center-val" class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full">0.0</span>
+                </div>
+                <input type="range" id="center-range" min="-3" max="3" step="0.1" value="0" class="w-full accent-emerald-600 cursor-pointer">
+            </div>
+
+            <!-- Static Equation Card -->
+            <div class="bg-slate-900 text-slate-100 p-4 rounded-xl shadow-inner mt-4">
+                <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Current Mathematical Form</h3>
+                <div id="math-output" class="text-sm font-mono overflow-x-auto whitespace-nowrap py-2 text-center">
+                    $$P_4(x) = ...$$
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Visualization Dashboard -->
+        <section class="lg:col-span-2 flex flex-col gap-6">
+            <!-- Graph Wrapper -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-1 min-h-[450px] relative">
+                <canvas id="taylorChart" class="w-full h-full"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <!-- Math Logic Engine Script -->
+    <script>
+        // DOM Elements
+        const fxSelect = document.getElementById('fx-select');
+        const orderRange = document.getElementById('order-range');
+        const centerRange = document.getElementById('center-range');
+        const orderVal = document.getElementById('order-val');
+        const centerVal = document.getElementById('center-val');
+        const mathOutput = document.getElementById('math-output');
+        const ctx = document.getElementById('taylorChart').getContext('2d');
+
+        let chart;
+
+        // Factored Math Profiles (Analytical Functions & Derivatives)
+        const functions = {
+            sin: {
+                val: (x) => Math.sin(x),
+                deriv: (n, a) => [Math.sin(a), Math.cos(a), -Math.sin(a), -Math.cos(a)][n % 4],
+                latex: (n, a) => {
+                    if (a === 0) {
+                        return `x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - \\dots`;
+                    }
+                    return `\\sin(a) + \\cos(a)(x-a) - \\frac{\\sin(a)}{2!}(x-a)^2 - \\dots`;
+                }
+            },
+            cos: {
+                val: (x) => Math.cos(x),
+                deriv: (n, a) => [Math.cos(a), -Math.sin(a), -Math.cos(a), Math.sin(a)][n % 4],
+                latex: (n, a) => {
+                    if (a === 0) {
+                        return `1 - \\frac{x^2}{2!} + \\frac{x^4}{4!} - \\dots`;
+                    }
+                    return `\\cos(a) - \\sin(a)(x-a) - \\frac{\\cos(a)}{2!}(x-a)^2 + \\dots`;
+                }
+            },
+            exp: {
+                val: (x) => Math.exp(x),
+                deriv: (n, a) => Math.exp(a),
+                latex: (n, a) => {
+                    if (a === 0) return `1 + x + \\frac{x^2}{2!} + \\frac{x^3}{3!} + \\dots`;
+                    return `e^a + e^a(x-a) + \\frac{e^a}{2!}(x-a)^2 + \\dots`;
+                }
+            },
+            ln: {
+                val: (x) => Math.log(1 + x),
+                deriv: (n, a) => {
+                    if (n === 0) return Math.log(1 + a);
+                    let fact = 1;
+                    for(let i = 1; i < n; i++) fact *= i;
+                    return Math.pow(-1, n - 1) * fact / Math.pow(1 + a, n);
+                },
+                latex: (n, a) => {
+                    if (a === 0) return `x - \\frac{x^2}{2} + \\frac{x^3}{3} - \\frac{x^4}{4} + \\dots`;
+                    return `\\ln(1+a) + \\frac{1}{1+a}(x-a) - \\frac{1}{2(1+a)^2}(x-a)^2 + \\dots`;
+                }
+            }
+        };
+
+        // Utility: Factorial Calculate
+        function factorial(num) {
+            if (num <= 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= num; i++) result *= i;
+            return result;
+        }
+
+        // Compute approximation value for a given x
+        function evaluateTaylor(fnKey, maxN, a, targetX) {
+            let sum = 0;
+            const fn = functions[fnKey];
+            for (let n = 0; n <= maxN; n++) {
+                const nthDeriv = fn.deriv(n, a);
+                const term = (nthDeriv / factorial(n)) * Math.pow(targetX - a, n);
+                sum += term;
+            }
+            return sum;
+        }
+
+        // Generate Plot Data Arrays
+        function generateChartData() {
+            const fnKey = fxSelect.value;
+            const maxOrder = parseInt(orderRange.value);
+            const a = parseFloat(centerRange.value);
+
+            // X Domain Configurations
+            const startX = fnKey === 'ln' ? -0.8 : -5;
+            const endX = 5;
+            const step = 0.1;
+
+            const labels = [];
+            const originalData = [];
+            const approxData = [];
+
+            for (let xVal = startX; xVal <= endX; xVal += step) {
+                const roundedX = parseFloat(xVal.toFixed(2));
+                labels.push(roundedX);
+                originalData.push(functions[fnKey].val(roundedX));
+                approxData.push(evaluateTaylor(fnKey, maxOrder, a, roundedX));
+            }
+
+            return { labels, originalData, approxData, a, f_a: functions[fnKey].val(a) };
+        }
+
+        // Render & Synchronize Pipeline
+        function updateVisualization() {
+            // Update UI value trackers
+            orderVal.innerText = orderRange.value;
+            centerVal.innerText = parseFloat(centerRange.value).toFixed(1);
+
+            const data = generateChartData();
+
+            // Refresh Equation Display box
+            const currentFn = functions[fxSelect.value];
+            mathOutput.innerHTML = `$$P_{${orderRange.value}}(x) = ${currentFn.latex(parseInt(orderRange.value), parseFloat(centerRange.value))}$$`;
+            if (window.MathJax && window.MathJax.typeset) {
+                window.MathJax.typesetPromise();
+            }
+
+            // Update Chart Elements
+            chart.data.labels = data.labels;
+            chart.data.datasets[0].data = data.originalData;
+            chart.data.datasets[1].data = data.approxData;
+            
+            // Re-render expansion dot marker coordinates
+            chart.data.datasets[2].data = [{ x: data.a, y: data.f_a }];
+
+            chart.update();
+        }
+
+        // Initial Chart Constructor Lifecycle
+        function initChart() {
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Target f(x)',
+                            data: [],
+                            borderColor: '#EF4444',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.2
+                        },
+                        {
+                            label: `Taylor Approximation`,
+                            data: [],
+                            borderColor: '#3B82F6',
+                            borderWidth: 2.5,
+                            borderDash: [6, 4],
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Expansion Point (a, f(a))',
+                            data: [],
+                            backgroundColor: '#0F172A',
+                            borderColor: '#0F172A',
+                            pointRadius: 7,
+                            pointHoverRadius: 9,
+                            type: 'scatter',
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 15, font: { weight: 'bold' } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Variable (x)', font: { weight: 'bold' } } },
+                        y: { 
+                            min: -3, 
+                            max: 3,
+                            title: { display: true, text: 'Output (y)', font: { weight: 'bold' } } 
+                        }
+                    }
+                }
+            });
+
+            updateVisualization();
+        }
+
+        // Attach Application Event Listeners
+        fxSelect.addEventListener('change', updateVisualization);
+        orderRange.addEventListener('input', updateVisualization);
+        centerRange.addEventListener('input', updateVisualization);
+
+        // Bootstrap Application
+        window.addEventListener('DOMContentLoaded', initChart);
+    </script>
+</body>
+</html>

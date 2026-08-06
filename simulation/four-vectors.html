@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four-Vectors — The Geometry of Spacetime</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<style>
+:root{
+  --bg:            #090b10;
+  --surface:       #10141d;
+  --surface-2:     #161b26;
+  --grid-line:     #212838;
+  --hair:          #262d3d;
+  --text:          #e9ecf3;
+  --text-muted:    #8b93a8;
+  --text-faint:    #5b6578;
+  --time:          #f2a65a;   /* timelike — amber */
+  --time-dim:      #6b4f30;
+  --space:         #5ac8f2;   /* spacelike — cyan */
+  --space-dim:     #2c4a58;
+  --null:          #efe6ad;   /* lightlike — pale gold */
+  --violet:        #9186d6;   /* interaction accent */
+  --radius:        3px;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+::selection{ background:var(--violet); color:#0a0a0f; }
+
+h1,h2,h3{ font-family:'Newsreader', serif; font-weight:500; margin:0; }
+.eyebrow{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.eyebrow::before{
+  content:"";
+  width:22px; height:1px;
+  background:var(--text-faint);
+}
+
+.katex{ font-size:1.05em; }
+.katex-display{ margin:0.9em 0; overflow-x:auto; overflow-y:hidden; }
+
+/* ---------- layout shells ---------- */
+.wrap{ max-width:1180px; margin:0 auto; padding:0 40px; }
+@media(max-width:720px){ .wrap{ padding:0 20px; } }
+
+section{ padding:120px 0; border-bottom:1px solid var(--hair); }
+section:last-of-type{ border-bottom:none; }
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  background:rgba(9,11,16,0.82);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--hair);
+}
+nav .wrap{ display:flex; align-items:center; justify-content:space-between; height:60px; padding-top:0; padding-bottom:0; }
+.brand{ font-family:'Newsreader', serif; font-style:italic; font-size:19px; color:var(--text); text-decoration:none; letter-spacing:0.01em; }
+.brand em{ color:var(--time); font-style:normal; }
+.navlinks{ display:flex; gap:28px; list-style:none; margin:0; padding:0; }
+.navlinks a{
+  color:var(--text-muted); text-decoration:none; font-size:13px;
+  font-family:'IBM Plex Mono', monospace; letter-spacing:0.02em;
+  transition:color .2s;
+}
+.navlinks a:hover{ color:var(--time); }
+@media(max-width:720px){ .navlinks{ display:none; } }
+
+/* ---------- hero ---------- */
+.hero{ padding-top:150px; padding-bottom:70px; border-bottom:1px solid var(--hair); }
+.hero-head{ max-width:680px; }
+.hero h1{
+  font-size:clamp(42px,6vw,68px);
+  line-height:1.02;
+  margin-top:18px;
+  color:var(--text);
+}
+.hero h1 i{ color:var(--time); font-style:italic; }
+.hero p.lede{
+  margin-top:22px;
+  font-size:18px;
+  color:var(--text-muted);
+  max-width:560px;
+}
+.hero .meta-row{
+  margin-top:34px;
+  display:flex; gap:36px; flex-wrap:wrap;
+}
+.meta-item{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-faint); }
+.meta-item b{ display:block; color:var(--text); font-size:13px; margin-bottom:3px; font-weight:500; }
+
+/* ---------- simulation block ---------- */
+.sim{
+  margin-top:64px;
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:1px;
+  background:var(--hair);
+  border:1px solid var(--hair);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+@media(max-width:880px){ .sim{ grid-template-columns:1fr; } }
+
+.sim-panel{ background:var(--surface); padding:26px 24px; }
+.sim-panel h3{ font-size:14px; font-family:'IBM Plex Mono', monospace; font-weight:500; color:var(--text); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
+.sim-panel .sub{ font-size:12px; color:var(--text-faint); margin-bottom:22px; }
+
+.ctrl{ margin-bottom:20px; }
+.ctrl label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-muted);
+  margin-bottom:8px;
+}
+.ctrl label .val{ color:var(--space); font-weight:500; }
+.ctrl.boost label .val{ color:var(--violet); }
+input[type=range]{
+  -webkit-appearance:none; width:100%; height:2px;
+  background:var(--grid-line); outline:none; border-radius:2px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
+  background:var(--space); cursor:pointer; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--space);
+}
+.ctrl.boost input[type=range]::-webkit-slider-thumb{ background:var(--violet); box-shadow:0 0 0 1px var(--violet); }
+input[type=range]::-moz-range-thumb{
+  width:13px; height:13px; border-radius:50%; background:var(--space); cursor:pointer; border:2px solid var(--surface);
+}
+
+.readout{
+  margin-top:26px; padding-top:22px; border-top:1px solid var(--hair);
+}
+.readout-row{ display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono', monospace; font-size:12.5px; padding:5px 0; color:var(--text-muted); }
+.readout-row span:last-child{ color:var(--text); }
+.badge{
+  display:inline-block; padding:3px 9px; border-radius:20px;
+  font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.04em;
+  border:1px solid currentColor;
+}
+.badge.timelike{ color:var(--time); }
+.badge.spacelike{ color:var(--space); }
+.badge.null{ color:var(--null); }
+
+.legend{ display:flex; flex-direction:column; gap:8px; margin-top:22px; padding-top:20px; border-top:1px solid var(--hair); }
+.legend-item{ display:flex; align-items:center; gap:9px; font-size:11.5px; color:var(--text-faint); font-family:'IBM Plex Mono',monospace; }
+.swatch{ width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+
+.sim-canvas-wrap{ position:relative; background:radial-gradient(circle at 30% 20%, #0e1119, var(--bg)); min-height:560px; }
+.sim-canvas-wrap canvas{ display:block; width:100%; height:100%; }
+.sim-hint{
+  position:absolute; bottom:16px; right:20px;
+  font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-faint);
+  letter-spacing:0.03em;
+}
+
+/* ---------- prose sections ---------- */
+.section-head{ max-width:640px; margin-bottom:56px; }
+.section-head h2{ font-size:clamp(30px,4vw,42px); margin-top:16px; }
+.section-head p{ color:var(--text-muted); margin-top:16px; font-size:16.5px; max-width:560px; }
+
+.definition-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:60px; align-items:start; }
+@media(max-width:880px){ .definition-grid{ grid-template-columns:1fr; gap:36px; } }
+.definition-grid p{ color:var(--text-muted); margin:0 0 18px; }
+.definition-grid strong{ color:var(--text); font-weight:600; }
+
+.eqbox{
+  background:var(--surface); border:1px solid var(--hair); border-radius:var(--radius);
+  padding:28px 26px;
+}
+.eqbox + .eqbox{ margin-top:1px; }
+.eqbox .cap{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px; }
+
+/* ---------- the four four-vectors ---------- */
+.vec-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--hair); border:1px solid var(--hair); border-radius:var(--radius); overflow:hidden; }
+@media(max-width:720px){ .vec-grid{ grid-template-columns:1fr; } }
+.vec-card{ background:var(--surface); padding:34px 32px; }
+.vec-card .num{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-faint); }
+.vec-card h3{ font-size:22px; margin-top:8px; color:var(--text); }
+.vec-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; padding:2px 8px; border-radius:20px; border:1px solid currentColor; margin-left:10px; vertical-align:middle; position:relative; top:-3px; }
+.vec-card p{ color:var(--text-muted); font-size:14.5px; margin-top:14px; }
+.vec-card .eq{ margin-top:16px; background:var(--surface-2); border:1px solid var(--hair); border-radius:var(--radius); padding:16px 18px; }
+
+/* ---------- invariant / boost section ---------- */
+.boost-grid{ display:grid; grid-template-columns:1fr 1fr; gap:60px; }
+@media(max-width:880px){ .boost-grid{ grid-template-columns:1fr; gap:36px; } }
+.boost-grid p{ color:var(--text-muted); }
+.boost-grid strong{ color:var(--text); }
+.matrix-note{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-faint); margin-top:10px; }
+
+/* ---------- footer ---------- */
+footer{ padding:56px 0 70px; }
+footer .wrap{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; }
+footer p{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-faint); margin:0; }
+footer .sig{ font-family:'Newsreader', serif; font-style:italic; color:var(--text-muted); font-size:14px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">four<em>·</em>vectors</a>
+    <ul class="navlinks">
+      <li><a href="#simulate">Simulation</a></li>
+      <li><a href="#definition">Definition</a></li>
+      <li><a href="#the-four">The Four Four-Vectors</a></li>
+      <li><a href="#invariant">Invariance</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="top">
+
+  <!-- HERO + SIMULATION -->
+  <section class="hero" id="simulate">
+    <div class="wrap">
+      <div class="hero-head">
+        <div class="eyebrow">Special Relativity · Minkowski Geometry</div>
+        <h1>The four numbers that don't<br><i>change</i> when everything else does.</h1>
+        <p class="lede">A four-vector packages space and time into a single object whose length — the spacetime interval — every observer agrees on, no matter how fast they're moving relative to each other.</p>
+        <div class="meta-row">
+          <div class="meta-item"><b>Signature</b>(+,&minus;,&minus;,&minus;)</div>
+          <div class="meta-item"><b>Invariant</b>A·A = A<sup>0</sup>A<sup>0</sup> &minus; A·A</div>
+          <div class="meta-item"><b>Group</b>Lorentz transformations O(1,3)</div>
+        </div>
+      </div>
+
+      <div class="sim">
+        <div class="sim-panel">
+          <h3>Set the vector</h3>
+          <div class="sub">Components measured in frame S, in light-seconds.</div>
+
+          <div class="ctrl">
+            <label>ct (time component)<span class="val" id="v-ct">2.4</span></label>
+            <input type="range" id="s-ct" min="-3" max="3" step="0.1" value="2.4">
+          </div>
+          <div class="ctrl">
+            <label>x<span class="val" id="v-x">1.2</span></label>
+            <input type="range" id="s-x" min="-3" max="3" step="0.1" value="1.2">
+          </div>
+          <div class="ctrl">
+            <label>y<span class="val" id="v-y">0.8</span></label>
+            <input type="range" id="s-y" min="-3" max="3" step="0.1" value="0.8">
+          </div>
+
+          <div class="ctrl boost">
+            <label>Boost β = v/c toward +x<span class="val" id="v-beta">0.00</span></label>
+            <input type="range" id="s-beta" min="-0.95" max="0.95" step="0.01" value="0">
+          </div>
+
+          <div class="readout">
+            <div class="readout-row"><span>A′ = (ct′, x′, y)</span><span id="r-boosted">—</span></div>
+            <div class="readout-row"><span>γ (Lorentz factor)</span><span id="r-gamma">1.000</span></div>
+            <div class="readout-row"><span>s² = c²t²&minus;x²&minus;y²</span><span id="r-interval">—</span></div>
+            <div class="readout-row"><span>class.</span><span><span class="badge" id="r-class">—</span></span></div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="swatch" style="background:var(--time)"></span> timelike four-vector</div>
+            <div class="legend-item"><span class="swatch" style="background:var(--space)"></span> spacelike four-vector</div>
+            <div class="legend-item"><span class="swatch" style="background:var(--null)"></span> light cone (null)</div>
+            <div class="legend-item"><span class="swatch" style="background:var(--violet)"></span> boosted vector, frame S′</div>
+          </div>
+        </div>
+
+        <div class="sim-canvas-wrap" id="canvas-wrap">
+          <div class="sim-hint">drag to orbit · scroll to zoom</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEFINITION -->
+  <section id="definition">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">01 · Foundations</div>
+        <h2>What makes a four-vector a four-vector</h2>
+        <p>Not every list of four numbers qualifies. A four-vector is defined by how it behaves — it must transform between inertial frames exactly the way spacetime coordinates do.</p>
+      </div>
+
+      <div class="definition-grid">
+        <div>
+          <p>In special relativity, space and time are stitched into a single four-dimensional manifold. A point — an <strong>event</strong> — is labeled by a <strong>four-position</strong>, and any quantity built from the same transformation rule is a four-vector:</p>
+          <p><strong>A four-vector</strong> is an ordered set of four components, <span id="eq-inline-1"></span>, that transforms under a change of inertial frame according to the Lorentz transformation — the same linear rule that relates one observer's coordinates of space and time to another's.</p>
+          <p>The essential payoff is <strong>invariance</strong>: from the components of any four-vector we can build a single number, the Minkowski inner product, and every inertial observer computes the same value for it — even though they disagree on the individual components.</p>
+          <p>This document uses the mostly-minus signature <span id="eq-inline-2"></span>, common in particle physics; the mostly-plus convention just flips an overall sign and changes no physics.</p>
+        </div>
+
+        <div>
+          <div class="eqbox">
+            <div class="cap">General four-vector</div>
+            <div id="eq-def-1"></div>
+          </div>
+          <div class="eqbox">
+            <div class="cap">Minkowski inner product</div>
+            <div id="eq-def-2"></div>
+          </div>
+          <div class="eqbox">
+            <div class="cap">Lorentz transformation (boost along x)</div>
+            <div id="eq-def-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE FOUR FOUR-VECTORS -->
+  <section id="the-four">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">02 · Canon</div>
+        <h2>The four four-vectors</h2>
+        <p>Almost every relativistic quantity you'll meet is built from one of these. Each takes the same skeleton — a time-like piece paired with an ordinary 3-vector — and each carries its own invariant.</p>
+      </div>
+
+      <div class="vec-grid">
+        <div class="vec-card">
+          <span class="num">I</span>
+          <h3>Four-position <span class="tag" style="color:var(--time)">timelike separation</span></h3>
+          <p>Locates an event in spacetime: a time of occurrence bundled with where it happened. Its invariant is the interval between the event and the origin — the quantity every observer agrees measures spacetime "distance."</p>
+          <div class="eq" id="vec-position"></div>
+        </div>
+
+        <div class="vec-card">
+          <span class="num">II</span>
+          <h3>Four-velocity <span class="tag" style="color:var(--space)">always timelike</span></h3>
+          <p>The rate of change of four-position with respect to <em>proper time</em> — the time on the moving object's own clock, not the observer's. Its magnitude is always exactly c, whatever the object's ordinary speed.</p>
+          <div class="eq" id="vec-velocity"></div>
+        </div>
+
+        <div class="vec-card">
+          <span class="num">III</span>
+          <h3>Four-momentum <span class="tag" style="color:var(--null)">mass-shell</span></h3>
+          <p>Mass times four-velocity: energy and ordinary momentum unified. Its invariant is the rest mass — the one measure of "how much stuff" that every observer, in every frame, computes identically.</p>
+          <div class="eq" id="vec-momentum"></div>
+        </div>
+
+        <div class="vec-card">
+          <span class="num">IV</span>
+          <h3>Four-current <span class="tag" style="color:var(--violet)">source term</span></h3>
+          <p>Charge density and ordinary current density combined into one object. It's what sources the electromagnetic field, and its conservation, ∂<sub>μ</sub>J<sup>μ</sup> = 0, is charge conservation written covariantly.</p>
+          <div class="eq" id="vec-current"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INVARIANCE / BOOST -->
+  <section id="invariant">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">03 · Why it matters</div>
+        <h2>One quantity every observer agrees on</h2>
+        <p>Rotate ordinary 3-vectors and their components change but their length doesn't. Boost a four-vector between inertial frames and the same thing happens — the "length" here is the spacetime interval.</p>
+      </div>
+
+      <div class="boost-grid">
+        <div>
+          <p>Move the <strong>β</strong> slider in the simulation above and watch the vector's components swing wildly — ct and x trade off against each other under the boost — while the readout for <strong>s²</strong> never moves. That invariance is the entire point of building physics out of four-vectors: it lets us write laws that look the same to every inertial observer, because both sides of the equation are built from quantities that transform the same covariant way.</p>
+          <p>The sign of s² also splits every four-vector into three physical classes. A <strong>timelike</strong> separation (s² &gt; 0) can be crossed by a slower-than-light signal — cause can reach effect. A <strong>spacelike</strong> separation (s² &lt; 0) cannot; different observers can even disagree on which of two such events happened first. A <strong>null</strong> separation (s² = 0) is exactly what light itself traces out — the light cone rendered in the simulation.</p>
+        </div>
+        <div>
+          <div class="eqbox">
+            <div class="cap">Invariance under boost</div>
+            <div id="eq-inv-1"></div>
+          </div>
+          <div class="eqbox">
+            <div class="cap">Causal classification</div>
+            <div id="eq-inv-2"></div>
+            <div class="matrix-note">γ = 1/√(1&minus;β²), β = v/c</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Rendered client-side · three.js + KaTeX</p>
+    <p class="sig">ds² = ημν dxμ dxν</p>
+  </div>
+</footer>
+
+<script>
+/* ============ KaTeX rendering ============ */
+document.addEventListener('DOMContentLoaded', () => {
+  const put = (id, tex, display=true) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    katex.render(tex, el, { throwOnError:false, displayMode:display });
+  };
+
+  put('eq-inline-1', 'A^\\mu = (A^0, A^1, A^2, A^3)', false);
+  put('eq-inline-2', '\\eta_{\\mu\\nu} = \\mathrm{diag}(+1,-1,-1,-1)', false);
+
+  put('eq-def-1', 'A^\\mu = (A^0,\\; A^1,\\; A^2,\\; A^3) \\;=\\; (A^0, \\vec A)');
+  put('eq-def-2', 'A\\cdot A \\;=\\; \\eta_{\\mu\\nu}A^\\mu A^\\nu \\;=\\; (A^0)^2 - |\\vec A|^{\\,2}');
+  put('eq-def-3', '\\begin{aligned} A^{0\\prime} &= \\gamma\\left(A^0 - \\beta A^1\\right) \\\\ A^{1\\prime} &= \\gamma\\left(A^1 - \\beta A^0\\right) \\\\ A^{2\\prime} &= A^2, \\quad A^{3\\prime} = A^3 \\end{aligned}');
+
+  put('vec-position', 'X^\\mu = (ct,\\ x,\\ y,\\ z) \\qquad X\\cdot X = c^2t^2 - |\\vec r|^2 = s^2');
+  put('vec-velocity', 'U^\\mu = \\frac{dX^\\mu}{d\\tau} = \\gamma(c,\\ \\vec v) \\qquad U\\cdot U = c^2');
+  put('vec-momentum', 'P^\\mu = mU^\\mu = \\left(\\frac{E}{c},\\ \\vec p\\right) \\qquad P\\cdot P = m^2c^2');
+  put('vec-current', 'J^\\mu = \\rho_0 U^\\mu = (c\\rho,\\ \\vec J) \\qquad \\partial_\\mu J^\\mu = 0');
+
+  put('eq-inv-1', 's^{\\prime 2} \\;=\\; c^2t^{\\prime 2} - x^{\\prime 2} - y^{\\prime 2} \\;=\\; c^2t^2 - x^2 - y^2 \\;=\\; s^2');
+  put('eq-inv-2', '\\begin{cases} s^2 > 0 & \\text{timelike} \\\\ s^2 = 0 & \\text{null (light cone)} \\\\ s^2 < 0 & \\text{spacelike} \\end{cases}');
+});
+
+/* ============ 3D Minkowski simulation ============ */
+(function(){
+  const wrap = document.getElementById('canvas-wrap');
+  let W = wrap.clientWidth, H = wrap.clientHeight || 560;
+
+  const COL = {
+    bg:      0x090b10,
+    grid:    0x212838,
+    axis_t:  0xf2a65a,
+    axis_s:  0x3d4a63,
+    cone:    0xefe6ad,
+    time:    0xf2a65a,
+    space:   0x5ac8f2,
+    nullc:   0xefe6ad,
+    boosted: 0x9186d6,
+    ghost:   0x3a4054
+  };
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, W/H, 0.1, 200);
+  camera.position.set(6.5, 5.2, 7.5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  wrap.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.07;
+  controls.minDistance = 4;
+  controls.maxDistance = 26;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.55;
+  renderer.domElement.addEventListener('pointerdown', () => controls.autoRotate = false);
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduceMotion) controls.autoRotate = false;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+  const SCALE = 1.2;      // world units per light-second
+  const AXLEN = 3.6 * SCALE;
+
+  /* ---- grid (spatial slice t=0) ---- */
+  const grid = new THREE.GridHelper(AXLEN*2, 16, COL.grid, COL.grid);
+  grid.position.y = 0;
+  scene.add(grid);
+
+  /* ---- axes with arrowheads ---- */
+  function axis(dir, len, color){
+    const g = new THREE.ArrowHelper(dir.clone().normalize(), new THREE.Vector3(0,0,0), len, color, len*0.05, len*0.03);
+    scene.add(g);
+    return g;
+  }
+  axis(new THREE.Vector3(0,1,0), AXLEN, COL.axis_t);   // ct  -> world Y
+  axis(new THREE.Vector3(1,0,0), AXLEN, COL.axis_s);   // x   -> world X
+  axis(new THREE.Vector3(0,0,1), AXLEN, COL.axis_s);   // y   -> world Z
+  axis(new THREE.Vector3(0,-1,0), AXLEN*0.35, COL.axis_t); // -ct short tail
+
+  function makeLabel(text, color){
+    const cvs = document.createElement('canvas');
+    cvs.width = 128; cvs.height = 64;
+    const ctx = cvs.getContext('2d');
+    ctx.font = '500 40px IBM Plex Mono, monospace';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 32);
+    const tex = new THREE.CanvasTexture(cvs);
+    const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false });
+    const spr = new THREE.Sprite(mat);
+    spr.scale.set(0.9, 0.45, 1);
+    return spr;
+  }
+  const lblCt = makeLabel('ct', '#f2a65a'); lblCt.position.set(0, AXLEN+0.35, 0); scene.add(lblCt);
+  const lblX  = makeLabel('x',  '#8b93a8'); lblX.position.set(AXLEN+0.3, 0, 0);  scene.add(lblX);
+  const lblY  = makeLabel('y',  '#8b93a8'); lblY.position.set(0, 0, AXLEN+0.3);  scene.add(lblY);
+
+  /* ---- light cone (double nappe) ---- */
+  const coneGeo = new THREE.ConeGeometry(AXLEN, AXLEN, 48, 1, true);
+  const coneMat = new THREE.MeshBasicMaterial({ color:COL.cone, transparent:true, opacity:0.10, side:THREE.DoubleSide, depthWrite:false });
+  const coneUp = new THREE.Mesh(coneGeo, coneMat);
+  coneUp.position.y = AXLEN/2;
+  scene.add(coneUp);
+  const coneDown = new THREE.Mesh(coneGeo, coneMat);
+  coneDown.rotation.x = Math.PI;
+  coneDown.position.y = -AXLEN/2;
+  scene.add(coneDown);
+  // wireframe edges for crispness
+  const edgesGeo = new THREE.EdgesGeometry(coneGeo, 20);
+  const edgesMat = new THREE.LineBasicMaterial({ color:COL.cone, transparent:true, opacity:0.22 });
+  const edgeUp = new THREE.LineSegments(edgesGeo, edgesMat); edgeUp.position.y = AXLEN/2; scene.add(edgeUp);
+  const edgeDown = new THREE.LineSegments(edgesGeo, edgesMat); edgeDown.rotation.x = Math.PI; edgeDown.position.y = -AXLEN/2; scene.add(edgeDown);
+
+  /* ---- dynamic vectors ---- */
+  let arrowMain = null, arrowGhost = null, arrowBoost = null, hyperbola = null;
+
+  function vecToWorld(x,y,ct){ return new THREE.Vector3(x*SCALE, ct*SCALE, y*SCALE); }
+
+  function classify(s2){
+    if(Math.abs(s2) < 0.03) return {name:'null', color:COL.nullc, label:'NULL'};
+    if(s2 > 0) return {name:'timelike', color:COL.time, label:'TIMELIKE'};
+    return {name:'spacelike', color:COL.space, label:'SPACELIKE'};
+  }
+
+  function makeArrow(vec3, color, headScale=1){
+    const len = vec3.length();
+    if(len < 0.001) return new THREE.Group();
+    const a = new THREE.ArrowHelper(vec3.clone().normalize(), new THREE.Vector3(0,0,0), len, color, Math.min(0.35,len*0.18)*headScale, Math.min(0.22,len*0.12)*headScale);
+    a.line.material.linewidth = 2;
+    return a;
+  }
+
+  function buildHyperbola(s2, colorHex){
+    const group = new THREE.Group();
+    const N = 80;
+    const pts = [];
+    if(s2 > 0.03){
+      // timelike: ct = sqrt(s2 + x^2), y = 0 slice, both branches
+      for(let i=0;i<=N;i++){
+        const x = -AXLEN/SCALE + (2*AXLEN/SCALE)*(i/N);
+        const ct = Math.sqrt(Math.max(s2 + x*x, 0));
+        pts.push(vecToWorld(x,0,ct));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({ color:colorHex, transparent:true, opacity:0.55 });
+      group.add(new THREE.Line(geo, mat));
+    } else if(s2 < -0.03){
+      // spacelike: x = sqrt(|s2| + ct^2)
+      const pts2 = [];
+      for(let i=0;i<=N;i++){
+        const ct = -AXLEN/SCALE + (2*AXLEN/SCALE)*(i/N);
+        const x = Math.sqrt(Math.max(-s2 + ct*ct, 0));
+        pts2.push(vecToWorld(x,0,ct));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts2);
+      const mat = new THREE.LineBasicMaterial({ color:colorHex, transparent:true, opacity:0.55 });
+      group.add(new THREE.Line(geo, mat));
+    }
+    return group;
+  }
+
+  function update(){
+    const x  = parseFloat(document.getElementById('s-x').value);
+    const y  = parseFloat(document.getElementById('s-y').value);
+    const ct = parseFloat(document.getElementById('s-ct').value);
+    const beta = parseFloat(document.getElementById('s-beta').value);
+
+    document.getElementById('v-x').textContent = x.toFixed(1);
+    document.getElementById('v-y').textContent = y.toFixed(1);
+    document.getElementById('v-ct').textContent = ct.toFixed(1);
+    document.getElementById('v-beta').textContent = beta.toFixed(2);
+
+    const gamma = 1/Math.sqrt(1 - beta*beta);
+    const ctP = gamma*(ct - beta*x);
+    const xP  = gamma*(x - beta*ct);
+
+    const s2 = ct*ct - x*x - y*y;
+    const cls = classify(s2);
+
+    document.getElementById('r-gamma').textContent = gamma.toFixed(3);
+    document.getElementById('r-interval').textContent = s2.toFixed(2);
+    document.getElementById('r-boosted').textContent = `(${ctP.toFixed(2)}, ${xP.toFixed(2)}, ${y.toFixed(2)})`;
+    const badge = document.getElementById('r-class');
+    badge.textContent = cls.label;
+    badge.className = 'badge ' + cls.name;
+
+    // remove old
+    [arrowMain, arrowGhost, arrowBoost, hyperbola].forEach(o => { if(o) scene.remove(o); });
+
+    const vMain = vecToWorld(x,y,ct);
+    arrowMain = makeArrow(vMain, cls.color, 1);
+    scene.add(arrowMain);
+
+    if(Math.abs(beta) > 0.001){
+      const vBoost = vecToWorld(xP, y, ctP);
+      arrowBoost = makeArrow(vBoost, COL.boosted, 0.9);
+      scene.add(arrowBoost);
+    }
+
+    hyperbola = buildHyperbola(s2, cls.color);
+    scene.add(hyperbola);
+  }
+
+  ['s-x','s-y','s-ct','s-beta'].forEach(id => {
+    document.getElementById(id).addEventListener('input', update);
+  });
+  update();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  function onResize(){
+    W = wrap.clientWidth; H = wrap.clientHeight || 560;
+    camera.aspect = W/H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(W,H);
+  }
+  window.addEventListener('resize', onResize);
+})();
+</script>
+
+</body>
+</html>

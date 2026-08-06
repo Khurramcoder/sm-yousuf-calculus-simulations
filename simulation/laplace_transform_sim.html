@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laplace Transform Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select:hover, input:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+
+        .function-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .chart-wrapper:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .info-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .info-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .info-card p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container > * {
+            animation: fadeIn 0.6s ease-out backwards;
+        }
+
+        .container > *:nth-child(1) { animation-delay: 0.1s; }
+        .container > *:nth-child(2) { animation-delay: 0.2s; }
+        .container > *:nth-child(3) { animation-delay: 0.3s; }
+        .container > *:nth-child(4) { animation-delay: 0.4s; }
+        .container > *:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌊 Laplace Transform Visualizer</h1>
+        <p class="subtitle">Explore the transformation from time domain to frequency domain</p>
+
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="functionSelect">Select Function f(t)</label>
+                    <select id="functionSelect">
+                        <option value="step">Unit Step: u(t)</option>
+                        <option value="exponential">Exponential: e^(-at)</option>
+                        <option value="sine">Sine Wave: sin(ωt)</option>
+                        <option value="cosine">Cosine Wave: cos(ωt)</option>
+                        <option value="ramp">Ramp: t·u(t)</option>
+                        <option value="damped">Damped Sine: e^(-at)·sin(ωt)</option>
+                        <option value="pulse">Pulse Train</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="paramA">Parameter a (decay/frequency)</label>
+                    <input type="range" id="paramA" min="0.1" max="5" step="0.1" value="1">
+                    <span id="paramAValue">1.0</span>
+                </div>
+                <div class="control-group">
+                    <label for="paramW">Parameter ω (angular frequency)</label>
+                    <input type="range" id="paramW" min="0.5" max="10" step="0.5" value="2">
+                    <span id="paramWValue">2.0</span>
+                </div>
+            </div>
+            <div class="function-info" id="functionInfo"></div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-wrapper">
+                <div class="chart-title">Time Domain: f(t)</div>
+                <canvas id="timeDomainChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <div class="chart-title">Laplace Transform: |F(s)|</div>
+                <canvas id="laplaceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>📊 What is Laplace Transform?</h3>
+                <p>The Laplace transform converts a time-domain function f(t) into a complex frequency-domain function F(s), where s = σ + jω. It's defined as: F(s) = ∫₀^∞ f(t)e^(-st) dt</p>
+            </div>
+            <div class="info-card">
+                <h3>🎯 Applications</h3>
+                <p>Used extensively in control systems, signal processing, circuit analysis, differential equations, and system stability analysis.</p>
+            </div>
+            <div class="info-card">
+                <h3>⚡ Key Properties</h3>
+                <p>Linearity, time-shifting, differentiation in time domain becomes multiplication in s-domain, and convolution becomes multiplication.</p>
+            </div>
+            <div class="info-card">
+                <h3>🔄 Real-time Visualization</h3>
+                <p>Adjust parameters to see how the time-domain signal and its Laplace transform change. The magnitude |F(s)| shows the frequency content.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const timeCanvas = document.getElementById('timeDomainChart');
+        const laplaceCanvas = document.getElementById('laplaceChart');
+        const timeCtx = timeCanvas.getContext('2d');
+        const laplaceCtx = laplaceCanvas.getContext('2d');
+
+        const functionSelect = document.getElementById('functionSelect');
+        const paramA = document.getElementById('paramA');
+        const paramW = document.getElementById('paramW');
+        const paramAValue = document.getElementById('paramAValue');
+        const paramWValue = document.getElementById('paramWValue');
+        const functionInfo = document.getElementById('functionInfo');
+
+        function resizeCanvas() {
+            timeCanvas.width = timeCanvas.offsetWidth * 2;
+            timeCanvas.height = timeCanvas.offsetHeight * 2;
+            laplaceCanvas.width = laplaceCanvas.offsetWidth * 2;
+            laplaceCanvas.height = laplaceCanvas.offsetHeight * 2;
+            update();
+        }
+
+        function getFunction(type, a, w) {
+            switch(type) {
+                case 'step':
+                    return {
+                        time: t => t >= 0 ? 1 : 0,
+                        laplace: s => 1 / s,
+                        formula: 'f(t) = u(t) ⟹ F(s) = 1/s'
+                    };
+                case 'exponential':
+                    return {
+                        time: t => t >= 0 ? Math.exp(-a * t) : 0,
+                        laplace: s => 1 / (s + a),
+                        formula: `f(t) = e^(-${a.toFixed(1)}t) ⟹ F(s) = 1/(s+${a.toFixed(1)})`
+                    };
+                case 'sine':
+                    return {
+                        time: t => t >= 0 ? Math.sin(w * t) : 0,
+                        laplace: s => w / (s * s + w * w),
+                        formula: `f(t) = sin(${w.toFixed(1)}t) ⟹ F(s) = ${w.toFixed(1)}/(s²+${(w*w).toFixed(1)})`
+                    };
+                case 'cosine':
+                    return {
+                        time: t => t >= 0 ? Math.cos(w * t) : 0,
+                        laplace: s => s / (s * s + w * w),
+                        formula: `f(t) = cos(${w.toFixed(1)}t) ⟹ F(s) = s/(s²+${(w*w).toFixed(1)})`
+                    };
+                case 'ramp':
+                    return {
+                        time: t => t >= 0 ? t : 0,
+                        laplace: s => 1 / (s * s),
+                        formula: 'f(t) = t·u(t) ⟹ F(s) = 1/s²'
+                    };
+                case 'damped':
+                    return {
+                        time: t => t >= 0 ? Math.exp(-a * t) * Math.sin(w * t) : 0,
+                        laplace: s => w / ((s + a) * (s + a) + w * w),
+                        formula: `f(t) = e^(-${a.toFixed(1)}t)·sin(${w.toFixed(1)}t) ⟹ F(s) = ${w.toFixed(1)}/((s+${a.toFixed(1)})²+${(w*w).toFixed(1)})`
+                    };
+                case 'pulse':
+                    return {
+                        time: t => {
+                            const period = 2 * Math.PI / w;
+                            const mod = t % period;
+                            return (t >= 0 && mod < period / 4) ? 1 : 0;
+                        },
+                        laplace: s => (1 - Math.exp(-s * Math.PI / (2 * w))) / (s * (1 - Math.exp(-s * 2 * Math.PI / w))),
+                        formula: 'f(t) = Pulse Train ⟹ F(s) = Complex'
+                    };
+            }
+        }
+
+        function drawTimeDomain(func, a, w) {
+            const width = timeCanvas.width;
+            const height = timeCanvas.height;
+            const padding = 60;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+
+            timeCtx.clearRect(0, 0, width, height);
+
+            // Background gradient
+            const bgGradient = timeCtx.createLinearGradient(0, 0, 0, height);
+            bgGradient.addColorStop(0, '#f8f9ff');
+            bgGradient.addColorStop(1, '#e8eeff');
+            timeCtx.fillStyle = bgGradient;
+            timeCtx.fillRect(0, 0, width, height);
+
+            // Grid
+            timeCtx.strokeStyle = '#ddd';
+            timeCtx.lineWidth = 1;
+            for(let i = 0; i <= 10; i++) {
+                const x = padding + (plotWidth / 10) * i;
+                const y = padding + (plotHeight / 10) * i;
+                timeCtx.beginPath();
+                timeCtx.moveTo(x, padding);
+                timeCtx.lineTo(x, height - padding);
+                timeCtx.stroke();
+                timeCtx.beginPath();
+                timeCtx.moveTo(padding, y);
+                timeCtx.lineTo(width - padding, y);
+                timeCtx.stroke();
+            }
+
+            // Axes
+            timeCtx.strokeStyle = '#333';
+            timeCtx.lineWidth = 3;
+            timeCtx.beginPath();
+            timeCtx.moveTo(padding, height - padding);
+            timeCtx.lineTo(width - padding, height - padding);
+            timeCtx.moveTo(padding, padding);
+            timeCtx.lineTo(padding, height - padding);
+            timeCtx.stroke();
+
+            // Labels
+            timeCtx.fillStyle = '#333';
+            timeCtx.font = 'bold 24px Arial';
+            timeCtx.textAlign = 'center';
+            timeCtx.fillText('t (time)', width / 2, height - 10);
+            timeCtx.save();
+            timeCtx.translate(15, height / 2);
+            timeCtx.rotate(-Math.PI / 2);
+            timeCtx.fillText('f(t)', 0, 0);
+            timeCtx.restore();
+
+            // Plot function
+            const tMax = 10;
+            const steps = 500;
+            let maxVal = 0;
+
+            // Find max value for scaling
+            for(let i = 0; i <= steps; i++) {
+                const t = (i / steps) * tMax;
+                const val = Math.abs(func.time(t));
+                if(val > maxVal) maxVal = val;
+            }
+
+            const scale = maxVal > 0 ? plotHeight / (2 * maxVal) : 1;
+
+            const gradient = timeCtx.createLinearGradient(0, padding, 0, height - padding);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+
+            timeCtx.strokeStyle = gradient;
+            timeCtx.lineWidth = 4;
+            timeCtx.beginPath();
+
+            for(let i = 0; i <= steps; i++) {
+                const t = (i / steps) * tMax;
+                const val = func.time(t);
+                const x = padding + (t / tMax) * plotWidth;
+                const y = height - padding - plotHeight / 2 - val * scale;
+
+                if(i === 0) {
+                    timeCtx.moveTo(x, y);
+                } else {
+                    timeCtx.lineTo(x, y);
+                }
+            }
+            timeCtx.stroke();
+
+            // Add glow effect
+            timeCtx.shadowBlur = 10;
+            timeCtx.shadowColor = '#764ba2';
+            timeCtx.stroke();
+            timeCtx.shadowBlur = 0;
+        }
+
+        function drawLaplaceDomain(func, a, w) {
+            const width = laplaceCanvas.width;
+            const height = laplaceCanvas.height;
+            const padding = 60;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+
+            laplaceCtx.clearRect(0, 0, width, height);
+
+            // Background gradient
+            const bgGradient = laplaceCtx.createLinearGradient(0, 0, 0, height);
+            bgGradient.addColorStop(0, '#fff8f0');
+            bgGradient.addColorStop(1, '#ffe8e0');
+            laplaceCtx.fillStyle = bgGradient;
+            laplaceCtx.fillRect(0, 0, width, height);
+
+            // Grid
+            laplaceCtx.strokeStyle = '#ddd';
+            laplaceCtx.lineWidth = 1;
+            for(let i = 0; i <= 10; i++) {
+                const x = padding + (plotWidth / 10) * i;
+                const y = padding + (plotHeight / 10) * i;
+                laplaceCtx.beginPath();
+                laplaceCtx.moveTo(x, padding);
+                laplaceCtx.lineTo(x, height - padding);
+                laplaceCtx.stroke();
+                laplaceCtx.beginPath();
+                laplaceCtx.moveTo(padding, y);
+                laplaceCtx.lineTo(width - padding, y);
+                laplaceCtx.stroke();
+            }
+
+            // Axes
+            laplaceCtx.strokeStyle = '#333';
+            laplaceCtx.lineWidth = 3;
+            laplaceCtx.beginPath();
+            laplaceCtx.moveTo(padding, height - padding);
+            laplaceCtx.lineTo(width - padding, height - padding);
+            laplaceCtx.moveTo(padding, padding);
+            laplaceCtx.lineTo(padding, height - padding);
+            laplaceCtx.stroke();
+
+            // Labels
+            laplaceCtx.fillStyle = '#333';
+            laplaceCtx.font = 'bold 24px Arial';
+            laplaceCtx.textAlign = 'center';
+            laplaceCtx.fillText('σ (real part of s)', width / 2, height - 10);
+            laplaceCtx.save();
+            laplaceCtx.translate(15, height / 2);
+            laplaceCtx.rotate(-Math.PI / 2);
+            laplaceCtx.fillText('|F(s)|', 0, 0);
+            laplaceCtx.restore();
+
+            // Plot Laplace transform magnitude
+            const sMax = 10;
+            const steps = 500;
+            let maxVal = 0;
+
+            // Find max value
+            for(let i = 1; i <= steps; i++) {
+                const s = (i / steps) * sMax;
+                const val = Math.abs(func.laplace(s));
+                if(!isNaN(val) && isFinite(val) && val > maxVal) maxVal = val;
+            }
+
+            const scale = maxVal > 0 ? (plotHeight * 0.8) / maxVal : 1;
+
+            // Create gradient fill
+            const gradient = laplaceCtx.createLinearGradient(0, padding, 0, height - padding);
+            gradient.addColorStop(0, 'rgba(255, 100, 100, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 200, 100, 0.8)');
+
+            laplaceCtx.fillStyle = gradient;
+            laplaceCtx.beginPath();
+            laplaceCtx.moveTo(padding, height - padding);
+
+            for(let i = 1; i <= steps; i++) {
+                const s = (i / steps) * sMax;
+                const val = Math.abs(func.laplace(s));
+                const x = padding + (s / sMax) * plotWidth;
+                const y = height - padding - (isFinite(val) ? Math.min(val * scale, plotHeight) : 0);
+                laplaceCtx.lineTo(x, y);
+            }
+
+            laplaceCtx.lineTo(width - padding, height - padding);
+            laplaceCtx.closePath();
+            laplaceCtx.fill();
+
+            // Outline
+            laplaceCtx.strokeStyle = '#ff6347';
+            laplaceCtx.lineWidth = 3;
+            laplaceCtx.beginPath();
+            for(let i = 1; i <= steps; i++) {
+                const s = (i / steps) * sMax;
+                const val = Math.abs(func.laplace(s));
+                const x = padding + (s / sMax) * plotWidth;
+                const y = height - padding - (isFinite(val) ? Math.min(val * scale, plotHeight) : 0);
+                if(i === 1) laplaceCtx.moveTo(x, y);
+                else laplaceCtx.lineTo(x, y);
+            }
+            laplaceCtx.stroke();
+        }
+
+        function update() {
+            const type = functionSelect.value;
+            const a = parseFloat(paramA.value);
+            const w = parseFloat(paramW.value);
+
+            paramAValue.textContent = a.toFixed(1);
+            paramWValue.textContent = w.toFixed(1);
+
+            const func = getFunction(type, a, w);
+            functionInfo.textContent = func.formula;
+
+            drawTimeDomain(func, a, w);
+            drawLaplaceDomain(func, a, w);
+        }
+
+        functionSelect.addEventListener('change', update);
+        paramA.addEventListener('input', update);
+        paramW.addEventListener('input', update);
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Block Game</title>
+<style>
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  canvas {
+    background: #000;
+    border: 2px solid #0ff;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// Paddle
+const paddle = {
+  width: 120,
+  height: 15,
+  x: 340,
+  y: 570,
+  speed: 7
+};
+
+// Ball
+const ball = {
+  x: 400,
+  y: 300,
+  r: 8,
+  dx: 4,
+  dy: -4
+};
+
+// Blocks
+const rows = 5;
+const cols = 10;
+const blockWidth = 70;
+const blockHeight = 25;
+const padding = 10;
+const offsetTop = 40;
+const offsetLeft = 35;
+
+let blocks = [];
+
+for (let r = 0; r < rows; r++) {
+  for (let c = 0; c < cols; c++) {
+    blocks.push({
+      x: c * (blockWidth + padding) + offsetLeft,
+      y: r * (blockHeight + padding) + offsetTop,
+      alive: true
+    });
+  }
+}
+
+let leftPressed = false;
+let rightPressed = false;
+
+// Keyboard controls
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") leftPressed = true;
+  if (e.key === "ArrowRight") rightPressed = true;
+});
+
+document.addEventListener("keyup", e => {
+  if (e.key === "ArrowLeft") leftPressed = false;
+  if (e.key === "ArrowRight") rightPressed = false;
+});
+
+function drawPaddle() {
+  ctx.fillStyle = "#00f";
+  ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+}
+
+function drawBall() {
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = "#fff";
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawBlocks() {
+  ctx.fillStyle = "#f00";
+  blocks.forEach(b => {
+    if (b.alive) {
+      ctx.fillRect(b.x, b.y, blockWidth, blockHeight);
+    }
+  });
+}
+
+function collisionDetection() {
+  blocks.forEach(b => {
+    if (
+      b.alive &&
+      ball.x > b.x &&
+      ball.x < b.x + blockWidth &&
+      ball.y > b.y &&
+      ball.y < b.y + blockHeight
+    ) {
+      b.alive = false;
+      ball.dy *= -1;
+    }
+  });
+
+  // Paddle collision
+  if (
+    ball.y + ball.r > paddle.y &&
+    ball.x > paddle.x &&
+    ball.x < paddle.x + paddle.width
+  ) {
+    ball.dy = -Math.abs(ball.dy);
+  }
+}
+
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawPaddle();
+  drawBall();
+  drawBlocks();
+  collisionDetection();
+
+  // Ball movement
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Wall collision
+  if (ball.x + ball.r > canvas.width || ball.x - ball.r < 0) {
+    ball.dx *= -1;
+  }
+  if (ball.y - ball.r < 0) {
+    ball.dy *= -1;
+  }
+  if (ball.y + ball.r > canvas.height) {
+    alert("Game Over!");
+    document.location.reload();
+  }
+
+  // Paddle movement
+  if (rightPressed && paddle.x + paddle.width < canvas.width) {
+    paddle.x += paddle.speed;
+  }
+  if (leftPressed && paddle.x > 0) {
+    paddle.x -= paddle.speed;
+  }
+
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+
+</body>
+</html>

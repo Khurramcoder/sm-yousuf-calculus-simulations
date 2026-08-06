@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiphase Flow Dynamics Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .simulation-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .simulation-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        #simulation-canvas {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 100%;
+            height: 400px;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+        }
+        
+        .value-display {
+            font-size: 0.9rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .info-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .info-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+        }
+        
+        .info-content {
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        .equation {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+        
+        .particle-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .particle-count {
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Multiphase Flow Dynamics</h1>
+            <div class="subtitle">Theory and Numerics - Interactive Simulation</div>
+        </header>
+        
+        <div class="content">
+            <div class="simulation-container">
+                <h2 class="simulation-title">Particle Tracking Simulation</h2>
+                <canvas id="simulation-canvas"></canvas>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="particle-density">Particle Density</label>
+                        <input type="range" id="particle-density" min="1" max="100" value="30">
+                        <div class="value-display" id="density-value">30</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="fluid-viscosity">Fluid Viscosity</label>
+                        <input type="range" id="fluid-viscosity" min="1" max="100" value="50">
+                        <div class="value-display" id="viscosity-value">50</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="flow-intensity">Flow Intensity</label>
+                        <input type="range" id="flow-intensity" min="1" max="100" value="40">
+                        <div class="value-display" id="intensity-value">40</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="gravity-effect">Gravity Effect</label>
+                        <input type="range" id="gravity-effect" min="0" max="100" value="20">
+                        <div class="value-display" id="gravity-value">20</div>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="reset-btn">Reset Simulation</button>
+                    <button id="add-particles">Add Particles</button>
+                    <button id="toggle-flow">Toggle Flow</button>
+                </div>
+                
+                <div class="particle-info">
+                    <div class="particle-count">Particles: <span id="particle-count">0</span></div>
+                    <div class="particle-count">Reynolds Number: <span id="reynolds-number">0</span></div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="info-section">
+                    <h3 class="info-title">Multiphase Flow Theory</h3>
+                    <div class="info-content">
+                        <p>Multiphase flows consist of two or more distinct phases (solid, liquid, gas) with characteristic fluid properties. Unlike single-phase flows, multiphase systems require specialized equations and closure models.</p>
+                        
+                        <div class="equation">
+                            ∂(φ<sub>α</sub>ρ<sub>α</sub>)/∂t + ∇·(φ<sub>α</sub>ρ<sub>α</sub>u<sub>α</sub>) = Γ<sub>α</sub>
+                        </div>
+                        
+                        <p>This simulation demonstrates particle tracking methods where solid particles are tracked through a fluid medium, accounting for drag forces, gravity, and fluid turbulence.</p>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-title">Particle Motion Equation</h3>
+                    <div class="info-content">
+                        <p>The motion of particles in a fluid is governed by the Basset-Boussinesq-Oseen (BBO) equation:</p>
+                        
+                        <div class="equation">
+                            m<sub>p</sub> dv/dt = F<sub>drag</sub> + F<sub>pressure</sub> + F<sub>added mass</sub> + F<sub>Basset</sub> + F<sub>buoyancy</sub>
+                        </div>
+                        
+                        <p>In this simulation, we focus on the dominant Stokes drag force and gravitational effects:</p>
+                        
+                        <div class="equation">
+                            F<sub>drag</sub> = 6πr<sub>p</sub>μ(u - v)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h3 class="info-title">Simulation Parameters</h3>
+                    <div class="info-content">
+                        <p><strong>Particle Density:</strong> Controls the number of particles in the simulation. Higher density increases particle-particle interactions.</p>
+                        <p><strong>Fluid Viscosity:</strong> Affects the drag force on particles. Higher viscosity slows particle movement.</p>
+                        <p><strong>Flow Intensity:</strong> Controls the strength of the background fluid flow field.</p>
+                        <p><strong>Gravity Effect:</strong> Simulates gravitational forces pulling particles downward.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Based on "Multiphase Flow Dynamics: Theory and Numerics" by Kai Hiltunen et al. | VTT Publications 722</p>
+            <p>This simulation demonstrates key concepts from the publication including particle tracking, drag forces, and fluid-particle interactions.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('simulation-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Simulation parameters
+        let particles = [];
+        let flowField = [];
+        let isFlowActive = true;
+        let animationId;
+        
+        // Get control elements
+        const densitySlider = document.getElementById('particle-density');
+        const viscositySlider = document.getElementById('fluid-viscosity');
+        const intensitySlider = document.getElementById('flow-intensity');
+        const gravitySlider = document.getElementById('gravity-effect');
+        const resetBtn = document.getElementById('reset-btn');
+        const addParticlesBtn = document.getElementById('add-particles');
+        const toggleFlowBtn = document.getElementById('toggle-flow');
+        
+        // Display elements
+        const densityValue = document.getElementById('density-value');
+        const viscosityValue = document.getElementById('viscosity-value');
+        const intensityValue = document.getElementById('intensity-value');
+        const gravityValue = document.getElementById('gravity-value');
+        const particleCount = document.getElementById('particle-count');
+        const reynoldsNumber = document.getElementById('reynolds-number');
+        
+        // Update display values
+        densitySlider.addEventListener('input', () => {
+            densityValue.textContent = densitySlider.value;
+            updateParticleCount();
+        });
+        
+        viscositySlider.addEventListener('input', () => {
+            viscosityValue.textContent = viscositySlider.value;
+            updateReynoldsNumber();
+        });
+        
+        intensitySlider.addEventListener('input', () => {
+            intensityValue.textContent = intensitySlider.value;
+        });
+        
+        gravitySlider.addEventListener('input', () => {
+            gravityValue.textContent = gravitySlider.value;
+        });
+        
+        // Particle class
+        class Particle {
+            constructor(x, y, radius) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.originalRadius = radius;
+                this.color = `hsl(${Math.random() * 60 + 200}, 70%, 60%)`;
+            }
+            
+            update(flowIntensity, viscosity, gravity) {
+                // Get flow field influence
+                const flowX = this.getFlowX(this.x, this.y, flowIntensity);
+                const flowY = this.getFlowY(this.x, this.y, flowIntensity);
+                
+                // Apply drag force (simplified Stokes drag)
+                const dragCoefficient = viscosity / 100;
+                this.vx += (flowX - this.vx) * dragCoefficient;
+                this.vy += (flowY - this.vy) * dragCoefficient;
+                
+                // Apply gravity
+                this.vy += gravity / 500;
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Boundary conditions
+                if (this.x < this.radius) {
+                    this.x = this.radius;
+                    this.vx *= -0.8;
+                }
+                if (this.x > canvas.width - this.radius) {
+                    this.x = canvas.width - this.radius;
+                    this.vx *= -0.8;
+                }
+                if (this.y < this.radius) {
+                    this.y = this.radius;
+                    this.vy *= -0.8;
+                }
+                if (this.y > canvas.height - this.radius) {
+                    this.y = canvas.height - this.radius;
+                    this.vy *= -0.8;
+                }
+                
+                // Dampen velocity
+                this.vx *= 0.995;
+                this.vy *= 0.995;
+            }
+            
+            getFlowX(x, y, intensity) {
+                // Create a simple flow field with vortices
+                const scale = 0.01;
+                const time = Date.now() * 0.001;
+                
+                // Multiple vortices
+                let flow = 0;
+                flow += Math.sin(y * scale * 2 + time) * 2;
+                flow += Math.cos(x * scale * 1.5 + time * 1.3) * 1.5;
+                flow += Math.sin((x + y) * scale * 3 + time * 0.7) * 1.2;
+                
+                return flow * (intensity / 30);
+            }
+            
+            getFlowY(x, y, intensity) {
+                // Create a simple flow field with vortices
+                const scale = 0.01;
+                const time = Date.now() * 0.001;
+                
+                // Multiple vortices
+                let flow = 0;
+                flow += Math.cos(x * scale * 2 + time) * 2;
+                flow += Math.sin(y * scale * 1.5 + time * 1.3) * 1.5;
+                flow += Math.cos((x - y) * scale * 3 + time * 0.7) * 1.2;
+                
+                return flow * (intensity / 30);
+            }
+            
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                // Add a highlight for 3D effect
+                ctx.beginPath();
+                ctx.arc(this.x - this.radius/3, this.y - this.radius/3, this.radius/2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+            }
+        }
+        
+        // Initialize particles
+        function initializeParticles() {
+            particles = [];
+            const density = parseInt(densitySlider.value);
+            const count = Math.floor(density * 0.5);
+            
+            for (let i = 0; i < count; i++) {
+                const radius = Math.random() * 5 + 3;
+                const x = Math.random() * (canvas.width - radius * 2) + radius;
+                const y = Math.random() * (canvas.height - radius * 2) + radius;
+                particles.push(new Particle(x, y, radius));
+            }
+            
+            updateParticleCount();
+            updateReynoldsNumber();
+        }
+        
+        // Add more particles
+        function addParticles() {
+            const density = parseInt(densitySlider.value);
+            const count = Math.floor(density * 0.2);
+            
+            for (let i = 0; i < count; i++) {
+                const radius = Math.random() * 5 + 3;
+                const x = Math.random() * (canvas.width - radius * 2) + radius;
+                const y = Math.random() * (canvas.height - radius * 2) + radius;
+                particles.push(new Particle(x, y, radius));
+            }
+            
+            updateParticleCount();
+        }
+        
+        // Update particle count display
+        function updateParticleCount() {
+            particleCount.textContent = particles.length;
+        }
+        
+        // Update Reynolds number display
+        function updateReynoldsNumber() {
+            const viscosity = parseInt(viscositySlider.value);
+            // Simplified Reynolds number calculation
+            const re = Math.max(1, Math.floor(1000 / viscosity));
+            reynoldsNumber.textContent = re;
+        }
+        
+        // Draw flow field visualization
+        function drawFlowField(intensity) {
+            if (!isFlowActive) return;
+            
+            const cellSize = 30;
+            const rows = Math.ceil(canvas.height / cellSize);
+            const cols = Math.ceil(canvas.width / cellSize);
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const x = j * cellSize + cellSize / 2;
+                    const y = i * cellSize + cellSize / 2;
+                    
+                    // Create a temporary particle to calculate flow
+                    const tempParticle = new Particle(x, y, 1);
+                    const flowX = tempParticle.getFlowX(x, y, intensity);
+                    const flowY = tempParticle.getFlowY(x, y, intensity);
+                    
+                    // Only draw if there's significant flow
+                    if (Math.abs(flowX) > 0.1 || Math.abs(flowY) > 0.1) {
+                        const length = Math.min(Math.sqrt(flowX * flowX + flowY * flowY) * 5, cellSize / 2);
+                        const angle = Math.atan2(flowY, flowX);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(
+                            x + Math.cos(angle) * length,
+                            y + Math.sin(angle) * length
+                        );
+                        ctx.stroke();
+                        
+                        // Draw arrowhead
+                        ctx.beginPath();
+                        ctx.moveTo(
+                            x + Math.cos(angle) * length,
+                            y + Math.sin(angle) * length
+                 

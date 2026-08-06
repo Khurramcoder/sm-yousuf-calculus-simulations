@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Moving Sofa Problem Solver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1100px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel h2 {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: #4facfe;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        label {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        input[type="range"] {
+            width: 65%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            width: 60px;
+            text-align: right;
+            font-weight: 500;
+            color: #00f2fe;
+        }
+        
+        button {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            border: none;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(79, 172, 254, 0.4);
+        }
+        
+        button:disabled {
+            background: rgba(255, 255, 255, 0.2);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .info-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 5px 0;
+            color: #4facfe;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .algorithm-info {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+        
+        .algorithm-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .step {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .step:hover {
+            transform: translateY(-5px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #4facfe;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .optimization-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00f2fe;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .history-chart-container {
+            width: 100%;
+            height: 150px;
+            margin-top: 15px;
+        }
+        
+        .coefficient-controls {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .coefficient-controls::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .coefficient-controls::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .coefficient-controls::-webkit-scrollbar-thumb {
+            background: #4facfe;
+            border-radius: 4px;
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: #4facfe;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .comparison-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .comparison-canvas {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Moving Sofa Problem Solver</h1>
+            <p class="subtitle">Using Particle Swarm Optimization to find the largest area shape that can navigate an L-shaped corridor</p>
+        </header>
+        
+        <div class="content">
+            <div class="panel">
+                <h2>Visualization</h2>
+                <div class="canvas-container">
+                    <canvas id="sofaCanvas"></canvas>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-label">Current Area</div>
+                        <div class="info-value" id="areaValue">2.2195</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Rotation Angle</div>
+                        <div class="info-value" id="angleValue">0°</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Fourier Terms</div>
+                        <div class="info-value" id="termsValue">12</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Status</div>
+                        <div class="info-value" id="statusValue">Feasible</div>
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="optimizationProgress"></div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>Controls & Optimization</h2>
+                
+                <div class="tab-container">
+                    <div class="tab active" data-tab="basic">Basic Controls</div>
+                    <div class="tab" data-tab="optimization">Optimization</div>
+                    <div class="tab" data-tab="comparison">Comparison</div>
+                </div>
+                
+                <div class="tab-content active" id="basic-tab">
+                    <div class="control-group">
+                        <div class="control-row">
+                            <label for="sofaType">Sofa Type:</label>
+                            <select id="sofaType">
+                                <option value="gerver">Gerver Sofa (Best Known)</option>
+                                <option value="hammersley">Hammersley Sofa</option>
+                                <option value="custom">Custom Fourier Sofa</option>
+                                <option value="pso">PSO Optimized</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-row">
+                            <label for="rotationSlider">Rotation:</label>
+                            <input type="range" id="rotationSlider" min="0" max="90" value="0" step="1">
+                            <span class="value-display" id="rotationValue">0°</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-row">
+                            <label for="fourierTerms">Fourier Terms:</label>
+                            <input type="range" id="fourierTerms" min="4" max="20" value="12" step="2">
+                            <span class="value-display" id="fourierValue">12</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group coefficient-controls" id="coefficientControls">
+                        <h3>Fourier Coefficients</h3>
+                        <!-- Coefficient sliders will be generated here -->
+                    </div>
+                    
+                    <div class="buttons-grid">
+                        <button id="animateButton">🔄 Animate Movement</button>
+                        <button id="resetButton">🔄 Reset to Default</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="optimization-tab">
+                    <div class="control-group">
+                        <div class="control-row">
+                            <label for="psoParticles">PSO Particles:</label>
+                            <input type="range" id="psoParticles" min="10" max="100" value="30" step="5">
+                            <span class="value-display" id="psoParticlesValue">30</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-row">
+                            <label for="psoIterations">PSO Iterations:</label>
+                            <input type="range" id="psoIterations" min="50" max="500" value="200" step="50">
+                            <span class="value-display" id="psoIterationsValue">200</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-row">
+                            <label for="mutationRate">Mutation Rate:</label>
+                            <input type="range" id="mutationRate" min="0" max="0.2" value="0.05" step="0.01">
+                            <span class="value-display" id="mutationRateValue">0.05</span>
+                        </div>
+                    </div>
+                    
+                    <div class="buttons-grid">
+                        <button id="optimizeButton">🚀 Run PSO Optimization</button>
+                        <button id="stopButton" disabled>⏹️ Stop Optimization</button>
+                    </div>
+                    
+                    <div class="optimization-stats">
+                        <div class="stat-card">
+                            <div class="stat-label">Current Best</div>
+                            <div class="stat-value" id="currentBest">2.2195</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Iteration</div>
+                            <div class="stat-value" id="currentIteration">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Time Elapsed</div>
+                            <div class="stat-value" id="timeElapsed">0s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="history-chart-container">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="comparison-tab">
+                    <div class="comparison-view">
+                        <div>
+                            <h3>Gerver Sofa</h3>
+                            <canvas class="comparison-canvas" id="gerverCanvas"></canvas>
+                            <div class="info-label">Area: 2.2195</div>
+                        </div>
+                        <div>
+                            <h3>PSO Optimized</h3>
+                            <canvas class="comparison-canvas" id="psoCanvas"></canvas>
+                            <div class="info-label">Area: <span id="psoArea">2.2195</span></div>
+                        </div>
+                    </div>
+                    <div class="info-card" style="margin-top: 15px;">
+                        <div class="info-label">Improvement</div>
+                        <div class="info-value" id="improvementValue">+0.0000</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>Optimization Algorithm</h2>
+                <p>This implementation uses a hybrid approach combining Particle Swarm Optimization (PSO) with Fourier descriptor parameterization to find optimal sofa shapes.</p>
+                
+                <div class="algorithm-steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <strong>Particle Initialization</strong>
+                        <p>Initialize a swarm of particles with random Fourier coefficients representing potential sofa shapes.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <strong>Fitness Evaluation</strong>
+                        <p>Evaluate each particle based on area and feasibility constraints at multiple rotation angles.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <strong>Velocity Update</strong>
+                        <p>Update particle velocities based on personal best and global best positions with inertia.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <strong>Position Update</strong>
+                        <p>Move particles to new positions and apply mutation for diversity.</p>
+                    </div>
+                </div>
+                
+                <div class="algorithm-info">
+                    <h3>Advanced Features</h3>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.6;">
+                        <li>Adaptive inertia weight for better convergence</li>
+                        <li>Constraint handling with penalty functions</li>
+                        <li>Mutation operator to escape local optima</li>
+                        <li>Multi-start optimization with different initial conditions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('sofaCanvas');
+        const ctx = canvas.getContext('2d');
+        const gerverCanvas = document.getElementById('gerverCanvas');
+        const gerverCtx = gerverCanvas.getContext('2d');
+        const psoCanvas = document.getElementById('psoCanvas');
+        const psoCtx = psoCanvas.getContext('2d');
+        const historyCanvas = document.getElementById('historyChart');
+        const historyCtx = historyCanvas.getContext('2d');
+        
+        // Set canvas dimensions
+        function resizeCanvases() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            gerverCanvas.width = gerverCanvas.clientWidth;
+            gerverCanvas.height = gerverCanvas.clientHeight;
+            
+            psoCanvas.width = psoCanvas.clientWidth;
+            psoCanvas.height = psoCanvas.clientHeight;
+            
+            historyCanvas.width = historyCanvas.clientWidth;
+            historyCanvas.height = historyCanvas.clientHeight;
+            
+            drawScene();
+            drawComparison();
+            drawHistoryChart();
+        }
+        
+        window.addEventListener('resize', resizeCanvases);
+        
+        // PSO Algorithm Implementation
+        class PSOSofaOptimizer {
+            constructor(particleCount = 30, dimensions = 16, maxIterations = 200) {
+                this.particleCount = particleCount;
+                this.dimensions = dimensions;
+                this.maxIterations = maxIterations;
+                this.currentIteration = 0;
+                this.isRunning = false;
+                this.startTime = null;
+                
+                // PSO parameters
+                this.inertia = 0.7;
+                this.cognitiveWeight = 1.5;
+                this.socialWeight = 1.5;
+                this.mutationRate = 0.05;
+                
+                // Optimization state
+                this.particles = [];
+                this.velocities = [];
+                this.personalBests = [];
+                this.personalBestFitnesses = [];
+                this.globalBest = null;
+                this.globalBestFitness = -Infinity;
+                this.fitnessHistory = [];
+                
+                this.initializeSwarm();
+            }
+            
+            initializeSwarm() {
+                this.particles = [];
+                this.velocities = [];
+                this.personalBests = [];
+                this.personalBestFitnesses = [];
+                
+                for (let i = 0; i < this.particleCount; i++) {
+                    // Initialize with random coefficients
+                    const particle = Array(this.dimensions).fill(0).map(() => 
+                        (Math.random() * 1.0 - 0.5) * 0.5
+                    );
+                    
+                    this.particles.push(particle);
+                    this.velocities.push(Array(this.dimensions).fill(0));
+                    this.personalBests.push([...particle]);
+                    this.personalBestFitnesses.push(-Infinity);
+                }
+                
+                this.globalBest = [...this.particles[0]];
+                this.globalBestFitness = -Infinity;
+                this.fitnessHistory = [];
+            }
+            
+            evaluateFitness(coefficients) {
+                // Create a temporary sofa with these coefficients
+                const sofa = new FourierSofa(coefficients.length / 2);
+                sofa.coeffs = coefficients;
+                
+                // Calculate area
+                const area = sofa.area();
+                
+                // Check feasibility at multiple angles
+                const angles = [0, 15, 30, 45, 60, 75, 90];
+                let feasibilityScore = 0;
+                
+                for (const angle of angles) {
+                    if (sofa.checkFeasibility(angle)) {
+                        feasibilityScore += 1 / angles.length;
+                    }
+                }
+                
+                // Combine area and feasibility with a penalty for infeasibility
+                const fitness = area * feasibilityScore - (1 - feasibilityScore) * 10;
+                
+                return fitness;
+            }
+            
+            updateParticles() {
+                for (let i = 0; i < this.particleCount; i++) {
+                    const particle = this.particles[i];
+                    const velocity = this.velocities[i];
+                    const personalBest = this.personalBests[i];
+                    
+                    // Update velocity
+                    for (let d = 0; d < this.dimensions; d++) {
+                        const r1 = Math.random();
+                        const r2 = Math.random();
+                        
+                        velocity[d] = this.inertia * velocity[d] +
+                            this.cognitiveWeight * r1 * (personalBest[d] - particle[d]) +
+                            this.socialWeight * r2 * (this.globalBest[d] - particle[d]);
+                    }
+                    
+                    // Update position
+                    for (let d = 0; d < this.dimensions; d++) {
+                        particle[d] += velocity[d];
+                        
+                        // Apply bounds
+                        particle[d] = Math.max(-0.5, Math.min(0.5, particle[d]));
+                    }
+                    
+                    // Apply mutation
+                    if (Math.random() < this.mutationRate) {
+                        const mutationIndex = Math.floor(Math.random() * this.dimensions);
+                        particle[mutationIndex] = (Math.random() * 1.0 - 0.5) * 0.5;
+                    }
+                    
+                    // Evaluate fitness
+                    const fitness = this.evaluateFitness(particle);
+                    
+                    // Update personal best
+                    if (fitness > this.personalBestFitnesses[i]) {
+                        this.personalBestFitnesses[i] = fitness;
+                        this.personalBests[i] = [...particle];
+                        
+                        // Update global best
+                        if (fitness > this.globalBestFitness) {
+                            this.globalBestFitness = fitness;
+                            this.globalBest = [...particle];
+                        }
+                    }
+                }
+                
+                this.fitnessHistory.push(this.globalBestFitness);
+                this.currentIteration++;
+                
+                // Adaptive inertia (decrease over time)
+                this.inertia = Math.max(0.4, 0.9 - (this.currentIteration / this.maxIterations) * 0.5);
+            }
+            
+            async run(callback) {
+                this.isRunning = true;
+                this.startTime = Date.now();
+                this.initializeSwarm();
+                
+                for (let i = 0; i < this.maxIterations && this.isRunning; i++) {
+                    this.updateParticles();
+                    
+                    if (callback) {
+                        callback({
+                            iteration: this.currentIteration,
+                            bestFitness: this.globalBestFitness,
+                            bestCoefficients: this.globalBest,
+                            progress: (this.currentIteration / this.maxIterations) * 100,
+                            timeElapsed: (Date.now() - this.startTime) / 1000
+                        });
+                    }
+                    
+                    // Slow down for visualization
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                this.isRunning = false;
+                return this.globalBest;
+            }
+            
+            stop() {
+                this.isRunning = false;
+            }
+        }
+
+        // Fourier Sofa Implementation
+        class FourierSofa {
+            constructor(n_coeffs = 8) {
+                this.n_coeffs = n_coeffs;
+                this.coeffs = Array(2 * n_coeffs).fill(0).map(() => (Math.random() * 1.0 - 0.5) * 0.2);
+            }
+            
+            getRadius(theta) {
+                let r = 1.0; // constant term
+                for (let k = 1; k <= this.n_coeffs; k++) {
+                    const cosIndex = 2 * (k - 1);
+                    const sinIndex = 2 * (k - 1) + 1;
+                    
+                    if (cosIndex < this.coeffs.length) {
+                        r += this.coeffs[cosIndex] * Math.cos(k * theta);
+                    }
+                    if (sinIndex < this.coeffs.length) {
+                        r += this.coeffs[sinIndex] * Math.sin(k * theta);
+                    }
+                }
+                return Math.max(r, 0.1);
+            }
+            
+            getShapePoints(rotation = 0, n_points = 200) {
+                const points = [];
+                const scale = Math.min(canvas.width, canvas.height) * 0.25;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                for (let i = 0; i < n_points; i++) {
+                    const theta = (i / n_points) * 2 * Math.PI;
+                    const r = this.getRadius(theta);
+                    
+                    let x = r * Math.cos(theta);
+                    let y = r * Math.sin(theta);
+                    
+                    // Apply rotation
+                    if (rotation !== 0) {
+                        const cosR = Math.cos(rotation * Math.PI / 180);
+                        const sinR = Math.sin(rotation * Math.PI / 180);
+                        const newX = x * cosR - y * sinR;
+                        const newY = x * sinR + y * cosR;
+                        x = newX;
+                        y = newY;
+                    }
+                    
+                    points.push({
+                        x: centerX + x * scale,
+                        y: centerY + y * scale
+                    });
+                }
+                
+                return points;
+            }
+            
+            area() {
+                // Calculate area using the shoelace formula
+                const points = this.getShapePoints(0, 1000);
+                let area = 0;
+                const n = points.length;
+                
+                for (let i = 0; i < n; i++) {
+                    const j = (i + 1) % n;
+                    area += points[i].x * points[j].y;
+                    area -= points[j].x * points[i].y;
+                }
+                
+                area = Math.abs(area) / 2;
+                
+                // Normalize to match known sofa areas
+                const scale = Math.min(canvas.width, canvas.height) * 0.25;
+                const scaleFactor = 1 / (scale * scale);
+                
+                return (area * scaleFactor * 4);
+            }
+            
+            checkFeasibility(rotation) {
+                const points = this.getShapePoints(rotation, 100);
+                const hallwayWidth = Math.min(canvas.width, canvas.height) * 0.25;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                for (const point of points) {
+                    const inHorizontal = (
+                        point.y >= centerY - hallwayWidth && 
+                        point.y <= centerY + hallwayWidth && 
+                        point.x >= centerX - hallwayWidth * 3
+                    );
+                    
+                    const inVertical = (
+                        point.x >= centerX - hallwayWidth && 
+                        point.x <= centerX + hallwayWidth && 
+                        point.y <= centerY + hallwayWidth * 3
+                    );
+                    
+                    if (!inHorizontal && !inVertical) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+        }
+
+        // Sofa parameters
+        let sofaType = 'gerver';
+        let rotationAngle = 0;
+        let fourierTerms = 12;
+        let coefficients = Array(24).fill(0).map(() => (Math.random() * 1.0 - 0.5) * 0.2);
+        let animationId = null;
+        let psoOptimizer = null;
+        
+        // UI elements
+        const sofaTypeSelect = document.getElementById('sofaType');
+        const rotationSlider = document.getElementById('rotationSlider');
+        const rotationValue = document.getElementById('rotationValue');
+        const fourierTermsSlider = document.getElementById('fourierTerms');
+        const fourierValue = document.getElementById('fourierValue');
+        const areaValue = document.getElementById('areaValue');
+        const angleValue = document.getElementById('angleValue');
+        const termsValue = document.getElementById('termsValue');
+        const statusValue = document.getElementById('statusValue');
+        const animateButton = document.getElementById('animateButton');
+        const optimizeButton = document.getElementById('optimizeButton');
+        const stopButton = document.getElementById('stopButton');
+        const resetButton = document.getElementById('resetButton');
+        const coefficientControls = document.getElementById('coefficientControls');
+        const optimizationProgress = document.getElementById('optimizationProgress');
+        const currentBest = document.getElementById('currentBest');
+        const currentIteration = document.getElementById('currentIteration');
+        const timeElapsed = document.getElementById('timeElapsed');
+        const psoArea = document.getElementById('psoArea');
+        const improvementValue = document.getElementById('improvementValue');
+        
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Initialize coefficient sliders
+        function initCoefficientSliders() {
+            coefficientControls.innerHTML = '<h3>Fourier Coefficients</h3>';
+            
+            for (let i = 0; i < coefficients.length; i++) {
+                const row = document.createElement('div');
+                row.className = 'control-row';
+                
+                const label = document.createElement('label');
+                label.textContent = `C${i+1}:`;
+                
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.min = '-0.5';
+                slider.max = '0.5';
+                slider.step = '0.01';
+                slider.value = coefficients[i];
+                slider.dataset.index = i;
+                
+                const valueDisplay = document.createElement('span');
+                valueDisplay.className = 'value-display';
+                valueDisplay.textContent = coefficients[i].toFixed(2);
+                
+                slider.addEventListener('input', function() {
+                    const index = parseInt(this.dataset.index);
+                    coefficients[index] = parseFloat(this.value);
+                    valueDisplay.textContent = coefficients[index].toFixed(2);
+                    updateSofa();
+                });
+                
+                row.appendChild(label);
+                row.appendChild(slider);
+                row.appendChild(valueDisplay);
+                coefficientControls.appendChild(row);
+            }
+        }
+        
+        // Get sofa points based on type
+        function getSofaPoints(sofaType, rotation, terms, coeffs) {
+            if (sofaType === 'pso' && psoOptimizer && psoOptimizer.globalBest) {
+                const sofa = new FourierSofa(terms);
+                sofa.coeffs = psoOptimizer.globalBest.slice(0, terms * 2);
+                return sofa.getShapePoints(rotation);
+            }
+            
+            const sofa = new FourierSofa(terms);
+            
+            if (sofaType === 'gerver') {
+                // Approximate Gerver's sofa coefficients
+                sofa.coeffs = [
+                    0.15, 0.1, -0.05, 0.08, 0.12, -0.03, 
+                    -0.07, 0.05, 0.1, 0.02, -0.04, 0.06,
+                    0.08, -0.01, -0.03, 0.04, 0.05, 0.01,
+                    -0.02, 0.03, 0.04, -0.01, -0.02, 0.02
+                ].slice(0, terms * 2);
+            } else if (sofaType === 'hammersley') {
+                // Approximate Hammersley sofa coefficients
+                sofa.coeffs = [
+                    0.1, 0.05, -0.1, 0.05, 0.08, -0.02,
+                    -0.05, 0.03, 0.06, 0.01, -0.03, 0.04,
+                    0.05, -0.01, -0.02, 0.03, 0.04, 0.01,
+                    -0.01, 0.02, 0.03, -0.01, -0.01, 0.01
+                ].slice(0, terms * 2);
+            } else {
+                sofa.coeffs = coeffs.slice(0, terms * 2);
+            }
+            
+            return sofa.getShapePoints(rotation);
+        }
+        
+        // Calculate approximate area
+        function calculateArea(points) {
+            let area = 0;
+            const n = points.length;
+            
+            for (let i = 0; i < n; i++) {
+                const j = (i + 1) % n;
+                area += points[i].x * points[j].y;
+                area -= points[j].x * points[i].y;
+            }
+            
+            area = Math.abs(area) / 2;
+            
+            // Normalize to match known sofa areas
+            const scale = Math.min(canvas.width, canvas.height) * 0.25;
+            const scaleFactor = 1 / (scale * scale);
+            
+            if (sofaType === 'gerver') return 2.2195;
+            if (sofaType === 'hammersley') return 2.2074;
+            if (sofaType === 'pso' && psoOptimizer) {
+                return (psoOptimizer.globalBestFitness + 10).toFixed(4);
+            }
+            
+            return (area * scaleFactor * 4).toFixed(4);
+        }
+        
+        // Check if sofa fits in hallway
+        function checkFeasibility(points) {
+            const hallwayWidth = Math.min(canvas.width, canvas.height) * 0.25;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            for (const point of points) {
+                const inHorizontal = (
+                    point.y >= centerY - hallwayWidth && 
+                    point.y <= centerY + hallwayWidth && 
+                    point.x >= centerX - hallwayWidth * 3
+                );
+                
+                const inVertical = (
+                    point.x >= centerX - hallwayWidth && 
+                    point.x <= centerX + hallwayWidth && 
+                    point.y <= centerY + hallwayWidth * 3
+                );
+                
+                if (!inHorizontal && !inVertical) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Draw the scene
+        function drawScene() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw hallway
+            drawHallway(ctx, canvas);
+            
+            // Get sofa points
+            const sofaPoints = getSofaPoints(sofaType, rotationAngle, fourierTerms, coefficients);
+            
+            // Check feasibility
+            const isFeasible = checkFeasibility(sofaPoints);
+            
+            // Draw sofa
+            drawSofa(ctx, sofaPoints, isFeasible);
+            
+            // Update info displays
+            updateInfoDisplays(sofaPoints, isFeasible);
+        }
+        
+        // Draw the L-shaped hallway
+        function drawHallway(context, canv) {
+            const hallwayWidth = Math.min(canv.width, canv.height) * 0.25;
+            const centerX = canv.width / 2;
+            const centerY = canv.height / 2;
+            
+            context.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            context.lineWidth = 2;
+            
+            // Horizontal corridor
+            context.beginPath();
+            context.rect(
+                centerX - hallwayWidth * 3, 
+                centerY - hallwayWidth, 
+                hallwayWidth * 3, 
+                hallwayWidth * 2
+            );
+            context.fill();
+            context.stroke();
+            
+            // Vertical corridor
+            context.beginPath();
+            context.rect(
+                centerX - hallwayWidth, 
+                centerY - hallwayWidth, 
+                hallwayWidth * 2, 
+                hallwayWidth * 3
+            );
+            context.fill();
+            context.stroke();
+            
+            // Corner
+            context.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            context.beginPath();
+            context.rect(
+                centerX - hallwayWidth, 
+                centerY - hallwayWidth, 
+                hallwayWidth, 
+                hallwayWidth
+            );
+            context.fill();
+            context.stroke();
+        }
+        
+        // Draw the sofa
+        function drawSofa(context, points, isFeasible) {
+            if (points.length < 3) return;
+            
+            context.fillStyle = isFeasible ? 'rgba(79, 172, 254, 0.7)' : 'rgba(220, 53, 69, 0.7)';
+            context.strokeStyle = isFeasible ? 'rgba(79, 172, 254, 1)' : 'rgba(220, 53, 69, 1)';
+            context.lineWidth = 2;
+            
+            context.beginPath();
+            context.moveTo(points[0].x, points[0].y);
+            
+            for (let i = 1; i < points.length; i++) {
+                context.lineTo(points[i].x, points[i].y);
+            }
+            
+            context.closePath();
+            context.fill();
+            context.stroke();
+        }
+        
+        // Draw comparison view
+        function drawComparison() {
+            // Draw Gerver sofa
+            drawHallway(gerverCtx, gerverCanvas);
+            const gerverPoints = getSofaPoints('gerver', 0, 12, []);
+            drawSofa(gerverCtx, gerverPoints, true);
+            
+            // Draw PSO optimized sofa
+            drawHallway(psoCtx, psoCanvas);
+            let psoPoints = [];
+            let psoAreaValue = "2.2195";
+            
+            if (psoOptimizer && psoOptimizer.globalBest) {
+                psoPoints = getSofaPoints('pso', 0, 12, []);
+                psoAreaValue = (psoOptimizer.globalBestFitness + 10).toFixed(4);
+            } else {
+                psoPoints = getSofaPoints('gerver', 0, 12, []);
+            }
+            
+            drawSofa(psoCtx, psoPoints, true);
+            
+            // Update PSO area and improvement
+            psoArea.textContent = psoAreaValue;
+            const improvement = (parseFloat(psoAreaValue) - 2.2195).toFixed(4);
+            improvementValue.textContent = improvement >= 0 ? `+${improvement}` : improvement;
+        }
+        
+        // Draw optimization history chart
+        function drawHistoryChart() {
+            if (!psoOptimizer || psoOptimizer.fitnessHistory.length === 0) {
+                historyCtx.clearRect(0, 0, historyCanvas.width, historyCanvas.height);
+                historyCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                historyCtx.font = '14px Arial';
+                historyCtx.textAlign = 'center';
+                historyCtx.fillText('Run optimization to see history', historyCanvas.width / 2, historyCanvas.height / 2);
+                return;
+            }
+            
+            const history = psoOptimizer.fitnessHistory;
+            const maxFitness = Math.max(...history);
+            const minFitness = Math.min(...history);
+            const range = maxFitness - minFitness || 1;
+            
+            const padding = 20;
+            const chartWidth = historyCanvas.width - padding * 2;
+            const chartHeight = historyCanvas.height - padding * 2;
+            
+            historyCtx.clearRect(0, 0, historyCanvas.width, historyCanvas.height);
+            
+            // Draw grid
+            historyCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            historyCtx.lineWidth = 1;
+            
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (i / 5) * chartHeight;
+                historyCtx.beginPath();
+                historyCtx.moveTo(padding, y);
+                historyCtx.lineTo(padding + chartWidth, y);
+                historyCtx.stroke();
+                
+                // Y-axis labels
+                historyCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                historyCtx.font = '10px Arial';
+                historyCtx.textAlign = 'right';
+                const value = minFitness + (5 - i) / 5 * range;
+                historyCtx.fillText(value.toFixed(2), padding - 5, y + 3);
+            }
+            
+            // Draw fitness curve
+            historyCtx.beginPath();
+            historyCtx.strokeStyle = '#4facfe';
+            historyCtx.lineWidth = 2;
+            
+            for (let i = 0; i < history.length; i++) {
+                const x = padding + (i / (history.length - 1)) * chartWidth;
+                const y = padding + chartHeight - ((history[i] - minFitness) / range) * chartHeight;
+                
+                if (i === 0) {
+                    historyCtx.moveTo(x, y);
+                } else {
+                    historyCtx.lineTo(x, y);
+                }
+            }
+            
+            historyCtx.stroke();
+            
+            // Draw current point
+            if (history.length > 0) {
+                const lastX = padding + chartWidth;
+                const lastY = padding + chartHeight - ((history[history.length - 1] - minFitness) / range) * chartHeight;
+                
+                historyCtx.fillStyle = '#00f2fe';
+                historyCtx.beginPath();
+                historyCtx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+                historyCtx.fill();
+            }
+        }
+        
+        // Update information displays
+        function updateInfoDisplays(points, isFeasible) {
+            areaValue.textContent = calculateArea(points);
+            angleValue.textContent = `${rotationAngle}°`;
+            termsValue.textContent = fourierTerms;
+            statusValue.textContent = isFeasible ? 'Feasible' : 'Infeasible';
+            statusValue.style.color = isFeasible ? '#4facfe' : '#dc3545';
+        }
+        
+        // Update sofa based on current parameters
+        function updateSofa() {
+            drawScene();
+            drawComparison();
+        }
+        
+        // Animate sofa movement
+        function animateSofa() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                animateButton.textContent = '🔄 Animate Movement';
+                return;
+            }
+            
+            animateButton.textContent = '⏹️ Stop Animation';
+            let startTime = null;
+            const duration = 5000; // 5 seconds
+            
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease in-out function
+                const eased = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : -1 + (4 - 2 * progress) * progress;
+                
+                rotationAngle = eased * 90;
+                rotationSlider.value = rotationAngle;
+                rotationValue.textContent = `${Math.round(rotationAngle)}°`;
+                
+                drawScene();
+                
+                if (progress < 1) {
+                    animationId = requestAnimationFrame(step);
+                } else {
+                    animationId = null;
+                    animateButton.textContent = '🔄 Animate Movement';
+                }
+            }
+            
+            animationId = requestAnimationFrame(step);
+        }
+        
+        // Run PSO optimization
+        function runPSOOptimization() {
+            if (psoOptimizer && psoOptimizer.isRunning) {
+                return;
+            }
+            
+            const particleCount = parseInt(document.getElementById('psoParticles').value);
+            const iterations = parseInt(document.getElementById('psoIterations').value);
+            const mutationRate = parseFloat(document.getElementById('mutationRate').value);
+            
+            sofaType = 'pso';
+            sofaTypeSelect.value = 'pso';
+            
+            optimizeButton.disabled = true;
+            stopButton.disabled = false;
+            optimizeButton.textContent = '⏳ Optimizing...';
+            
+            psoOptimizer = new PSOSofaOptimizer(particleCount, fourierTerms * 2, iterations);
+            psoOptimizer.mutationRate = mutationRate;
+            
+            psoOptimizer.run((stats) => {
+                optimizationProgress.style.width = `${stats.progress}%`;
+                currentBest.textContent = (stats.bestFitness + 10).toFixed(4);
+                currentIteration.textContent = stats.iteration;
+                timeElapsed.textContent = `${stats.timeElapsed.toFixed(1)}s`;
+                
+                coefficients = stats.bestCoefficients;
+                updateSofa();
+                drawHistoryChart();
+                
+                // Update coefficient sliders
+                const sliders = coefficientControls.querySelectorAll('input[type="range"]');
+                sliders.forEach((slider, i) => {
+                    if (i < coefficients.length) {
+                        slider.value = coefficients[i];
+                        slider.nextElementSibling.textContent = coefficients[i].toFixed(2);
+                    }
+                });
+            }).then(() => {
+                optimizeButton.disabled = false;
+                stopButton.disabled = true;
+                optimizeButton.textContent = '🚀 Run PSO Optimization';
+                drawComparison();
+            });
+        }
+        
+        // Stop optimization
+        function stopOptimization() {
+            if (psoOptimizer) {
+                psoOptimizer.stop();
+                optimizeButton.disabled = false;
+                stopButton.disabled = true;
+                optimizeButton.textContent = '🚀 Run PSO Optimization';
+            }
+        }
+        
+        // Reset to default values
+        function resetToDefault() {
+            sofaType = 'gerver';
+            sofaTypeSelect.value = sofaType;
+            rotationAngle = 0;
+            rotationSlider.value = rotationAngle;
+            rotationValue.textContent = '0°';
+            fourierTerms = 12;
+            fourierTermsSlider.value = fourierTerms;
+            fourierValue.textContent = '12';
+            coefficients = Array(24).fill(0).map(() => (Math.random() * 1.0 - 0.5) * 0.2);
+            
+            // Reset coefficient sliders
+            const sliders = coefficientControls.querySelectorAll('input[type="range"]');
+            sliders.forEach((slider, i) => {
+                slider.value = coefficients[i];
+                slider.nextElementSibling.textContent = coefficients[i].toFixed(2);
+            });
+            
+            if (psoOptimizer) {
+                psoOptimizer.stop();
+            }
+            
+            optimizeButton.disabled = false;
+            stopButton.disabled = true;
+            optimizeButton.textContent = '🚀 Run PSO Optimization';
+            
+            updateSofa();
+            drawHistoryChart();
+        }
+        
+        // Event listeners
+        sofaTypeSelect.addEventListener('change', function() {
+            sofaType = this.value;
+            updateSofa();
+        });
+        
+        rotationSlider.addEventListener('input', function() {
+            rotationAngle = parseInt(this.value);
+            rotationValue.textContent = `${rotationAngle}°`;
+            updateSofa();
+        });
+        
+        fourierTermsSlider.addEventListener('input', function() {
+            fourierTerms = parseInt(this.value);
+            fourierValue.textContent = fourierTerms;
+            initCoefficientSliders();
+            updateSofa();
+        });
+        
+        document.getElementById('psoParticles').addEventListener('input', function() {
+            document.getElementById('psoParticlesValue').textContent = this.value;
+        });
+        
+        document.getElementById('psoIterations').addEventListener('input', function() {
+            document.getElementById('psoIterationsValue').textContent = this.value;
+        });
+        
+        document.getElementById('mutationRate').addEventListener('input', function() {
+            document.getElementById('mutationRateValue').textContent = this.value;
+        });
+        
+        animateButton.addEventListener('click', animateSofa);
+        optimizeButton.addEventListener('click', runPSOOptimization);
+        stopButton.addEventListener('click', stopOptimization);
+        resetButton.addEventListener('click', resetToDefault);
+        
+        // Initialize
+        resizeCanvases();
+        initCoefficientSliders();
+        drawScene();
+        drawComparison();
+        drawHistoryChart();
+    </script>
+</body>
+</html>

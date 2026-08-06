@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaussian Integral Visualizations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .formula {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            margin: 20px auto;
+            display: inline-block;
+            font-size: 1.4em;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .proof-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .proof-btn {
+            background: rgba(255,255,255,0.95);
+            border: none;
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .proof-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            background: white;
+        }
+
+        .proof-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .visualization-area {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+        }
+
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .description {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .description h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        button.action-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button.action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>The Gaussian Integral</h1>
+            <p class="subtitle">Interactive Visualizations of Multiple Proofs</p>
+            <div class="formula">
+                ∫<sub>-∞</sub><sup>∞</sup> e<sup>-x²/2</sup> dx = √(2π)
+            </div>
+        </header>
+
+        <div class="proof-selector">
+            <button class="proof-btn active" onclick="showProof('polar')">Polar Coordinates</button>
+            <button class="proof-btn" onclick="showProof('bell')">Bell Surface</button>
+            <button class="proof-btn" onclick="showProof('fourier')">Fourier Transform</button>
+            <button class="proof-btn" onclick="showProof('animation')">Animated Proof</button>
+        </div>
+
+        <div class="visualization-area">
+            <canvas id="canvas"></canvas>
+            <div class="controls" id="controls"></div>
+            <div class="description" id="description"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        let currentProof = 'polar';
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Proof descriptions
+        const descriptions = {
+            polar: {
+                title: "Proof 1: Polar Coordinates (Poisson)",
+                text: "This classic proof expresses J² as a double integral over the first quadrant, then converts to polar coordinates. The key insight is that x² + y² becomes r², and the Jacobian gives us the factor r. The integral separates beautifully into radial and angular components."
+            },
+            bell: {
+                title: "Proof 5: Volume Under the Bell Surface",
+                text: "By revolving the Gaussian curve around the z-axis, we create a 3D bell surface. Computing the volume both by horizontal slices (discs) and vertical slices (bell curves) gives two expressions for the same volume, leading to I² = 2π."
+            },
+            fourier: {
+                title: "Proof 11: Fourier Transform",
+                text: "The Gaussian function is its own Fourier transform (up to scaling). By applying the transform twice and using the inversion formula, we can deduce that I = √(2π). This connects the Gaussian integral to fundamental properties of Fourier analysis."
+            },
+            animation: {
+                title: "Animated Visualization",
+                text: "Watch as the Gaussian curve and its square relationship emerge. The area under e^(-x²/2) relates to the fundamental constant √(2π), which appears throughout mathematics, from probability theory to quantum mechanics."
+            }
+        };
+
+        function showProof(proof) {
+            if (animationId) cancelAnimationFrame(animationId);
+            currentProof = proof;
+            
+            // Update active button
+            document.querySelectorAll('.proof-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update description
+            const desc = descriptions[proof];
+            document.getElementById('description').innerHTML = `
+                <h3>${desc.title}</h3>
+                <p>${desc.text}</p>
+            `;
+            
+            // Clear controls
+            document.getElementById('controls').innerHTML = '';
+            
+            // Start appropriate visualization
+            switch(proof) {
+                case 'polar': drawPolarProof(); break;
+                case 'bell': drawBellSurface(); break;
+                case 'fourier': drawFourierProof(); break;
+                case 'animation': animateGaussian(); break;
+            }
+        }
+
+        function drawPolarProof() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const scale = Math.min(w, h) / 6;
+
+            // Add controls
+            document.getElementById('controls').innerHTML = `
+                <div class="control-group">
+                    <label>Radius: <span class="value-display" id="radiusVal">3.0</span></label>
+                    <input type="range" id="radius" min="0.5" max="4" step="0.1" value="3">
+                </div>
+                <div class="control-group">
+                    <label>Angle: <span class="value-display" id="angleVal">90°</span></label>
+                    <input type="range" id="angle" min="0" max="90" step="1" value="90">
+                </div>
+            `;
+
+            function draw() {
+                const r = parseFloat(document.getElementById('radius').value);
+                const maxAngle = parseFloat(document.getElementById('angle').value) * Math.PI / 180;
+                
+                document.getElementById('radiusVal').textContent = r.toFixed(1);
+                document.getElementById('angleVal').textContent = Math.round(maxAngle * 180 / Math.PI) + '°';
+
+                ctx.clearRect(0, 0, w, h);
+
+                // Draw axes
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, 0);
+                ctx.lineTo(centerX, h);
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(w, centerY);
+                ctx.stroke();
+
+                // Draw concentric circles with heat map
+                for (let i = 0.5; i <= r; i += 0.2) {
+                    const value = Math.exp(-i * i);
+                    const alpha = value * 0.5;
+                    ctx.strokeStyle = `rgba(102, 126, 234, ${alpha})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, i * scale, 0, maxAngle);
+                    ctx.stroke();
+                }
+
+                // Fill the quadrant with gradient
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r * scale);
+                gradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
+                gradient.addColorStop(0.5, 'rgba(118, 75, 162, 0.3)');
+                gradient.addColorStop(1, 'rgba(102, 126, 234, 0.1)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, r * scale, 0, maxAngle);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw radius lines
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                for (let theta = 0; theta <= maxAngle; theta += maxAngle / 6) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX + r * scale * Math.cos(theta),
+                              centerY - r * scale * Math.sin(theta));
+                    ctx.stroke();
+                }
+
+                // Labels
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('x', w - 30, centerY - 10);
+                ctx.fillText('y', centerX + 10, 30);
+                ctx.fillText('r', centerX + r * scale / 2 * Math.cos(maxAngle / 2) + 10,
+                           centerY - r * scale / 2 * Math.sin(maxAngle / 2));
+            }
+
+            document.getElementById('radius').oninput = draw;
+            document.getElementById('angle').oninput = draw;
+            draw();
+        }
+
+        function drawBellSurface() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Add controls
+            document.getElementById('controls').innerHTML = `
+                <div class="control-group">
+                    <label>Rotation: <span class="value-display" id="rotVal">45°</span></label>
+                    <input type="range" id="rotation" min="0" max="360" step="1" value="45">
+                </div>
+                <div class="control-group">
+                    <label>Height: <span class="value-display" id="heightVal">0.5</span></label>
+                    <input type="range" id="height" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            `;
+
+            function draw() {
+                const rotation = parseFloat(document.getElementById('rotation').value) * Math.PI / 180;
+                const sliceHeight = parseFloat(document.getElementById('height').value);
+                
+                document.getElementById('rotVal').textContent = Math.round(rotation * 180 / Math.PI) + '°';
+                document.getElementById('heightVal').textContent = sliceHeight.toFixed(2);
+
+                ctx.clearRect(0, 0, w, h);
+
+                const centerX = w / 2;
+                const centerY = h * 0.7;
+                const scale = Math.min(w, h) / 5;
+
+                // Draw 3D bell surface
+                for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+                    const x1 = Math.cos(angle) * Math.cos(rotation);
+                    const y1 = Math.cos(angle) * Math.sin(rotation);
+                    const z1 = Math.sin(angle);
+
+                    for (let r = 0; r <= 3; r += 0.2) {
+                        const height = Math.exp(-r * r / 2);
+                        const x = centerX + r * scale * x1;
+                        const y = centerY - height * scale * 100 - r * scale * y1 * 0.5;
+                        
+                        const alpha = Math.exp(-r * r / 2) * 0.5;
+                        ctx.fillStyle = `rgba(102, 126, 234, ${alpha})`;
+                        ctx.fillRect(x - 2, y - 2, 4, 4);
+                    }
+                }
+
+                // Draw horizontal slice
+                if (sliceHeight > 0) {
+                    const radius = Math.sqrt(-2 * Math.log(sliceHeight));
+                    ctx.strokeStyle = '#ff6b6b';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    for (let angle = 0; angle <= Math.PI * 2; angle += 0.1) {
+                        const x = centerX + radius * scale * Math.cos(angle) * Math.cos(rotation);
+                        const y = centerY - sliceHeight * scale * 100 - radius * scale * Math.sin(angle) * Math.sin(rotation) * 0.5;
+                        if (angle === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                // Draw axes
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX, centerY - scale * 150);
+                ctx.stroke();
+
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('z', centerX + 10, centerY - scale * 150);
+            }
+
+            document.getElementById('rotation').oninput = draw;
+            document.getElementById('height').oninput = draw;
+            draw();
+        }
+
+        function drawFourierProof() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            document.getElementById('controls').innerHTML = `
+                <div class="control-group">
+                    <label>Frequency: <span class="value-display" id="freqVal">1.0</span></label>
+                    <input type="range" id="frequency" min="0" max="3" step="0.1" value="1">
+                </div>
+            `;
+
+            function draw() {
+                const freq = parseFloat(document.getElementById('frequency').value);
+                document.getElementById('freqVal').textContent = freq.toFixed(1);
+
+                ctx.clearRect(0, 0, w, h);
+
+                const centerY = h / 2;
+                const scale = h / 5;
+                const xScale = w / 10;
+
+                // Draw axes
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(w, centerY);
+                ctx.stroke();
+
+                // Draw original Gaussian
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                for (let x = 0; x < w; x++) {
+                    const t = (x - w / 2) / xScale;
+                    const y = centerY - scale * Math.exp(-t * t / 2);
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                // Draw Fourier transform (also Gaussian)
+                ctx.strokeStyle = '#764ba2';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                for (let x = 0; x < w; x++) {
+                    const omega = (x - w / 2) / xScale * freq;
+                    const y = centerY + scale * Math.exp(-omega * omega / 2) * 0.8;
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Labels
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('f(x) = e^(-x²/2)', 20, 30);
+                
+                ctx.fillStyle = '#764ba2';
+                ctx.fillText('F[f](ω) = √(2π) e^(-ω²/2)', 20, 55);
+            }
+
+            document.getElementById('frequency').oninput = draw;
+            draw();
+        }
+
+        function animateGaussian() {
+            const w = canvas.width;
+            const h = canvas.height;
+            let t = 0;
+
+            document.getElementById('controls').innerHTML = `
+                <button class="action-btn" onclick="showProof('animation')">Restart Animation</button>
+            `;
+
+            function animate() {
+                t += 0.02;
+                ctx.clearRect(0, 0, w, h);
+
+                const centerY = h / 2;
+                const scale = h / 4;
+                const xScale = w / 8;
+
+                // Draw axes
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(w, centerY);
+                ctx.stroke();
+
+                // Draw Gaussian curve
+                const gradient = ctx.createLinearGradient(0, centerY - scale, 0, centerY);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                const maxX = Math.min(t * 50, w);
+                for (let x = 0; x < maxX; x++) {
+                    const val = (x - w / 2) / xScale;
+                    const y = centerY - scale * Math.exp(-val * val / 2);
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                // Fill area under curve
+                if (t > 0.5) {
+                    ctx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, centerY);
+                    for (let x = 0; x < maxX; x++) {
+                        const val = (x - w / 2) / xScale;
+                        const y = centerY - scale * Math.exp(-val * val / 2);
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.lineTo(maxX, centerY);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Display integral value
+                if (t > 1) {
+                    const progress = Math.min((t - 1) / 2, 1);
+                    ctx.fillStyle = 'rgba(102, 126, 234, ' + progress + ')';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillText('∫ e^(-x²/2) dx = √(2π) ≈ 2.507', w / 2 - 150, h - 50);
+                }
+
+                if (t < 5) {
+                    animationId = requestAnimationFrame(animate);
+                }
+            }
+
+            animate();
+        }
+
+        // Initialize with polar proof
+        showProof('polar');
+    </script>
+</body>
+</html>

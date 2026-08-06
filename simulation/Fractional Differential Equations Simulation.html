@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractional Differential Equations Simulation</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #fdbb2d;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fdbb2d;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid #444;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            background: rgba(253, 187, 45, 0.2);
+            border-bottom: 3px solid #fdbb2d;
+            color: #fdbb2d;
+        }
+        
+        .tab:hover {
+            background: rgba(253, 187, 45, 0.1);
+        }
+        
+        .content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        .equation-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #fdbb2d;
+        }
+        
+        .equation {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            text-align: center;
+            font-family: 'Cambria Math', serif;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .control-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #fdbb2d;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #444;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            cursor: pointer;
+        }
+        
+        .case-selector {
+            margin-bottom: 15px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            font-size: 1rem;
+        }
+        
+        .plot-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 500px;
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .info-content {
+            line-height: 1.6;
+        }
+        
+        .method-explanation {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .method-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .method-steps {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .method-steps li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .equation {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Fractional Differential Equations Simulation</h1>
+            <p class="subtitle">Interactive visualization of exact solutions for space-time fractional Eckhaus equation and generalized reaction Duffing model using the sine-Gordon expansion method</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="eckhaus">Eckhaus Equation</div>
+            <div class="tab" data-tab="duffing">Duffing Model</div>
+            <div class="tab" data-tab="method">Method Explanation</div>
+        </div>
+        
+        <div class="content active" id="eckhaus-content">
+            <div class="equation-container">
+                <div class="equation">iD<sub>t</sub><sup>α</sup>φ + D<sub>x</sub><sup>2α</sup>φ + 2D<sub>x</sub><sup>α</sup>|φ|<sup>2</sup>φ + |φ|<sup>4</sup>φ = 0</div>
+                <p>This equation describes the propagation of waves in dispersive media. The solutions represent different types of solitons.</p>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <div class="control-title">Solution Parameters</div>
+                    
+                    <div class="case-selector">
+                        <label for="eckhaus-case">Solution Case:</label>
+                        <select id="eckhaus-case">
+                            <option value="1">Case 1</option>
+                            <option value="2">Case 2</option>
+                            <option value="3">Case 3</option>
+                            <option value="4">Case 4</option>
+                        </select>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Fractional Order (α):</span>
+                            <span id="eckhaus-alpha-value">0.5</span>
+                        </div>
+                        <input type="range" id="eckhaus-alpha" min="0.1" max="1" step="0.05" value="0.5">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Velocity (r):</span>
+                            <span id="eckhaus-r-value">0.5</span>
+                        </div>
+                        <input type="range" id="eckhaus-r" min="-2" max="2" step="0.1" value="0.5">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Frequency (s):</span>
+                            <span id="eckhaus-s-value">0.5</span>
+                        </div>
+                        <input type="range" id="eckhaus-s" min="-2" max="2" step="0.1" value="0.5">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">Visualization Parameters</div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Time (t):</span>
+                            <span id="eckhaus-t-value">0</span>
+                        </div>
+                        <input type="range" id="eckhaus-t" min="0" max="10" step="0.1" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>X Range:</span>
+                            <span id="eckhaus-xrange-value">10</span>
+                        </div>
+                        <input type="range" id="eckhaus-xrange" min="5" max="20" step="1" value="10">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="plot-container" id="eckhaus-plot"></div>
+            
+            <div class="info-panel">
+                <div class="info-title">About the Eckhaus Equation</div>
+                <div class="info-content">
+                    <p>The space-time fractional Eckhaus equation is a nonlinear partial differential equation that models wave propagation in dispersive media. It was introduced by Wiktor Eckhaus and has applications in plasma physics, nonlinear optics, and solid-state physics.</p>
+                    <p>The solutions obtained using the sine-Gordon expansion method represent various types of solitons - localized wave packets that maintain their shape while traveling at constant velocity.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content" id="duffing-content">
+            <div class="equation-container">
+                <div class="equation">D<sub>t</sub><sup>2α</sup>φ + aD<sub>x</sub><sup>2α</sup>φ + bφ + cφ<sup>2</sup> + dφ<sup>3</sup> = 0</div>
+                <p>This model describes the motion of a damped oscillator and is a classic example of a dynamical system that exhibits chaotic behavior.</p>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <div class="control-title">Solution Parameters</div>
+                    
+                    <div class="case-selector">
+                        <label for="duffing-case">Solution Case:</label>
+                        <select id="duffing-case">
+                            <option value="1">Case 1</option>
+                            <option value="2">Case 2</option>
+                            <option value="3">Case 3</option>
+                            <option value="4">Case 4</option>
+                        </select>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Fractional Order (α):</span>
+                            <span id="duffing-alpha-value">0.5</span>
+                        </div>
+                        <input type="range" id="duffing-alpha" min="0.1" max="1" step="0.05" value="0.5">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Parameter a:</span>
+                            <span id="duffing-a-value">1</span>
+                        </div>
+                        <input type="range" id="duffing-a" min="0.1" max="5" step="0.1" value="1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Parameter b:</span>
+                            <span id="duffing-b-value">1</span>
+                        </div>
+                        <input type="range" id="duffing-b" min="0.1" max="5" step="0.1" value="1">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">Additional Parameters</div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Parameter c:</span>
+                            <span id="duffing-c-value">1</span>
+                        </div>
+                        <input type="range" id="duffing-c" min="0.1" max="5" step="0.1" value="1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Parameter d:</span>
+                            <span id="duffing-d-value">1</span>
+                        </div>
+                        <input type="range" id="duffing-d" min="0.1" max="5" step="0.1" value="1">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Velocity (r):</span>
+                            <span id="duffing-r-value">0.5</span>
+                        </div>
+                        <input type="range" id="duffing-r" min="-2" max="2" step="0.1" value="0.5">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">Visualization Parameters</div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Time (t):</span>
+                            <span id="duffing-t-value">0</span>
+                        </div>
+                        <input type="range" id="duffing-t" min="0" max="10" step="0.1" value="0">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>X Range:</span>
+                            <span id="duffing-xrange-value">10</span>
+                        </div>
+                        <input type="range" id="duffing-xrange" min="5" max="20" step="1" value="10">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="plot-container" id="duffing-plot"></div>
+            
+            <div class="info-panel">
+                <div class="info-title">About the Duffing Model</div>
+                <div class="info-content">
+                    <p>The generalized reaction Duffing model describes the motion of a damped oscillator with a nonlinear restoring force. It's a classic example of a dynamical system that can exhibit chaotic behavior under certain conditions.</p>
+                    <p>The fractional version of this model extends its applicability to systems with memory effects and anomalous diffusion, which are common in viscoelastic materials, biological systems, and complex fluids.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content" id="method-content">
+            <div class="method-explanation">
+                <div class="method-title">Sine-Gordon Expansion Method</div>
+                <p>The sine-Gordon expansion method is a powerful technique for finding exact solutions to nonlinear fractional differential equations. The method is based on the relationship between the sine-Gordon equation and a first-order ordinary differential equation.</p>
+                
+                <p><strong>Key Steps:</strong></p>
+                <ol class="method-steps">
+                    <li>Convert the fractional differential equation to an ordinary differential equation using a suitable wave transformation.</li>
+                    <li>Assume a solution in the form of a finite series of trigonometric functions (sine and cosine).</li>
+                    <li>Determine the degree of the series by balancing the highest order derivative and nonlinear terms.</li>
+                    <li>Substitute the assumed solution into the ODE and collect coefficients of like terms.</li>
+                    <li>Set the coefficients to zero to obtain a system of algebraic equations.</li>
+                    <li>Solve the system to determine the parameters in the solution.</li>
+                    <li>Construct the exact solutions using the obtained parameters.</li>
+                </ol>
+                
+                <p><strong>Advantages:</strong></p>
+                <ul class="method-steps">
+                    <li>Provides exact solutions in closed form</li>
+                    <li>Applicable to a wide range of nonlinear fractional differential equations</li>
+                    <li>Yields various types of solutions including solitons, periodic waves, and kink solutions</li>
+                </ul>
+                
+                <p>The method has been successfully applied to many important equations in mathematical physics, including the equations studied in this simulation.</p>
+            </div>
+            
+            <div class="info-panel">
+                <div class="info-title">Conformable Fractional Derivative</div>
+                <div class="info-content">
+                    <p>The conformable fractional derivative is defined for a function g:[0,∞]→ℝ of order α as:</p>
+                    <p style="text-align: center; margin: 15px 0;">D<sup>α</sup>{g(z)} = lim<sub>η→0</sub> [g(z+ηz<sup>1-α</sup>) - g(z)] / η</p>
+                    <p>This definition satisfies many of the classical properties of derivatives, such as the product rule, quotient rule, and chain rule, making it particularly useful for solving fractional differential equations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+                
+                // Update plots when switching tabs
+                if (tab.dataset.tab === 'eckhaus') {
+                    updateEckhausPlot();
+                } else if (tab.dataset.tab === 'duffing') {
+                    updateDuffingPlot();
+                }
+            });
+        });
+        
+        // Eckhaus equation functionality
+        const eckhausSliders = ['alpha', 'r', 's', 't', 'xrange'];
+        eckhausSliders.forEach(slider => {
+            document.getElementById(`eckhaus-${slider}`).addEventListener('input', function() {
+                document.getElementById(`eckhaus-${slider}-value`).textContent = this.value;
+                updateEckhausPlot();
+            });
+        });
+        
+        document.getElementById('eckhaus-case').addEventListener('change', updateEckhausPlot);
+        
+        function updateEckhausPlot() {
+            const alpha = parseFloat(document.getElementById('eckhaus-alpha').value);
+            const r = parseFloat(document.getElementById('eckhaus-r').value);
+            const s = parseFloat(document.getElementById('eckhaus-s').value);
+            const t = parseFloat(document.getElementById('eckhaus-t').value);
+            const xRange = parseFloat(document.getElementById('eckhaus-xrange').value);
+            const caseNum = document.getElementById('eckhaus-case').value;
+            
+            // Generate x values
+            const x = [];
+            for (let i = -xRange; i <= xRange; i += 0.1) {
+                x.push(i);
+            }
+            
+            // Calculate ξ values
+            const xi = x.map(xVal => {
+                const xAlpha = Math.pow(Math.abs(xVal), alpha) / alpha * Math.sign(xVal);
+                const tAlpha = Math.pow(t, alpha) / alpha;
+                return xAlpha - 2 * r * tAlpha;
+            });
+            
+            // Calculate solutions based on case
+            const realPart = [];
+            const imagPart = [];
+            const magnitude = [];
+            
+            x.forEach((xVal, index) => {
+                let phiReal, phiImag;
+                
+                switch(caseNum) {
+                    case '1':
+                        // Case 1 solution
+                        const k1 = 2 * Math.sqrt(r*r + s);
+                        const term1 = -Math.sqrt(r*r + s)/2 * (1 + Math.tanh(k1 * xi[index]));
+                        const term2 = Math.sqrt(r*r + s)/2 * 1/Math.cosh(k1 * xi[index]); // Using ± positive
+                        phiReal = Math.sqrt(Math.abs(term1)) * Math.sign(term1);
+                        phiImag = Math.sqrt(Math.abs(term2)) * Math.sign(term2);
+                        break;
+                    case '2':
+                        // Case 2 solution
+                        const k2 = 2 * Math.sqrt(r*r + s);
+                        const term1_2 = Math.sqrt(r*r + s)/2 * (1 - Math.tanh(k2 * xi[index]));
+                        const term2_2 = Math.sqrt(r*r + s)/2 * 1/Math.cosh(k2 * xi[index]); // Using ± positive
+                        phiReal = Math.sqrt(Math.abs(term1_2)) * Math.sign(term1_2);
+                        phiImag = Math.sqrt(Math.abs(term2_2)) * Math.sign(term2_2);
+                        break;
+                    case '3':
+                        // Case 3 solution
+                        const k3 = -Math.sqrt(r*r + s);
+                        const expTerm = Math.exp(2 * k3 * xi[index]);
+                        const term3 = Math.sqrt(r*r + s) * expTerm / (expTerm + 1);
+                        phiReal = Math.sqrt(Math.abs(term3)) * Math.sign(term3);
+                        phiImag = 0;
+                        break;
+                    case '4':
+                        // Case 4 solution
+                        const k4 = Math.sqrt(r*r + s);
+                        const expTerm4 = Math.exp(2 * k4 * xi[index]);
+                        const term4 = Math.sqrt(r*r + s) / (expTerm4 + 1);
+                        phiReal = Math.sqrt(Math.abs(term4)) * Math.sign(term4);
+                        phiImag = 0;
+                        break;
+                }
+                
+                // Add phase component
+                const theta = r * (Math.pow(Math.abs(xVal), alpha) / alpha * Math.sign(xVal)) + 
+                             s * (Math.pow(t, alpha) / alpha);
+                
+                const phaseReal = Math.cos(theta);
+                const phaseImag = Math.sin(theta);
+                
+                // Final complex value
+                const finalReal = phiReal * phaseReal - phiImag * phaseImag;
+                const finalImag = phiReal * phaseImag + phiImag * phaseReal;
+                
+                realPart.push(finalReal);
+                imagPart.push(finalImag);
+                magnitude.push(Math.sqrt(finalReal*finalReal + finalImag*finalImag));
+            });
+            
+            // Plot the results
+            const trace1 = {
+                x: x,
+                y: realPart,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Real Part',
+                line: {color: '#fdbb2d', width: 3}
+            };
+            
+            const trace2 = {
+                x: x,
+                y: imagPart,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Imaginary Part',
+                line: {color: '#1a2a6c', width: 3}
+            };
+            
+            const trace3 = {
+                x: x,
+                y: magnitude,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Magnitude',
+                line: {color: '#b21f1f', width: 3}
+            };
+            
+            const layout = {
+                title: 'Eckhaus Equation Solution',
+                xaxis: {title: 'x', gridcolor: '#444', zerolinecolor: '#444'},
+                yaxis: {title: 'φ(x,t)', gridcolor: '#444', zerolinecolor: '#444'},
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: {color: '#fff'},
+                legend: {font: {color: '#fff'}},
+                margin: {l: 60, r: 40, t: 60, b: 60}
+            };
+            
+            Plotly.newPlot('eckhaus-plot', [trace1, trace2, trace3], layout, {displayModeBar: false});
+        }
+        
+        // Duffing model functionality
+        const duffingSliders = ['alpha', 'a', 'b', 'c', 'd', 'r', 't', 'xrange'];
+        duffingSliders.forEach(slider => {
+            document.getElementById(`duffing-${slider}`).addEventListener('input', function() {
+                document.getElementById(`duffing-${slider}-value`).textContent = this.value;
+                updateDuffingPlot();
+            });
+        });
+        
+        document.getElementById('duffing-case').addEventListener('change', updateDuffingPlot);
+        
+        function updateDuffingPlot() {
+            const alpha = parseFloat(document.getElementById('duffing-alpha').value);
+            const a = parseFloat(document.getElementById('duffing-a').value);
+            const b = parseFloat(document.getElementById('duffing-b').value);
+            const c = parseFloat(document.getElementById('duffing-c').value);
+            const d = parseFloat(document.getElementById('duffing-d').value);
+            const r = parseFloat(document.getElementById('duffing-r').value);
+            const t = parseFloat(document.getElementById('duffing-t').value);
+            const xRange = parseFloat(document.getElementById('duffing-xrange').value);
+            const caseNum = document.getElementById('duffing-case').value;
+            
+            // Generate x values
+            const x = [];
+            for (let i = -xRange; i <= xRange; i += 0.1) {
+                x.push(i);
+            }
+            
+            // Calculate ξ values
+            const xi = x.map(xVal => {
+                const xAlpha = Math.pow(Math.abs(xVal), alpha) / alpha * Math.sign(xVal);
+                const tAlpha = Math.pow(t, alpha) / alpha;
+                return xAlpha - 2 * r * tAlpha;
+            });
+            
+            // Calculate solutions based on case
+            const solution = [];
+            
+            x.forEach((xVal, index) => {
+                let phi;
+                
+                switch(caseNum) {
+                    case '1':
+                        // Case 1 solution
+                        phi = (3*b)/(2*c) * (-1 + Math.tanh(xi[index]));
+                        break;
+                    case '2':
+                        // Case 2 solution
+                        phi = (3*b)/(2*c) * (-1 + Math.sqrt(2)/Math.cosh(xi[index]));
+                        break;
+                    case '3':
+                        // Case 3 solution
+                        phi = (3*b)/(2*c) * (-1 + Math.tanh(xi[index]) + 1/Math.cosh(xi[index]));
+                        break;
+                    case '4':
+                        // Case 4 solution
+                        const k = 1; // Assuming k=1 for simplicity
+                        const term = (k*k*(a + 4*r*r) - 2*b)/c;
+                        phi = term * (1 + (2*k*Math.sqrt(a + 4*r*r)/Math.sqrt(b))/Math.cosh(xi[index]);
+                        break;
+                }
+                
+                solution.push(phi);
+            });
+            
+            // Plot the results
+            const trace = {
+                x: x,
+                y: solution,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'φ(x,t)',
+                line: {color: '#fdbb2d', width: 3}
+            };
+            
+            const layout = {
+                title: 'Duffing Model Solution',
+                xaxis: {title: 'x', gridcolor: '#444', zerolinecolor: '#444'},
+                yaxis: {title: 'φ(x,t)', gridcolor: '#444', zerolinecolor: '#444'},
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: {color: '#fff'},
+                margin: {l: 60, r: 40, t: 60, b: 60}
+            };
+            
+            Plotly.newPlot('duffing-plot', [trace], layout, {displayModeBar: false});
+        }
+        
+        // Initialize plots
+        updateEckhausPlot();
+        updateDuffingPlot();
+    </script>
+</body>
+</html>

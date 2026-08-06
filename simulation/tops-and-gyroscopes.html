@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tops &amp; Gyroscopes — 3D Rigid Body Dynamics</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+  :root{
+    --navy-950:#080e19;
+    --navy-900:#0d1830;
+    --navy-850:#122040;
+    --navy-800:#16273f;
+    --navy-700:#1d3153;
+    --blueprint:#22406a;
+    --blueprint-dim:#1a2c48;
+    --brass:#c9a24b;
+    --brass-bright:#e9c976;
+    --brass-dim:#8a7038;
+    --ivory:#eee7d6;
+    --ivory-dim:#a9b3c4;
+    --steel:#7fb2d8;
+    --rust:#a3543a;
+    --green:#7ea788;
+    --radius-lg:18px;
+    --radius-sm:8px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 1200px 700px at 20% -10%, rgba(201,162,75,0.08), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 100% 20%, rgba(127,178,216,0.06), transparent 55%),
+      var(--navy-950);
+    color:var(--ivory);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* faint blueprint grid overlay */
+  .grid-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      linear-gradient(var(--blueprint-dim) 1px, transparent 1px),
+      linear-gradient(90deg, var(--blueprint-dim) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:0.35;
+    mask-image: radial-gradient(ellipse 100% 60% at 50% 0%, black, transparent 85%);
+  }
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    margin:0;
+  }
+
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--brass);
+  }
+
+  a{ color:var(--brass-bright); }
+
+  /* ============ HERO ============ */
+  header.hero{
+    position:relative; z-index:1;
+    max-width:1180px;
+    margin:0 auto;
+    padding:64px 32px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    border-bottom:1px solid var(--blueprint);
+  }
+  header.hero .eyebrow{ display:flex; align-items:center; gap:10px;}
+  header.hero .eyebrow::before{
+    content:"";
+    width:26px; height:1px; background:var(--brass-dim);
+    display:inline-block;
+  }
+  header.hero h1{
+    font-size:clamp(38px, 6vw, 72px);
+    line-height:0.98;
+    color:var(--ivory);
+  }
+  header.hero h1 em{
+    font-style:italic;
+    color:var(--brass-bright);
+  }
+  header.hero p.lede{
+    max-width:640px;
+    font-size:17px;
+    line-height:1.6;
+    color:var(--ivory-dim);
+    margin-top:6px;
+  }
+  header.hero .credit{
+    margin-top:18px;
+    font-size:12px;
+    color:var(--ivory-dim);
+    font-family:'JetBrains Mono',monospace;
+    opacity:0.75;
+  }
+
+  /* ============ LAB / SIMULATOR ============ */
+  section.lab{
+    position:relative; z-index:1;
+    max-width:1180px;
+    margin:0 auto;
+    padding:48px 32px 64px;
+    display:grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap:28px;
+  }
+  @media (max-width:900px){
+    section.lab{ grid-template-columns:1fr; }
+  }
+
+  .dial{
+    position:relative;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(127,178,216,0.05), transparent 60%),
+      var(--navy-900);
+    border:1px solid var(--blueprint);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    box-shadow: inset 0 0 0 1px rgba(201,162,75,0.06), 0 30px 60px -30px rgba(0,0,0,0.7);
+  }
+  .dial-rim{
+    position:absolute; inset:14px;
+    border:1px solid var(--brass-dim);
+    border-radius:14px;
+    pointer-events:none;
+    opacity:0.55;
+  }
+  .dial-ticks{
+    position:absolute; inset:0; pointer-events:none;
+  }
+  .dial-label{
+    position:absolute; top:16px; left:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--brass);
+    z-index:3;
+  }
+  .dial-label span{ display:block; color:var(--ivory-dim); font-size:10px; margin-top:2px; letter-spacing:0.08em;}
+  #canvas-wrap{ position:relative; width:100%; aspect-ratio: 4/3.1; }
+  #canvas-wrap canvas{ display:block; width:100%; height:100%; cursor:grab; }
+  #canvas-wrap canvas:active{ cursor:grabbing; }
+
+  .readout{
+    position:absolute; bottom:14px; left:14px; right:14px;
+    display:flex; flex-wrap:wrap;
+    gap:8px 18px;
+    padding:10px 14px;
+    background:rgba(8,14,25,0.6);
+    backdrop-filter: blur(6px);
+    border:1px solid var(--blueprint);
+    border-radius:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    color:var(--ivory-dim);
+    z-index:3;
+  }
+  .readout b{ color:var(--brass-bright); font-weight:600; }
+  .readout .sep{ width:1px; background:var(--blueprint); align-self:stretch; opacity:0.8; }
+
+  /* control panel */
+  .controls{
+    background:var(--navy-900);
+    border:1px solid var(--blueprint);
+    border-radius:var(--radius-lg);
+    padding:22px 22px 26px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .controls h3{
+    font-size:15px;
+    color:var(--brass-bright);
+    display:flex; align-items:center; gap:8px;
+  }
+  .controls h3 .n{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; color:var(--brass-dim);
+    border:1px solid var(--brass-dim);
+    border-radius:4px;
+    padding:1px 6px;
+  }
+
+  .preset-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .preset-btn{
+    flex:1 1 auto;
+    background:var(--navy-800);
+    border:1px solid var(--blueprint);
+    color:var(--ivory);
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:500;
+    padding:9px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .preset-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
+  .preset-btn.active{ background:var(--brass); border-color:var(--brass); color:var(--navy-950); font-weight:600;}
+
+  .slider-group{ display:flex; flex-direction:column; gap:4px; }
+  .slider-label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12.5px; color:var(--ivory-dim);
+  }
+  .slider-label .val{ font-family:'JetBrains Mono',monospace; color:var(--brass-bright); font-size:12px; }
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:3px;
+    background:var(--blueprint);
+    border-radius:2px;
+    outline:none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:14px; height:14px;
+    border-radius:50%;
+    background:var(--brass-bright);
+    border:2px solid var(--navy-950);
+    cursor:pointer;
+    margin-top:-1px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:12px; height:12px; border-radius:50%;
+    background:var(--brass-bright); border:2px solid var(--navy-950); cursor:pointer;
+  }
+
+  .toggle-row{ display:flex; gap:16px; flex-wrap:wrap; }
+  .toggle{
+    display:flex; align-items:center; gap:7px;
+    font-size:12.5px; color:var(--ivory-dim);
+    cursor:pointer; user-select:none;
+  }
+  .toggle input{ accent-color:var(--brass); width:14px; height:14px; }
+
+  .play-row{ display:flex; gap:10px; margin-top:2px; }
+  .play-btn{
+    flex:1;
+    background:var(--brass);
+    color:var(--navy-950);
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    padding:11px;
+    border-radius:8px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  .play-btn.secondary{
+    background:transparent;
+    border:1px solid var(--blueprint);
+    color:var(--ivory-dim);
+    font-weight:600;
+  }
+  .play-btn.secondary:hover{ border-color:var(--brass); color:var(--brass-bright); }
+
+  .hint{
+    font-size:11.5px;
+    line-height:1.55;
+    color:var(--ivory-dim);
+    opacity:0.8;
+    border-top:1px solid var(--blueprint);
+    padding-top:14px;
+  }
+
+  /* ============ THEORY SECTIONS ============ */
+  section.theory{
+    position:relative; z-index:1;
+    max-width:920px;
+    margin:0 auto;
+    padding:20px 32px 100px;
+  }
+  .theory-intro{ max-width:640px; margin-bottom:56px; }
+  .theory-intro p{ color:var(--ivory-dim); line-height:1.7; font-size:15.5px; }
+
+  .step{
+    display:grid;
+    grid-template-columns: 64px 1fr;
+    gap:24px;
+    padding:40px 0;
+    border-top:1px solid var(--blueprint);
+  }
+  .step:first-of-type{ border-top:1px solid var(--blueprint); }
+  .step-index{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--brass-dim);
+    padding-top:4px;
+  }
+  .step-index .roman{ display:block; color:var(--brass); font-size:22px; font-family:'Fraunces',serif; font-style:italic; margin-bottom:6px;}
+  .step h3{ font-size:23px; color:var(--ivory); margin-bottom:10px; }
+  .step p{ color:var(--ivory-dim); line-height:1.75; font-size:15px; margin:0 0 14px; }
+  .step p:last-child{ margin-bottom:0; }
+
+  .eq-block{
+    background:var(--navy-900);
+    border:1px solid var(--blueprint);
+    border-left:2px solid var(--brass-dim);
+    border-radius:0 10px 10px 0;
+    padding:16px 20px;
+    margin:16px 0;
+    overflow-x:auto;
+  }
+  .eq-block .katex-display{ margin:0; }
+  .eq-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--brass-dim);
+    letter-spacing:0.08em;
+    margin-bottom:8px;
+    text-transform:uppercase;
+  }
+
+  .fig-note{
+    font-size:12.5px;
+    color:var(--ivory-dim);
+    opacity:0.75;
+    font-style:italic;
+    margin-top:-4px;
+  }
+
+  .conserved-pair{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin:16px 0;
+  }
+  @media (max-width:640px){ .conserved-pair{ grid-template-columns:1fr; } }
+  .conserved-card{
+    background:var(--navy-850);
+    border:1px solid var(--blueprint);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .conserved-card .eq-tag{ color:var(--steel); }
+
+  /* footer */
+  footer{
+    position:relative; z-index:1;
+    border-top:1px solid var(--blueprint);
+    padding:40px 32px 60px;
+  }
+  footer .inner{
+    max-width:920px; margin:0 auto;
+    display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap;
+  }
+  footer .col{ min-width:220px; }
+  footer h4{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--brass); margin-bottom:12px;
+  }
+  footer ul{ list-style:none; margin:0; padding:0; }
+  footer li{ font-size:13px; color:var(--ivory-dim); margin-bottom:7px; line-height:1.5; }
+  footer .note{ font-size:12px; color:var(--ivory-dim); opacity:0.6; margin-top:24px; }
+
+  ::selection{ background:var(--brass); color:var(--navy-950); }
+</style>
+</head>
+<body>
+
+<div class="grid-overlay"></div>
+
+<header class="hero">
+  <div class="eyebrow">16.07 DYNAMICS · MIT · LECTURE L30</div>
+  <h1>Tops &amp; <em>Gyroscopes</em></h1>
+  <p class="lede">
+    When a spinning body is tilted against gravity, it doesn't fall — it <em style="color:var(--brass-bright); font-style:normal;">precesses</em>.
+    This page rebuilds the full Euler-angle theory of a symmetric top from first principles, and drives a live
+    rigid-body simulation from the exact same equations, so you can watch steady precession, nutation, and
+    looping motion emerge from the mathematics in real time.
+  </p>
+  <div class="credit">After J. Peraire &amp; S. Widnall, 16.07 Dynamics, Fall 2008 — MIT OpenCourseWare</div>
+</header>
+
+<section class="lab">
+  <div class="dial">
+    <div class="dial-label">LIVE SIMULATION <span>rigid body · Euler angles · RK4</span></div>
+    <div id="canvas-wrap"></div>
+    <div class="dial-rim"></div>
+    <div class="readout" id="readout"></div>
+  </div>
+
+  <div class="controls">
+    <div>
+      <h3><span class="n">01</span> Presets</h3>
+      <div class="preset-row" style="margin-top:10px;">
+        <button class="preset-btn" data-preset="steady">Steady precession</button>
+        <button class="preset-btn" data-preset="dropped">Dropped top</button>
+        <button class="preset-btn" data-preset="looping">Looping precession</button>
+      </div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label"><span>Spin rate — <span class="mono">ψ̇</span></span><span class="val" id="v-spin">18.0 rad/s</span></div>
+      <input type="range" id="s-spin" min="2" max="35" step="0.1" value="18">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label"><span>Initial tilt — <span class="mono">θ₀</span></span><span class="val" id="v-theta">35°</span></div>
+      <input type="range" id="s-theta" min="8" max="80" step="1" value="35">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label"><span>Torque strength — <span class="mono">Mg·z_G</span></span><span class="val" id="v-torque">1.20</span></div>
+      <input type="range" id="s-torque" min="0.2" max="4" step="0.05" value="1.2">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label"><span>Inertia ratio — <span class="mono">I / I₀</span></span><span class="val" id="v-ratio">0.55</span></div>
+      <input type="range" id="s-ratio" min="0.2" max="0.95" step="0.01" value="0.55">
+    </div>
+
+    <div class="toggle-row">
+      <label class="toggle"><input type="checkbox" id="t-trace" checked> Nutation trace</label>
+      <label class="toggle"><input type="checkbox" id="t-H" checked> Show H vector</label>
+      <label class="toggle"><input type="checkbox" id="t-cone" checked> Precession cone</label>
+    </div>
+
+    <div class="play-row">
+      <button class="play-btn" id="btn-play">Pause</button>
+      <button class="play-btn secondary" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="hint">Drag on the dial to orbit the camera. The gold arrow is the angular momentum vector <b class="mono" style="color:var(--brass-bright);">H</b>, reconstructed each frame from H<sub>x</sub>, H<sub>y</sub>, H<sub>z</sub> in the rotating (x,y,z) frame — the same frame used in the derivation below.</div>
+  </div>
+</section>
+
+<section class="theory">
+  <div class="theory-intro">
+    <div class="eyebrow" style="margin-bottom:10px;">THE MATHEMATICS</div>
+    <h2 style="font-size:32px; margin-bottom:14px;">Why a spinning top doesn't fall</h2>
+    <p>
+      A top resting on the ground under gravity is a rigid body free to rotate about a fixed point <span class="mono">O</span>.
+      Gravity exerts a moment about that point, yet instead of toppling over, the top's axis sweeps out a cone.
+      The six steps below derive that behavior from Euler's equations of rigid-body rotation, expressed in the
+      three Euler angles — spin <span class="mono">ψ</span>, precession <span class="mono">φ</span>, and nutation <span class="mono">θ</span> — that the simulation above is integrating live.
+    </p>
+  </div>
+
+  <!-- STEP I -->
+  <div class="step">
+    <div class="step-index"><span class="roman">I</span>§30.1</div>
+    <div>
+      <h3>Euler angles and angular velocity</h3>
+      <p>
+        Orient the top with three sequential rotations: precession <span class="mono">φ</span> about the fixed vertical <span class="mono">Z</span> axis,
+        nutation <span class="mono">θ</span> tipping the spin axis away from vertical, and spin <span class="mono">ψ</span> about the body's own symmetry axis <span class="mono">z</span>.
+        Projected onto the instantaneous body axes <span class="mono">x, y, z</span>, the three angle-rates combine — non-orthogonally — into the total angular velocity:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">Eq. 1–3</div>
+        $$\begin{aligned}
+        \omega_x &= \dot\phi\sin\theta\sin\psi + \dot\theta\cos\psi \\
+        \omega_y &= \dot\phi\sin\theta\cos\psi - \dot\theta\sin\psi \\
+        \omega_z &= \dot\phi\cos\theta + \dot\psi
+        \end{aligned}$$
+      </div>
+      <p class="fig-note">These are the raw components before we exploit the top's symmetry — used again in the Lagrangian derivation in Step V.</p>
+    </div>
+  </div>
+
+  <!-- STEP II -->
+  <div class="step">
+    <div class="step-index"><span class="roman">II</span>§30.1</div>
+    <div>
+      <h3>Euler's equations in a frame that isn't quite body-fixed</h3>
+      <p>
+        For a symmetric top, <span class="mono">I<sub>xx</sub> = I<sub>yy</sub> = I₀</span> and <span class="mono">I<sub>zz</sub> = I</span>. Angular momentum conservation, <span class="mono">Ḣ = applied moment</span>,
+        must be written in a rotating frame to keep the inertia tensor constant — but we don't have to rotate with the full body spin.
+        Because the top is axisymmetric, it's legal to rotate the axes only with <span class="mono">φ̇</span> and <span class="mono">θ̇</span>, letting the spin <span class="mono">ψ̇</span>
+        slip relative to the frame. That frame's angular velocity is <span class="mono">Ω</span>, distinct from the body's own <span class="mono">ω</span>:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">Eq. 12–17 — the moving (not spinning) frame</div>
+        $$\Omega_x=\dot\theta,\qquad \Omega_y=\dot\phi\sin\theta,\qquad \Omega_z=\dot\phi\cos\theta$$
+        $$\omega_x=\dot\theta,\qquad \omega_y=\dot\phi\sin\theta,\qquad \omega_z=\dot\phi\cos\theta+\dot\psi$$
+      </div>
+      <p>
+        With <span class="mono">Ḣ = ∂H/∂t + Ω × H</span> and <span class="mono">H = (I₀ω<sub>x</sub>, I₀ω<sub>y</sub>, Iω<sub>z</sub>)</span>, the moment balance <span class="mono">M = Ḣ − HΩ + HΩ</span> reduces, after the cross product is expanded, to three coupled nonlinear ODEs:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">Eq. 27–29 — the general equations of motion</div>
+        $$\begin{aligned}
+        M_x &= I_0(\ddot\theta - \dot\phi^2\sin\theta\cos\theta) + I\dot\phi\sin\theta(\dot\phi\cos\theta+\dot\psi)\\
+        M_y &= I_0(\ddot\phi\sin\theta + 2\dot\phi\dot\theta\cos\theta) - I\dot\theta(\dot\phi\cos\theta+\dot\psi)\\
+        M_z &= I(\ddot\psi+\ddot\phi\cos\theta-\dot\phi\dot\theta\sin\theta)
+        \end{aligned}$$
+      </div>
+      <p>For a top pivoting on the ground, gravity supplies only <span class="mono">M<sub>x</sub> = Mg z<sub>G</sub> sin θ</span>, with <span class="mono">M<sub>y</sub> = M<sub>z</sub> = 0</span> — there is no moment trying to twist the spin or drag the precession directly.</p>
+    </div>
+  </div>
+
+  <!-- STEP III -->
+  <div class="step">
+    <div class="step-index"><span class="roman">III</span>§30.2</div>
+    <div>
+      <h3>Steady precession — the gyroscope limit</h3>
+      <p>
+        Suppose the top holds a constant tilt: <span class="mono">θ̇ = θ̈ = φ̈ = 0</span>, with the spin folded into a constant <span class="mono">φ̇</span>. Substituting into
+        <span class="mono">M<sub>x</sub></span> above, <span class="mono">sin θ</span> cancels entirely, and — dropping the small <span class="mono">φ̇²</span> term valid whenever the spin vastly exceeds the precession rate — we're left with a strikingly simple relation:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">Eq. 34–35 — steady precession rate</div>
+        $$I\dot\phi\dot\psi - (I_0-I)\dot\phi^2\cos\theta = Mgz_G \quad\Longrightarrow\quad \dot\phi \approx \frac{Mgz_G}{I\dot\psi}$$
+      </div>
+      <p>
+        Faster spin <span class="mono">ψ̇</span> means <em>slower</em> precession <span class="mono">φ̇</span> — this is why a fast top precesses lazily while a slowing top's precession visibly speeds up.
+        Try the <b style="color:var(--brass-bright);">Steady precession</b> preset above: the tilt angle barely drifts because <span class="mono">φ̇</span> is set to exactly this value.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP IV -->
+  <div class="step">
+    <div class="step-index"><span class="roman">IV</span>§30.3</div>
+    <div>
+      <h3>The general case: nutation and two conserved momenta</h3>
+      <p>
+        Drop the steady assumption and let all three angles vary. Because <span class="mono">M<sub>y</sub> = M<sub>z</sub> = 0</span>, two combinations of the equations of motion integrate directly into constants — <em>generalized momenta</em> conjugate to <span class="mono">φ</span> and <span class="mono">ψ</span>:
+      </p>
+      <div class="conserved-pair">
+        <div class="conserved-card">
+          <div class="eq-tag">conjugate to precession</div>
+          $$p_\phi = I_0\sin^2\theta\,\dot\phi + I\cos\theta(\dot\psi+\dot\phi\cos\theta)$$
+        </div>
+        <div class="conserved-card">
+          <div class="eq-tag">conjugate to spin</div>
+          $$p_\psi = I(\dot\psi+\dot\phi\cos\theta)$$
+        </div>
+      </div>
+      <p>
+        Solving these for <span class="mono">φ̇</span> and <span class="mono">ψ̇</span> in terms of <span class="mono">θ</span> alone collapses the entire problem to a single second-order equation for the nutation angle:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">Eq. 44 — the governing equation the simulator integrates</div>
+        $$\ddot\theta \;+\; \frac{\left(\dfrac{p_\phi}{I_0}-\dfrac{p_\psi}{I}\cos\theta\right)\left(\dfrac{p_\psi}{I}-\dfrac{p_\phi}{I_0}\cos\theta\right)}{\sin^3\theta} \;-\; \frac{Mgz_G}{I_0} \;=\; 0$$
+      </div>
+      <p>
+        This single equation, integrated numerically with a 4th-order Runge–Kutta scheme (exactly what runs behind the simulation above), produces the classic
+        family of motions: <b>unidirectional</b> precession if the top is launched already precessing, <b>cuspidal</b> motion with sharp cusps if released from rest, and
+        <b>looping</b> precession if it's launched precessing backward relative to the eventual mean drift.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP V -->
+  <div class="step">
+    <div class="step-index"><span class="roman">V</span>§30.4</div>
+    <div>
+      <h3>The same result, faster — Lagrange's equation</h3>
+      <p>
+        The two conserved momenta above are not a coincidence of Euler's equations; they fall out immediately once the problem is written as a Lagrangian.
+        With kinetic energy built from the raw <span class="mono">ω</span> components of Step I and potential energy <span class="mono">V = Mgz<sub>G</sub>cos θ</span>:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">the Lagrangian</div>
+        $$\mathcal{L} = \tfrac12 I_0\!\left(\dot\phi^2\sin^2\theta+\dot\theta^2\right) + \tfrac12 I\left(\dot\phi\cos\theta+\dot\psi\right)^2 - Mgz_G\cos\theta$$
+      </div>
+      <p>
+        Since neither <span class="mono">φ</span> nor <span class="mono">ψ</span> appears explicitly in <span class="mono">𝓛</span> — only their rates do — both are <em>cyclic coordinates</em>, and Lagrange's equation hands back <span class="mono">p<sub>φ</sub> = ∂𝓛/∂φ̇</span> and <span class="mono">p<sub>ψ</sub> = ∂𝓛/∂ψ̇</span> as constants of the motion for free, without ever expanding a triple cross product. Total energy <span class="mono">E = T + V</span> is conserved alongside them.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP VI -->
+  <div class="step">
+    <div class="step-index"><span class="roman">VI</span>§30.5</div>
+    <div>
+      <h3>The extreme limit: gyroscopes as instruments</h3>
+      <p>
+        When the spin <span class="mono">ω</span> is an order of magnitude larger than every other rotation rate in the system — the regime engineers actually call a <em>gyroscope</em> —
+        the angular momentum vector locks essentially onto the spin axis, <span class="mono">H ≈ Iωk̂</span>. Mount such a spinning disk in gimbals on a rotating platform, and the only
+        moment-free response left is a slow tilt <span class="mono">θ</span> that balances the platform's own rotation <span class="mono">Ω</span> against the disk's locked-in momentum:
+      </p>
+      <div class="eq-block">
+        <div class="eq-tag">Eq. 59 — the gyrocompass equation</div>
+        $$I_0\ddot\theta + I\omega\Omega\sin\theta = 0$$
+      </div>
+      <p>
+        This is a pendulum equation. With a trace of friction, <span class="mono">θ</span> settles to zero — the spin axis aligns itself with the platform's own axis of rotation.
+        Mount the device on the Earth instead of a turntable, and it settles pointing along the Earth's rotation axis: true north, with no compass needle or magnetic field required.
+        This is the operating principle of the <b style="color:var(--brass-bright);">gyrocompass</b>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <div class="col">
+      <h4>Source</h4>
+      <ul>
+        <li>J. Peraire &amp; S. Widnall — 16.07 Dynamics, Lecture L30, Fall 2008, MIT OpenCourseWare (ocw.mit.edu)</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h4>Further reading</h4>
+      <ul>
+        <li>Marion &amp; Thornton, <em>Classical Dynamics</em>, Ch. 11</li>
+        <li>Thomson, <em>Introduction to Space Dynamics</em>, Ch. 5</li>
+        <li>Kleppner &amp; Kolenkow, <em>An Introduction to Mechanics</em>, Ch. 7</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h4>This page</h4>
+      <ul>
+        <li>Simulation integrates Eq. 44 directly with RK4 — no small-angle approximation.</li>
+        <li>Built with Three.js and KaTeX.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">Interactive explainer, independently built from the lecture's derivation — not an official MIT publication.</div>
+</footer>
+
+<script>
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: "$$", right: "$$", display: true},
+    {left: "\\(", right: "\\)", display: false}
+  ],
+  throwOnError: false
+});
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     PHYSICS — integrates Euler's equation (44) for the symmetric top
+     ============================================================ */
+  function TopPhysics(){
+    this.I0 = 1.0;
+    this.I  = 0.55;
+    this.tau0 = 1.2; // Mg*zG
+  }
+  TopPhysics.prototype.setInitial = function(theta0, thetaDot0, phi0, phiDot0, psi0, psiDot0){
+    this.theta = theta0;
+    this.thetaDot = thetaDot0;
+    this.phi = phi0;
+    this.psi = psi0;
+    this.pphi = this.I0*Math.sin(theta0)*Math.sin(theta0)*phiDot0 + this.I*Math.cos(theta0)*(psiDot0 + phiDot0*Math.cos(theta0));
+    this.ppsi = this.I*(psiDot0 + phiDot0*Math.cos(theta0));
+  };
+  TopPhysics.prototype._thetaDD = function(theta){
+    var s = Math.sin(theta);
+    var c = Math.cos(theta);
+    var eps = 1e-4;
+    if (Math.abs(s) < eps) s = (s < 0 ? -eps : eps);
+    var s3 = s*s*s;
+    var a = this.pphi/this.I0 - (this.ppsi/this.I)*c;
+    var b = this.ppsi/this.I - (this.pphi/this.I0)*c;
+    return (this.tau0/this.I0) - (a*b)/s3;
+  };
+  TopPhysics.prototype.rates = function(theta){
+    var s = Math.sin(theta);
+    var c = Math.cos(theta);
+    var eps = 1e-4;
+    if (Math.abs(s) < eps) s = (s < 0 ? -eps : eps);
+    var s2 = s*s;
+    var phiDot = (this.pphi - this.ppsi*c) / (this.I0*s2);
+    var psiDot = this.ppsi/this.I - phiDot*c;
+    return {phiDot: phiDot, psiDot: psiDot};
+  };
+  TopPhysics.prototype.step = function(dt){
+    // RK4 on (theta, thetaDot)
+    var self = this;
+    function deriv(theta, thetaDot){
+      return { dTheta: thetaDot, dThetaDot: self._thetaDD(theta) };
+    }
+    var th = this.theta, om = this.thetaDot;
+
+    var k1 = deriv(th, om);
+    var k2 = deriv(th + 0.5*dt*k1.dTheta, om + 0.5*dt*k1.dThetaDot);
+    var k3 = deriv(th + 0.5*dt*k2.dTheta, om + 0.5*dt*k2.dThetaDot);
+    var k4 = deriv(th + dt*k3.dTheta,     om + dt*k3.dThetaDot);
+
+    var newTheta = th + (dt/6)*(k1.dTheta + 2*k2.dTheta + 2*k3.dTheta + k4.dTheta);
+    var newOm    = om + (dt/6)*(k1.dThetaDot + 2*k2.dThetaDot + 2*k3.dThetaDot + k4.dThetaDot);
+
+    // clamp theta into a safe range away from the poles
+    var lo = 0.045, hi = Math.PI - 0.045;
+    if (newTheta < lo){ newTheta = lo; if(newOm<0) newOm = -newOm*0.4; }
+    if (newTheta > hi){ newTheta = hi; if(newOm>0) newOm = -newOm*0.4; }
+
+    this.theta = newTheta;
+    this.thetaDot = newOm;
+
+    var r = this.rates(this.theta);
+    this.phi += r.phiDot*dt;
+    this.psi += r.psiDot*dt;
+    this._phiDot = r.phiDot;
+    this._psiDot = r.psiDot;
+  };
+  TopPhysics.prototype.H = function(){
+    // components in the rotating (x,y,z) frame of Step II
+    var Hx = this.I0*this.thetaDot;
+    var Hy = this.I0*Math.sin(this.theta)*(this._phiDot!==undefined?this._phiDot:0);
+    var Hz = this.I*((this._psiDot!==undefined?this._psiDot:0) + (this._phiDot!==undefined?this._phiDot:0)*Math.cos(this.theta));
+    return {x:Hx, y:Hy, z:Hz};
+  };
+
+  /* ============================================================
+     THREE.JS SCENE
+     ============================================================ */
+  var wrap = document.getElementById('canvas-wrap');
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+
+  var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  wrap.appendChild(renderer.domElement);
+
+  // lights
+  scene.add(new THREE.AmbientLight(0x8fa8c9, 0.65));
+  var key = new THREE.DirectionalLight(0xfff2d0, 1.1);
+  key.position.set(4,6,3);
+  scene.add(key);
+  var rim = new THREE.DirectionalLight(0x7fb2d8, 0.5);
+  rim.position.set(-4,-2,-4);
+  scene.add(rim);
+
+  // ground grid (blueprint disc)
+  var groundGeo = new THREE.CircleGeometry(2.6, 64);
+  var groundMat = new THREE.MeshBasicMaterial({color:0x122040, transparent:true, opacity:0.55, side:THREE.DoubleSide});
+  var ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -1.55;
+  scene.add(ground);
+
+  var gridHelper = new THREE.PolarGridHelper(2.6, 16, 6, 64, 0x22406a, 0x1a2c48);
+  gridHelper.position.y = -1.549;
+  scene.add(gridHelper);
+
+  // pivot point marker
+  var pivotGeo = new THREE.SphereGeometry(0.045, 16, 16);
+  var pivotMat = new THREE.MeshStandardMaterial({color:0xc9a24b, metalness:0.6, roughness:0.35, emissive:0x3a2f10});
+  var pivot = new THREE.Mesh(pivotGeo, pivotMat);
+  pivot.position.y = -1.55;
+  scene.add(pivot);
+
+  // ----- the top itself -----
+  var TOP_LEN = 1.55; // distance from pivot to tip, along symmetry axis
+  var topRoot = new THREE.Group();
+  topRoot.position.y = -1.55;
+  scene.add(topRoot);
+
+  var axisGroup = new THREE.Group(); // orientation via basis vectors (ex,ey,ez)
+  topRoot.add(axisGroup);
+
+  var bodyGroup = new THREE.Group(); // the visible top shape, local +Y = symmetry axis
+  axisGroup.add(bodyGroup);
+
+  var bodyMat = new THREE.MeshStandardMaterial({color:0x1d3153, metalness:0.55, roughness:0.32});
+  var bandMat = new THREE.MeshStandardMaterial({color:0xc9a24b, metalness:0.7, roughness:0.28, emissive:0x2a2007, emissiveIntensity:0.5});
+
+  var cone = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.1, 40), bodyMat);
+  cone.position.y = 0.55;
+  bodyGroup.add(cone);
+
+  var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.85, 24), bandMat);
+  shaft.position.y = 1.1 + 0.425;
+  bodyGroup.add(shaft);
+
+  var tip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 16), bandMat);
+  tip.position.y = TOP_LEN;
+  bodyGroup.add(tip);
+
+  var band = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.025, 12, 40), bandMat);
+  band.position.y = 0.18;
+  band.rotation.x = Math.PI/2;
+  bodyGroup.add(band);
+
+  // spin indicator flag — spins visibly around the symmetry axis at psi-rate
+  var spinGroup = new THREE.Group();
+  spinGroup.position.y = 0.62;
+  axisGroup.add(spinGroup);
+  var flagMat = new THREE.MeshStandardMaterial({color:0xe9c976, metalness:0.5, roughness:0.3, emissive:0x2a2007});
+  var flag = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.05), flagMat);
+  flag.position.x = 0.25;
+  spinGroup.add(flag);
+  var flagTip = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 10), flagMat);
+  flagTip.position.x = 0.5;
+  spinGroup.add(flagTip);
+
+  // H vector arrow
+  var hArrow = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), 1, 0xe9c976, 0.16, 0.09);
+  hArrow.line.material.linewidth = 2;
+  topRoot.add(hArrow);
+
+  // precession cone guide (dashed circle traced at tip height)
+  var coneGuideGeo = new THREE.RingGeometry(0.01, 0.012, 64);
+  var coneGuideMat = new THREE.LineBasicMaterial({color:0x7fb2d8, transparent:true, opacity:0.5});
+  var coneGuidePoints = [];
+  for (var i=0;i<=64;i++){ coneGuidePoints.push(new THREE.Vector3(0,0,0)); }
+  var coneGuideGeom = new THREE.BufferGeometry().setFromPoints(coneGuidePoints);
+  var coneGuideLine = new THREE.Line(coneGuideGeom, coneGuideMat);
+  topRoot.add(coneGuideLine);
+
+  // nutation trace (tip path on the sphere)
+  var MAX_TRACE = 700;
+  var tracePositions = new Float32Array(MAX_TRACE*3);
+  var traceGeom = new THREE.BufferGeometry();
+  traceGeom.setAttribute('position', new THREE.BufferAttribute(tracePositions, 3));
+  traceGeom.setDrawRange(0,0);
+  var traceMat = new THREE.LineBasicMaterial({color:0xa3543a, transparent:true, opacity:0.85});
+  var traceLine = new THREE.Line(traceGeom, traceMat);
+  topRoot.add(traceLine);
+  var traceCount = 0;
+  var traceStart = 0;
+
+  function resetTrace(){ traceCount = 0; traceStart = 0; traceGeom.setDrawRange(0,0); }
+
+  function pushTracePoint(v){
+    var idx = (traceStart + traceCount) % MAX_TRACE;
+    tracePositions[idx*3]   = v.x;
+    tracePositions[idx*3+1] = v.y;
+    tracePositions[idx*3+2] = v.z;
+    if (traceCount < MAX_TRACE){
+      traceCount++;
+    } else {
+      traceStart = (traceStart+1) % MAX_TRACE;
+    }
+    // rebuild a contiguous ordered buffer for simplicity (cheap at this size)
+    var geomPos = traceGeom.attributes.position.array;
+    for (var i=0;i<traceCount;i++){
+      var srcIdx = (traceStart+i) % MAX_TRACE;
+      geomPos[i*3]   = tracePositions[srcIdx*3];
+      geomPos[i*3+1] = tracePositions[srcIdx*3+1];
+      geomPos[i*3+2] = tracePositions[srcIdx*3+2];
+    }
+    traceGeom.setDrawRange(0, traceCount);
+    traceGeom.attributes.position.needsUpdate = true;
+  }
+
+  /* ============================================================
+     CAMERA ORBIT (manual, drag to rotate)
+     ============================================================ */
+  var camAz = 0.9, camEl = 0.42, camDist = 4.4;
+  function updateCamera(){
+    var x = camDist*Math.cos(camEl)*Math.sin(camAz);
+    var y = camDist*Math.sin(camEl);
+    var z = camDist*Math.cos(camEl)*Math.cos(camAz);
+    camera.position.set(x, y, z);
+    camera.lookAt(0, -0.55, 0);
+  }
+  updateCamera();
+
+  var dragging = false, lastX=0, lastY=0;
+  renderer.domElement.addEventListener('pointerdown', function(e){
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    renderer.domElement.setPointerCapture(e.pointerId);
+  });
+  renderer.domElement.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx = e.clientX-lastX, dy = e.clientY-lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    camAz -= dx*0.006;
+    camEl += dy*0.005;
+    camEl = Math.max(0.06, Math.min(1.45, camEl));
+    updateCamera();
+  });
+  window.addEventListener('pointerup', function(){ dragging = false; });
+  renderer.domElement.addEventListener('wheel', function(e){
+    e.preventDefault();
+    camDist += e.deltaY*0.0025;
+    camDist = Math.max(2.6, Math.min(8, camDist));
+    updateCamera();
+  }, {passive:false});
+
+  function resize(){
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  /* ============================================================
+     UI WIRING
+     ============================================================ */
+  var physics = new TopPhysics();
+
+  var els = {
+    spin: document.getElementById('s-spin'),
+    theta: document.getElementById('s-theta'),
+    torque: document.getElementById('s-torque'),
+    ratio: document.getElementById('s-ratio'),
+    vSpin: document.getElementById('v-spin'),
+    vTheta: document.getElementById('v-theta'),
+    vTorque: document.getElementById('v-torque'),
+    vRatio: document.getElementById('v-ratio'),
+    trace: document.getElementById('t-trace'),
+    showH: document.getElementById('t-H'),
+    showCone: document.getElementById('t-cone'),
+    play: document.getElementById('btn-play'),
+    reset: document.getElementById('btn-reset'),
+    readout: document.getElementById('readout'),
+  };
+
+  var mode = 'steady';
+  var playing = true;
+
+  function currentSteadyPhiDot(){
+    var psiDot = parseFloat(els.spin.value);
+    var I = parseFloat(els.ratio.value);
+    var tau0 = parseFloat(els.torque.value);
+    return tau0/(I*psiDot);
+  }
+
+  function applyInitialConditions(){
+    physics.I0 = 1.0;
+    physics.I  = parseFloat(els.ratio.value);
+    physics.tau0 = parseFloat(els.torque.value);
+
+    var theta0 = parseFloat(els.theta.value)*Math.PI/180;
+    var psiDot0 = parseFloat(els.spin.value);
+    var phiDot0, thetaDot0 = 0;
+
+    if (mode === 'steady'){
+      phiDot0 = currentSteadyPhiDot();
+    } else if (mode === 'dropped'){
+      phiDot0 = 0;
+    } else if (mode === 'looping'){
+      phiDot0 = -0.55*currentSteadyPhiDot();
+    } else {
+      phiDot0 = currentSteadyPhiDot();
+    }
+
+    physics.setInitial(theta0, thetaDot0, 0, phiDot0, 0, psiDot0);
+    var r = physics.rates(physics.theta);
+    physics._phiDot = r.phiDot;
+    physics._psiDot = r.psiDot;
+    resetTrace();
+  }
+
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll('.preset-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.preset === m);
+    });
+    applyInitialConditions();
+  }
+
+  document.querySelectorAll('.preset-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ setMode(btn.dataset.preset); });
+  });
+
+  function syncLabels(){
+    els.vSpin.textContent = parseFloat(els.spin.value).toFixed(1)+' rad/s';
+    els.vTheta.textContent = els.theta.value+'°';
+    els.vTorque.textContent = parseFloat(els.torque.value).toFixed(2);
+    els.vRatio.textContent = parseFloat(els.ratio.value).toFixed(2);
+  }
+  [els.spin, els.theta, els.torque, els.ratio].forEach(function(inp){
+    inp.addEventListener('input', function(){ syncLabels(); applyInitialConditions(); });
+  });
+  syncLabels();
+
+  els.play.addEventListener('click', function(){
+    playing = !playing;
+    els.play.textContent = playing ? 'Pause' : 'Play';
+  });
+  els.reset.addEventListener('click', applyInitialConditions);
+
+  setMode('steady');
+
+  /* ============================================================
+     MAIN LOOP
+     ============================================================ */
+  var clock = new THREE.Clock();
+  var accum = 0;
+  var SIM_DT = 1/240;
+  var lastReadoutT = 0;
+
+  function frame(){
+    requestAnimationFrame(frame);
+    resize();
+
+    var dt = Math.min(clock.getDelta(), 0.05);
+    if (playing){
+      accum += dt;
+      var steps = 0;
+      while (accum > SIM_DT && steps < 12){
+        physics.step(SIM_DT);
+        accum -= SIM_DT;
+        steps++;
+      }
+    }
+
+    var theta = physics.theta, phi = physics.phi, psi = physics.psi;
+
+    // basis vectors ex (line of nodes), ez (symmetry axis / lecture z), ey
+    var ex = new THREE.Vector3(Math.cos(phi), 0, -Math.sin(phi));
+    var ez = new THREE.Vector3(Math.sin(theta)*Math.sin(phi), Math.cos(theta), Math.sin(theta)*Math.cos(phi));
+    var ey = new THREE.Vector3().crossVectors(ez, ex);
+
+    var m = new THREE.Matrix4();
+    m.makeBasis(ex, ey, ez); // local X->ex(lecture x), local Y->ey(lecture y)? we want local Y = symmetry axis = ez
+    // We want body's local +Y axis (symmetry axis) to map to ez. makeBasis maps local X,Y,Z -> given columns.
+    // So reorder: local X -> ex, local Y -> ez (symmetry), local Z -> ey
+    m.makeBasis(ex, ez, ey);
+    axisGroup.quaternion.setFromRotationMatrix(m);
+
+    spinGroup.rotation.y = psi;
+
+    // H vector: components in (x,y,z) frame -> lab via ex,ey,ez
+    var Hc = physics.H();
+    var Hlab = new THREE.Vector3()
+      .addScaledVector(ex, Hc.x)
+      .addScaledVector(ey, Hc.y)
+      .addScaledVector(ez, Hc.z);
+    var Hlen = Hlab.length();
+    var Hdir = Hlen > 1e-5 ? Hlab.clone().normalize() : new THREE.Vector3(0,1,0);
+    hArrow.visible = els.showH.checked;
+    if (els.showH.checked){
+      hArrow.setDirection(Hdir);
+      hArrow.setLength(0.85 + Math.min(Hlen*0.25, 0.7), 0.15, 0.08);
+    }
+
+    // precession cone guide: circle at the tip's current height
+    coneGuideLine.visible = els.showCone.checked;
+    if (els.showCone.checked){
+      var tipY = TOP_LEN*Math.cos(theta);
+      var ringR = TOP_LEN*Math.sin(theta);
+      var pos = coneGuideGeom.attributes.position.array;
+      for (var i=0;i<=64;i++){
+        var a = (i/64)*Math.PI*2;
+        pos[i*3]   = ringR*Math.sin(a);
+        pos[i*3+1] = tipY;
+        pos[i*3+2] = ringR*Math.cos(a);
+      }
+      coneGuideGeom.attributes.position.needsUpdate = true;
+    }
+
+    // nutation trace
+    traceLine.visible = els.trace.checked;
+    if (els.trace.checked && playing){
+      var tipVec = new THREE.Vector3().copy(ez).multiplyScalar(TOP_LEN);
+      pushTracePoint(tipVec);
+    }
+
+    // readout
+    var now = performance.now();
+    if (now - lastReadoutT > 90){
+      lastReadoutT = now;
+      var thetaDeg = (theta*180/Math.PI).toFixed(1);
+      var phiDot = physics._phiDot!==undefined ? physics._phiDot : 0;
+      var psiDot = physics._psiDot!==undefined ? physics._psiDot : 0;
+      els.readout.innerHTML =
+        '<span>θ = <b>'+thetaDeg+'°</b></span>' +
+        '<span class="sep"></span>' +
+        '<span>φ̇ = <b>'+phiDot.toFixed(3)+'</b> rad/s</span>' +
+        '<span class="sep"></span>' +
+        '<span>ψ̇ = <b>'+psiDot.toFixed(2)+'</b> rad/s</span>' +
+        '<span class="sep"></span>' +
+        '<span>H = ('+Hc.x.toFixed(2)+', '+Hc.y.toFixed(2)+', '+Hc.z.toFixed(2)+')</span>';
+    }
+
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frame);
+
+})();
+</script>
+
+</body>
+</html>

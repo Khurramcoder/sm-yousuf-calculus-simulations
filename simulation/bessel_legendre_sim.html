@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bessel's & Legendre's Functions Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .controls {
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            outline: none;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-left: 10px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .formula {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            overflow-x: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .properties-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .properties-list li {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Bessel's & Legendre's Functions Explorer</h1>
+            <p class="subtitle">Interactive visualization of special functions in differential equations</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Bessel's Function Section -->
+            <div class="card">
+                <h2>🌊 Bessel's Functions J<sub>n</sub>(x)</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label>
+                            Order (n): <span class="value-display" id="besselOrder">0</span>
+                        </label>
+                        <input type="range" id="besselOrderSlider" min="0" max="5" value="0" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            X Range: <span class="value-display" id="besselRange">15</span>
+                        </label>
+                        <input type="range" id="besselRangeSlider" min="5" max="30" value="15" step="1">
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="besselChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Legendre's Function Section -->
+            <div class="card">
+                <h2>🎯 Legendre's Polynomials P<sub>n</sub>(x)</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label>
+                            Degree (n): <span class="value-display" id="legendreOrder">0</span>
+                        </label>
+                        <input type="range" id="legendreOrderSlider" min="0" max="6" value="0" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            Show Multiple Orders: <span class="value-display" id="showMultiple">OFF</span>
+                        </label>
+                        <input type="range" id="showMultipleSlider" min="0" max="1" value="0" step="1">
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="legendreChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Section -->
+        <div class="info-section">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('bessel-info')">Bessel's Functions</button>
+                <button class="tab" onclick="showTab('legendre-info')">Legendre's Functions</button>
+                <button class="tab" onclick="showTab('properties')">Key Properties</button>
+            </div>
+
+            <div id="bessel-info" class="tab-content">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>📐 Bessel's Equation</h3>
+                        <div class="formula">
+                            x²y'' + xy' + (x² - n²)y = 0
+                        </div>
+                        <p>Solutions are called Bessel functions of the first kind J<sub>n</sub>(x)</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>🎓 Applications</h3>
+                        <ul class="properties-list">
+                            <li>Vibrating circular membranes</li>
+                            <li>Heat conduction in cylinders</li>
+                            <li>Wave propagation</li>
+                            <li>Signal processing</li>
+                        </ul>
+                    </div>
+                    <div class="info-card">
+                        <h3>🔄 Recurrence Relations</h3>
+                        <div class="formula">
+                            J<sub>n-1</sub>(x) + J<sub>n+1</sub>(x) = (2n/x)J<sub>n</sub>(x)
+                        </div>
+                        <div class="formula">
+                            J<sub>n-1</sub>(x) - J<sub>n+1</sub>(x) = 2J'<sub>n</sub>(x)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="legendre-info" class="tab-content" style="display:none;">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>📐 Legendre's Equation</h3>
+                        <div class="formula">
+                            (1-x²)y'' - 2xy' + n(n+1)y = 0
+                        </div>
+                        <p>Solutions are Legendre polynomials P<sub>n</sub>(x) for integer n</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>🎓 Applications</h3>
+                        <ul class="properties-list">
+                            <li>Spherical harmonics</li>
+                            <li>Gravitational potentials</li>
+                            <li>Electrostatics</li>
+                            <li>Quantum mechanics</li>
+                        </ul>
+                    </div>
+                    <div class="info-card">
+                        <h3>🧮 Rodrigue's Formula</h3>
+                        <div class="formula">
+                            P<sub>n</sub>(x) = (1/2ⁿn!) dⁿ/dxⁿ[(x²-1)ⁿ]
+                        </div>
+                        <p>Generates Legendre polynomials of any order</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="properties" class="tab-content" style="display:none;">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>🔍 Orthogonality</h3>
+                        <p><strong>Bessel Functions:</strong></p>
+                        <div class="formula">
+                            ∫₀¹ xJ<sub>n</sub>(αx)J<sub>n</sub>(βx)dx = 0 (α ≠ β)
+                        </div>
+                        <p><strong>Legendre Polynomials:</strong></p>
+                        <div class="formula">
+                            ∫₋₁¹ P<sub>m</sub>(x)P<sub>n</sub>(x)dx = 0 (m ≠ n)
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h3>📊 Generating Functions</h3>
+                        <p><strong>Legendre:</strong></p>
+                        <div class="formula">
+                            (1-2xt+t²)^(-1/2) = Σ P<sub>n</sub>(x)tⁿ
+                        </div>
+                        <p>Generates all Legendre polynomials at once</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>💡 Key Properties</h3>
+                        <ul class="properties-list">
+                            <li>P<sub>n</sub>(1) = 1 for all n</li>
+                            <li>P<sub>n</sub>(-x) = (-1)ⁿP<sub>n</sub>(x)</li>
+                            <li>J<sub>-n</sub>(x) = (-1)ⁿJ<sub>n</sub>(x) for integer n</li>
+                            <li>Both satisfy recurrence relations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Factorial function
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        // Bessel function J_n(x) approximation using series
+        function besselJ(n, x, terms = 30) {
+            let sum = 0;
+            for (let k = 0; k < terms; k++) {
+                const numerator = Math.pow(-1, k) * Math.pow(x / 2, 2 * k + n);
+                const denominator = factorial(k) * factorial(k + n);
+                sum += numerator / denominator;
+            }
+            return sum;
+        }
+
+        // Legendre polynomial P_n(x) using Rodrigue's formula approximation
+        function legendreP(n, x) {
+            if (n === 0) return 1;
+            if (n === 1) return x;
+            if (n === 2) return (3 * x * x - 1) / 2;
+            if (n === 3) return (5 * x * x * x - 3 * x) / 2;
+            if (n === 4) return (35 * x * x * x * x - 30 * x * x + 3) / 8;
+            if (n === 5) return (63 * Math.pow(x, 5) - 70 * Math.pow(x, 3) + 15 * x) / 8;
+            if (n === 6) return (231 * Math.pow(x, 6) - 315 * Math.pow(x, 4) + 105 * x * x - 5) / 16;
+            
+            // Fallback: use recurrence relation
+            let p0 = 1, p1 = x;
+            for (let k = 2; k <= n; k++) {
+                const pk = ((2 * k - 1) * x * p1 - (k - 1) * p0) / k;
+                p0 = p1;
+                p1 = pk;
+            }
+            return p1;
+        }
+
+        // Initialize charts
+        const besselCtx = document.getElementById('besselChart').getContext('2d');
+        const legendreCtx = document.getElementById('legendreChart').getContext('2d');
+
+        const besselChart = new Chart(besselCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'J₀(x)',
+                    data: [],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'x', font: { size: 14, weight: 'bold' } } },
+                    y: { title: { display: true, text: 'Jₙ(x)', font: { size: 14, weight: 'bold' } } }
+                }
+            }
+        });
+
+        const legendreChart = new Chart(legendreCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'P₀(x)',
+                    data: [],
+                    borderColor: '#f5576c',
+                    backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'x', font: { size: 14, weight: 'bold' } } },
+                    y: { title: { display: true, text: 'Pₙ(x)', font: { size: 14, weight: 'bold' } } }
+                }
+            }
+        });
+
+        // Update Bessel chart
+        function updateBesselChart() {
+            const n = parseInt(document.getElementById('besselOrderSlider').value);
+            const range = parseInt(document.getElementById('besselRangeSlider').value);
+            const points = 300;
+            const data = [];
+            const labels = [];
+
+            for (let i = 0; i <= points; i++) {
+                const x = (i / points) * range;
+                labels.push(x.toFixed(2));
+                data.push(besselJ(n, x));
+            }
+
+            besselChart.data.labels = labels;
+            besselChart.data.datasets[0].label = `J�${n}(x)`;
+            besselChart.data.datasets[0].data = data;
+            besselChart.update();
+        }
+
+        // Update Legendre chart
+        function updateLegendreChart() {
+            const n = parseInt(document.getElementById('legendreOrderSlider').value);
+            const showMultiple = parseInt(document.getElementById('showMultipleSlider').value);
+            const points = 200;
+            const labels = [];
+            
+            for (let i = 0; i <= points; i++) {
+                const x = -1 + (2 * i / points);
+                labels.push(x.toFixed(2));
+            }
+
+            legendreChart.data.labels = labels;
+            legendreChart.data.datasets = [];
+
+            const colors = ['#f5576c', '#667eea', '#4ecdc4', '#f093fb', '#feca57', '#48dbfb'];
+
+            if (showMultiple) {
+                for (let order = 0; order <= n; order++) {
+                    const data = [];
+                    for (let i = 0; i <= points; i++) {
+                        const x = -1 + (2 * i / points);
+                        data.push(legendreP(order, x));
+                    }
+                    legendreChart.data.datasets.push({
+                        label: `P�${order}(x)`,
+                        data: data,
+                        borderColor: colors[order % colors.length],
+                        backgroundColor: colors[order % colors.length] + '20',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0
+                    });
+                }
+            } else {
+                const data = [];
+                for (let i = 0; i <= points; i++) {
+                    const x = -1 + (2 * i / points);
+                    data.push(legendreP(n, x));
+                }
+                legendreChart.data.datasets.push({
+                    label: `P�${n}(x)`,
+                    data: data,
+                    borderColor: colors[n % colors.length],
+                    backgroundColor: colors[n % colors.length] + '20',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+
+            legendreChart.update();
+        }
+
+        // Event listeners
+        document.getElementById('besselOrderSlider').addEventListener('input', function(e) {
+            document.getElementById('besselOrder').textContent = e.target.value;
+            updateBesselChart();
+        });
+
+        document.getElementById('besselRangeSlider').addEventListener('input', function(e) {
+            document.getElementById('besselRange').textContent = e.target.value;
+            updateBesselChart();
+        });
+
+        document.getElementById('legendreOrderSlider').addEventListener('input', function(e) {
+            document.getElementById('legendreOrder').textContent = e.target.value;
+            updateLegendreChart();
+        });
+
+        document.getElementById('showMultipleSlider').addEventListener('input', function(e) {
+            document.getElementById('showMultiple').textContent = e.target.value === '1' ? 'ON' : 'OFF';
+            updateLegendreChart();
+        });
+
+        // Tab switching
+        function showTab(tabId) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.style.display = 'none');
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).style.display = 'block';
+        }
+
+        // Initialize
+        updateBesselChart();
+        updateLegendreChart();
+    </script>
+</body>
+</html>

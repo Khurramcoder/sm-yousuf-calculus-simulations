@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pythagorean Theorem Visual Proof</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            margin: 20px 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .theorem {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .visualization {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-container label {
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            min-width: 60px;
+            text-align: left;
+        }
+        
+        .explanation {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .explanation h2 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .explanation p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .step {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background: #fdbb2d;
+            color: #1a2a6c;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .proof {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .proof span {
+            margin: 0 10px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .toggle-button {
+            background: #fdbb2d;
+            color: #1a2a6c;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+        }
+        
+        .toggle-button:hover {
+            background: #ffcc44;
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .visualization, .explanation {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pythagorean Theorem Visual Proof</h1>
+        <div class="theorem">a² + b² = c²</div>
+        
+        <div class="content">
+            <div class="visualization">
+                <h2>Geometric Visualization</h2>
+                <div class="canvas-container">
+                    <canvas id="pythagorasCanvas"></canvas>
+                </div>
+                
+                <div class="controls">
+                    <div class="slider-container">
+                        <label for="aSlider">Side a:</label>
+                        <input type="range" id="aSlider" min="1" max="10" step="0.1" value="3">
+                        <div class="value-display" id="aValue">3.0</div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="bSlider">Side b:</label>
+                        <input type="range" id="bSlider" min="1" max="10" step="0.1" value="4">
+                        <div class="value-display" id="bValue">4.0</div>
+                    </div>
+                    
+                    <button class="toggle-button" id="toggleView">Switch to Area View</button>
+                </div>
+            </div>
+            
+            <div class="explanation">
+                <h2>How It Works</h2>
+                <div class="step">
+                    <span class="step-number">1</span>
+                    The Pythagorean theorem states that in a right triangle, the square of the hypotenuse (c) equals the sum of squares of the other two sides (a and b).
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">2</span>
+                    This visualization shows how the areas of squares built on sides a and b can be rearranged to exactly fill the square built on the hypotenuse c.
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">3</span>
+                    Use the sliders to change the lengths of sides a and b, and watch how the relationship a² + b² = c² always holds true.
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">4</span>
+                    The "Switch to Area View" button shows the actual area comparison, proving that the combined area of the two smaller squares equals the area of the largest square.
+                </div>
+                
+                <div class="proof">
+                    <span id="aSquare">9.0</span> + 
+                    <span id="bSquare">16.0</span> = 
+                    <span id="cSquare">25.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const canvas = document.getElementById('pythagorasCanvas');
+        const ctx = canvas.getContext('2d');
+        const aSlider = document.getElementById('aSlider');
+        const bSlider = document.getElementById('bSlider');
+        const aValue = document.getElementById('aValue');
+        const bValue = document.getElementById('bValue');
+        const aSquare = document.getElementById('aSquare');
+        const bSquare = document.getElementById('bSquare');
+        const cSquare = document.getElementById('cSquare');
+        const toggleViewBtn = document.getElementById('toggleView');
+        
+        // Initial values
+        let a = parseFloat(aSlider.value);
+        let b = parseFloat(bSlider.value);
+        let isAreaView = false;
+        
+        // Set canvas dimensions
+        function setCanvasSize() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        
+        // Update values when sliders change
+        aSlider.addEventListener('input', function() {
+            a = parseFloat(this.value);
+            aValue.textContent = a.toFixed(1);
+            updateSquares();
+            draw();
+        });
+        
+        bSlider.addEventListener('input', function() {
+            b = parseFloat(this.value);
+            bValue.textContent = b.toFixed(1);
+            updateSquares();
+            draw();
+        });
+        
+        // Toggle between triangle view and area view
+        toggleViewBtn.addEventListener('click', function() {
+            isAreaView = !isAreaView;
+            this.textContent = isAreaView ? "Switch to Triangle View" : "Switch to Area View";
+            draw();
+        });
+        
+        // Update square values display
+        function updateSquares() {
+            const aSq = (a * a).toFixed(1);
+            const bSq = (b * b).toFixed(1);
+            const cSq = (a * a + b * b).toFixed(1);
+            
+            aSquare.textContent = aSq;
+            bSquare.textContent = bSq;
+            cSquare.textContent = cSq;
+        }
+        
+        // Draw the visualization
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Calculate dimensions
+            const padding = 40;
+            const maxSize = Math.min(canvas.width, canvas.height) - padding * 2;
+            const scale = maxSize / 15;
+            
+            if (isAreaView) {
+                drawAreaView(scale, padding);
+            } else {
+                drawTriangleView(scale, padding);
+            }
+        }
+        
+        // Draw the triangle view
+        function drawTriangleView(scale, padding) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Draw the right triangle
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + a * scale, centerY);
+            ctx.lineTo(centerX, centerY - b * scale);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(253, 187, 45, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#fdbb2d';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw squares on each side
+            // Square on side a
+            ctx.beginPath();
+            ctx.rect(centerX, centerY, a * scale, a * scale);
+            ctx.fillStyle = 'rgba(26, 42, 108, 0.5)';
+            ctx.fill();
+            ctx.strokeStyle = '#1a2a6c';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Square on side b
+            ctx.beginPath();
+            ctx.rect(centerX - b * scale, centerY - b * scale, b * scale, b * scale);
+            ctx.fillStyle = 'rgba(178, 31, 31, 0.5)';
+            ctx.fill();
+            ctx.strokeStyle = '#b21f1f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Square on hypotenuse c
+            const c = Math.sqrt(a * a + b * b);
+            const angle = Math.atan2(b, a);
+            
+            ctx.save();
+            ctx.translate(centerX, centerY - b * scale);
+            ctx.rotate(-angle);
+            
+            ctx.beginPath();
+            ctx.rect(0, 0, c * scale, c * scale);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            // Draw labels
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            
+            // Label for side a
+            ctx.fillText('a', centerX + a * scale / 2, centerY + 20);
+            ctx.fillText('a²', centerX + a * scale / 2, centerY + a * scale / 2);
+            
+            // Label for side b
+            ctx.fillText('b', centerX - b * scale / 2, centerY - b * scale / 2);
+            ctx.fillText('b²', centerX - b * scale / 2, centerY - b * scale / 2);
+            
+            // Label for side c
+            const labelX = centerX + (a * scale) / 2 - (b * scale) / 4;
+            const labelY = centerY - (b * scale) / 2 + (a * scale) / 4;
+            ctx.fillText('c', labelX, labelY);
+            ctx.fillText('c²', labelX, labelY - 15);
+        }
+        
+        // Draw the area comparison view
+        function drawAreaView(scale, padding) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const c = Math.sqrt(a * a + b * b);
+            
+            // Draw the large square (c²)
+            const largeSquareSize = c * scale;
+            ctx.beginPath();
+            ctx.rect(centerX - largeSquareSize / 2, centerY - largeSquareSize / 2, largeSquareSize, largeSquareSize);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw the two smaller squares inside
+            // Square a²
+            ctx.beginPath();
+            ctx.rect(centerX - largeSquareSize / 2, centerY - largeSquareSize / 2, a * scale, a * scale);
+            ctx.fillStyle = 'rgba(26, 42, 108, 0.7)';
+            ctx.fill();
+            ctx.strokeStyle = '#1a2a6c';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Square b²
+            ctx.beginPath();
+            ctx.rect(
+                centerX - largeSquareSize / 2 + a * scale, 
+                centerY - largeSquareSize / 2, 
+                b * scale, 
+                b * scale
+            );
+            ctx.fillStyle = 'rgba(178, 31, 31, 0.7)';
+            ctx.fill();
+            ctx.strokeStyle = '#b21f1f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw labels
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            
+            // Label for the large square
+            ctx.fillText(
+                `c² = ${(c * c).toFixed(1)}`, 
+                centerX, 
+                centerY - largeSquareSize / 2 - 10
+            );
+            
+            // Label for square a²
+            ctx.fillText(
+                `a² = ${(a * a).toFixed(1)}`, 
+                centerX - largeSquareSize / 2 + a * scale / 2, 
+                centerY - largeSquareSize / 2 + a * scale / 2
+            );
+            
+            // Label for square b²
+            ctx.fillText(
+                `b² = ${(b * b).toFixed(1)}`, 
+                centerX - largeSquareSize / 2 + a * scale + b * scale / 2, 
+                centerY - largeSquareSize / 2 + b * scale / 2
+            );
+            
+            // Draw the equality
+            ctx.fillText(
+                `a² + b² = c²`, 
+                centerX, 
+                centerY + largeSquareSize / 2 + 30
+            );
+        }
+        
+        // Initialize
+        setCanvasSize();
+        updateSquares();
+        draw();
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            setCanvasSize();
+            draw();
+        });
+    </script>
+</body>
+</html>

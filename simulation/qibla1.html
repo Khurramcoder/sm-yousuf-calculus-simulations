@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qibla Vector Math & Directional Dashboard</title>
+    <!-- Tailwind CSS for modern, professional UI styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .compass-bg {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+
+    <!-- Main Application Container -->
+    <div class="w-full max-w-6xl bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+        
+        <!-- Left Side: Mathematical Engine Control Panel (5 Cols) -->
+        <div class="lg:col-span-5 p-6 md:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 rounded">Calculus Engine</span>
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-tight">Qibla Analytics Engine</h1>
+                <p class="text-sm text-slate-400 mt-1 mb-6">Spherical trigonometry visualization according to Yusaf & Amin[span_1](start_span)[span_1](end_span).</p>
+                
+                <!-- Quick Location Bookmarks from Text Exercises -->
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Textbook Presets</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="applyLocation(31.5925, 74.3119, 'Lahore (Ex 41)')" class="px-3 py-2 text-left text-xs bg-slate-800 hover:bg-emerald-600/30 hover:text-emerald-400 rounded-lg border border-slate-700/50 transition cursor-pointer">📍 Lahore[span_2](start_span)[span_2](end_span)</button>
+                        <button onclick="applyLocation(23.7000, 90.3667, 'Dhaka (Ex 42)')" class="px-3 py-2 text-left text-xs bg-slate-800 hover:bg-emerald-600/30 hover:text-emerald-400 rounded-lg border border-slate-700/50 transition cursor-pointer">📍 Dhaka[span_3](start_span)[span_3](end_span)</button>
+                        <button onclick="applyLocation(33.6667, 73.1333, 'Islamabad (Q 5a)')" class="px-3 py-2 text-left text-xs bg-slate-800 hover:bg-emerald-600/30 hover:text-emerald-400 rounded-lg border border-slate-700/50 transition cursor-pointer">📍 Islamabad[span_4](start_span)[span_4](end_span)</button>
+                        <button onclick="applyLocation(40.8167, -74.0000, 'New York (Q 5e)')" class="px-3 py-2 text-left text-xs bg-slate-800 hover:bg-emerald-600/30 hover:text-emerald-400 rounded-lg border border-slate-700/50 transition cursor-pointer">📍 New York[span_5](start_span)[span_5](end_span)</button>
+                    </div>
+                </div>
+
+                <!-- Input Coordinate Forms -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Local Latitude (Decimal Degrees)</label>
+                        <input type="number" id="inp-lat" step="0.0001" value="31.5925" oninput="processMathEngine()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 font-mono text-sm transition">
+                        <span class="text-[10px] text-slate-500 mt-1 block">Positive for North, Negative for South[span_6](start_span)[span_6](end_span)</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Local Longitude (Decimal Degrees)</label>
+                        <input type="number" id="inp-lng" step="0.0001" value="74.3119" oninput="processMathEngine()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 font-mono text-sm transition">
+                        <span class="text-[10px] text-slate-500 mt-1 block">Positive for East, Negative for West[span_7](start_span)[span_7](end_span)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mathematical Output Equation Card -->
+            <div class="mt-8 bg-slate-950 p-4 rounded-xl border border-slate-800/80">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-3">Live Mathematical Trace</span>
+                <div class="text-xs space-y-2 font-mono text-slate-400">
+                    <div class="flex justify-between"><span>Ka'ba Lat ($\phi_0$):</span> <span class="text-slate-200">21°25.2' N[span_8](start_span)[span_8](end_span)</span></div>
+                    <div class="flex justify-between"><span>Ka'ba Lng ($\lambda_0$):</span> <span class="text-slate-200">39°49.2' E[span_9](start_span)[span_9](end_span)</span></div>
+                    <div class="flex justify-between pt-1 border-t border-slate-900"><span>Diff Long ($l$):</span> <span id="trace-l" class="text-amber-400">0.00°</span></div>
+                    <div class="flex justify-between"><span>Inclination ($i$):</span> <span id="trace-i" class="text-emerald-400 font-bold">0.00°</span></div>
+                    <div class="mt-2 p-2 bg-slate-900 rounded text-center text-[11px] text-slate-400 border border-slate-800">
+                         $\tan(i) = \frac{\sin\phi \cos l - \cos\phi \tan\phi_0}{\sin l}$[span_10](start_span)[span_10](end_span)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: High-End Vector Canvas & Compass Display (7 Cols) -->
+        <div class="lg:col-span-7 compass-bg p-8 flex flex-col items-center justify-center relative min-h-[450px] md:min-h-[500px]">
+            
+            <!-- Floating Navigation Header Labels -->
+            <div class="absolute top-6 left-6 right-6 flex justify-between items-start pointer-events-none">
+                <div>
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-widest block">Target Orientation</span>
+                    <h2 id="target-label" class="text-lg font-bold text-white">Lahore (Ex 41)[span_11](start_span)[span_11](end_span)</h2>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-widest block">True Bearing</span>
+                    <h2 id="azimuth-display" class="text-xl font-black text-emerald-400 font-mono">000.0°</h2>
+                </div>
+            </div>
+
+            <!-- Custom Vector Compass Rendering Engine Container -->
+            <div class="relative w-72 h-72 md:w-88 md:h-88 mt-4">
+                <canvas id="vectorCompass" class="w-full h-full drop-shadow-[0_0_25px_rgba(16,185,129,0.15)]"></canvas>
+            </div>
+
+            <!-- Lower Descriptive Alignment Legend -->
+            <div class="mt-6 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800 text-xs flex gap-4 text-slate-400 shadow-inner">
+                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-rose-500 rounded-full inline-block"></span> Geodetic North</div>
+                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-400 rounded-full inline-block"></span> Qibla Vector</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Engine Implementation logic -->
+    <script>
+        // Exact mathematical configurations matching the provided source document[span_12](start_span)[span_12](end_span)
+        const KABA_LAT = 21.4200; // 21° 25.2' N[span_13](start_span)[span_13](end_span)
+        const KABA_LNG = 39.8200; // 39° 49.2' E[span_14](start_span)[span_14](end_span)
+
+        function processMathEngine() {
+            const phi = parseFloat(document.getElementById('inp-lat').value) || 0;
+            const lambda = parseFloat(document.getElementById('inp-lng').value) || 0;
+
+            const rad = Math.PI / 180;
+            const phiRad = phi * rad;
+            const phi0Rad = KABA_LAT * rad;
+
+            // Longitudinal Delta transformation (l)
+            let lDeg = lambda - KABA_LNG; //[span_15](start_span)[span_15](end_span)
+            document.getElementById('trace-l').innerText = `${lDeg.toFixed(2)}°`;
+            const lRad = lDeg * rad;
+
+            // Classical Formula execution: tan(i) = (sinφ cos l - cosφ tanφ₀) / sin l[span_16](start_span)[span_16](end_span)
+            const numerator = (Math.sin(phiRad) * Math.cos(lRad)) - (Math.cos(phiRad) * Math.tan(phi0Rad)); //[span_17](start_span)[span_17](end_span)
+            const denominator = Math.sin(lRad); //[span_18](start_span)[span_18](end_span)
+            
+            let iRad = Math.atan2(numerator, denominator);
+            let iDeg = iRad / rad;
+            document.getElementById('trace-i').innerText = `${iDeg.toFixed(2)}°`;
+
+            // Calculate precise geographic bearing relative to true north
+            let finalBearing = 0;
+            const dLon = (KABA_LNG - lambda) * rad;
+            const y = Math.sin(dLon);
+            const x = Math.cos(phiRad) * Math.tan(phi0Rad) - Math.sin(phiRad) * Math.cos(dLon);
+            finalBearing = Math.atan2(y, x) / rad;
+            finalBearing = (finalBearing + 360) % 360;
+
+            document.getElementById('azimuth-display').innerText = `${finalBearing.toFixed(1)}° N`;
+            
+            drawCompassGraphic(finalBearing);
+        }
+
+        function drawCompassGraphic(targetAzimuth) {
+            const canvas = document.getElementById('vectorCompass');
+            const ctx = canvas.getContext('2d');
+            
+            // Set dynamic resolution tracking
+            const size = 400;
+            canvas.width = size;
+            canvas.height = size;
+
+            const center = size / 2;
+            const radius = (size / 2) - 25;
+
+            ctx.clearRect(0, 0, size, size);
+
+            // 1. Draw Exterior Structural Ring Grid
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(center, center, radius - 15, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // 2. Render Cardinal Sub-ticks
+            const cardinals = ['N', 'E', 'S', 'W'];
+            for(let a = 0; a < 360; a += 15) {
+                const angleRad = (a - 90) * Math.PI / 180;
+                const innerR = (a % 90 === 0) ? radius - 12 : radius - 6;
+                
+                const x1 = center + innerR * Math.cos(angleRad);
+                const y1 = center + innerR * Math.sin(angleRad);
+                const x2 = center + radius * Math.cos(angleRad);
+                const y2 = center + radius * Math.sin(angleRad);
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = (a % 90 === 0) ? '#475569' : '#1e293b';
+                ctx.lineWidth = (a % 90 === 0) ? 2 : 1;
+                ctx.stroke();
+
+                // Typography markers
+                if(a % 90 === 0) {
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const labelX = center + (radius - 28) * Math.cos(angleRad);
+                    const labelY = center + (radius - 28) * Math.sin(angleRad);
+                    ctx.fillText(cardinals[a/90], labelX, labelY);
+                }
+            }
+
+            // 3. Render Geodetic North Vector (Fixed Baseline Pointer)
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.lineTo(center, center - radius + 15);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // North Pointer Cap Arrowhead
+            ctx.beginPath();
+            ctx.moveTo(center, center - radius + 15);
+            ctx.lineTo(center - 6, center - radius + 25);
+            ctx.lineTo(center + 6, center - radius + 25);
+            ctx.closePath();
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+
+            // 4. Render Dynamic Angular Qibla Target Vector Line
+            const qiblaRad = (targetAzimuth - 90) * Math.PI / 180;
+            
+            ctx.shadowColor = '#34d399';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.lineTo(center + (radius - 20) * Math.cos(qiblaRad), center + (radius - 20) * Math.sin(qiblaRad));
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Target Vector Indicator Head
+            ctx.beginPath();
+            ctx.arc(center + (radius - 20) * Math.cos(qiblaRad), center + (radius - 20) * Math.sin(qiblaRad), 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#34d399';
+            ctx.fill();
+
+            // 5. Stylized Center Pivot Point
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(center, center, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function applyLocation(lat, lng, label) {
+            document.getElementById('inp-lat').value = lat;
+            document.getElementById('inp-lng').value = lng;
+            document.getElementById('target-label').innerText = label;
+            processMathEngine();
+        }
+
+        // Bootstrapping Execution Pipeline
+        window.onload = () => {
+            processMathEngine();
+        };
+    </script>
+</body>
+</html>

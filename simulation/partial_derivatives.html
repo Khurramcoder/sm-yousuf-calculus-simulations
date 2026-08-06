@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partial Derivatives Simulation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            color: #7f8c8d;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1100px;
+            width: 100%;
+            justify-content: center;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 320px;
+        }
+        .visualization-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        .math-display {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 0 4px 4px 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .highlight-x { color: #e74c3c; font-weight: bold; }
+        .highlight-y { color: #2ecc71; font-weight: bold; }
+        .explanation {
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Partial Derivatives Visualizer</h1>
+    <p class="subtitle">An interactive sandbox simulating $f(x, y) = 10 - (x^2 + y^2)$</p>
+
+    <div class="container">
+        <!-- Control and Explanation Panel -->
+        <div class="panel">
+            <h2>Controls & Analysis</h2>
+            
+            <div class="control-group">
+                <label>Choose Derivative Focus:</label>
+                <div class="radio-group">
+                    <label style="font-weight: normal;"><input type="radio" name="derivative" value="x" checked id="radioX"> w.r.t $x$ (&part;f/&part;x)</label>
+                    <label style="font-weight: normal;"><input type="radio" name="derivative" value="y" id="radioY"> w.r.t $y$ (&part;f/&part;y)</label>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Point <span class="highlight-x">x</span> value: <span id="valX">0.0</span></label>
+                <input type="disabled" type="range" id="sliderX" min="-2" max="2" step="0.1" value="0.5">
+            </div>
+
+            <div class="control-group">
+                <label>Point <span class="highlight-y">y</span> value: <span id="valY">0.0</span></label>
+                <input type="range" id="sliderY" min="-2" max="2" step="0.1" value="-0.5">
+            </div>
+
+            <div class="math-display" id="mathOutput">
+                <!-- Calculated dynamically -->
+            </div>
+
+            <div class="explanation">
+                <h3>Core Concept</h3>
+                <p>When finding a <strong>partial derivative</strong>, you look at how a multi-variable function changes along <em>one axis only</em>, treating all other variables as fixed constants.</p>
+                <ul>
+                    <li><strong>w.r.t $x$:</strong> We treat <span class="highlight-y">y</span> as a frozen number. The red plane cuts through the surface parallel to the x-axis, producing a 2D curve. The slope of the line tangent to this curve is $\frac{\partial f}{\partial x}$.</li>
+                    <li><strong>w.r.t $y$:</strong> We treat <span class="highlight-x">x</span> as a frozen number. The green plane cuts through parallel to the y-axis. The slope of the line tangent to this curve is $\frac{\partial f}{\partial y}$.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3D Graph Simulation Panel -->
+        <div class="panel visualization-panel">
+            <canvas id="graphCanvas" width="500" height="450"></canvas>
+            <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 10px;">Drag mouse on graph to rotate the view horizontally.</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // State variables
+        let ptX = 0.5;
+        let ptY = -0.5;
+        let angle = 0.6; // Horizontal rotation angle
+        let viewW = 500;
+        let viewH = 450;
+        let isDragging = false;
+        let previousMouseX = 0;
+
+        // UI Selectors
+        const sliderX = document.getElementById('sliderX');
+        const sliderY = document.getElementById('sliderY');
+        const valX = document.getElementById('valX');
+        const valY = document.getElementById('valY');
+        const radioX = document.getElementById('radioX');
+        const mathOutput = document.getElementById('mathOutput');
+
+        // Function definitions: f(x,y) = 10 - (x^2 + y^2)
+        function f(x, y) { return 8 - (x*x + y*y); }
+        function df_dx(x, y) { return -2 * x; }
+        function df_dy(x, y) { return -2 * y; }
+
+        // 3D Isometric Projection Logic
+        function project(x, y, z) {
+            // Center of canvas
+            let cx = viewW / 2;
+            let cy = viewH / 2 + 50;
+            
+            // Basic rotation matrix calculations for horizontal spinning
+            let rotX = x * Math.cos(angle) - y * Math.sin(angle);
+            let rotY = x * Math.sin(angle) + y * Math.cos(angle);
+            
+            // Simple perspective mapping trick onto 2D viewport
+            let screenX = cx + rotX * 80;
+            let screenY = cy - rotY * 40 - z * 25; 
+            return { x: screenX, y: screenY };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, viewW, viewH);
+            
+            const respectToX = radioX.checked;
+            
+            // Update UI Labels
+            valX.textContent = ptX.toFixed(1);
+            valY.textContent = ptY.toFixed(1);
+            
+            let zVal = f(ptX, ptY);
+            let slope = respectToX ? df_dx(ptX, ptY) : df_dy(ptX, ptY);
+
+            // Update Mathematical Formulas Text Block
+            mathOutput.innerHTML = `
+                <strong>Function:</strong> f(x,y) = 10 - x² - y²<br>
+                <strong>Current Point:</strong> (${ptX.toFixed(1)}, ${ptY.toFixed(1)}, ${zVal.toFixed(2)})<br><br>
+                ${respectToX ? 
+                    `<strong>Partial w.r.t x (&part;f/&part;x):</strong> -2x<br>
+                     <strong>Slope at (${ptX.toFixed(1)}):</strong> -2 * (${ptX.toFixed(1)}) = <span class="highlight-x">${slope.toFixed(1)}</span>` : 
+                    `<strong>Partial w.r.t y (&part;f/&part;y):</strong> -2y<br>
+                     <strong>Slope at (${ptY.toFixed(1)}):</strong> -2 * (${ptY.toFixed(1)}) = <span class="highlight-y">${slope.toFixed(1)}</span>`
+                }
+            `;
+
+            // Draw Base Grid/Axes
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            for(let i = -2.5; i <= 2.5; i += 0.5) {
+                let p1 = project(i, -2.5, 0); let p2 = project(i, 2.5, 0);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                
+                let p3 = project(-2.5, i, 0); let p4 = project(2.5, i, 0);
+                ctx.beginPath(); ctx.moveTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.stroke();
+            }
+
+            // Draw 3D Mesh Surface
+            ctx.lineWidth = 1;
+            let step = 0.25;
+            for (let x = -2; x <= 2; x += step) {
+                for (let y = -2; y <= 2; y += step) {
+                    ctx.strokeStyle = 'rgba(44, 62, 80, 0.15)';
+                    
+                    let p00 = project(x, y, f(x, y));
+                    let p10 = project(x + step, y, f(x + step, y));
+                    let p01 = project(x, y + step, f(x, y + step));
+
+                    if (x + step <= 2) {
+                        ctx.beginPath(); ctx.moveTo(p00.x, p00.y); ctx.lineTo(p10.x, p10.y); ctx.stroke();
+                    }
+                    if (y + step <= 2) {
+                        ctx.beginPath(); ctx.moveTo(p00.x, p00.y); ctx.lineTo(p01.x, p01.y); ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw Slice/Intersection Plane representing the partial condition
+            ctx.lineWidth = 2;
+            if (respectToX) {
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.7)'; // Red Slice Plane for X
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.05)';
+                ctx.beginPath();
+                let startPlane = project(-2, ptY, 0);
+                ctx.moveTo(startPlane.x, startPlane.y);
+                for(let x = -2; x <= 2; x += 0.1) {
+                    let pt = project(x, ptY, f(x, ptY));
+                    ctx.lineTo(pt.x, pt.y);
+                }
+                let endPlane = project(2, ptY, 0);
+                ctx.lineTo(endPlane.x, endPlane.y);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'rgba(46, 204, 113, 0.7)'; // Green Slice Plane for Y
+                ctx.fillStyle = 'rgba(46, 204, 113, 0.05)';
+                ctx.beginPath();
+                let startPlane = project(ptX, -2, 0);
+                ctx.moveTo(startPlane.x, startPlane.y);
+                for(let y = -2; y <= 2; y += 0.1) {
+                    let pt = project(ptX, y, f(ptX, y));
+                    ctx.lineTo(pt.x, pt.y);
+                }
+                let endPlane = project(ptX, 2, 0);
+                ctx.lineTo(endPlane.x, endPlane.y);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+            }
+
+            // Draw Tangent Line
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#8e44ad'; // Purple Tangent Line
+            let tLength = 1.0;
+            let pTangentStart, pTangentEnd;
+            
+            if (respectToX) {
+                pTangentStart = project(ptX - tLength, ptY, zVal - slope * tLength);
+                pTangentEnd = project(ptX + tLength, ptY, zVal + slope * tLength);
+            } else {
+                pTangentStart = project(ptX, ptY - tLength, zVal - slope * tLength);
+                pTangentEnd = project(ptX, ptY + tLength, zVal + slope * tLength);
+            }
+            ctx.beginPath();
+            ctx.moveTo(pTangentStart.x, pTangentStart.y);
+            ctx.lineTo(pTangentEnd.x, pTangentEnd.y);
+            ctx.stroke();
+
+            // Draw Evaluated Point dot
+            let focalPoint = project(ptX, ptY, zVal);
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.arc(focalPoint.x, focalPoint.y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // Event Listeners for controls
+        sliderX.addEventListener('input', (e) => { ptX = parseFloat(e.target.value); draw(); });
+        sliderY.addEventListener('input', (e) => { ptY = parseFloat(e.target.value); draw(); });
+        document.querySelectorAll('input[name="derivative"]').forEach(r => r.addEventListener('change', draw));
+
+        // Canvas drag rotation mechanics
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMouseX = e.clientX;
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                let deltaX = e.clientX - previousMouseX;
+                angle += deltaX * 0.01;
+                previousMouseX = e.clientX;
+                draw();
+            }
+        });
+
+        // Initialize display
+        draw();
+    </script>
+</body>
+</html>

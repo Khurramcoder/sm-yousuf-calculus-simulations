@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bessel's & Legendre's Equations Learning App</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .tab:hover {
+            background-color: var(--light);
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .content-section {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h2 {
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: var(--primary);
+            margin: 1.5rem 0 1rem;
+        }
+        
+        .equation {
+            background-color: var(--light);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        .example-box {
+            background-color: #f9f9f9;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .interactive-area {
+            background-color: #f0f7ff;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        label {
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        input[type="range"], input[type="number"] {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .graph-container {
+            width: 100%;
+            height: 300px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        .code-block {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+        
+        .definition {
+            background-color: #e8f4fd;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .note {
+            background-color: #fff9e6;
+            border-left: 4px solid #f1c40f;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            background-color: var(--secondary);
+            color: white;
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bessel's & Legendre's Equations</h1>
+        <p class="subtitle">Interactive Learning App for Mathematics Students</p>
+    </header>
+    
+    <div class="container">
+        <div class="nav-tabs">
+            <div class="tab active" data-tab="introduction">Introduction</div>
+            <div class="tab" data-tab="bessel">Bessel's Equations</div>
+            <div class="tab" data-tab="legendre">Legendre's Equations</div>
+            <div class="tab" data-tab="simulations">Interactive Simulations</div>
+            <div class="tab" data-tab="examples">Solved Examples</div>
+        </div>
+        
+        <!-- Introduction Section -->
+        <section id="introduction" class="content-section active">
+            <h2>Introduction to Special Functions</h2>
+            <p>Many linear differential equations having variable coefficients cannot be solved by usual methods and we need to employ series solution method to find their solutions in terms of infinite convergent series.</p>
+            
+            <div class="definition">
+                <h3>What are Special Functions?</h3>
+                <p>Special functions are particular mathematical functions that have more or less established names and notations due to their importance in mathematical analysis, functional analysis, geometry, physics, or other applications.</p>
+            </div>
+            
+            <h3>Key Topics Covered</h3>
+            <ul>
+                <li>Bessel's Equation and Bessel Functions</li>
+                <li>Legendre's Equation and Legendre Polynomials</li>
+                <li>Recurrence Relations</li>
+                <li>Orthogonality Properties</li>
+                <li>Applications in Physics and Engineering</li>
+            </ul>
+            
+            <div class="note">
+                <p><strong>Note:</strong> This app is designed to help you visualize and understand these complex mathematical concepts through interactive examples and simulations.</p>
+            </div>
+        </section>
+        
+        <!-- Bessel's Equations Section -->
+        <section id="bessel" class="content-section">
+            <h2>Bessel's Equation</h2>
+            <p>The differential equation:</p>
+            <div class="equation">
+                \[ x^2 \frac{d^2 y}{dx^2} + x \frac{dy}{dx} + (x^2 - n^2)y = 0 \]
+            </div>
+            <p>is known as <strong>Bessel's equation of order \( n \)</strong> and its particular solutions are called <strong>Bessel's functions</strong>.</p>
+            
+            <h3>Bessel Functions</h3>
+            <p>Series solution of Bessel's equation in terms of Bessel's functions \( J_n(x) \) and \( J_{-n}(x) \) is given by:</p>
+            <div class="equation">
+                \[ y = AJ_n(x) + BJ_{-n}(x) \]
+            </div>
+            <p>where</p>
+            <div class="equation">
+                \[ J_n(x) = \sum_{r=0}^{\infty} (-1)^r \frac{1}{r! \Gamma(n+r+1)} \left( \frac{x}{2} \right)^{n+2r} \]
+            </div>
+            <div class="equation">
+                \[ J_{-n}(x) = \sum_{r=0}^{\infty} (-1)^r \frac{1}{r! \Gamma(-n+r+1)} \left( \frac{x}{2} \right)^{-n+2r} \]
+            </div>
+            
+            <h3>Recurrence Relations</h3>
+            <div class="equation">
+                \[ \frac{d}{dx}[x^nJ_n(x)] = x^nJ_{n-1}(x) \]
+            </div>
+            <div class="equation">
+                \[ \frac{d}{dx}[x^{-n}J_n(x)] = -x^{-n}J_{n+1}(x) \]
+            </div>
+            <div class="equation">
+                \[ J_n'(x) = J_{n-1}(x) - \frac{n}{x} J_n(x) \]
+            </div>
+            <div class="equation">
+                \[ J_n'(x) = -J_{n+1}(x) + \frac{n}{x} J_n(x) \]
+            </div>
+            
+            <div class="interactive-area">
+                <h3>Bessel Function Visualization</h3>
+                <p>Adjust the order \( n \) to see how Bessel functions change:</p>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="besselOrder">Order (n):</label>
+                        <input type="range" id="besselOrder" min="0" max="5" step="0.1" value="0">
+                        <span id="besselOrderValue">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="besselType">Function Type:</label>
+                        <select id="besselType">
+                            <option value="J">J (First Kind)</option>
+                            <option value="Y">Y (Second Kind)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="graph-container" id="besselGraph">
+                    <!-- Bessel function graph will be rendered here -->
+                </div>
+            </div>
+        </section>
+        
+        <!-- Legendre's Equations Section -->
+        <section id="legendre" class="content-section">
+            <h2>Legendre's Equation</h2>
+            <p>Another important differential equation used in problems showing spherical symmetry is Legendre's equation:</p>
+            <div class="equation">
+                \[ (1 - x^2) \frac{d^2 y}{dx^2} - 2x \frac{dy}{dx} + n(n + 1)y = 0 \]
+            </div>
+            
+            <h3>Legendre Polynomials</h3>
+            <p>Series solution in terms of Legendre's function \( P_n(x) \) and \( Q_n(x) \) is given by:</p>
+            <div class="equation">
+                \[ y = AP_n(x) + BQ_n(x) \]
+            </div>
+            <p>where \( P_n(x) \) is a terminating series containing positive powers of \( x \):</p>
+            <div class="equation">
+                \[ P_n(x) = \frac{1.3.5...(2n-1)}{n!} \left[ x^n - \frac{n(n-1)}{2(2n-1)} x^{n-2} + \frac{n(n-1)(n-2)(n-3)}{2.4.(2n-1)(2n-3)} x^{n-4} - \cdots \right] \]
+            </div>
+            
+            <h3>Generating Function</h3>
+            <div class="equation">
+                \[ (1 - 2xz + z^2)^{-\frac{1}{2}} = \sum_{n=0}^{\infty} P_n(x)z^n \]
+            </div>
+            
+            <h3>Rodrigue's Formula</h3>
+            <div class="equation">
+                \[ P_n(x) = \frac{1}{2^n n!} \frac{d^n}{dx^n} (x^2 - 1)^n \]
+            </div>
+            
+            <h3>Recurrence Relations</h3>
+            <div class="equation">
+                \[ (n+1)P_{n+1}(x) = (2n+1)xP_n(x) - nP_{n-1}(x) \]
+            </div>
+            <div class="equation">
+                \[ P_n(x) = P'_{n+1}(x) - 2xP'_n(x) + P'_{n-1}(x) \]
+            </div>
+            
+            <div class="interactive-area">
+                <h3>Legendre Polynomial Visualization</h3>
+                <p>Adjust the degree \( n \) to see how Legendre polynomials change:</p>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="legendreDegree">Degree (n):</label>
+                        <input type="range" id="legendreDegree" min="0" max="6" step="1" value="0">
+                        <span id="legendreDegreeValue">0</span>
+                    </div>
+                </div>
+                <div class="graph-container" id="legendreGraph">
+                    <!-- Legendre polynomial graph will be rendered here -->
+                </div>
+            </div>
+        </section>
+        
+        <!-- Interactive Simulations Section -->
+        <section id="simulations" class="content-section">
+            <h2>Interactive Simulations</h2>
+            
+            <div class="interactive-area">
+                <h3>Bessel Function Calculator</h3>
+                <p>Calculate the value of Bessel functions at a specific point:</p>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="calcBesselOrder">Order (n):</label>
+                        <input type="number" id="calcBesselOrder" min="0" max="10" step="0.1" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label for="calcBesselX">x value:</label>
+                        <input type="number" id="calcBesselX" min="0" max="20" step="0.1" value="1">
+                    </div>
+                    <button id="calculateBessel">Calculate</button>
+                </div>
+                <div id="besselResult" class="equation"></div>
+            </div>
+            
+            <div class="interactive-area">
+                <h3>Legendre Polynomial Calculator</h3>
+                <p>Calculate the value of Legendre polynomials at a specific point:</p>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="calcLegendreDegree">Degree (n):</label>
+                        <input type="number" id="calcLegendreDegree" min="0" max="10" step="1" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label for="calcLegendreX">x value:</label>
+                        <input type="number" id="calcLegendreX" min="-1" max="1" step="0.1" value="0">
+                    </div>
+                    <button id="calculateLegendre">Calculate</button>
+                </div>
+                <div id="legendreResult" class="equation"></div>
+            </div>
+            
+            <div class="interactive-area">
+                <h3>Orthogonality Demonstration</h3>
+                <p>Visualize the orthogonality of Legendre polynomials:</p>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="orthoDegree1">First Polynomial Degree:</label>
+                        <input type="number" id="orthoDegree1" min="0" max="5" step="1" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label for="orthoDegree2">Second Polynomial Degree:</label>
+                        <input type="number" id="orthoDegree2" min="0" max="5" step="1" value="1">
+                    </div>
+                    <button id="calculateOrthogonality">Calculate Integral</button>
+                </div>
+                <div id="orthogonalityResult" class="equation"></div>
+            </div>
+        </section>
+        
+        <!-- Solved Examples Section -->
+        <section id="examples" class="content-section">
+            <h2>Solved Examples</h2>
+            
+            <div class="example-box">
+                <h3>Example 1: Bessel Function Recurrence</h3>
+                <p>Prove that \( \frac{d}{dx}[x^nJ_n(x)] = x^nJ_{n-1}(x) \)</p>
+                <button class="toggle-solution">Show Solution</button>
+                <div class="solution" style="display: none;">
+                    <p><strong>Solution:</strong></p>
+                    <p>Starting with the definition:</p>
+                    <div class="equation">
+                        \[ J_n(x) = \sum_{r=0}^{\infty}(-1)^r\frac{1}{r! \Gamma(n+r+1)}\left(\frac{x}{2}\right)^{n+2r} \]
+                    </div>
+                    <p>Then:</p>
+                    <div class="equation">
+                        \[ x^nJ_n(x) = \sum_{r=0}^{\infty}(-1)^r\frac{1}{r! \Gamma(n+r+1)}\frac{x^{2n+2r}}{2^{n+2r}} \]
+                    </div>
+                    <p>Differentiating both sides:</p>
+                    <div class="equation">
+                        \[ \frac{d}{dx}[x^nJ_n(x)] = \sum_{r=0}^{\infty}(-1)^r\frac{1}{r! \Gamma(n+r+1)}\frac{2(n+r)x^{2n+2r-1}}{2^{n+2r}} \]
+                    </div>
+                    <p>Using \( \Gamma(n + r + 1) = (n + r)\Gamma(n + r) \):</p>
+                    <div class="equation">
+                        \[ = x^n\sum_{r=0}^{\infty}(-1)^r\frac{1}{r! \Gamma((n-1)+r+1)}\left(\frac{x}{2}\right)^{(n-1)+2r} \]
+                    </div>
+                    <div class="equation">
+                        \[ = x^nJ_{n-1}(x) \]
+                    </div>
+                </div>
+            </div>
+            
+            <div class="example-box">
+                <h3>Example 2: Legendre Polynomial Expansion</h3>
+                <p>Express \( x^3 \) in terms of Legendre polynomials.</p>
+                <button class="toggle-solution">Show Solution</button>
+                <div class="solution" style="display: none;">
+                    <p><strong>Solution:</strong></p>
+                    <p>We know:</p>
+                    <div class="equation">
+                        \[ P_0(x) = 1, \quad P_1(x) = x \]
+                    </div>
+                    <div class="equation">
+                        \[ P_2(x) = \frac{1}{2}(3x^2 - 1) \Rightarrow x^2 = \frac{1}{3}(2P_2(x) + P_0(x)) \]
+                    </div>
+                    <div class="equation">
+                        \[ P_3(x) = \frac{1}{2}(5x^3 - 3x) \Rightarrow x^3 = \frac{1}{5}(2P_3(x) + 3P_1(x)) \]
+                    </div>
+                    <p>Therefore:</p>
+                    <div class="equation">
+                        \[ x^3 = \frac{2}{5}P_3(x) + \frac{3}{5}P_1(x) \]
+                    </div>
+                </div>
+            </div>
+            
+            <div class="example-box">
+                <h3>Example 3: Orthogonality of Bessel Functions</h3>
+                <p>If \( \alpha \) and \( \beta \) be roots of the equation \( J_n(x) = 0 \), then</p>
+                <div class="equation">
+                    \[ \int_{0}^{1} x J_n(\alpha x) J_n(\beta x) dx = \begin{cases} 0 & \text{if } \beta \neq \alpha \\ \frac{1}{2} J_{n+1}^2 (\alpha) & \text{if } \beta = \alpha \end{cases} \]
+                </div>
+                <button class="toggle-solution">Show Solution</button>
+                <div class="solution" style="display: none;">
+                    <p><strong>Solution:</strong></p>
+                    <p>Given that \( \alpha \) and \( \beta \) be roots of the equation \( J_n(x) = 0 \), so \( J_n(\alpha) = J_n(\beta) = 0 \).</p>
+                    <p>Consider the Bessel's equations:</p>
+                    <div class="equation">
+                        \[ x^2 u'' + xu' + (\alpha^2 x^2 - n^2)u = 0 \]
+                    </div>
+                    <div class="equation">
+                        \[ x^2 v'' + xv' + (\beta^2 x^2 - n^2)v = 0 \]
+                    </div>
+                    <p>Solutions of these equations are respectively \( u = J_n(\alpha x) \) and \( v = J_n(\beta x) \).</p>
+                    <p>Multiplying the first by \( \frac{v}{x} \) and the second by \( \frac{u}{x} \) and subtracting, we get:</p>
+                    <div class="equation">
+                        \[ \frac{d}{dx} [x(u'v - uv')] + (\alpha^2 - \beta^2)uvx = 0 \]
+                    </div>
+                    <p>Integrating with respect to \( x \) from 0 to 1:</p>
+                    <div class="equation">
+                        \[ [x(u'v - uv')]_{0}^{1} + (\alpha^2 - \beta^2) \int_{0}^{1} uvx \, dx = 0 \]
+                    </div>
+                    <p>At \( x = 1 \), \( u = J_n(\alpha) = 0 \), \( v = J_n(\beta) = 0 \), so the first term vanishes.</p>
+                    <p>Thus:</p>
+                    <div class="equation">
+                        \[ (\alpha^2 - \beta^2) \int_{0}^{1} xJ_n(\alpha x)J_n(\beta x) \, dx = 0 \]
+                    </div>
+                    <p>If \( \beta \neq \alpha \), then the integral must be zero.</p>
+                    <p>For the case \( \beta = \alpha \), we take the limit as \( \beta \to \alpha \) and apply L'Hopital's rule to get:</p>
+                    <div class="equation">
+                        \[ \int_{0}^{1} xJ_n^2(\alpha x) \, dx = \frac{1}{2} J_{n+1}^2 (\alpha) \]
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <footer>
+        <p>Bessel's & Legendre's Equations Learning App &copy; 2023</p>
+        <p>Designed for Mathematics Students</p>
+    </footer>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and sections
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding section
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Toggle solution visibility
+        document.querySelectorAll('.toggle-solution').forEach(button => {
+            button.addEventListener('click', () => {
+                const solution = button.nextElementSibling;
+                if (solution.style.display === 'none') {
+                    solution.style.display = 'block';
+                    button.textContent = 'Hide Solution';
+                } else {
+                    solution.style.display = 'none';
+                    button.textContent = 'Show Solution';
+                }
+            });
+        });
+        
+        // Bessel function order slider
+        const besselOrderSlider = document.getElementById('besselOrder');
+        const besselOrderValue = document.getElementById('besselOrderValue');
+        
+        besselOrderSlider.addEventListener('input', () => {
+            besselOrderValue.textContent = besselOrderSlider.value;
+            updateBesselGraph();
+        });
+        
+        // Bessel function type selector
+        const besselTypeSelector = document.getElementById('besselType');
+        besselTypeSelector.addEventListener('change', updateBesselGraph);
+        
+        // Legendre polynomial degree slider
+        const legendreDegreeSlider = document.getElementById('legendreDegree');
+        const legendreDegreeValue = document.getElementById('legendreDegreeValue');
+        
+        legendreDegreeSlider.addEventListener('input', () => {
+            legendreDegreeValue.textContent = legendreDegreeSlider.value;
+            updateLegendreGraph();
+        });
+        
+        // Bessel function calculator
+        document.getElementById('calculateBessel').addEventListener('click', () => {
+            const n = parseFloat(document.getElementById('calcBesselOrder').value);
+            const x = parseFloat(document.getElementById('calcBesselX').value);
+            
+            // Simple approximation for Bessel function (for demonstration)
+            // In a real application, you would use a proper Bessel function library
+            let result;
+            if (n === 0) {
+                result = Math.cos(x); // Approximation for J0
+            } else if (n === 1) {
+                result = Math.sin(x) / x; // Approximation for J1
+            } else {
+                // Very basic approximation for demonstration
+                result = Math.sin(x + n * Math.PI/2) / Math.sqrt(x);
+            }
+            
+            document.getElementById('besselResult').innerHTML = 
+                `J<sub>${n}</sub>(${x}) ≈ ${result.toFixed(6)}`;
+        });
+        
+        // Legendre polynomial calculator
+        document.getElementById('calculateLegendre').addEventListener('click', () => {
+            const n = parseInt(document.getElementById('calcLegendreDegree').value);
+            const x = parseFloat(document.getElementById('calcLegendreX').value);
+            
+            // Simple Legendre polynomial calculation (for demonstration)
+            let result;
+            if (n === 0) {
+                result = 1;
+            } else if (n === 1) {
+                result = x;
+            } else if (n === 2) {
+                result = (3*x*x - 1) / 2;
+            } else if (n === 3) {
+                result = (5*x*x*x - 3*x) / 2;
+            } else if (n === 4) {
+                result = (35*x*x*x*x - 30*x*x + 3) / 8;
+            } else if (n === 5) {
+                result = (63*x*x*x*x*x - 70*x*x*x + 15*x) / 8;
+            } else {
+                // For higher degrees, use recurrence relation
+                let p0 = 1;
+                let p1 = x;
+                let p2;
+                
+                for (let i = 2; i <= n; i++) {
+                    p2 = ((2*i - 1)*x*p1 - (i - 1)*p0) / i;
+                    p0 = p1;
+                    p1 = p2;
+                }
+                
+                result = p1;
+            }
+            
+            document.getElementById('legendreResult').innerHTML = 
+                `P<sub>${n}</sub>(${x}) = ${result.toFixed(6)}`;
+        });
+        
+        // Orthogonality calculator
+        document.getElementById('calculateOrthogonality').addEventListener('click', () => {
+            const n1 = parseInt(document.getElementById('orthoDegree1').value);
+            const n2 = parseInt(document.getElementById('orthoDegree2').value);
+            
+            if (n1 === n2) {
+                document.getElementById('orthogonalityResult').innerHTML = 
+                    `∫<sub>-1</sub><sup>1</sup> P<sub>${n1}</sub>(x) P<sub>${n2}</sub>(x) dx = ${(2/(2*n1+1)).toFixed(6)}`;
+            } else {
+                document.getElementById('orthogonalityResult').innerHTML = 
+                    `∫<sub>-1</sub><sup>1</sup> P<sub>${n1}</sub>(x) P<sub>${n2}</sub>(x) dx = 0`;
+            }
+        });
+        
+        // Function to update Bessel function graph
+        function updateBesselGraph() {
+            const n = parseFloat(besselOrderSlider.value);
+            const type = besselTypeSelector.value;
+            const graphContainer = document.getElementById('besselGraph');
+            
+            // In a real application, you would use a proper graphing library
+            // For this demo, we'll just show a placeholder with the parameters
+            graphContainer.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                    <div style="text-align: center;">
+                        <h4>Bessel Function ${type}<sub>${n}</sub>(x)</h4>
+                        <p>Graph would be displayed here using a proper graphing library</p>
+                        <p>Parameters: Order = ${n}, Type = ${type}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Function to update Legendre polynomial graph
+        function updateLegendreGraph() {
+            const n = parseInt(legendreDegreeSlider.value);
+            const graphContainer = document.getElementById('legendreGraph');
+            
+            // In a real application, you would use a proper graphing library
+            graphContainer.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                    <div style="text-align: center;">
+                        <h4>Legendre Polynomial P<sub>${n}</sub>(x)</h4>
+                        <p>Graph would be displayed here using a proper graphing library</p>
+                        <p>Degree = ${n}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Initialize graphs
+        updateBesselGraph();
+        updateLegendreGraph();
+        
+        // Initialize MathJax
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+</body>
+</html>

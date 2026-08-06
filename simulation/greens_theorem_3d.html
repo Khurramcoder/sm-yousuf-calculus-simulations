@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Green's Theorem — 3D Simulation</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Kalam:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg-deep:#0a1826;
+    --bg-panel:#0f2033;
+    --bg-panel-2:#122840;
+    --chalk-white:#eef2ea;
+    --chalk-dim:#9db2c2;
+    --chalk-teal:#6fbf9f;
+    --chalk-teal-dim:#3f7a63;
+    --chalk-amber:#e8a94c;
+    --chalk-rose:#d17a82;
+    --line:rgba(238,242,234,0.14);
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg-deep);
+    color:var(--chalk-white);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body{
+    background-image:
+      radial-gradient(ellipse at 20% -10%, rgba(111,191,159,0.08), transparent 55%),
+      radial-gradient(ellipse at 90% 110%, rgba(209,122,130,0.06), transparent 55%);
+  }
+
+  .app{
+    max-width:1440px;
+    margin:0 auto;
+    padding:28px 24px 80px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:28px;
+  }
+
+  .eyebrow{
+    font-family:'Kalam',cursive;
+    color:var(--chalk-amber);
+    letter-spacing:0.06em;
+    font-size:14px;
+    margin-bottom:6px;
+  }
+
+  h1{
+    font-family:'Newsreader',serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,46px);
+    margin:0 0 10px;
+    color:var(--chalk-white);
+  }
+
+  h1 em{
+    font-style:italic;
+    color:var(--chalk-teal);
+  }
+
+  .sub{
+    font-size:15px;
+    color:var(--chalk-dim);
+    max-width:640px;
+    margin:0 auto;
+    line-height:1.5;
+  }
+
+  main{
+    display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(320px,0.85fr);
+    gap:22px;
+    align-items:start;
+  }
+
+  @media (max-width:980px){
+    main{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+
+  .viz-panel{
+    position:sticky;
+    top:16px;
+  }
+
+  #canvas-container{
+    width:100%;
+    aspect-ratio:4/3.1;
+    position:relative;
+    cursor:grab;
+    background:
+      radial-gradient(circle at 50% 30%, #12283e, #0a1826 75%);
+  }
+  #canvas-container:active{cursor:grabbing;}
+  #canvas-container canvas{display:block;width:100%;height:100%;}
+
+  .hint{
+    position:absolute;
+    bottom:10px;
+    left:14px;
+    font-family:'Kalam',cursive;
+    font-size:13px;
+    color:var(--chalk-dim);
+    opacity:0.75;
+    pointer-events:none;
+  }
+
+  .controls{
+    padding:16px 18px 18px;
+    border-top:1px solid var(--line);
+  }
+
+  .row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+
+  button{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    color:var(--chalk-white);
+    background:var(--bg-panel-2);
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:9px 13px;
+    cursor:pointer;
+    transition:border-color .15s, transform .1s, background .15s;
+  }
+  button:hover{border-color:rgba(238,242,234,0.35); background:#16324e;}
+  button:active{transform:scale(0.97);}
+  button:focus-visible{outline:2px solid var(--chalk-teal); outline-offset:2px;}
+  button.primary{border-color:var(--chalk-amber); color:#1a1305; background:var(--chalk-amber);}
+  button.primary:hover{background:#f0b866;}
+  button.secondary-accent{border-color:var(--chalk-rose); color:#2a1113; background:var(--chalk-rose);}
+  button.secondary-accent:hover{background:#dd8f96;}
+  button.ghost{background:transparent;}
+  button.toggled{border-color:var(--chalk-teal); box-shadow:inset 0 0 0 1px var(--chalk-teal);}
+
+  .readouts{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .stat{
+    background:var(--bg-panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+  }
+
+  .stat .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--chalk-dim);
+    margin-bottom:4px;
+  }
+
+  .stat .value{
+    font-family:'Newsreader',serif;
+    font-size:22px;
+    font-weight:600;
+  }
+  .stat.line .value{color:var(--chalk-amber);}
+  .stat.area .value{color:var(--chalk-rose);}
+
+  .stat .sub-value{
+    font-size:11px;
+    color:var(--chalk-dim);
+    margin-top:2px;
+  }
+
+  .math-panel{
+    padding:22px 24px 26px;
+    max-height:none;
+  }
+
+  .math-panel h2{
+    font-family:'Newsreader',serif;
+    font-size:19px;
+    font-weight:600;
+    margin:26px 0 10px;
+    color:var(--chalk-teal);
+  }
+  .math-panel h2:first-child{margin-top:0;}
+
+  .math-panel h2 .num{
+    font-family:'Kalam',cursive;
+    color:var(--chalk-amber);
+    margin-right:8px;
+    font-size:16px;
+  }
+
+  .math-panel p{
+    font-size:14.5px;
+    line-height:1.65;
+    color:#dbe4dc;
+    margin:0 0 10px;
+  }
+
+  .math-panel p code{
+    font-family:'Inter',sans-serif;
+    background:var(--bg-panel-2);
+    padding:1px 5px;
+    border-radius:4px;
+    color:var(--chalk-teal);
+  }
+
+  .eqn{
+    background:var(--bg-panel-2);
+    border-left:3px solid var(--chalk-amber);
+    border-radius:0 8px 8px 0;
+    padding:12px 16px;
+    margin:12px 0;
+    overflow-x:auto;
+  }
+  .eqn.rose{border-left-color:var(--chalk-rose);}
+  .eqn.teal{border-left-color:var(--chalk-teal);}
+
+  .note{
+    font-family:'Kalam',cursive;
+    font-size:13.5px;
+    color:var(--chalk-amber);
+    background:rgba(232,169,76,0.08);
+    border:1px dashed rgba(232,169,76,0.4);
+    border-radius:10px;
+    padding:10px 14px;
+    margin:14px 0;
+    line-height:1.5;
+  }
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin:10px 0 16px;
+    font-size:12.5px;
+    color:var(--chalk-dim);
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;}
+
+  hr{
+    border:none;
+    border-top:1px solid var(--line);
+    margin:22px 0;
+  }
+
+  .katex{font-size:1.02em;}
+
+  ::selection{background:var(--chalk-teal-dim); color:#fff;}
+
+  @media (prefers-reduced-motion: reduce){
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="eyebrow">an interactive 3D lecture</div>
+    <h1>Green's Theorem, <em>seen from above and below</em></h1>
+    <p class="sub">Drag to orbit. Trace the boundary and watch the line integral tick up.
+    Raise the curl surface and watch the double integral catch up to the same number.</p>
+  </header>
+
+  <main>
+
+    <section class="panel viz-panel">
+      <div id="canvas-container">
+        <div class="hint">drag to orbit &middot; scroll to zoom</div>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <button id="btn-trace" class="primary">Trace boundary ∮</button>
+          <button id="btn-volume" class="secondary-accent">Raise curl surface ∬</button>
+          <button id="btn-field" class="ghost">Toggle field arrows</button>
+          <button id="btn-reset" class="ghost">Reset</button>
+        </div>
+        <div class="readouts">
+          <div class="stat line">
+            <div class="label">Line integral ∮c F&middot;dr</div>
+            <div class="value" id="line-value">0.00</div>
+            <div class="sub-value" id="line-sub">press "trace boundary"</div>
+          </div>
+          <div class="stat area">
+            <div class="label">Double integral ∬d curl F dA</div>
+            <div class="value" id="area-value">0.00</div>
+            <div class="sub-value" id="area-sub">press "raise curl surface"</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel math-panel">
+
+      <h2><span class="num">01</span>the setup</h2>
+      <p>Region <code>D</code> is the triangle bounded by <code>y = 0</code>, <code>x = 2</code>, and <code>y = 2x</code>,
+      with vertices <span id="eq-verts"></span>. The vector field is</p>
+      <div class="eqn"><span id="eq-field"></span></div>
+      <p>so <code>L(x,y) = x&sup2;y</code> and <code>M(x,y) = 3x</code>. Boundary <code>C</code> is traversed counter-clockwise —
+      the orientation Green's Theorem requires so the region always sits to the left of travel.</p>
+
+      <h2><span class="num">02</span>the theorem</h2>
+      <p>For a positively-oriented, piecewise-smooth simple closed curve <code>C</code> enclosing region <code>D</code>:</p>
+      <div class="eqn teal"><span id="eq-green"></span></div>
+      <p>The left side is a 1D walk around the edge. The right side is a 2D fill of the interior.
+      The theorem says these are always equal — a boundary measurement and an interior measurement, forced to agree.</p>
+
+      <div class="note">Think of <code>M<sub>x</sub> − L<sub>y</sub></code> as the local spin (curl) of the field at each point.
+      Stack it over the whole region and it exactly accounts for everything the boundary trace picks up — nothing leaks out, nothing is missed.</div>
+
+      <h2><span class="num">03</span>step 1 — find the curl</h2>
+      <div class="eqn"><span id="eq-curl"></span></div>
+      <p>This scalar curl is what the copper-rose surface in the 3D view stands for: its height above (or below) each point of the triangle.</p>
+
+      <h2><span class="num">04</span>step 2 — the double integral</h2>
+      <p>Sweep <code>x</code> from 0 to 2; for each <code>x</code>, <code>y</code> runs from the base up to the line <code>y = 2x</code>:</p>
+      <div class="eqn rose"><span id="eq-double1"></span></div>
+      <div class="eqn rose"><span id="eq-double2"></span></div>
+      <div class="eqn rose"><span id="eq-double3"></span></div>
+      <p>The double integral — the volume trapped between the triangle and the curl surface, counting the part below the base as negative — comes out to <strong>4</strong>.</p>
+
+      <h2><span class="num">05</span>step 3 — the line integral, edge by edge</h2>
+      <p>Same answer, walked around the rim in three legs:</p>
+      <div class="eqn"><span id="eq-edge1"></span></div>
+      <p>Along the base, <code>y = 0</code> and <code>dy = 0</code>, so every term vanishes.</p>
+      <div class="eqn"><span id="eq-edge2"></span></div>
+      <p>Along the right edge, <code>x = 2</code> is fixed and <code>dx = 0</code>.</p>
+      <div class="eqn"><span id="eq-edge3"></span></div>
+      <p>Along the hypotenuse, <code>y = 2x</code> and <code>dy = 2dx</code>, integrated from <code>x = 2</code> back to <code>x = 0</code>.</p>
+      <div class="eqn teal"><span id="eq-total"></span></div>
+
+      <div class="note">Watch the "line integral" counter during the trace: it sits at 0 on the base, jumps to 24 on the right edge, then falls back to 4 on the hypotenuse.
+      The overshoot-and-settle is not a rounding artifact — it is the three partial sums <code>0, 24, −20</code> arriving one at a time.</div>
+
+      <h2><span class="num">06</span>reading the 3D scene</h2>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--chalk-teal)"></i>base triangle, region D</span>
+        <span><i class="swatch" style="background:var(--chalk-amber)"></i>boundary C, counter-clockwise</span>
+        <span><i class="swatch" style="background:var(--chalk-rose)"></i>curl-height columns</span>
+      </div>
+      <p>The flat teal triangle is <code>D</code> sitting in the <code>z = 0</code> plane. The amber loop is <code>C</code>.
+      Each rose or pale column stands over a small patch of <code>D</code> with height <code>M<sub>x</sub> − L<sub>y</sub> = 3 − x&sup2;</code> —
+      tall and warm where curl is strongly positive near <code>x = 0</code>, thin and pale as <code>x</code> approaches <code>&radic;3</code>, and dipping
+      below the base where curl turns negative past that point. Summing every column's signed volume gives the same 4 that the boundary trace gives.</p>
+
+      <hr>
+      <p style="font-size:13px;color:var(--chalk-dim);">Green's Theorem is the flat-earth version of Stokes' Theorem — restrict a surface integral of curl to a surface lying in a single plane,
+      and the surface integral collapses to this double integral, while the boundary circulation becomes an ordinary 2D line integral. It is also why aerodynamicists
+      can get circulation around an airfoil cross-section by integrating vorticity over the enclosed area instead of tracking the flow around the whole boundary.</p>
+
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+(function(){
+  function K(id, tex, display){
+    var el = document.getElementById(id);
+    if(!el) return;
+    try{ katex.render(tex, el, {displayMode: !!display, throwOnError:false}); }
+    catch(e){ el.textContent = tex; }
+  }
+  K('eq-verts', '(0,0),\\ (2,0),\\ (2,4)');
+  K('eq-field', '\\vec F(x,y) = \\langle x^2 y,\\; 3x \\rangle \\quad\\Rightarrow\\quad L = x^2y,\\ \\ M = 3x', true);
+  K('eq-green', '\\oint_C L\\,dx + M\\,dy \\;=\\; \\iint_D \\left(\\frac{\\partial M}{\\partial x} - \\frac{\\partial L}{\\partial y}\\right) dA', true);
+  K('eq-curl', '\\frac{\\partial M}{\\partial x} - \\frac{\\partial L}{\\partial y} = \\frac{\\partial}{\\partial x}(3x) - \\frac{\\partial}{\\partial y}(x^2y) = 3 - x^2', true);
+  K('eq-double1', '\\iint_D (3-x^2)\\,dA = \\int_0^2 \\int_0^{2x} (3-x^2)\\,dy\\,dx', true);
+  K('eq-double2', '= \\int_0^2 (3-x^2)(2x)\\,dx = \\int_0^2 \\big(6x - 2x^3\\big)\\,dx', true);
+  K('eq-double3', '= \\Big[\\,3x^2 - \\tfrac12 x^4\\,\\Big]_0^2 = 12 - 8 = 4', true);
+  K('eq-edge1', '(0,0)\\to(2,0):\\quad \\int_0^2 (x^2\\cdot 0)\\,dx + 3x\\cdot 0 = 0', true);
+  K('eq-edge2', '(2,0)\\to(2,4):\\quad \\int_0^4 3(2)\\,dy = 6\\!\\int_0^4 dy = 24', true);
+  K('eq-edge3', '(2,4)\\to(0,0):\\quad \\int_2^0 \\big(2x^3 + 6x\\big)\\,dx = \\Big[\\tfrac12x^4+3x^2\\Big]_2^0 = -20', true);
+  K('eq-total', '\\oint_C L\\,dx+M\\,dy = 0 + 24 - 20 = 4 \\;=\\; \\iint_D(3-x^2)\\,dA', true);
+})();
+</script>
+
+<script>
+(function(){
+  var container = document.getElementById('canvas-container');
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+
+  var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  container.appendChild(renderer.domElement);
+
+  var COLORS = {
+    white: 0xeef2ea,
+    dim: 0x9db2c2,
+    teal: 0x6fbf9f,
+    amber: 0xe8a94c,
+    rose: 0xd17a82,
+    grid: 0x27455f
+  };
+
+  var target = new THREE.Vector3(1, 1.6, 0.6);
+  var spherical = {theta: 0.95, phi: 1.05, radius: 8.5};
+
+  function updateCamera(){
+    var s = spherical;
+    camera.position.x = target.x + s.radius * Math.sin(s.phi) * Math.sin(s.theta);
+    camera.position.y = target.y + s.radius * Math.cos(s.phi);
+    camera.position.z = target.z + s.radius * Math.sin(s.phi) * Math.cos(s.theta);
+    camera.lookAt(target);
+  }
+  updateCamera();
+
+  function resize(){
+    var w = container.clientWidth, h = container.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  var dragging = false, lastX = 0, lastY = 0;
+  container.addEventListener('pointerdown', function(e){
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    container.setPointerCapture(e.pointerId);
+  });
+  container.addEventListener('pointerup', function(e){ dragging = false; });
+  container.addEventListener('pointerleave', function(){ dragging = false; });
+  container.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    spherical.theta -= dx * 0.006;
+    spherical.phi -= dy * 0.006;
+    spherical.phi = Math.max(0.25, Math.min(Math.PI - 0.25, spherical.phi));
+    updateCamera();
+  });
+  container.addEventListener('wheel', function(e){
+    e.preventDefault();
+    spherical.radius *= (1 + e.deltaY * 0.001);
+    spherical.radius = Math.max(4, Math.min(16, spherical.radius));
+    updateCamera();
+  }, {passive:false});
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+  var dl = new THREE.DirectionalLight(0xffffff, 0.55);
+  dl.position.set(4, 8, 5);
+  scene.add(dl);
+
+  function makeLabel(text, color){
+    var canvas = document.createElement('canvas');
+    canvas.width = 128; canvas.height = 64;
+    var ctx = canvas.getContext('2d');
+    ctx.font = '600 40px Newsreader, serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 34);
+    var tex = new THREE.CanvasTexture(canvas);
+    var mat = new THREE.SpriteMaterial({map: tex, transparent:true});
+    var sprite = new THREE.Sprite(mat);
+    sprite.scale.set(0.5, 0.25, 1);
+    return sprite;
+  }
+
+  var axesGroup = new THREE.Group();
+  function addAxis(dir, len, color, labelText){
+    var geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(len)]);
+    var mat = new THREE.LineBasicMaterial({color: color, transparent:true, opacity:0.55});
+    axesGroup.add(new THREE.Line(geo, mat));
+    var cone = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.16, 12), new THREE.MeshBasicMaterial({color:color, transparent:true, opacity:0.7}));
+    var tip = dir.clone().multiplyScalar(len);
+    cone.position.copy(tip);
+    cone.lookAt(tip.clone().add(dir));
+    cone.rotateX(Math.PI/2);
+    axesGroup.add(cone);
+    var label = makeLabel(labelText, '#' + (new THREE.Color(color)).getHexString());
+    label.position.copy(tip.clone().add(dir.clone().multiplyScalar(0.28)));
+    axesGroup.add(label);
+  }
+  addAxis(new THREE.Vector3(1,0,0), 2.7, COLORS.dim, 'x');
+  addAxis(new THREE.Vector3(0,0,1), 4.7, COLORS.dim, 'y');
+  addAxis(new THREE.Vector3(0,1,0), 3.6, COLORS.dim, 'z');
+  scene.add(axesGroup);
+
+  var floorGrid = new THREE.GridHelper(6, 12, COLORS.grid, COLORS.grid);
+  floorGrid.position.set(1, -0.001, 2);
+  floorGrid.material.transparent = true;
+  floorGrid.material.opacity = 0.28;
+  scene.add(floorGrid);
+
+  function P(x, y, z){ return new THREE.Vector3(x, z, y); }
+
+  var triShape = new THREE.Shape();
+  var triGeo = new THREE.BufferGeometry();
+  var triVerts = new Float32Array([
+    0,0,0,   2,0,0,   2,0,4
+  ]);
+  triGeo.setAttribute('position', new THREE.BufferAttribute(triVerts, 3));
+  triGeo.setIndex([0,1,2]);
+  triGeo.computeVertexNormals();
+  var triMat = new THREE.MeshBasicMaterial({color: COLORS.teal, transparent:true, opacity:0.22, side: THREE.DoubleSide});
+  var triMesh = new THREE.Mesh(triGeo, triMat);
+  scene.add(triMesh);
+
+  var triEdgeGeo = new THREE.BufferGeometry().setFromPoints([P(0,0,0), P(2,0,0), P(2,4,0), P(0,0,0)]);
+  var triEdgeMat = new THREE.LineBasicMaterial({color: COLORS.teal, transparent:true, opacity:0.35});
+  scene.add(new THREE.Line(triEdgeGeo, triEdgeMat));
+
+  var segments = [
+    {a:[0,0], b:[2,0]},
+    {a:[2,0], b:[2,4]},
+    {a:[2,4], b:[0,0]}
+  ];
+  var boundaryGroup = new THREE.Group();
+  segments.forEach(function(seg){
+    var geo = new THREE.BufferGeometry().setFromPoints([P(seg.a[0],seg.a[1],0), P(seg.b[0],seg.b[1],0)]);
+    var mat = new THREE.LineBasicMaterial({color: COLORS.amber, linewidth:2});
+    boundaryGroup.add(new THREE.Line(geo, mat));
+    var dir = new THREE.Vector3(seg.b[0]-seg.a[0], 0, seg.b[1]-seg.a[1]).normalize();
+    var mid = new THREE.Vector3(P(seg.a[0],seg.a[1],0).x*0.5 + P(seg.b[0],seg.b[1],0).x*0.5, 0.01, P(seg.a[0],seg.a[1],0).z*0.5 + P(seg.b[0],seg.b[1],0).z*0.5);
+    var cone = new THREE.Mesh(new THREE.ConeGeometry(0.06,0.2,10), new THREE.MeshBasicMaterial({color: COLORS.amber}));
+    cone.position.copy(mid);
+    cone.position.y = 0.02;
+    var target2 = mid.clone().add(dir);
+    cone.lookAt(target2);
+    cone.rotateX(Math.PI/2);
+    boundaryGroup.add(cone);
+  });
+  scene.add(boundaryGroup);
+
+  var particleGeo = new THREE.SphereGeometry(0.075, 16, 16);
+  var particleMat = new THREE.MeshBasicMaterial({color: COLORS.amber});
+  var particle = new THREE.Mesh(particleGeo, particleMat);
+  particle.visible = false;
+  scene.add(particle);
+
+  var fieldGroup = new THREE.Group();
+  fieldGroup.visible = false;
+  (function buildField(){
+    var nx = 5;
+    for(var i=1;i<=nx;i++){
+      var x = (2*i)/(nx+1);
+      var nyLevels = 3;
+      for(var j=1;j<=nyLevels;j++){
+        var y = (2*x) * j/(nyLevels+1);
+        var Fx = x*x*y, Fy = 3*x;
+        var mag = Math.sqrt(Fx*Fx+Fy*Fy);
+        var len = Math.min(0.55, 0.10 + mag*0.02);
+        var dir3 = new THREE.Vector3(Fx, 0, Fy).normalize();
+        var origin = P(x,y,0.02);
+        var t = Math.min(1, mag/20);
+        var col = new THREE.Color(COLORS.teal).lerp(new THREE.Color(COLORS.rose), t);
+        var arrow = new THREE.ArrowHelper(dir3, origin, len, col.getHex(), len*0.35, len*0.22);
+        fieldGroup.add(arrow);
+      }
+    }
+  })();
+  scene.add(fieldGroup);
+
+  var columnGroup = new THREE.Group();
+  var columns = [];
+  (function buildColumns(){
+    var nxDiv = 12;
+    var dx = 2/nxDiv;
+    for(var i=0;i<nxDiv;i++){
+      var x0 = i*dx, x1 = x0+dx;
+      var xc = (x0+x1)/2;
+      var yMax0 = 2*x0, yMax1 = 2*x1;
+      var yMaxC = 2*xc;
+      var nyDiv = Math.max(1, Math.round((yMaxC/4)*6));
+      var dy = yMaxC/nyDiv;
+      for(var j=0;j<nyDiv;j++){
+        var y0 = j*dy, y1 = y0+dy;
+        var yc = (y0+y1)/2;
+        var h = 3 - xc*xc;
+        var cellArea = dx*dy;
+        var boxW = dx*0.92, boxD = dy*0.92;
+        var geo = new THREE.BoxGeometry(boxW, Math.max(Math.abs(h),0.001), boxD);
+        var t = Math.max(-1, Math.min(1, h/3));
+        var col;
+        if(h >= 0){ col = new THREE.Color(COLORS.white).lerp(new THREE.Color(COLORS.rose), t); }
+        else { col = new THREE.Color(COLORS.white).lerp(new THREE.Color(0x3b6fa0), -t); }
+        var mat = new THREE.MeshLambertMaterial({color: col.getHex(), transparent:true, opacity:0.88});
+        var mesh = new THREE.Mesh(geo, mat);
+        var yc3 = h/2;
+        mesh.position.set(xc, yc3, yc);
+        mesh.scale.y = 0.0001;
+        columnGroup.add(mesh);
+        columns.push({mesh: mesh, targetH: h, area: cellArea});
+      }
+    }
+  })();
+  scene.add(columnGroup);
+
+  var lineValueEl = document.getElementById('line-value');
+  var lineSubEl = document.getElementById('line-sub');
+  var areaValueEl = document.getElementById('area-value');
+  var areaSubEl = document.getElementById('area-sub');
+
+  var traceState = null;
+  var volumeState = null;
+
+  function lerpPt(a,b,t){ return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t]; }
+
+  function startTrace(){
+    particle.visible = true;
+    traceState = {
+      segIndex: 0,
+      segT: 0,
+      accum: 0,
+      speed: 0.55,
+      segTotals: [0, 24, -20]
+    };
+  }
+
+  function startVolume(){
+    columns.forEach(function(c){ c.mesh.scale.y = 0.0001; });
+    volumeState = {t: 0, dur: 1.6, running: 0};
+  }
+
+  function resetAll(){
+    traceState = null;
+    volumeState = null;
+    particle.visible = false;
+    fieldGroup.visible = false;
+    document.getElementById('btn-field').classList.remove('toggled');
+    columns.forEach(function(c){ c.mesh.scale.y = 0.0001; });
+    lineValueEl.textContent = '0.00';
+    lineSubEl.textContent = 'press "trace boundary"';
+    areaValueEl.textContent = '0.00';
+    areaSubEl.textContent = 'press "raise curl surface"';
+  }
+
+  document.getElementById('btn-trace').addEventListener('click', startTrace);
+  document.getElementById('btn-volume').addEventListener('click', startVolume);
+  document.getElementById('btn-reset').addEventListener('click', resetAll);
+  document.getElementById('btn-field').addEventListener('click', function(){
+    fieldGroup.visible = !fieldGroup.visible;
+    this.classList.toggle('toggled', fieldGroup.visible);
+  });
+
+  var clock = new THREE.Clock();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt = Math.min(clock.getDelta(), 0.05);
+
+    if(traceState){
+      var ts = traceState;
+      var seg = segments[ts.segIndex];
+      var segLen = Math.hypot(seg.b[0]-seg.a[0], seg.b[1]-seg.a[1]);
+      ts.segT += (ts.speed * dt) / (segLen*0.5 + 0.4);
+      if(ts.segT >= 1){
+        ts.segT = 1;
+      }
+      var pt = lerpPt(seg.a, seg.b, ts.segT);
+      particle.position.copy(P(pt[0], pt[1], 0.03));
+
+      var completedTotal = 0;
+      for(var k=0;k<ts.segIndex;k++) completedTotal += ts.segTotals[k];
+      var currentPartial = ts.segTotals[ts.segIndex] * ts.segT;
+      var liveTotal = completedTotal + currentPartial;
+      lineValueEl.textContent = liveTotal.toFixed(2);
+      lineSubEl.textContent = 'edge ' + (ts.segIndex+1) + ' of 3';
+
+      if(ts.segT >= 1){
+        ts.segIndex += 1;
+        ts.segT = 0;
+        if(ts.segIndex >= 3){
+          traceState = null;
+          lineValueEl.textContent = '4.00';
+          lineSubEl.textContent = 'boundary complete — matches ∬';
+          particle.visible = false;
+        }
+      }
+    }
+
+    if(volumeState){
+      var vs = volumeState;
+      vs.t += dt;
+      var progress = Math.min(1, vs.t / vs.dur);
+      var eased = 1 - Math.pow(1-progress, 3);
+      var running = 0;
+      columns.forEach(function(c, idx){
+        var stagger = Math.min(1, Math.max(0, (eased*columns.length - idx*0.35) / 6));
+        var s = Math.max(0.0001, Math.abs(c.targetH) * stagger);
+        c.mesh.scale.y = s / Math.max(Math.abs(c.targetH), 0.0001);
+        running += c.targetH * c.area * stagger;
+      });
+      areaValueEl.textContent = running.toFixed(2);
+      areaSubEl.textContent = progress < 1 ? 'summing columns…' : 'converged — matches ∮';
+      if(progress >= 1){
+        volumeState = null;
+        areaValueEl.textContent = '4.00';
+        areaSubEl.textContent = 'converged — matches ∮';
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

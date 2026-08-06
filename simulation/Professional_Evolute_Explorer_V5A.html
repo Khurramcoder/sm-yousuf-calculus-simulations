@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Professional Evolute Explorer V5A</title>
+<style>
+body{margin:0;background:#0f172a;color:#fff;font-family:Segoe UI,sans-serif}
+#app{display:grid;grid-template-columns:320px 1fr;height:100vh}
+#side{background:#111827;padding:14px;overflow:auto}
+.card{background:#1f2937;padding:12px;border-radius:10px;margin-bottom:10px}
+button,select,input{width:100%;padding:8px;margin:4px 0}
+#main{position:relative}
+svg{width:100%;height:100%}
+#info{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.75);padding:10px;border-radius:8px}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="side">
+<h2>Evolute Explorer V5A</h2>
+<div class="card">
+<select id="curve">
+<option value="parabola">Parabola</option>
+<option value="circle">Circle</option>
+<option value="ellipse">Ellipse</option>
+<option value="cycloid">Cycloid</option>
+<option value="astroid">Astroid</option>
+</select>
+<button id="play">Play / Pause</button>
+<button id="reset">Reset</button>
+<input id="slider" type="range" min="0" max="100" value="0">
+</div>
+<div class="card">
+<b>Features</b><br>
+✓ Real animation<br>
+✓ Tangent & Normal<br>
+✓ Curvature computation<br>
+✓ Osculating circle<br>
+✓ Evolute tracing<br>
+✓ Multiple curves
+</div>
+</div>
+<div id="main">
+<svg id="svg"></svg>
+<div id="info"></div>
+</div>
+</div>
+<script>
+const svg=document.getElementById("svg");
+let playing=false,param=0,evolute=[];
+
+const curves={
+parabola:{min:-8,max:8,x:t=>t,y:t=>t*t/8,dx:t=>1,dy:t=>t/4,ddx:t=>0,ddy:t=>0.25},
+circle:{min:0,max:2*Math.PI,x:t=>5*Math.cos(t),y:t=>5*Math.sin(t),dx:t=>-5*Math.sin(t),dy:t=>5*Math.cos(t),ddx:t=>-5*Math.cos(t),ddy:t=>-5*Math.sin(t)},
+ellipse:{min:0,max:2*Math.PI,x:t=>7*Math.cos(t),y:t=>4*Math.sin(t),dx:t=>-7*Math.sin(t),dy:t=>4*Math.cos(t),ddx:t=>-7*Math.cos(t),ddy:t=>-4*Math.sin(t)},
+cycloid:{min:0,max:4*Math.PI,x:t=>t-Math.sin(t),y:t=>1-Math.cos(t),dx:t=>1-Math.cos(t),dy:t=>Math.sin(t),ddx:t=>Math.sin(t),ddy:t=>Math.cos(t)},
+astroid:{min:0,max:2*Math.PI,x:t=>5*Math.cos(t)**3,y:t=>5*Math.sin(t)**3,
+dx:t=>-15*Math.cos(t)**2*Math.sin(t),
+dy:t=>15*Math.sin(t)**2*Math.cos(t),
+ddx:t=>30*Math.cos(t)*Math.sin(t)**2-15*Math.cos(t)**3,
+ddy:t=>30*Math.sin(t)*Math.cos(t)**2-15*Math.sin(t)**3}
+};
+let current="parabola";
+
+function S(x,y){
+const w=svg.clientWidth,h=svg.clientHeight;
+return {x:w/2+x*30,y:h/2-y*30};
+}
+function add(tag,a){
+const e=document.createElementNS("http://www.w3.org/2000/svg",tag);
+for(const k in a)e.setAttribute(k,a[k]);
+svg.appendChild(e);return e;
+}
+function tval(){
+const c=curves[current];
+return c.min+(c.max-c.min)*param;
+}
+function curvature(){
+const c=curves[current],t=tval();
+const dx=c.dx(t),dy=c.dy(t),ddx=c.ddx(t),ddy=c.ddy(t);
+const den=Math.pow(dx*dx+dy*dy,1.5);
+if(den<1e-9)return 0.001;
+return Math.abs(dx*ddy-dy*ddx)/den;
+}
+function rho(){return Math.min(30,1/Math.max(curvature(),0.001));}
+function center(){
+const c=curves[current],t=tval();
+const x=c.x(t),y=c.y(t),dx=c.dx(t),dy=c.dy(t);
+let s=Math.sqrt(dx*dx+dy*dy); if(s<1e-9)s=1;
+const r=rho();
+return {x:x-r*(dy/s),y:y+r*(dx/s)};
+}
+
+function render(){
+svg.innerHTML="";
+const w=svg.clientWidth,h=svg.clientHeight;
+
+for(let x=0;x<w;x+=40)add("line",{x1:x,y1:0,x2:x,y2:h,stroke:"#1e293b"});
+for(let y=0;y<h;y+=40)add("line",{x1:0,y1:y,x2:w,y2:y,stroke:"#1e293b"});
+
+const c=curves[current];
+let d="";
+for(let i=0;i<=700;i++){
+ const t=c.min+(c.max-c.min)*i/700;
+ const p=S(c.x(t),c.y(t));
+ d+=(i?" L ":"M ")+p.x+" "+p.y;
+}
+add("path",{d,fill:"none",stroke:"#22c55e","stroke-width":4});
+
+const t=tval(),x=c.x(t),y=c.y(t),dx=c.dx(t),dy=c.dy(t);
+const p=S(x,y);
+
+add("line",{x1:p.x-dx*25,y1:p.y+dy*25,x2:p.x+dx*25,y2:p.y-dy*25,stroke:"#38bdf8","stroke-width":3});
+add("line",{x1:p.x+dy*25,y1:p.y+dx*25,x2:p.x-dy*25,y2:p.y-dx*25,stroke:"#f59e0b","stroke-width":3});
+
+const cc=center(),cp=S(cc.x,cc.y);
+add("line",{x1:p.x,y1:p.y,x2:cp.x,y2:cp.y,stroke:"#ef4444"});
+add("circle",{cx:p.x,cy:p.y,r:6,fill:"white"});
+add("circle",{cx:cp.x,cy:cp.y,r:5,fill:"#ef4444"});
+add("circle",{cx:cp.x,cy:cp.y,r:rho()*30,fill:"none",stroke:"#f59e0b"});
+
+if(evolute.length>1){
+ let ed="";
+ evolute.forEach((v,i)=>{
+   const q=S(v.x,v.y);
+   ed+=(i?" L ":"M ")+q.x+" "+q.y;
+ });
+ add("path",{d:ed,fill:"none",stroke:"#ff3366","stroke-width":4});
+}
+
+document.getElementById("info").innerHTML=
+`Curve: ${current}<br>κ=${curvature().toFixed(5)}<br>ρ=${rho().toFixed(3)}<br>Evolute points=${evolute.length}`;
+}
+
+document.getElementById("curve").onchange=e=>{current=e.target.value;evolute=[];render();};
+document.getElementById("slider").oninput=e=>{param=e.target.value/100;render();};
+document.getElementById("play").onclick=()=>playing=!playing;
+document.getElementById("reset").onclick=()=>{param=0;evolute=[];render();};
+
+function animate(){
+ if(playing){
+   param+=0.002;
+   if(param>1){param=0;evolute=[];}
+   evolute.push(center());
+   document.getElementById("slider").value=param*100;
+   render();
+ }
+ requestAnimationFrame(animate);
+}
+window.onresize=render;
+render();
+animate();
+</script>
+</body>
+</html>

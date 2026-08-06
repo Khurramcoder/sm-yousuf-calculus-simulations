@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Five Perfect Solids — Platonic Polyhedra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --ink-deep: #11142a;
+    --ink-mid: #1b2044;
+    --ink-line: #2a2f5c;
+    --parchment: #e9dfc4;
+    --parchment-dim: #d8caa2;
+    --gold: #c9a227;
+    --gold-bright: #e0bd4e;
+    --gold-soft: #a9863f;
+    --vermilion: #b23a2e;
+    --teal: #3e6e68;
+    --text-light: #f2ead3;
+    --text-muted: #b9b4d6;
+    --text-dark: #221c10;
+    --display: 'Cormorant Garamond', 'Times New Roman', serif;
+    --body: 'Crimson Pro', 'Georgia', serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--ink-deep);
+    color: var(--text-light);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- starfield texture ---------- */
+  .stars{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(233,223,196,.5) 0, transparent 60%),
+      radial-gradient(1px 1px at 80% 10%, rgba(233,223,196,.35) 0, transparent 60%),
+      radial-gradient(1.5px 1.5px at 35% 65%, rgba(201,162,39,.45) 0, transparent 60%),
+      radial-gradient(1px 1px at 60% 80%, rgba(233,223,196,.4) 0, transparent 60%),
+      radial-gradient(1px 1px at 92% 55%, rgba(233,223,196,.3) 0, transparent 60%),
+      radial-gradient(1.5px 1.5px at 15% 90%, rgba(201,162,39,.3) 0, transparent 60%);
+    opacity:.7;
+  }
+
+  a{ color: var(--gold-bright); }
+
+  ::selection{ background: var(--gold); color: var(--text-dark); }
+
+  /* ---------- nav ---------- */
+  nav{
+    position: sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:center; gap: clamp(10px,2.4vw,28px);
+    padding: 14px 16px;
+    background: rgba(17,20,42,.86);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--ink-line);
+    flex-wrap: wrap;
+  }
+  nav a{
+    color: var(--text-muted);
+    text-decoration:none;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    transition: color .2s;
+    white-space: nowrap;
+  }
+  nav a:hover{ color: var(--gold-bright); }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position: relative;
+    min-height: 92vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    overflow:hidden;
+    padding: 40px 20px;
+  }
+  #hero-canvas{ position:absolute; inset:0; z-index:1; }
+  .hero-content{ position:relative; z-index:2; max-width: 780px; }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+  .hero h1{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(2.6rem, 7vw, 5.2rem);
+    line-height: 1.02;
+    margin: 0 0 20px;
+    color: var(--text-light);
+    letter-spacing: .01em;
+  }
+  .hero h1 em{ color: var(--gold-bright); font-style: italic; }
+  .hero p.lede{
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 auto 30px;
+  }
+  .scroll-hint{
+    font-family: var(--mono); font-size: 11px; letter-spacing:.2em; text-transform:uppercase;
+    color: var(--text-muted); opacity:.7;
+  }
+  .scroll-hint::after{ content:'↓'; display:block; margin-top:6px; animation: bob 2s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(6px);} }
+
+  /* ---------- sections ---------- */
+  main{ position:relative; z-index:1; }
+  section{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 90px 24px;
+  }
+  section + section{ border-top: 1px solid var(--ink-line); }
+
+  .kicker{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 12px;
+  }
+  h2{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+    margin: 0 0 26px;
+    color: var(--text-light);
+  }
+  h3{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--gold-bright);
+    margin: 0 0 10px;
+  }
+  p{ line-height: 1.75; color: var(--text-muted); font-size: 1.06rem; }
+  .lead-text{ color: var(--text-light); font-size: 1.12rem; max-width: 640px; }
+
+  /* parchment definition cards */
+  .card{
+    background: linear-gradient(180deg, var(--parchment), var(--parchment-dim));
+    color: var(--text-dark);
+    border-radius: 3px;
+    padding: 26px 28px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    position: relative;
+  }
+  .card::before{
+    content:'';
+    position:absolute; inset: 8px;
+    border: 1px solid rgba(34,28,16,.25);
+    pointer-events:none;
+  }
+  .card h4{
+    font-family: var(--display); font-size: 1.25rem; font-weight:700;
+    margin: 0 0 8px; color: var(--text-dark);
+  }
+  .card p{ color: rgba(34,28,16,.85); font-size: .98rem; line-height:1.65; }
+  .def-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 10px;}
+  @media (max-width: 720px){ .def-grid{ grid-template-columns: 1fr; } }
+
+  .mini-diagram{ width:100%; height:120px; margin-bottom:14px; }
+
+  /* ---------- solid explorer ---------- */
+  .explorer{
+    display:grid; grid-template-columns: 300px 1fr; gap: 30px;
+    margin-top: 30px;
+  }
+  @media (max-width: 800px){ .explorer{ grid-template-columns: 1fr; } }
+
+  .solid-tabs{ display:flex; flex-direction:column; gap:8px; }
+  .solid-tab{
+    display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    background: var(--ink-mid);
+    border: 1px solid var(--ink-line);
+    color: var(--text-muted);
+    padding: 14px 16px;
+    cursor:pointer;
+    text-align:left;
+    font-family: var(--body);
+    transition: all .2s;
+    border-radius: 2px;
+  }
+  .solid-tab:hover{ border-color: var(--gold-soft); color: var(--text-light); }
+  .solid-tab.active{
+    background: linear-gradient(90deg, rgba(201,162,39,.16), transparent);
+    border-color: var(--gold);
+    color: var(--text-light);
+  }
+  .solid-tab .name{ font-family: var(--display); font-size: 1.15rem; font-weight:600; }
+  .solid-tab .elem{
+    font-family: var(--mono); font-size: 10px; letter-spacing:.12em; text-transform:uppercase;
+    color: var(--gold-soft);
+  }
+  .solid-tab.active .elem{ color: var(--gold-bright); }
+
+  .viewer-wrap{
+    background: radial-gradient(circle at 50% 40%, var(--ink-mid), var(--ink-deep));
+    border: 1px solid var(--ink-line);
+    border-radius: 3px;
+    position: relative;
+    min-height: 420px;
+    display:flex; flex-direction:column;
+  }
+  .viewer-canvas-holder{ flex:1; position:relative; min-height: 320px; cursor: grab; }
+  .viewer-canvas-holder:active{ cursor: grabbing; }
+  .viewer-toolbar{
+    display:flex; gap:10px; padding: 12px 16px; border-top: 1px solid var(--ink-line);
+    flex-wrap:wrap; align-items:center; justify-content:space-between;
+  }
+  .toggle-btn{
+    font-family: var(--mono); font-size: 10.5px; letter-spacing:.1em; text-transform:uppercase;
+    background: transparent; border:1px solid var(--ink-line); color: var(--text-muted);
+    padding: 7px 12px; border-radius: 20px; cursor:pointer; transition: all .2s;
+  }
+  .toggle-btn:hover{ border-color: var(--gold-soft); color: var(--text-light); }
+  .toggle-btn.on{ background: var(--gold); border-color: var(--gold); color: var(--text-dark); font-weight:600; }
+  .drag-note{ font-family: var(--mono); font-size: 10px; color: var(--text-muted); opacity:.6; letter-spacing:.05em; }
+
+  .stat-row{
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--ink-line); margin-top: 24px;
+    border: 1px solid var(--ink-line);
+  }
+  @media (max-width: 720px){ .stat-row{ grid-template-columns: repeat(2,1fr); } }
+  .stat{
+    background: var(--ink-deep); padding: 18px 16px; text-align:center;
+  }
+  .stat .num{
+    font-family: var(--display); font-size: 2.1rem; font-weight:700; color: var(--gold-bright);
+    display:block; line-height:1;
+  }
+  .stat .label{
+    font-family: var(--mono); font-size: 10px; letter-spacing:.14em; text-transform:uppercase;
+    color: var(--text-muted); margin-top:6px; display:block;
+  }
+
+  .element-strip{
+    margin-top: 18px; padding: 16px 18px;
+    border-left: 2px solid var(--gold);
+    background: rgba(201,162,39,.06);
+    font-family: var(--body); color: var(--text-light); font-size: .98rem; line-height:1.6;
+  }
+  .element-strip b{ color: var(--gold-bright); font-family: var(--display); font-size: 1.05rem; }
+
+  /* ---------- euler ---------- */
+  .euler-box{
+    display:flex; align-items:center; justify-content:center; gap: 18px;
+    flex-wrap:wrap;
+    background: var(--ink-mid);
+    border:1px solid var(--ink-line);
+    padding: 34px 24px;
+    margin-top: 24px;
+    border-radius: 3px;
+  }
+  .euler-term{ text-align:center; }
+  .euler-term .val{
+    font-family: var(--mono); font-size: 2.4rem; font-weight:600; color: var(--gold-bright);
+    display:block;
+  }
+  .euler-term .tag{
+    font-family: var(--mono); font-size: 10px; letter-spacing:.15em; text-transform:uppercase;
+    color: var(--text-muted); margin-top: 4px; display:block;
+  }
+  .euler-op{ font-family: var(--display); font-size: 2rem; color: var(--text-muted); }
+  .euler-result{
+    font-family: var(--mono); font-size: 2.4rem; color: var(--text-light); padding: 6px 18px;
+    border: 1px solid var(--gold); border-radius: 6px;
+  }
+
+  /* ---------- duality ---------- */
+  .duality-wrap{
+    display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 26px;
+  }
+  @media (max-width: 720px){ .duality-wrap{ grid-template-columns: 1fr; } }
+  .dual-panel{
+    background: var(--ink-mid); border: 1px solid var(--ink-line); border-radius:3px;
+    height: 300px; position:relative; overflow:hidden;
+  }
+  .dual-label{
+    position:absolute; top:12px; left:14px; z-index:2;
+    font-family: var(--mono); font-size: 10px; letter-spacing:.14em; text-transform:uppercase;
+    color: var(--gold-soft);
+  }
+  .duality-controls{ display:flex; justify-content:center; margin-top: 18px; }
+
+  /* ---------- proof grid ---------- */
+  .proof-grid-wrap{ margin-top: 26px; overflow-x:auto; }
+  table.grid-table{ border-collapse: collapse; width:100%; min-width: 480px; }
+  table.grid-table th, table.grid-table td{
+    border: 1px solid var(--ink-line); text-align:center; padding: 14px 10px;
+    font-family: var(--mono); font-size: 13px;
+  }
+  table.grid-table th{
+    color: var(--gold); font-weight:600; background: var(--ink-mid); letter-spacing:.05em;
+  }
+  table.grid-table td{ color: var(--text-muted); transition: background .2s; cursor:default; }
+  table.grid-table td.valid{
+    background: rgba(201,162,39,.14); color: var(--text-light); font-weight:600;
+  }
+  table.grid-table td.valid small{ display:block; font-family:var(--body); font-size:11px; color: var(--gold-bright); margin-top:3px; }
+  table.grid-table td:hover{ background: rgba(201,162,39,.22); }
+
+  .formula-block{
+    background: var(--ink-mid); border-left: 2px solid var(--gold);
+    padding: 20px 24px; margin: 20px 0; overflow-x:auto;
+  }
+  .katex{ color: var(--text-light) !important; font-size: 1.05em; }
+  .katex .mord, .katex .mrel, .katex .mbin{ color: var(--text-light); }
+
+  /* ---------- footer ---------- */
+  footer{
+    text-align:center; padding: 60px 24px 80px;
+    font-family: var(--mono); font-size: 11px; letter-spacing:.08em;
+    color: var(--text-muted);
+  }
+  footer .glyph{ font-size: 22px; color: var(--gold); margin-bottom: 14px; }
+  footer a{ color: var(--gold-soft); }
+
+  .exercise-note{
+    margin-top: 30px; padding: 20px 22px;
+    border: 1px dashed var(--gold-soft);
+    color: var(--text-muted); font-size: .95rem; font-style: italic;
+  }
+  .exercise-note b{ color: var(--gold-bright); font-style: normal; font-family: var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+
+  @media (prefers-reduced-motion: reduce){
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--gold-bright); outline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<nav>
+  <a href="#definitions">Definitions</a>
+  <a href="#explorer">The Five Solids</a>
+  <a href="#euler">Euler's Formula</a>
+  <a href="#duality">Duality</a>
+  <a href="#proof">Why Only Five</a>
+</nav>
+
+<div class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="eyebrow">Geometry · Mathematics · Antiquity</div>
+    <h1>The Five<br><em>Perfect</em> Solids</h1>
+    <p class="lede">For over two thousand years, geometers have known there are exactly five convex regular polyhedra — bodies of such perfect symmetry that Plato bound them to fire, earth, air, water, and the cosmos itself.</p>
+    <div class="scroll-hint">Begin</div>
+  </div>
+</div>
+
+<main>
+
+  <section id="definitions">
+    <div class="kicker">§ 4.1 — Foundations</div>
+    <h2>What makes a solid&nbsp;<em style="font-family:var(--display); color:var(--gold-bright); font-style:italic;">platonic</em></h2>
+    <p class="lead-text">Before the five solids can be named, three ideas need pinning down: convexity, the polyhedron itself, and what it means for one to be perfectly regular.</p>
+
+    <div class="def-grid">
+      <div class="card">
+        <svg class="mini-diagram" viewBox="0 0 200 120"><polygon points="40,20 160,30 175,90 90,105 25,80" fill="none" stroke="#221c10" stroke-width="2"/><line x1="60" y1="40" x2="140" y2="80" stroke="#b23a2e" stroke-width="2"/><circle cx="60" cy="40" r="3" fill="#221c10"/><circle cx="140" cy="80" r="3" fill="#221c10"/></svg>
+        <h4>4.1.1 — Convex Set</h4>
+        <p>A subset X of Rⁿ is <em>convex</em> if, for every pair of points x, y in X, the segment joining them lies entirely within X — that is, for each t in [0,1], tx + (1−t)y remains in X. A convex set is closed under this kind of combination.</p>
+      </div>
+      <div class="card">
+        <svg class="mini-diagram" viewBox="0 0 200 120"><polygon points="30,90 70,15 145,25 175,70 120,110" fill="rgba(201,162,39,.18)" stroke="#221c10" stroke-width="2"/></svg>
+        <h4>4.1.2 — Convex Polyhedron</h4>
+        <p>A subset of R³ carved out by finitely many linear inequalities is a convex polyhedron — a solid built from finitely many planar faces. The intersection of two faces is an edge; the intersection of two edges is a vertex.</p>
+      </div>
+      <div class="card">
+        <svg class="mini-diagram" viewBox="0 0 200 120"><polygon points="100,10 175,60 145,110 55,110 25,60" fill="rgba(62,110,104,.18)" stroke="#221c10" stroke-width="2"/></svg>
+        <h4>4.1.3 — Regular Polyhedron</h4>
+        <p>A polyhedron is <em>regular</em> when every face, edge, and vertex is identical to every other — the same number of edges meets at each vertex, always at the same angles.</p>
+      </div>
+      <div class="card">
+        <svg class="mini-diagram" viewBox="0 0 200 120"><polygon points="100,15 145,45 130,100 70,100 55,45" fill="rgba(178,58,46,.14)" stroke="#221c10" stroke-width="2"/><circle cx="100" cy="15" r="3" fill="#b23a2e"/><circle cx="145" cy="45" r="3" fill="#b23a2e"/><circle cx="130" cy="100" r="3" fill="#b23a2e"/><circle cx="70" cy="100" r="3" fill="#b23a2e"/><circle cx="55" cy="45" r="3" fill="#b23a2e"/></svg>
+        <h4>4.1.4 — Platonic Solid</h4>
+        <p>A <em>convex regular polyhedron</em> is called a platonic solid. Remarkably, there are only five of them — each fully described by the shape of its face and how many faces meet at each vertex.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="explorer">
+    <div class="kicker">§ Interactive</div>
+    <h2>The five solids, in three dimensions</h2>
+    <p class="lead-text">Select a solid. Drag inside the viewer to turn it in your hand — the way Plato's students might have turned a wooden model, two thousand years before the wireframe existed.</p>
+
+    <div class="explorer">
+      <div class="solid-tabs" id="solid-tabs"></div>
+      <div class="viewer-wrap">
+        <div class="viewer-canvas-holder" id="viewer-holder"></div>
+        <div class="viewer-toolbar">
+          <div style="display:flex; gap:8px;">
+            <button class="toggle-btn on" id="btn-solid" type="button">Faces</button>
+            <button class="toggle-btn on" id="btn-wire" type="button">Edges</button>
+            <button class="toggle-btn" id="btn-spin" type="button">Auto‑spin</button>
+          </div>
+          <span class="drag-note">drag to rotate</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row" id="stat-row"></div>
+    <div class="element-strip" id="element-strip"></div>
+  </section>
+
+  <section id="euler">
+    <div class="kicker">§ 4.1.5</div>
+    <h2>Euler's Formula</h2>
+    <p class="lead-text">For any convex polyhedron with V vertices, E edges, and F faces:</p>
+    <div class="formula-block" id="euler-formula"></div>
+    <p>It holds for every one of the five solids — watch the tally update as you switch solids above.</p>
+    <div class="euler-box">
+      <div class="euler-term"><span class="val" id="ev-v">4</span><span class="tag">Vertices</span></div>
+      <div class="euler-op">−</div>
+      <div class="euler-term"><span class="val" id="ev-e">6</span><span class="tag">Edges</span></div>
+      <div class="euler-op">+</div>
+      <div class="euler-term"><span class="val" id="ev-f">4</span><span class="tag">Faces</span></div>
+      <div class="euler-op">=</div>
+      <div class="euler-result" id="ev-r">2</div>
+    </div>
+  </section>
+
+  <section id="duality">
+    <div class="kicker">§ 4.1.6</div>
+    <h2>Duality</h2>
+    <p class="lead-text">Join the midpoints of adjacent faces of a platonic solid with new edges, and the shape you get back is its <em>dual</em> — again platonic. Do it twice, and the original solid returns, only smaller. The tetrahedron is self‑dual; the cube pairs with the octahedron; the dodecahedron pairs with the icosahedron.</p>
+
+    <div class="duality-wrap">
+      <div class="dual-panel"><div class="dual-label" id="dual-a-label">Cube</div><div id="dual-a-canvas" style="width:100%;height:100%;"></div></div>
+      <div class="dual-panel"><div class="dual-label" id="dual-b-label">Octahedron ( dual )</div><div id="dual-b-canvas" style="width:100%;height:100%;"></div></div>
+    </div>
+    <div class="duality-controls">
+      <button class="toggle-btn on" id="dual-pair-btn" type="button">Cube ↔ Octahedron</button>
+    </div>
+
+    <div class="card" style="margin-top:28px;">
+      <h4>Exercise — equal edges</h4>
+      <p>Show that a platonic solid and its dual have the same number of edges.</p>
+      <p style="margin-top:10px;"><b style="font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#7a5c1e;">Solution</b> — Corresponding to each face of a platonic solid there is a vertex of its dual, so the solid and its dual interchange F and V. Euler's formula V − E + F = 2 is symmetric in V and F, so E must stay fixed.</p>
+    </div>
+  </section>
+
+  <section id="proof">
+    <div class="kicker">§ Theorem</div>
+    <h2>Why there are only ever five</h2>
+    <p class="lead-text">Suppose <em>r</em> faces meet at each vertex, and every face is a regular <em>n</em>‑gon (so r, n ≥ 3). Each interior angle of a regular n‑gon measures:</p>
+    <div class="formula-block" id="angle-formula"></div>
+    <p>The angles meeting at any vertex of a convex solid must sum to less than a full turn, 2π:</p>
+    <div class="formula-block" id="ineq-formula"></div>
+    <p>Multiplying through by n/π and rearranging gives a strikingly simple inequality:</p>
+    <div class="formula-block" id="final-formula"></div>
+    <p>Integers r, n ≥ 3 satisfying this are scarce. The grid below tests every small pair — hover to see (r−2)(n−2) for each. Only five combinations survive, and each one determines exactly one solid.</p>
+
+    <div class="proof-grid-wrap">
+      <table class="grid-table" id="proof-table"></table>
+    </div>
+
+    <div class="exercise-note"><b>Exercise</b><br>Construct models of these five solids — paper, folded and glued along matching edges, remains the truest way to feel why no sixth is possible.</div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="glyph">✦</div>
+  There are precisely five platonic solids.<br>
+  Text after MathCity.org, §4.1 Platonic Polyhedra — rendered here as an interactive study.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+/* ================= DATA ================= */
+const SOLIDS = [
+  { key:'tetra', name:'Tetrahedron', gon:'4 Triangles', faces:4, edges:6, verts:4,
+    dual:'tetra', dualName:'Tetrahedron', element:'Fire',
+    note:'The sharpest of the solids — Plato assigned it to fire for its piercing points.' },
+  { key:'cube', name:'Cube', gon:'6 Squares', faces:6, edges:12, verts:8,
+    dual:'octa', dualName:'Octahedron', element:'Earth',
+    note:'Square faces stack and rest solidly — the natural emblem of the ground beneath us.' },
+  { key:'octa', name:'Octahedron', gon:'8 Triangles', faces:8, edges:12, verts:6,
+    dual:'cube', dualName:'Cube', element:'Air',
+    note:'Light, symmetrical, and quick to spin — Plato read it as the element of air.' },
+  { key:'dodeca', name:'Dodecahedron', gon:'12 Pentagons', faces:12, edges:30, verts:20,
+    dual:'icosa', dualName:'Icosahedron', element:'Cosmos',
+    note:'With faces closest to a sphere, this solid stood apart — Plato reserved it for the heavens themselves.' },
+  { key:'icosa', name:'Icosahedron', gon:'20 Triangles', faces:20, edges:30, verts:12,
+    dual:'dodeca', dualName:'Dodecahedron', element:'Water',
+    note:'Many small faces roll and flow — a fitting shape for water.' },
+];
+
+function geometryFor(key, radius){
+  radius = radius || 1;
+  switch(key){
+    case 'tetra': return new THREE.TetrahedronGeometry(radius);
+    case 'cube': return new THREE.BoxGeometry(radius*1.2, radius*1.2, radius*1.2);
+    case 'octa': return new THREE.OctahedronGeometry(radius);
+    case 'dodeca': return new THREE.DodecahedronGeometry(radius);
+    case 'icosa': return new THREE.IcosahedronGeometry(radius);
+  }
+}
+
+/* ================= HERO SCENE ================= */
+(function heroScene(){
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  const scene = new THREE.Scene();
+  let w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+  const camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
+  camera.position.set(0,0,6.2);
+
+  function size(){
+    w = canvas.parentElement.clientWidth; h = canvas.parentElement.clientHeight;
+    renderer.setSize(w,h,false);
+    camera.aspect = w/h; camera.updateProjectionMatrix();
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  size();
+  window.addEventListener('resize', size);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const geo = new THREE.IcosahedronGeometry(1.9, 0);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x1b2044, transparent:true, opacity:.55 });
+  const mesh = new THREE.Mesh(geo, mat);
+  group.add(mesh);
+
+  const edges = new THREE.EdgesGeometry(geo);
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xc9a227 });
+  const lines = new THREE.LineSegments(edges, lineMat);
+  group.add(lines);
+
+  // faint outer nested solids (nod to Kepler's cosmic model)
+  [2.6, 3.3].forEach((r,i)=>{
+    const g = new THREE.DodecahedronGeometry(r,0);
+    const e = new THREE.EdgesGeometry(g);
+    const l = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color:0xc9a227, transparent:true, opacity:.12 - i*0.04 }));
+    group.add(l);
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    group.rotation.y += 0.0028;
+    group.rotation.x += 0.0011;
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+/* ================= SOLID EXPLORER ================= */
+const explorer = (function(){
+  const holder = document.getElementById('viewer-holder');
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  holder.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  let w=holder.clientWidth, h=holder.clientHeight;
+  const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 100);
+  camera.position.set(0,0,4.4);
+
+  function size(){
+    w = holder.clientWidth; h = holder.clientHeight;
+    renderer.setSize(w,h,false);
+    camera.aspect = w/h; camera.updateProjectionMatrix();
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  size();
+  window.addEventListener('resize', size);
+
+  const group = new THREE.Group();
+  scene.add(group);
+  const light = new THREE.DirectionalLight(0xffffff, 1.1);
+  light.position.set(3,4,5); scene.add(light);
+  scene.add(new THREE.AmbientLight(0x8888aa, .7));
+
+  let solidMesh, edgeLines;
+  let showSolid = true, showWire = true, autoSpin = false;
+
+  function build(key){
+    if(solidMesh){ group.remove(solidMesh); solidMesh.geometry.dispose(); }
+    if(edgeLines){ group.remove(edgeLines); edgeLines.geometry.dispose(); }
+    const geo = geometryFor(key, 1.5);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xa9863f, metalness:.35, roughness:.5, flatShading:true, transparent:true, opacity: showSolid?0.92:0 });
+    solidMesh = new THREE.Mesh(geo, mat);
+    group.add(solidMesh);
+    const eg = new THREE.EdgesGeometry(geo);
+    edgeLines = new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: 0xf2ead3 }));
+    edgeLines.visible = showWire;
+    group.add(edgeLines);
+  }
+
+  function setSolidVisible(v){ showSolid=v; if(solidMesh) solidMesh.material.opacity = v?0.92:0; }
+  function setWireVisible(v){ showWire=v; if(edgeLines) edgeLines.visible = v; }
+  function setSpin(v){ autoSpin=v; }
+
+  // drag rotation
+  let dragging=false, lastX=0, lastY=0;
+  holder.addEventListener('pointerdown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; holder.setPointerCapture(e.pointerId); });
+  holder.addEventListener('pointerup', ()=> dragging=false);
+  holder.addEventListener('pointerleave', ()=> dragging=false);
+  holder.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx = e.clientX-lastX, dy = e.clientY-lastY;
+    group.rotation.y += dx*0.008;
+    group.rotation.x += dy*0.008;
+    lastX=e.clientX; lastY=e.clientY;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(autoSpin && !dragging){ group.rotation.y += 0.006; }
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  build('tetra');
+  group.rotation.x = 0.4; group.rotation.y = 0.6;
+
+  return { build, setSolidVisible, setWireVisible, setSpin };
+})();
+
+/* tabs */
+const tabsEl = document.getElementById('solid-tabs');
+let currentKey = 'tetra';
+SOLIDS.forEach(s=>{
+  const btn = document.createElement('button');
+  btn.className = 'solid-tab' + (s.key==='tetra' ? ' active':'');
+  btn.type = 'button';
+  btn.innerHTML = `<span class="name">${s.name}</span><span class="elem">${s.element}</span>`;
+  btn.addEventListener('click', ()=> selectSolid(s.key));
+  btn.dataset.key = s.key;
+  tabsEl.appendChild(btn);
+});
+
+function selectSolid(key){
+  currentKey = key;
+  const s = SOLIDS.find(x=>x.key===key);
+  document.querySelectorAll('.solid-tab').forEach(el=>{
+    el.classList.toggle('active', el.dataset.key===key);
+  });
+  explorer.build(key);
+
+  const statRow = document.getElementById('stat-row');
+  statRow.innerHTML = `
+    <div class="stat"><span class="num">${s.faces}</span><span class="label">Faces — ${s.gon}</span></div>
+    <div class="stat"><span class="num">${s.edges}</span><span class="label">Edges</span></div>
+    <div class="stat"><span class="num">${s.verts}</span><span class="label">Vertices</span></div>
+    <div class="stat"><span class="num">${s.dualName}</span><span class="label">Dual solid</span></div>
+  `;
+  document.getElementById('element-strip').innerHTML = `<b>${s.element}</b> — ${s.note}`;
+
+  document.getElementById('ev-v').textContent = s.verts;
+  document.getElementById('ev-e').textContent = s.edges;
+  document.getElementById('ev-f').textContent = s.faces;
+  document.getElementById('ev-r').textContent = s.verts - s.edges + s.faces;
+}
+selectSolid('tetra');
+
+/* toolbar toggles */
+const btnSolid = document.getElementById('btn-solid');
+const btnWire = document.getElementById('btn-wire');
+const btnSpin = document.getElementById('btn-spin');
+btnSolid.addEventListener('click', ()=>{
+  const on = !btnSolid.classList.contains('on');
+  btnSolid.classList.toggle('on', on);
+  explorer.setSolidVisible(on);
+});
+btnWire.addEventListener('click', ()=>{
+  const on = !btnWire.classList.contains('on');
+  btnWire.classList.toggle('on', on);
+  explorer.setWireVisible(on);
+});
+btnSpin.addEventListener('click', ()=>{
+  const on = !btnSpin.classList.contains('on');
+  btnSpin.classList.toggle('on', on);
+  explorer.setSpin(on);
+});
+
+/* ================= DUALITY VIEWERS ================= */
+function makeDualViewer(containerId){
+  const holder = document.getElementById(containerId);
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  holder.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  let w=holder.clientWidth, h=holder.clientHeight;
+  const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 100);
+  camera.position.set(0,0,4.2);
+  function size(){ w=holder.clientWidth; h=holder.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  size(); window.addEventListener('resize', size);
+  const group = new THREE.Group(); scene.add(group);
+  scene.add(new THREE.AmbientLight(0x8888aa,.8));
+  const light = new THREE.DirectionalLight(0xffffff,1); light.position.set(3,4,5); scene.add(light);
+
+  let mesh, wire;
+  function build(key){
+    if(mesh){ group.remove(mesh); mesh.geometry.dispose(); }
+    if(wire){ group.remove(wire); wire.geometry.dispose(); }
+    const geo = geometryFor(key, 1.35);
+    mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color:0x3e6e68, metalness:.3, roughness:.6, flatShading:true, transparent:true, opacity:.85 }));
+    group.add(mesh);
+    const eg = new THREE.EdgesGeometry(geo);
+    wire = new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color:0xf2ead3 }));
+    group.add(wire);
+  }
+  function animate(){ requestAnimationFrame(animate); group.rotation.y += 0.006; group.rotation.x = 0.3; renderer.render(scene,camera); }
+  animate();
+  return { build };
+}
+const dualA = makeDualViewer('dual-a-canvas');
+const dualB = makeDualViewer('dual-b-canvas');
+
+const DUAL_PAIRS = [
+  { a:'cube', b:'octa', label:'Cube ↔ Octahedron' },
+  { a:'dodeca', b:'icosa', label:'Dodecahedron ↔ Icosahedron' },
+  { a:'tetra', b:'tetra', label:'Tetrahedron ↔ Itself (self‑dual)' },
+];
+let dualIndex = 0;
+function showDualPair(i){
+  const p = DUAL_PAIRS[i];
+  const sa = SOLIDS.find(s=>s.key===p.a), sb = SOLIDS.find(s=>s.key===p.b);
+  dualA.build(p.a); dualB.build(p.b);
+  document.getElementById('dual-a-label').textContent = sa.name;
+  document.getElementById('dual-b-label').textContent = sb.name + (p.a===p.b ? '' : ' ( dual )');
+  document.getElementById('dual-pair-btn').textContent = p.label;
+}
+document.getElementById('dual-pair-btn').addEventListener('click', ()=>{
+  dualIndex = (dualIndex+1) % DUAL_PAIRS.length;
+  showDualPair(dualIndex);
+});
+showDualPair(0);
+
+/* ================= PROOF GRID ================= */
+const table = document.getElementById('proof-table');
+const ns = [3,4,5,6];
+const rs = [3,4,5,6];
+const solutionMap = { '3,3':'Tetrahedron', '4,3':'Cube', '5,3':'Dodecahedron', '3,4':'Octahedron', '3,5':'Icosahedron' };
+
+let thead = '<tr><th>r \\ n</th>' + ns.map(n=>`<th>n = ${n}</th>`).join('') + '</tr>';
+let rows = rs.map(r=>{
+  let cells = ns.map(n=>{
+    const val = (r-2)*(n-2);
+    const key = r+','+n;
+    const valid = val < 4 && solutionMap[key];
+    return `<td class="${valid?'valid':''}">${val}${valid? `<small>${solutionMap[key]}</small>` : ''}</td>`;
+  }).join('');
+  return `<tr><th>r = ${r}</th>${cells}</tr>`;
+}).join('');
+table.innerHTML = thead + rows;
+
+/* ================= KATEX FORMULAS ================= */
+window.addEventListener('load', ()=>{
+  katex.render("V - E + F = 2", document.getElementById('euler-formula'), { throwOnError:false, displayMode:true });
+  katex.render("\\dfrac{(n-2)\\pi}{n}", document.getElementById('angle-formula'), { throwOnError:false, displayMode:true });
+  katex.render("\\dfrac{r(n-2)\\pi}{n} < 2\\pi", document.getElementById('ineq-formula'), { throwOnError:false, displayMode:true });
+  katex.render("(r-2)(n-2) < 4 \\qquad r,n \\ge 3", document.getElementById('final-formula'), { throwOnError:false, displayMode:true });
+});
+</script>
+</body>
+</html>

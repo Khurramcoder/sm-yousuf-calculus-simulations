@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fourier Transform — Geometry & Math Simulation</title>
+<style>
+  :root{
+    --bg: #0f1724;
+    --panel: #0b1220;
+    --accent: #60a5fa;
+    --muted: #94a3b8;
+    --good: #34d399;
+    --danger: #fb7185;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#071125);color:white}
+  .app{
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap:18px;
+    padding:18px;
+    height:100vh;
+    box-sizing:border-box;
+  }
+  .left{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px;
+    padding:14px;
+    box-shadow: 0 6px 20px rgba(2,6,23,0.6);
+  }
+  .row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  canvas{
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    border-radius:8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .controls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  button, select, input[type=range]{
+    background:transparent;color:var(--accent);border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:8px;
+  }
+  label{color:var(--muted);font-size:13px}
+  .panel{
+    background:var(--panel);
+    padding:12px;border-radius:10px;min-height:0;
+  }
+  .right{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .small{
+    font-size:13px;color:var(--muted)
+  }
+  .big-title{font-size:18px;font-weight:600;color:white}
+  .spectrum-list{max-height:220px;overflow:auto;padding-right:6px}
+  .spectrum-item{display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
+  .footer{font-size:12px;color:var(--muted);margin-top:auto}
+  .badge{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;font-size:13px}
+  .equation{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px;color:var(--muted); background: rgba(255,255,255,0.01); padding:8px; border-radius:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="left">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="big-title">Fourier Transform — Geometric & Mathematical Demo</div>
+        <div class="small">Discrete approximation: rotating vectors (phasors) reconstruct the waveform</div>
+      </div>
+      <div class="badge">DFT / Phasor visualization</div>
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1" class="panel">
+        <label>Time-domain signal</label>
+        <canvas id="timeCanvas" width="900" height="220"></canvas>
+      </div>
+
+      <div style="width:360px" class="panel">
+        <label>Complex plane (phasors)</label>
+        <canvas id="phasorCanvas" width="360" height="220"></canvas>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1" class="panel">
+        <label>Reconstructed signal (sum of selected phasors)</label>
+        <canvas id="reconCanvas" width="900" height="140"></canvas>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="controls">
+        <button id="playBtn">Play ▶</button>
+        <button id="stepBtn">Step</button>
+        <label style="margin-left:6px">Speed</label>
+        <input type="range" id="speed" min="0.25" max="4" step="0.25" value="1" />
+        <label>Components</label>
+        <input type="range" id="maxComp" min="1" max="32" step="1" value="12" />
+        <label id="compLabel">12</label>
+      </div>
+      <div style="margin-left:auto">
+        <label class="small">Preset</label>
+        <select id="preset">
+          <option value="sum">Sum of sines (demo)</option>
+          <option value="square">Square-like (odd harmonics)</option>
+          <option value="triangle">Triangle-like</option>
+          <option value="sampled">Custom sampled (press compute)</option>
+        </select>
+        <button id="compute">Compute DFT</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:6px;align-items:center;">
+      <div class="equation" style="flex:1">
+        f[n] &nbsp;=&nbsp; samples of the signal &nbsp;&nbsp; • &nbsp;&nbsp;
+        F[k] &nbsp;=&nbsp; Σ<sub>n</sub> f[n] e<sup>-i2πkn/N</sup> &nbsp;&nbsp; • &nbsp;&nbsp;
+        f[n] ≈ (1/N) Σ<sub>k</sub> F[k] e<sup>i2πkn/N</sup>
+      </div>
+      <div style="width:260px" class="panel">
+        <label>Animation Controls</label>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+          <label><input type="checkbox" id="showAll" checked /> Show all phasors (or only largest)</label>
+          <label><input type="checkbox" id="showTimeMarker" checked /> Show time marker on time plot</label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><b>Magnitude spectrum</b></div>
+        <div class="small">Top components (k) & amplitude</div>
+      </div>
+      <canvas id="spectrum" width="360" height="180" style="margin-top:8px;border-radius:8px;"></canvas>
+      <div class="spectrum-list" id="spectrumList"></div>
+    </div>
+
+    <div class="panel">
+      <div><b>Phasor details</b></div>
+      <div id="details" class="small" style="margin-top:8px">Click a bar to select a component (interactive)</div>
+    </div>
+
+    <div class="panel footer">
+      <div><b>How to use</b></div>
+      <ol style="font-size:13px;color:var(--muted);padding-left:18px">
+        <li>Choose preset → Compute DFT (or use default)</li>
+        <li>Click Play to see rotating phasors reconstruct the waveform</li>
+        <li>Adjust number of components to include or toggle to show only largest contributors</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Fourier visualization (DFT / Phasor)
+  - discrete samples (N)
+  - compute DFT F[k] = Σ f[n] * exp(-i * 2π * k * n / N)
+  - animate phasors rotating with angular speed 2πk / T
+  - sum phasors to show reconstruction
+*/
+
+// Utilities
+function complexMul(a,b){return {re: a.re*b.re - a.im*b.im, im: a.re*b.im + a.im*b.re}}
+function complexAdd(a,b){return {re: a.re + b.re, im: a.im + b.im}}
+function complexMag(a){return Math.hypot(a.re,a.im)}
+function complexScale(a,s){return {re: a.re*s, im: a.im*s}}
+function complexExp(theta){return {re: Math.cos(theta), im: Math.sin(theta)}}
+
+// Canvas elements
+const timeCanvas = document.getElementById('timeCanvas');
+const phasorCanvas = document.getElementById('phasorCanvas');
+const reconCanvas = document.getElementById('reconCanvas');
+const spectrumCanvas = document.getElementById('spectrum');
+const tctx = timeCanvas.getContext('2d');
+const pctx = phasorCanvas.getContext('2d');
+const rctx = reconCanvas.getContext('2d');
+const sctx = spectrumCanvas.getContext('2d');
+
+const playBtn = document.getElementById('playBtn');
+const stepBtn = document.getElementById('stepBtn');
+const speedInput = document.getElementById('speed');
+const maxComp = document.getElementById('maxComp');
+const compLabel = document.getElementById('compLabel');
+const preset = document.getElementById('preset');
+const computeBtn = document.getElementById('compute');
+const showAll = document.getElementById('showAll');
+const showTimeMarker = document.getElementById('showTimeMarker');
+
+let N = 256; // sample count
+let samples = new Array(N).fill(0);
+let Fs = 1; // normalized sampling (1 per period)
+let F = new Array(N).fill({re:0,im:0}); // DFT result
+let selectedK = 1;
+let t = 0; // current continuous time (0..1)
+let playing = false;
+let speed = 1;
+let maxComponents = parseInt(maxComp.value);
+compLabel.textContent = maxComponents;
+
+// default preset signal
+function makePreset(name){
+  if(name==='sum'){
+    for(let n=0;n<N;n++){
+      let x = n/N;
+      samples[n] = Math.sin(2*Math.PI*2*x) + 0.6*Math.sin(2*Math.PI*5*x + 0.8) + 0.3*Math.sin(2*Math.PI*9*x - 1.2);
+    }
+  } else if(name==='square'){
+    for(let n=0;n<N;n++){
+      let x = n/N;
+      let s=0;
+      for(let k=1;k<20;k+=2) s += (1/k) * Math.sin(2*Math.PI*k*x);
+      samples[n] = (4/Math.PI)*s * 0.7;
+    }
+  } else if(name==='triangle'){
+    for(let n=0;n<N;n++){
+      let x = n/N;
+      let s=0;
+      for(let k=1;k<40;k+=2) s += (Math.pow(-1,(k-1)/2) / (k*k)) * Math.sin(2*Math.PI*k*x);
+      samples[n] = (8/Math.PI/Math.PI)*s;
+    }
+  } else {
+    // custom: let user edit later (we keep current samples)
+  }
+}
+
+// compute DFT
+function computeDFT(){
+  const out = new Array(N);
+  for(let k=0;k<N;k++){
+    let acc = {re:0,im:0};
+    for(let n=0;n<N;n++){
+      const theta = -2*Math.PI*k*n/N;
+      const c = {re: Math.cos(theta), im: Math.sin(theta)};
+      const v = samples[n];
+      acc.re += v * c.re;
+      acc.im += v * c.im;
+    }
+    out[k] = acc;
+  }
+  F = out;
+  renderSpectrum();
+}
+
+// draw time-domain
+function drawTimeDomain(ctx, w, h, highlightIndex=null){
+  ctx.clearRect(0,0,w,h);
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  const margin = 20;
+  // plot samples as smooth curve
+  ctx.beginPath();
+  for(let n=0;n<N;n++){
+    const x = margin + (w-2*margin)*n/(N-1);
+    const y = h/2 - samples[n]*(h/2 - margin);
+    if(n===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.stroke();
+
+  // small dots
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for(let n=0;n<N;n+=Math.floor(N/32)){
+    const x = margin + (w-2*margin)*n/(N-1);
+    const y = h/2 - samples[n]*(h/2 - margin);
+    ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill();
+  }
+
+  // time marker
+  if(showTimeMarker.checked){
+    const x = margin + (w-2*margin)*t*(N-1); // t in 0..1
+    ctx.strokeStyle = 'rgba(96,165,250,0.7)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+  }
+}
+
+// render spectrum bars and list
+function renderSpectrum(){
+  const w = spectrumCanvas.width, h = spectrumCanvas.height;
+  sctx.clearRect(0,0,w,h);
+  // magnitudes
+  const mags = F.map(c => complexMag(c)/N);
+  // draw first N/2 (positive freqs)
+  const half = Math.floor(N/2);
+  const maxMag = Math.max(...mags.slice(0,half));
+  const barW = w/half;
+  for(let k=0;k<half;k++){
+    const x = k*barW;
+    const H = (maxMag>0) ? (mags[k]/maxMag)* (h-10) : 0;
+    sctx.fillStyle = k===selectedK ? 'rgba(96,165,250,0.9)' : 'rgba(255,255,255,0.12)';
+    sctx.fillRect(x, h-5-H, barW-1, H);
+  }
+  // build sorted list of components
+  const arr = mags.map((m,k)=>({k,m})).slice(0,half).sort((a,b)=>b.m-a.m);
+  const list = document.getElementById('spectrumList');
+  list.innerHTML = '';
+  for(let i=0;i<Math.min(30,arr.length);i++){
+    const it = arr[i];
+    const div = document.createElement('div'); div.className='spectrum-item';
+    div.innerHTML = `<div>k = ${it.k}</div><div>${(it.m).toFixed(3)}</div>`;
+    div.onclick = ()=> { selectedK = it.k; renderSpectrum(); }
+    list.appendChild(div);
+  }
+}
+
+// draw phasors
+function drawPhasors(ctx,w,h){
+  ctx.clearRect(0,0,w,h);
+  const cx = w/2, cy = h/2;
+  // coordinate grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.moveTo(0,cy); ctx.lineTo(w,cy); ctx.stroke();
+
+  // sort components by magnitude
+  const mags = F.map(c => complexMag(c)/N).map((m,k)=>({m,k}));
+  mags.sort((a,b)=>b.m - a.m);
+  // choose components to display
+  let comps = mags.slice(0, Math.min(maxComponents, mags.length));
+  if(showAll.checked) comps = mags.slice(0, Math.min(100, mags.length));
+  // phasor drawing: draw vectors head-to-tail to show complex sum
+  let origin = {x: cx, y: cy};
+  let acc = {re:0, im:0};
+  for(let i=0;i<comps.length;i++){
+    const k = comps[i].k;
+    const C = F[k];
+    const mag = complexMag(C)/N;
+    const phase = Math.atan2(C.im, C.re);
+    // rotating angle at time t: +2πk t
+    const angle = phase + 2*Math.PI*k*t;
+    const vec = {re: mag * Math.cos(angle), im: mag * Math.sin(angle)};
+    // draw radius circle for this phasor
+    ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.02)'; ctx.arc(origin.x, origin.y, Math.max(0,mag*80),0,Math.PI*2); ctx.stroke();
+    // draw vector
+    const end = {x: origin.x + vec.re*80, y: origin.y - vec.im*80};
+    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(end.x, end.y);
+    ctx.strokeStyle = i===0 ? 'rgba(96,165,250,0.9)' : 'rgba(96,165,250,0.5)';
+    ctx.lineWidth = i===0 ? 3 : 1.6; ctx.stroke();
+    // head dot
+    ctx.beginPath(); ctx.fillStyle = 'rgba(96,165,250,0.9)'; ctx.arc(end.x,end.y,3,0,Math.PI*2); ctx.fill();
+    // label (k)
+    if(i<6){
+      ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='12px monospace';
+      ctx.fillText('k='+k, end.x+6, end.y-6);
+    }
+    // accumulate
+    acc = complexAdd(acc, vec);
+    origin = {x: end.x, y: end.y};
+  }
+  // final sum dot
+  const finalX = cx + acc.re*80, finalY = cy - acc.im*80;
+  ctx.beginPath(); ctx.fillStyle = 'rgba(16,185,129,0.95)'; ctx.arc(finalX, finalY, 5,0,Math.PI*2); ctx.fill();
+  // draw connection to time-domain (optional)
+  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.font = '12px monospace';
+  ctx.fillText('Reconstructed amplitude = ' + (acc.re.toFixed(3)), 10, h-20);
+}
+
+// reconstruct the sample at time t (0..1)
+function reconstructAt(tVal){
+  // continuous-like reconstruction using DFT components
+  let acc = {re:0, im:0};
+  const half = Math.floor(N/2);
+  const mags = F.map(c => complexMag(c)/N).map((m,k)=>({m,k}));
+  mags.sort((a,b)=>b.m - a.m);
+  let comps = mags.slice(0, Math.min(maxComponents, mags.length));
+  if(showAll.checked) comps = mags.slice(0, Math.min(half, mags.length));
+  for(let item of comps){
+    const k = item.k;
+    const C = F[k];
+    // amplitude-phase form: C/N * e^{i*2π*k*t}
+    const mag = complexMag(C)/N;
+    const phase = Math.atan2(C.im, C.re);
+    const angle = phase + 2*Math.PI*k*tVal;
+    acc.re += mag * Math.cos(angle);
+    acc.im += mag * Math.sin(angle);
+  }
+  return acc.re; // real part -> signal amplitude
+}
+
+// draw reconstructed curve (over full period)
+function drawReconstruction(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+  const margin = 20;
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.beginPath(); ctx.moveTo(margin, h/2); ctx.lineTo(w-margin,h/2); ctx.stroke();
+  // draw original samples as faint line
+  ctx.beginPath();
+  for(let n=0;n<N;n++){
+    const x = margin + (w-2*margin)*n/(N-1);
+    const y = h/2 - samples[n]*(h/2 - margin);
+    if(n===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth=1; ctx.stroke();
+
+  // draw reconstructed curve
+  ctx.beginPath();
+  const M = N;
+  for(let i=0;i<M;i++){
+    const x = margin + (w-2*margin)*i/(M-1);
+    const tt = i/(M-1);
+    const val = reconstructAt(tt);
+    const y = h/2 - val*(h/2 - margin);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = '#60a5fa'; ctx.lineWidth=2; ctx.stroke();
+
+  // draw current reconstructed point
+  const cx = margin + (w-2*margin)*t;
+  const cy = h/2 - reconstructAt(t)*(h/2 - margin);
+  ctx.beginPath(); ctx.fillStyle = '#34d399'; ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fill();
+}
+
+// main animation loop
+let last = null;
+function loop(ts){
+  if(!last) last = ts;
+  const dt = (ts-last)/1000; last = ts;
+  if(playing) t += dt * 0.2 * speed; // speed scalar
+  t = t % 1;
+  drawTimeDomain(tctx, timeCanvas.width, timeCanvas.height);
+  drawPhasors(pctx, phasorCanvas.width, phasorCanvas.height);
+  drawReconstruction(rctx, reconCanvas.width, reconCanvas.height);
+  requestAnimationFrame(loop);
+}
+
+// event handlers
+playBtn.onclick = ()=>{
+  playing = !playing;
+  playBtn.textContent = playing ? 'Pause ❚❚' : 'Play ▶';
+  if(playing){ last = null; requestAnimationFrame(loop); }
+};
+stepBtn.onclick = ()=>{
+  t += 1/N; t = t % 1;
+  drawTimeDomain(tctx, timeCanvas.width, timeCanvas.height);
+  drawPhasors(pctx, phasorCanvas.width, phasorCanvas.height);
+  drawReconstruction(rctx, reconCanvas.width, reconCanvas.height);
+};
+speedInput.oninput = ()=> speed = parseFloat(speedInput.value);
+maxComp.oninput = ()=> { maxComponents = parseInt(maxComp.value); compLabel.textContent = maxComponents; renderSpectrum(); };
+computeBtn.onclick = ()=> { computeDFT(); };
+preset.onchange = ()=> { makePreset(preset.value); computeDFT(); };
+
+window.addEventListener('resize', ()=> {
+  // nothing special: canvases are fixed pixel sizes for clarity
+});
+
+// initialize demo
+makePreset('sum');
+computeDFT();
+drawTimeDomain(tctx, timeCanvas.width, timeCanvas.height);
+drawPhasors(pctx, phasorCanvas.width, phasorCanvas.height);
+drawReconstruction(rctx, reconCanvas.width, reconCanvas.height);
+
+// kick animation
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

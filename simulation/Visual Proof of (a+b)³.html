@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Proof of (a+b)^3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .formula {
+            font-size: 1.8rem;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .visualization-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .cube-container {
+            width: 500px;
+            height: 400px;
+            perspective: 1000px;
+            position: relative;
+        }
+        
+        .cube {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            margin: 0 auto;
+            transform: rotateX(-20deg) rotateY(-30deg);
+            transition: transform 1s;
+        }
+        
+        .face {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            opacity: 0.8;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+        
+        .front { 
+            transform: translateZ(100px); 
+            background: rgba(255, 0, 0, 0.7);
+        }
+        .back { 
+            transform: rotateY(180deg) translateZ(100px); 
+            background: rgba(0, 255, 0, 0.7);
+        }
+        .right { 
+            transform: rotateY(90deg) translateZ(100px); 
+            background: rgba(0, 0, 255, 0.7);
+        }
+        .left { 
+            transform: rotateY(-90deg) translateZ(100px); 
+            background: rgba(255, 255, 0, 0.7);
+        }
+        .top { 
+            transform: rotateX(90deg) translateZ(100px); 
+            background: rgba(255, 0, 255, 0.7);
+        }
+        .bottom { 
+            transform: rotateX(-90deg) translateZ(100px); 
+            background: rgba(0, 255, 255, 0.7);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .explanation {
+            width: 500px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            line-height: 1.6;
+        }
+        
+        .parts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .part {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .part-1 { background: rgba(255, 0, 0, 0.7); }
+        .part-2 { background: rgba(255, 165, 0, 0.7); }
+        .part-3 { background: rgba(255, 255, 0, 0.7); }
+        .part-4 { background: rgba(0, 255, 0, 0.7); }
+        
+        .slider-container {
+            margin: 20px 0;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .slider {
+            width: 80%;
+            margin: 10px 0;
+        }
+        
+        .dimension-label {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .decomposed-cubes {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .cube-part {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-style: preserve-3d;
+            margin-bottom: 20px;
+        }
+        
+        .cube-part .face {
+            width: 120px;
+            height: 120px;
+            font-size: 0.8rem;
+        }
+        
+        .cube-part .front { transform: translateZ(60px); }
+        .cube-part .back { transform: rotateY(180deg) translateZ(60px); }
+        .cube-part .right { transform: rotateY(90deg) translateZ(60px); }
+        .cube-part .left { transform: rotateY(-90deg) translateZ(60px); }
+        .cube-part .top { transform: rotateX(90deg) translateZ(60px); }
+        .cube-part .bottom { transform: rotateX(-90deg) translateZ(60px); }
+        
+        .part-title {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 1100px) {
+            .visualization-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .cube-container, .explanation {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Visual Proof of (a+b)³</h1>
+            <div class="formula">(a+b)³ = a³ + 3a²b + 3ab² + b³</div>
+            <p>This visualization shows how a cube with side length (a+b) can be decomposed into smaller cubes and rectangular prisms.</p>
+        </header>
+        
+        <div class="slider-container">
+            <div class="dimension-label">Adjust a and b values: a = <span id="a-value">5</span>, b = <span id="b-value">3</span></div>
+            <div>
+                <label for="a-slider">a: </label>
+                <input type="range" id="a-slider" class="slider" min="1" max="10" value="5">
+            </div>
+            <div>
+                <label for="b-slider">b: </label>
+                <input type="range" id="b-slider" class="slider" min="1" max="10" value="3">
+            </div>
+        </div>
+        
+        <div class="visualization-container">
+            <div class="cube-container">
+                <h2>Complete Cube (a+b)³</h2>
+                <div class="cube" id="main-cube">
+                    <div class="face front">Front (a+b)</div>
+                    <div class="face back">Back (a+b)</div>
+                    <div class="face right">Right (a+b)</div>
+                    <div class="face left">Left (a+b)</div>
+                    <div class="face top">Top (a+b)</div>
+                    <div class="face bottom">Bottom (a+b)</div>
+                </div>
+                <div class="controls">
+                    <button id="rotate-x">Rotate X</button>
+                    <button id="rotate-y">Rotate Y</button>
+                    <button id="rotate-z">Rotate Z</button>
+                    <button id="reset">Reset View</button>
+                </div>
+            </div>
+            
+            <div class="explanation">
+                <h2>Cube Decomposition</h2>
+                <p>When we expand (a+b)³, we get four distinct components:</p>
+                
+                <div class="parts-grid">
+                    <div class="part part-1">
+                        <h3>a³</h3>
+                        <p>The cube with side length a</p>
+                        <div class="volume">Volume: a × a × a = a³</div>
+                    </div>
+                    <div class="part part-2">
+                        <h3>3a²b</h3>
+                        <p>Three rectangular prisms with dimensions a × a × b</p>
+                        <div class="volume">Volume: 3 × (a × a × b) = 3a²b</div>
+                    </div>
+                    <div class="part part-3">
+                        <h3>3ab²</h3>
+                        <p>Three rectangular prisms with dimensions a × b × b</p>
+                        <div class="volume">Volume: 3 × (a × b × b) = 3ab²</div>
+                    </div>
+                    <div class="part part-4">
+                        <h3>b³</h3>
+                        <p>The cube with side length b</p>
+                        <div class="volume">Volume: b × b × b = b³</div>
+                    </div>
+                </div>
+                
+                <div class="decomposed-cubes">
+                    <div>
+                        <div class="cube-part" id="cube-a3">
+                            <div class="face front part-1">a</div>
+                            <div class="face back part-1">a</div>
+                            <div class="face right part-1">a</div>
+                            <div class="face left part-1">a</div>
+                            <div class="face top part-1">a</div>
+                            <div class="face bottom part-1">a</div>
+                        </div>
+                        <div class="part-title">a³</div>
+                    </div>
+                    
+                    <div>
+                        <div class="cube-part" id="cube-a2b">
+                            <div class="face front part-2">a</div>
+                            <div class="face back part-2">a</div>
+                            <div class="face right part-2">b</div>
+                            <div class="face left part-2">b</div>
+                            <div class="face top part-2">a</div>
+                            <div class="face bottom part-2">a</div>
+                        </div>
+                        <div class="part-title">a²b (one of three)</div>
+                    </div>
+                    
+                    <div>
+                        <div class="cube-part" id="cube-ab2">
+                            <div class="face front part-3">a</div>
+                            <div class="face back part-3">a</div>
+                            <div class="face right part-3">b</div>
+                            <div class="face left part-3">b</div>
+                            <div class="face top part-3">b</div>
+                            <div class="face bottom part-3">b</div>
+                        </div>
+                        <div class="part-title">ab² (one of three)</div>
+                    </div>
+                    
+                    <div>
+                        <div class="cube-part" id="cube-b3">
+                            <div class="face front part-4">b</div>
+                            <div class="face back part-4">b</div>
+                            <div class="face right part-4">b</div>
+                            <div class="face left part-4">b</div>
+                            <div class="face top part-4">b</div>
+                            <div class="face bottom part-4">b</div>
+                        </div>
+                        <div class="part-title">b³</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const mainCube = document.getElementById('main-cube');
+        const cubeA3 = document.getElementById('cube-a3');
+        const cubeA2b = document.getElementById('cube-a2b');
+        const cubeAb2 = document.getElementById('cube-ab2');
+        const cubeB3 = document.getElementById('cube-b3');
+        const aSlider = document.getElementById('a-slider');
+        const bSlider = document.getElementById('b-slider');
+        const aValue = document.getElementById('a-value');
+        const bValue = document.getElementById('b-value');
+        const rotateXBtn = document.getElementById('rotate-x');
+        const rotateYBtn = document.getElementById('rotate-y');
+        const rotateZBtn = document.getElementById('rotate-z');
+        const resetBtn = document.getElementById('reset');
+        
+        // Initial rotation values
+        let rotationX = -20;
+        let rotationY = -30;
+        let rotationZ = 0;
+        
+        // Update cube rotation
+        function updateCubeRotation() {
+            mainCube.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)`;
+        }
+        
+        // Rotate cube on button clicks
+        rotateXBtn.addEventListener('click', () => {
+            rotationX += 30;
+            updateCubeRotation();
+        });
+        
+        rotateYBtn.addEventListener('click', () => {
+            rotationY += 30;
+            updateCubeRotation();
+        });
+        
+        rotateZBtn.addEventListener('click', () => {
+            rotationZ += 30;
+            updateCubeRotation();
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            rotationX = -20;
+            rotationY = -30;
+            rotationZ = 0;
+            updateCubeRotation();
+        });
+        
+        // Update cube sizes based on slider values
+        function updateCubeSizes() {
+            const a = parseInt(aSlider.value);
+            const b = parseInt(bSlider.value);
+            
+            aValue.textContent = a;
+            bValue.textContent = b;
+            
+            // Update main cube size
+            const mainSize = (a + b) * 10;
+            mainCube.style.width = `${mainSize}px`;
+            mainCube.style.height = `${mainSize}px`;
+            
+            // Update face positions for main cube
+            const mainFaces = mainCube.querySelectorAll('.face');
+            const translateZ = mainSize / 2;
+            mainFaces.forEach(face => {
+                if (face.classList.contains('front')) {
+                    face.style.transform = `translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('back')) {
+                    face.style.transform = `rotateY(180deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('right')) {
+                    face.style.transform = `rotateY(90deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('left')) {
+                    face.style.transform = `rotateY(-90deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('top')) {
+                    face.style.transform = `rotateX(90deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('bottom')) {
+                    face.style.transform = `rotateX(-90deg) translateZ(${translateZ}px)`;
+                }
+            });
+            
+            // Update decomposed cubes
+            const aSize = a * 10;
+            const bSize = b * 10;
+            
+            // Update a³ cube
+            cubeA3.style.width = `${aSize}px`;
+            cubeA3.style.height = `${aSize}px`;
+            updateCubePartFaces(cubeA3, aSize/2);
+            
+            // Update a²b cube
+            cubeA2b.style.width = `${aSize}px`;
+            cubeA2b.style.height = `${aSize}px`;
+            updateRectangularPrismFaces(cubeA2b, aSize, aSize, bSize);
+            
+            // Update ab² cube
+            cubeAb2.style.width = `${aSize}px`;
+            cubeAb2.style.height = `${aSize}px`;
+            updateRectangularPrismFaces(cubeAb2, aSize, bSize, bSize);
+            
+            // Update b³ cube
+            cubeB3.style.width = `${bSize}px`;
+            cubeB3.style.height = `${bSize}px`;
+            updateCubePartFaces(cubeB3, bSize/2);
+        }
+        
+        // Update faces for cube parts (cubes)
+        function updateCubePartFaces(cube, translateZ) {
+            const faces = cube.querySelectorAll('.face');
+            faces.forEach(face => {
+                if (face.classList.contains('front')) {
+                    face.style.transform = `translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('back')) {
+                    face.style.transform = `rotateY(180deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('right')) {
+                    face.style.transform = `rotateY(90deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('left')) {
+                    face.style.transform = `rotateY(-90deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('top')) {
+                    face.style.transform = `rotateX(90deg) translateZ(${translateZ}px)`;
+                } else if (face.classList.contains('bottom')) {
+                    face.style.transform = `rotateX(-90deg) translateZ(${translateZ}px)`;
+                }
+            });
+        }
+        
+        // Update faces for rectangular prisms
+        function updateRectangularPrismFaces(prism, width, height, depth) {
+            const faces = prism.querySelectorAll('.face');
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            const halfDepth = depth / 2;
+            
+            faces.forEach(face => {
+                if (face.classList.contains('front')) {
+                    face.style.width = `${width}px`;
+                    face.style.height = `${height}px`;
+                    face.style.transform = `translateZ(${halfDepth}px)`;
+                } else if (face.classList.contains('back')) {
+                    face.style.width = `${width}px`;
+                    face.style.height = `${height}px`;
+                    face.style.transform = `rotateY(180deg) translateZ(${halfDepth}px)`;
+                } else if (face.classList.contains('right')) {
+                    face.style.width = `${depth}px`;
+                    face.style.height = `${height}px`;
+                    face.style.transform = `rotateY(90deg) translateZ(${halfWidth}px)`;
+                } else if (face.classList.contains('left')) {
+                    face.style.width = `${depth}px`;
+                    face.style.height = `${height}px`;
+                    face.style.transform = `rotateY(-90deg) translateZ(${halfWidth}px)`;
+                } else if (face.classList.contains('top')) {
+                    face.style.width = `${width}px`;
+                    face.style.height = `${depth}px`;
+                    face.style.transform = `rotateX(90deg) translateZ(${halfHeight}px)`;
+                } else if (face.classList.contains('bottom')) {
+                    face.style.width = `${width}px`;
+                    face.style.height = `${depth}px`;
+                    face.style.transform = `rotateX(-90deg) translateZ(${halfHeight}px)`;
+                }
+            });
+        }
+        
+        // Initialize and add event listeners
+        aSlider.addEventListener('input', updateCubeSizes);
+        bSlider.addEventListener('input', updateCubeSizes);
+        
+        // Initial update
+        updateCubeSizes();
+        
+        // Add continuous rotation animation
+        setInterval(() => {
+            rotationY += 0.5;
+            updateCubeRotation();
+        }, 50);
+    </script>
+</body>
+</html>

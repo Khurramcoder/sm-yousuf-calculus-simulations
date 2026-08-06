@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laplace Transform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 0;
+            height: 100vh;
+            max-width: 100vw;
+        }
+
+        .left-panel {
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .plot-container {
+            flex: 1;
+            position: relative;
+            border-left: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .plot-container:first-child {
+            border-bottom: 1px solid #222;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .label {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 15px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+
+        .label sup {
+            font-size: 0.7em;
+        }
+
+        #threejs-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            pointer-events: none;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 0.5fr 0.5fr;
+            }
+
+            .plot-container:first-child {
+                border-bottom: 1px solid #222;
+                border-left: none;
+            }
+
+            .plot-container:last-child {
+                border-left: none;
+                border-top: 1px solid #222;
+            }
+        }
+
+        .axis-label {
+            position: absolute;
+            color: #666;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div id="threejs-container"></div>
+            <div class="grid-overlay"></div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="plot-container">
+                <div class="label">cos(t)e<sup>-st</sup></div>
+                <canvas id="spiral1"></canvas>
+            </div>
+            <div class="plot-container">
+                <div class="label">∫<sub>0</sub><sup>∞</sup> cos(t)e<sup>-st</sup>dt</div>
+                <canvas id="spiral2"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Three.js setup for 3D surface
+        const container = document.getElementById('threejs-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        
+        const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(8, 6, 12);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Create grid plane
+        const gridSize = 20;
+        const gridDivisions = 40;
+        const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // Create surface geometry
+        const segments = 80;
+        const width = 10;
+        const depth = 10;
+        const geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
+        
+        let time = 0;
+        const s = 0.3;
+
+        // Update surface vertices
+        function updateSurface() {
+            const positions = geometry.attributes.position;
+            
+            for (let i = 0; i < positions.count; i++) {
+                const x = positions.getX(i);
+                const z = positions.getZ(i);
+                
+                // Create wave pattern
+                const t = z + 5;
+                const wave1 = Math.exp(-s * t) * Math.cos(t * 2 + time);
+                const wave2 = Math.exp(-s * t) * Math.sin(t * 2 + time * 0.7);
+                
+                const y = (wave1 + wave2 * 0.5) * 2;
+                positions.setY(i, Math.max(y, 0));
+            }
+            
+            positions.needsUpdate = true;
+            geometry.computeVertexNormals();
+        }
+
+        // Create gradient material
+        const vertexShader = `
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            void main() {
+                vPosition = position;
+                vNormal = normal;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            void main() {
+                float height = vPosition.y;
+                vec3 color1 = vec3(0.2, 0.8, 0.6);
+                vec3 color2 = vec3(0.8, 0.3, 0.6);
+                vec3 color3 = vec3(1.0, 0.5, 0.3);
+                
+                vec3 color;
+                if (height < 0.5) {
+                    color = mix(color1, color2, height * 2.0);
+                } else {
+                    color = mix(color2, color3, (height - 0.5) * 2.0);
+                }
+                
+                float lighting = dot(normalize(vNormal), normalize(vec3(1.0, 1.0, 1.0))) * 0.5 + 0.5;
+                gl_FragColor = vec4(color * lighting, 0.9);
+            }
+        `;
+
+        const material = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            side: THREE.DoubleSide,
+            transparent: true
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.y = 0.5;
+        scene.add(mesh);
+
+        // Add ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        directionalLight.position.set(5, 10, 5);
+        scene.add(directionalLight);
+
+        // Canvas setup for 2D plots
+        const spiral1Canvas = document.getElementById('spiral1');
+        const spiral2Canvas = document.getElementById('spiral2');
+        const ctx1 = spiral1Canvas.getContext('2d');
+        const ctx2 = spiral2Canvas.getContext('2d');
+
+        function resizeCanvas(canvas) {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            canvas.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        resizeCanvas(spiral1Canvas);
+        resizeCanvas(spiral2Canvas);
+
+        // Draw spiral plot
+        function drawSpiral(ctx, canvas, maxTime, filled = false) {
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const scale = Math.min(w, h) * 0.35;
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(centerX - w/2, centerY);
+            ctx.lineTo(centerX + w/2, centerY);
+            ctx.moveTo(centerX, centerY - h/2);
+            ctx.lineTo(centerX, centerY + h/2);
+            ctx.stroke();
+
+            // Draw grid circles
+            ctx.strokeStyle = '#1a1a1a';
+            for (let r = 0.5; r <= 2; r += 0.5) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, r * scale / 2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Draw grid lines
+            for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(
+                    centerX + Math.cos(angle) * scale,
+                    centerY + Math.sin(angle) * scale
+                );
+                ctx.stroke();
+            }
+
+            // Draw spiral
+            const points = [];
+            for (let t = 0; t <= maxTime; t += 0.02) {
+                const r = Math.exp(-s * t) * scale;
+                const angle = t * 2;
+                const x = centerX + r * Math.cos(angle);
+                const y = centerY - r * Math.sin(angle);
+                points.push({ x, y, t });
+            }
+
+            if (filled) {
+                // Draw filled area
+                ctx.fillStyle = 'rgba(255, 100, 150, 0.15)';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                points.forEach((p, i) => {
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                });
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Draw spiral line
+            ctx.beginPath();
+            points.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+
+            const gradient = ctx.createLinearGradient(
+                centerX - scale, centerY - scale,
+                centerX + scale, centerY + scale
+            );
+            gradient.addColorStop(0, '#ff6b9d');
+            gradient.addColorStop(0.5, '#ff8fb3');
+            gradient.addColorStop(1, '#ffa5c8');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Draw points along spiral
+            points.forEach((p, i) => {
+                if (i % 10 === 0) {
+                    ctx.fillStyle = 'rgba(255, 107, 157, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            time += 0.02;
+            updateSurface();
+
+            // Rotate camera slowly
+            camera.position.x = Math.cos(time * 0.1) * 12;
+            camera.position.z = Math.sin(time * 0.1) * 12;
+            camera.lookAt(0, 1, 0);
+
+            renderer.render(scene, camera);
+
+            // Update 2D plots
+            const t1 = (Math.sin(time * 0.5) + 1) * 5 + 2;
+            const t2 = 8;
+            
+            drawSpiral(ctx1, spiral1Canvas, t1, false);
+            drawSpiral(ctx2, spiral2Canvas, t2, true);
+        }
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            
+            resizeCanvas(spiral1Canvas);
+            resizeCanvas(spiral2Canvas);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

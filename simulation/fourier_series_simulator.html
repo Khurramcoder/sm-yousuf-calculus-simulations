@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fourier Series Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#080b0c;
+    --panel:#0f1518;
+    --panel2:#131b1f;
+    --border:#1c282c;
+    --grid:#182226;
+    --text:#e7eef0;
+    --text-dim:#7c8f96;
+    --text-dimmer:#48565c;
+    --green:#4dffb0;
+    --green-dim:#2a8f68;
+    --amber:#ffb454;
+    --amber-dim:#8a6530;
+    --cyan:#5ec8ff;
+    --red:#ff6b6b;
+    --radius:10px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(78,255,176,0.05), transparent 45%),
+      radial-gradient(ellipse at 90% 0%, rgba(255,180,84,0.04), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  .mono{ font-family:'JetBrains Mono', 'SF Mono', Consolas, monospace; }
+
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:16px;
+    flex-wrap:wrap;
+    padding-bottom:20px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.22em;
+    color:var(--green);
+    text-transform:uppercase;
+    margin:0 0 8px;
+    opacity:.85;
+  }
+  h1{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:clamp(22px,3.4vw,32px);
+    letter-spacing:-0.01em;
+    margin:0;
+    color:var(--text);
+  }
+  h1 span{ color:var(--text-dimmer); font-weight:500; }
+  .sub{
+    color:var(--text-dim);
+    font-size:13.5px;
+    max-width:480px;
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .readout{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--text-dim);
+    text-align:right;
+    line-height:1.9;
+  }
+  .readout b{ color:var(--green); font-weight:600; }
+
+  /* ---------- panels ---------- */
+  .panel{
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.15em;
+    color:var(--text-dimmer);
+    text-transform:uppercase;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .panel-label .tag{
+    color:var(--cyan);
+    background:rgba(94,200,255,0.08);
+    border:1px solid rgba(94,200,255,0.25);
+    padding:2px 7px;
+    border-radius:5px;
+    font-size:10px;
+    letter-spacing:.05em;
+  }
+
+  /* ---------- viz row ---------- */
+  .viz-wrapper{
+    position:relative;
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    margin-bottom:18px;
+  }
+  .epi-panel{ flex:1 1 320px; max-width:380px; }
+  .scope-panel{ flex:3 1 460px; }
+  canvas{ display:block; width:100%; height:360px; border-radius:6px; }
+  #epiCanvas, #scopeCanvas{ background:
+      linear-gradient(180deg, rgba(255,255,255,0.015), transparent 40%),
+      #070a0b;
+    border:1px solid var(--grid);
+  }
+  #connectorCanvas{
+    position:absolute; inset:0; width:100%; height:100%;
+    pointer-events:none;
+    z-index:5;
+  }
+
+  /* ---------- controls ---------- */
+  .controls{ margin-bottom:18px; }
+  .controls-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:22px 28px;
+  }
+  .field{ display:flex; flex-direction:column; gap:8px; }
+  .field-label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text-dim); font-family:'JetBrains Mono', monospace;
+  }
+  .field-label b{ color:var(--text); font-size:13px; letter-spacing:0; }
+
+  .wave-btns{ display:flex; gap:6px; flex-wrap:wrap; }
+  .wave-btn{
+    flex:1 1 auto;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    padding:9px 6px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:all .15s ease;
+    text-align:center;
+  }
+  .wave-btn:hover{ color:var(--text); border-color:#2a3a40; }
+  .wave-btn.active{
+    color:#04120c;
+    background:var(--green);
+    border-color:var(--green);
+    font-weight:600;
+    box-shadow:0 0 18px rgba(77,255,176,0.35);
+  }
+
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:4px; border-radius:2px;
+    background:var(--grid); outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:15px; height:15px; border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 10px rgba(77,255,176,0.6), 0 0 0 3px rgba(77,255,176,0.12);
+    cursor:pointer; margin-top:-5.5px;
+    border:2px solid #04120c;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--green); border:2px solid #04120c; cursor:pointer;
+    box-shadow:0 0 10px rgba(77,255,176,0.6);
+  }
+  input[type=range]::-webkit-slider-runnable-track{ height:4px; border-radius:2px; }
+
+  .row-buttons{ display:flex; gap:8px; align-items:center; }
+  .icon-btn{
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    background:var(--panel); border:1px solid var(--border);
+    color:var(--text); font-family:'JetBrains Mono', monospace; font-size:12px;
+    padding:10px 14px; border-radius:7px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .icon-btn:hover{ border-color:var(--green); color:var(--green); }
+  .icon-btn.primary{
+    background:var(--green); color:#04120c; border-color:var(--green); font-weight:600;
+  }
+  .icon-btn.primary:hover{ filter:brightness(1.08); color:#04120c; }
+
+  .toggle-row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:2px; }
+  .toggle{
+    display:flex; align-items:center; gap:8px; cursor:pointer;
+    font-size:12.5px; color:var(--text-dim); user-select:none;
+  }
+  .toggle input{ accent-color:var(--green); width:14px; height:14px; cursor:pointer; }
+  .toggle:hover{ color:var(--text); }
+
+  /* ---------- spectrum ---------- */
+  .spectrum-panel canvas{ height:180px; }
+  #specCanvas{ background:#070a0b; border:1px solid var(--grid); border-radius:6px; }
+
+  /* ---------- formula / stats ---------- */
+  .bottom-grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr;
+    gap:18px;
+    margin-top:18px;
+  }
+  @media (max-width:760px){ .bottom-grid{ grid-template-columns:1fr; } }
+
+  .formula-box{
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    line-height:1.9;
+    color:var(--text);
+    overflow-x:auto;
+  }
+  .formula-box .op{ color:var(--text-dim); }
+  .formula-box .term{ color:var(--amber); }
+  .formula-box .n{ color:var(--cyan); }
+  .formula-expand{
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);
+    font-size:12.5px; color:var(--text-dim); word-break:break-word;
+  }
+
+  .stat-list{ display:flex; flex-direction:column; gap:10px; }
+  .stat{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px;
+    padding:8px 10px; background:var(--panel); border:1px solid var(--border); border-radius:6px;
+  }
+  .stat .label{ color:var(--text-dim); }
+  .stat .value{ color:var(--green); font-weight:600; }
+  .stat .value.warn{ color:var(--red); }
+
+  footer{
+    margin-top:26px; text-align:center; color:var(--text-dimmer);
+    font-size:11.5px; font-family:'JetBrains Mono', monospace; letter-spacing:.04em;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <p class="eyebrow">Signal Reconstruction Lab</p>
+      <h1>Fourier Series <span>Simulator</span></h1>
+      <p class="sub">Watch rotating harmonics sum into a periodic waveform in real time — adjust the harmonic count and see the Gibbs phenomenon, spectrum, and convergence error live.</p>
+    </div>
+    <div class="readout mono">
+      WAVEFORM <b id="roWave">SQUARE</b><br>
+      HARMONICS <b id="roN">6</b><br>
+      θ(t) <b id="roTheta">0.00</b> rad
+    </div>
+  </header>
+
+  <section class="viz-wrapper">
+    <div class="panel epi-panel">
+      <div class="panel-label"><span>Epicycle Construction</span><span class="tag">Σ rotating vectors</span></div>
+      <canvas id="epiCanvas"></canvas>
+    </div>
+    <div class="panel scope-panel">
+      <div class="panel-label"><span>Reconstructed Signal</span><span class="tag" id="scopeTag">N = 6</span></div>
+      <canvas id="scopeCanvas"></canvas>
+    </div>
+    <canvas id="connectorCanvas"></canvas>
+  </section>
+
+  <section class="panel controls">
+    <div class="controls-grid">
+
+      <div class="field" style="grid-column:span 2;">
+        <div class="field-label"><span>Waveform</span></div>
+        <div class="wave-btns">
+          <button class="wave-btn active" data-wave="square">Square</button>
+          <button class="wave-btn" data-wave="sawtooth">Sawtooth</button>
+          <button class="wave-btn" data-wave="triangle">Triangle</button>
+          <button class="wave-btn" data-wave="pulse">Pulse train</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Harmonics</span><b id="nLabel">6</b></div>
+        <input type="range" id="nSlider" min="1" max="40" value="6" step="1">
+      </div>
+
+      <div class="field" id="dutyField" style="display:none;">
+        <div class="field-label"><span>Duty cycle</span><b id="dutyLabel">30%</b></div>
+        <input type="range" id="dutySlider" min="5" max="95" value="30" step="1">
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Rotation speed</span><b id="speedLabel">1.0×</b></div>
+        <input type="range" id="speedSlider" min="10" max="300" value="100" step="5">
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Playback</span></div>
+        <div class="row-buttons">
+          <button class="icon-btn primary" id="playBtn">⏸ Pause</button>
+          <button class="icon-btn" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column:span 2;">
+        <div class="field-label"><span>Display</span></div>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="showTarget" checked> Show ideal waveform (dashed)</label>
+          <label class="toggle"><input type="checkbox" id="showCircles" checked> Show construction circles</label>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="panel spectrum-panel">
+    <div class="panel-label"><span>Frequency Spectrum</span><span class="tag">amplitude vs. harmonic n</span></div>
+    <canvas id="specCanvas"></canvas>
+  </section>
+
+  <section class="bottom-grid">
+    <div class="panel">
+      <div class="panel-label"><span>Series Definition</span></div>
+      <div class="formula-box" id="formulaMain"></div>
+      <div class="formula-expand" id="formulaExpand"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Convergence</span></div>
+      <div class="stat-list" id="statList"></div>
+    </div>
+  </section>
+
+  <footer>SUM OF SINES &nbsp;·&nbsp; DRAG SLIDERS TO EXPLORE &nbsp;·&nbsp; BUILT WITH CLAUDE</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- state ----------------
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = {
+    waveform: 'square',
+    N: 6,
+    duty: 0.30,
+    speed: 1.0,
+    playing: !prefersReduced,
+    showTarget: true,
+    showCircles: true,
+    theta: 0
+  };
+
+  let harmonicData = computeHarmonics(state.waveform, state.N, state.duty);
+
+  // ---------------- math ----------------
+  function computeHarmonics(type, N, duty){
+    const terms = [];
+    let dc = 0;
+    if(type === 'pulse') dc = duty;
+    let n = 1;
+    let guard = 0;
+    while(terms.length < N && guard < 4000){
+      guard++;
+      let amp = 0, phase = 0;
+      if(type === 'square'){
+        if(n % 2 === 1){ amp = 4/(n*Math.PI); phase = 0; }
+      } else if(type === 'sawtooth'){
+        const raw = (2/(n*Math.PI)) * ((n % 2 === 0) ? -1 : 1);
+        amp = Math.abs(raw); phase = raw < 0 ? Math.PI : 0;
+      } else if(type === 'triangle'){
+        if(n % 2 === 1){
+          const k = (n-1)/2;
+          const raw = (8/(Math.PI*Math.PI*n*n)) * ((k % 2 === 0) ? 1 : -1);
+          amp = Math.abs(raw); phase = raw < 0 ? Math.PI : 0;
+        }
+      } else if(type === 'pulse'){
+        const raw = (2/(n*Math.PI)) * Math.sin(n*Math.PI*duty);
+        amp = Math.abs(raw);
+        phase = raw < 0 ? (1.5*Math.PI) : (0.5*Math.PI); // cosine via sin(x+pi/2)
+      }
+      if(amp > 1e-9){ terms.push({ n, amp, phase }); }
+      n++;
+    }
+    return { terms, dc };
+  }
+
+  function valueAt(theta, terms, dc){
+    let s = dc;
+    for(let i=0;i<terms.length;i++){
+      const t = terms[i];
+      s += t.amp * Math.sin(t.n*theta + t.phase);
+    }
+    return s;
+  }
+
+  function wrapPi(theta){
+    let x = ((theta + Math.PI) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI) - Math.PI;
+    return x;
+  }
+
+  function idealValueAt(theta, type, duty){
+    const x = wrapPi(theta);
+    if(type === 'square') return x >= 0 ? 1 : -1;
+    if(type === 'sawtooth') return x/Math.PI;
+    if(type === 'triangle') return (2/Math.PI)*Math.asin(Math.sin(theta));
+    if(type === 'pulse') return Math.abs(x) < Math.PI*duty ? 1 : 0;
+    return 0;
+  }
+
+  function envelope(type){
+    if(type === 'pulse') return { min:0, max:1 };
+    return { min:-1, max:1 };
+  }
+
+  function computeStats(type, duty, terms, dc){
+    const env = envelope(type);
+    const range = env.max - env.min;
+    let sumSq = 0, maxN = -Infinity, minN = Infinity;
+    const STEPS = 1200;
+    for(let i=0;i<STEPS;i++){
+      const theta = -Math.PI + (2*Math.PI*i/STEPS);
+      const fN = valueAt(theta, terms, dc);
+      const fI = idealValueAt(theta, type, duty);
+      sumSq += (fN-fI)*(fN-fI);
+      if(fN > maxN) maxN = fN;
+      if(fN < minN) minN = fN;
+    }
+    const rms = Math.sqrt(sumSq/STEPS);
+    const rmsPct = (rms/range)*100;
+    const overshoot = Math.max(0, (maxN - env.max))/range*100;
+    const undershoot = Math.max(0, (env.min - minN))/range*100;
+    const gibbs = Math.max(overshoot, undershoot);
+    return { rmsPct, gibbs };
+  }
+
+  // ---------------- canvas setup ----------------
+  const epiCanvas = document.getElementById('epiCanvas');
+  const scopeCanvas = document.getElementById('scopeCanvas');
+  const connectorCanvas = document.getElementById('connectorCanvas');
+  const specCanvas = document.getElementById('specCanvas');
+  const vizWrapper = document.querySelector('.viz-wrapper');
+
+  function fitCanvas(canvas){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width));
+    const h = Math.max(1, Math.round(rect.height));
+    if(canvas._w !== w || canvas._h !== h || canvas._dpr !== dpr){
+      canvas.width = w*dpr;
+      canvas.height = h*dpr;
+      canvas._w = w; canvas._h = h; canvas._dpr = dpr;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return { ctx, w, h };
+  }
+
+  function resizeAll(){
+    fitCanvas(epiCanvas);
+    fitCanvas(scopeCanvas);
+    fitCanvas(specCanvas);
+    const wr = vizWrapper.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    connectorCanvas.width = Math.round(wr.width*dpr);
+    connectorCanvas.height = Math.round(wr.height*dpr);
+    connectorCanvas.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+    drawSpectrum();
+  }
+
+  // ---------------- drawing helpers ----------------
+  function ampScaleFor(type, panelH){
+    const env = envelope(type);
+    const halfRange = (env.max-env.min)/2;
+    const buffer = 1.3;
+    const available = panelH/2 - 18;
+    return available/(halfRange*buffer);
+  }
+  function envMidFor(type){
+    const env = envelope(type);
+    return (env.min+env.max)/2;
+  }
+  function pixelY(value, ampScale, panelH, envMid){
+    return panelH/2 - (value-envMid)*ampScale;
+  }
+
+  let lastTip = { x:0, y:0 };
+
+  function drawEpicycle(){
+    const { ctx, w, h } = fitCanvas(epiCanvas);
+    ctx.clearRect(0,0,w,h);
+
+    // faint grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0,h/2); ctx.lineTo(w,h/2);
+    ctx.stroke();
+
+    const ampScale = ampScaleFor(state.waveform, h);
+    const envMid = envMidFor(state.waveform);
+    const originX = w*0.36;
+    let cx = originX, cy = pixelY(harmonicData.dc, ampScale, h, envMid);
+
+    const terms = harmonicData.terms;
+    ctx.lineWidth = 1;
+    for(let i=0;i<terms.length;i++){
+      const t = terms[i];
+      const r = t.amp*ampScale;
+      const nx = cx + r*Math.cos(t.n*state.theta + t.phase);
+      const ny = cy - r*Math.sin(t.n*state.theta + t.phase);
+
+      if(state.showCircles && r > 0.6){
+        const alpha = Math.max(0.10, 0.55 - i*0.018);
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255,180,84,${alpha})`;
+        ctx.arc(cx, cy, r, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      // vector arm
+      ctx.beginPath();
+      ctx.strokeStyle = i === 0 ? 'rgba(94,200,255,0.9)' : 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = i === 0 ? 1.6 : 1;
+      ctx.moveTo(cx,cy); ctx.lineTo(nx,ny);
+      ctx.stroke();
+
+      cx = nx; cy = ny;
+    }
+
+    lastTip = { x: cx, y: cy };
+
+    // dashed line from tip to right edge
+    ctx.save();
+    ctx.strokeStyle = 'rgba(77,255,176,0.55)';
+    ctx.setLineDash([4,4]);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy); ctx.lineTo(w-4, cy);
+    ctx.stroke();
+    ctx.restore();
+
+    // tip dot
+    ctx.beginPath();
+    ctx.fillStyle = '#4dffb0';
+    ctx.shadowColor = '#4dffb0';
+    ctx.shadowBlur = 10;
+    ctx.arc(cx,cy,4.2,0,Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // origin dot
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.arc(originX, pixelY(harmonicData.dc, ampScale, h, envMid), 2.6, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  let lastScopeStartY = 0;
+
+  function drawScope(){
+    const { ctx, w, h } = fitCanvas(scopeCanvas);
+    ctx.clearRect(0,0,w,h);
+
+    const ampScale = ampScaleFor(state.waveform, h);
+    const envMid = envMidFor(state.waveform);
+    const env = envelope(state.waveform);
+    const windowSpan = 4*Math.PI; // two periods visible
+
+    // gridlines at envelope min/max
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    [env.min, env.max, (env.min+env.max)/2].forEach(v=>{
+      const y = pixelY(v, ampScale, h, envMid);
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    });
+
+    // vertical period gridlines
+    ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+    const step = w/ (windowSpan/Math.PI);
+    for(let x=w; x>=0; x-=step){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    }
+
+    const STEP_PX = 2;
+
+    if(state.showTarget){
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,180,84,0.65)';
+      ctx.setLineDash([5,4]);
+      ctx.lineWidth = 1.4;
+      for(let x=0; x<=w; x+=STEP_PX){
+        const theta = state.theta - (x/w)*windowSpan;
+        const v = idealValueAt(theta, state.waveform, state.duty);
+        const y = pixelY(v, ampScale, h, envMid);
+        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#4dffb0';
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = 'rgba(77,255,176,0.6)';
+    ctx.shadowBlur = 6;
+    for(let x=0; x<=w; x+=STEP_PX){
+      const theta = state.theta - (x/w)*windowSpan;
+      const v = valueAt(theta, harmonicData.terms, harmonicData.dc);
+      const y = pixelY(v, ampScale, h, envMid);
+      if(x===0){ ctx.moveTo(x,y); lastScopeStartY = y; }
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // "now" marker
+    ctx.beginPath();
+    ctx.fillStyle = '#4dffb0';
+    ctx.shadowColor = '#4dffb0'; ctx.shadowBlur = 10;
+    ctx.arc(0, lastScopeStartY, 4.2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = 'rgba(124,143,150,0.8)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillText('NOW', 8, 14);
+    ctx.textAlign = 'right';
+    ctx.fillText('PAST', w-6, 14);
+    ctx.textAlign = 'left';
+  }
+
+  function drawConnector(){
+    const wr = vizWrapper.getBoundingClientRect();
+    const epiRect = epiCanvas.getBoundingClientRect();
+    const scopeRect = scopeCanvas.getBoundingClientRect();
+    const ctx = connectorCanvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,connectorCanvas.width/dpr, connectorCanvas.height/dpr);
+
+    // only draw a bridging beam when panels sit roughly side by side
+    const sideBySide = Math.abs(epiRect.top - scopeRect.top) < 4 && (scopeRect.left - epiRect.right) < 80;
+    if(!sideBySide) return;
+
+    const x1 = epiRect.right - wr.left;
+    const y1 = epiRect.top - wr.top + lastTip.y;
+    const x2 = scopeRect.left - wr.left;
+    const y2 = scopeRect.top - wr.top + lastScopeStartY;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(77,255,176,0.35)';
+    ctx.setLineDash([3,5]);
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.fillStyle = '#4dffb0';
+    ctx.shadowColor = '#4dffb0'; ctx.shadowBlur = 12;
+    ctx.arc(x2,y2,3.4,0,Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawSpectrum(){
+    const { ctx, w, h } = fitCanvas(specCanvas);
+    ctx.clearRect(0,0,w,h);
+    const terms = harmonicData.terms;
+    if(terms.length === 0) return;
+
+    const maxN = terms[terms.length-1].n;
+    const maxAmp = Math.max(...terms.map(t=>t.amp), harmonicData.dc || 0);
+    const padL = 34, padB = 20, padT = 10, padR = 10;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+    const barSlot = plotW / maxN;
+    const barW = Math.max(2, Math.min(18, barSlot*0.6));
+
+    // axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT); ctx.lineTo(padL, h-padB); ctx.lineTo(w-padR, h-padB);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(124,143,150,0.85)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(maxAmp.toFixed(2), padL-6, padT+8);
+    ctx.fillText('0', padL-6, h-padB);
+    ctx.textAlign = 'center';
+
+    const termMap = {};
+    terms.forEach(t=> termMap[t.n]=t.amp);
+
+    for(let n=1; n<=maxN; n++){
+      const amp = termMap[n] || 0;
+      const x = padL + (n-0.5)*barSlot;
+      const barH = (amp/maxAmp)*plotH;
+      const isFundamental = n===1;
+      const grad = ctx.createLinearGradient(0,h-padB-barH,0,h-padB);
+      if(amp>0){
+        grad.addColorStop(0, isFundamental ? 'rgba(255,180,84,0.95)' : 'rgba(94,200,255,0.85)');
+        grad.addColorStop(1, isFundamental ? 'rgba(255,180,84,0.35)' : 'rgba(94,200,255,0.25)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x-barW/2, h-padB-barH, barW, Math.max(barH,1));
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(x-1, h-padB-2, 2, 2);
+      }
+      if(maxN<=20 || n%5===0 || n===1 || n===maxN){
+        ctx.fillStyle = 'rgba(124,143,150,0.7)';
+        ctx.fillText(String(n), x, h-padB+13);
+      }
+    }
+  }
+
+  // ---------------- formula text ----------------
+  function fmt(v, d){ return v.toFixed(d===undefined?3:d); }
+
+  function buildFormula(){
+    const type = state.waveform, N = state.N, duty = state.duty;
+    let general = '';
+    if(type === 'square'){
+      general = `f(t) = <span class="op">(4/π)</span> Σ<sub class="n">n=1,3,5,…</sub> <span class="term">(1/n) sin(nθ)</span>`;
+    } else if(type === 'sawtooth'){
+      general = `f(t) = <span class="op">(2/π)</span> Σ<sub class="n">n=1,2,3,…</sub> <span class="term">((−1)<sup>n+1</sup>/n) sin(nθ)</span>`;
+    } else if(type === 'triangle'){
+      general = `f(t) = <span class="op">(8/π²)</span> Σ<sub class="n">n=1,3,5,…</sub> <span class="term">((−1)<sup>(n−1)/2</sup>/n²) sin(nθ)</span>`;
+    } else if(type === 'pulse'){
+      general = `f(t) = <span class="op">d</span> + Σ<sub class="n">n=1,2,3,…</sub> <span class="term">(2/(nπ)) sin(nπd) cos(nθ)</span>, &nbsp;d = ${fmt(duty,2)}`;
+    }
+    document.getElementById('formulaMain').innerHTML = general + `<br><span class="op" style="font-size:12px;">θ = ωt &nbsp;·&nbsp; truncated to N = ${N} harmonics</span>`;
+
+    function classifyPhase(phase){
+      const p = ((phase % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+      if(p < 0.1 || p > 2*Math.PI-0.1) return { fn:'sin', sign:'+' };
+      if(Math.abs(p-Math.PI) < 0.1) return { fn:'sin', sign:'−' };
+      if(Math.abs(p-Math.PI/2) < 0.1) return { fn:'cos', sign:'+' };
+      if(Math.abs(p-1.5*Math.PI) < 0.1) return { fn:'cos', sign:'−' };
+      return { fn:'sin', sign:'+' };
+    }
+    const terms = harmonicData.terms.slice(0,4);
+    const parts = terms.map(t=>{
+      const c = classifyPhase(t.phase);
+      return `${c.sign} ${fmt(t.amp,3)}·${c.fn}(${t.n}θ)`;
+    });
+    let expandStr = parts.join(' ');
+    if(harmonicData.dc) expandStr = `${fmt(harmonicData.dc,3)} ` + expandStr;
+    if(harmonicData.terms.length>4) expandStr += ' + …';
+    document.getElementById('formulaExpand').textContent = 'f(t) ≈ ' + expandStr.replace(/^\+\s*/,'');
+  }
+
+  function updateStats(){
+    const s = computeStats(state.waveform, state.duty, harmonicData.terms, harmonicData.dc);
+    const list = document.getElementById('statList');
+    list.innerHTML = `
+      <div class="stat"><span class="label">RMS error vs. ideal</span><span class="value">${s.rmsPct.toFixed(2)}%</span></div>
+      <div class="stat"><span class="label">Gibbs overshoot</span><span class="value ${s.gibbs>3?'warn':''}">${s.gibbs.toFixed(1)}%</span></div>
+      <div class="stat"><span class="label">Active harmonics</span><span class="value">${harmonicData.terms.length}</span></div>
+      <div class="stat"><span class="label">Highest harmonic</span><span class="value">n = ${harmonicData.terms.length ? harmonicData.terms[harmonicData.terms.length-1].n : '—'}</span></div>
+    `;
+  }
+
+  // ---------------- controls wiring ----------------
+  const nSlider = document.getElementById('nSlider');
+  const nLabel = document.getElementById('nLabel');
+  const dutyField = document.getElementById('dutyField');
+  const dutySlider = document.getElementById('dutySlider');
+  const dutyLabel = document.getElementById('dutyLabel');
+  const speedSlider = document.getElementById('speedSlider');
+  const speedLabel = document.getElementById('speedLabel');
+  const playBtn = document.getElementById('playBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const showTargetBox = document.getElementById('showTarget');
+  const showCirclesBox = document.getElementById('showCircles');
+  const roWave = document.getElementById('roWave');
+  const roN = document.getElementById('roN');
+  const scopeTag = document.getElementById('scopeTag');
+
+  function refreshHarmonicsAndUI(){
+    harmonicData = computeHarmonics(state.waveform, state.N, state.duty);
+    nLabel.textContent = state.N;
+    roN.textContent = state.N;
+    scopeTag.textContent = 'N = ' + state.N;
+    roWave.textContent = state.waveform.toUpperCase();
+    buildFormula();
+    updateStats();
+    drawSpectrum();
+  }
+
+  document.querySelectorAll('.wave-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.wave-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.waveform = btn.dataset.wave;
+      dutyField.style.display = state.waveform === 'pulse' ? 'flex' : 'none';
+      requestAnimationFrame(resizeAll);
+      refreshHarmonicsAndUI();
+    });
+  });
+
+  nSlider.addEventListener('input', ()=>{
+    state.N = parseInt(nSlider.value,10);
+    refreshHarmonicsAndUI();
+  });
+
+  dutySlider.addEventListener('input', ()=>{
+    state.duty = parseInt(dutySlider.value,10)/100;
+    dutyLabel.textContent = Math.round(state.duty*100) + '%';
+    refreshHarmonicsAndUI();
+  });
+
+  speedSlider.addEventListener('input', ()=>{
+    state.speed = parseInt(speedSlider.value,10)/100;
+    speedLabel.textContent = state.speed.toFixed(1) + '×';
+  });
+
+  playBtn.addEventListener('click', ()=>{
+    state.playing = !state.playing;
+    playBtn.innerHTML = state.playing ? '⏸ Pause' : '▶ Play';
+    playBtn.classList.toggle('primary', state.playing);
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    state.theta = 0;
+  });
+
+  showTargetBox.addEventListener('change', ()=>{ state.showTarget = showTargetBox.checked; });
+  showCirclesBox.addEventListener('change', ()=>{ state.showCircles = showCirclesBox.checked; });
+
+  window.addEventListener('resize', resizeAll);
+
+  // ---------------- animation loop ----------------
+  let lastTs = null;
+  function frame(ts){
+    if(lastTs === null) lastTs = ts;
+    const dt = Math.min((ts-lastTs)/1000, 0.05);
+    lastTs = ts;
+    if(state.playing){
+      state.theta += dt * state.speed * 0.8;
+    }
+    document.getElementById('roTheta').textContent = (state.theta % (2*Math.PI*100)).toFixed(2);
+    drawEpicycle();
+    drawScope();
+    drawConnector();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------- init ----------------
+  if(prefersReduced){
+    playBtn.innerHTML = '▶ Play';
+    playBtn.classList.remove('primary');
+  }
+  resizeAll();
+  refreshHarmonicsAndUI();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

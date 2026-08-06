@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyroscope & Top Dynamics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 1.1em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .canvas-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            background: radial-gradient(ellipse at center, #1a1f3a 0%, #0a0e27 100%);
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-item {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            display: inline-block;
+            background: rgba(102, 126, 234, 0.2);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #667eea;
+            float: right;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #b0b0b0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-label {
+            color: #667eea;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .legend {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌀 3D Gyroscope & Spinning Top Dynamics</h1>
+            <p class="subtitle">Interactive Simulation of Rigid Body Dynamics with Euler Angles</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="canvas-container">
+                <canvas id="simulationCanvas"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>X Axis (Body Frame)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span>Y Axis (Body Frame)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffe66d;"></div>
+                        <span>Z Axis (Spin)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #95e1d3;"></div>
+                        <span>Angular Momentum</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>🎯 Simulation Mode</h3>
+                    <div class="mode-selector">
+                        <div class="mode-btn active" onclick="setMode('gyroscope')">Gyroscope</div>
+                        <div class="mode-btn" onclick="setMode('top')">Spinning Top</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>⚙️ Parameters</h3>
+                    <div class="control-item">
+                        <label>Spin Velocity (ψ̇) <span class="value-display" id="spinValue">10.0</span></label>
+                        <input type="range" id="spinVelocity" min="1" max="30" step="0.5" value="10">
+                    </div>
+                    <div class="control-item">
+                        <label>Tilt Angle (θ) <span class="value-display" id="thetaValue">30°</span></label>
+                        <input type="range" id="thetaAngle" min="0" max="80" step="1" value="30">
+                    </div>
+                    <div class="control-item">
+                        <label>Gravity <span class="value-display" id="gravityValue">9.8</span></label>
+                        <input type="range" id="gravity" min="0" max="20" step="0.5" value="9.8">
+                    </div>
+                    <div class="control-item">
+                        <label>Mass <span class="value-display" id="massValue">1.0 kg</span></label>
+                        <input type="range" id="mass" min="0.1" max="5" step="0.1" value="1">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>🎮 Controls</h3>
+                    <button class="btn btn-primary" onclick="toggleAnimation()">
+                        <span id="playBtn">⏸ Pause</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetSimulation()">🔄 Reset</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>👁️ View Options</h3>
+                    <div class="control-item">
+                        <label><input type="checkbox" id="showTrail" checked style="width: auto; margin-right: 8px;"> Show Precession Trail</label>
+                    </div>
+                    <div class="control-item">
+                        <label><input type="checkbox" id="showVectors" checked style="width: auto; margin-right: 8px;"> Show Vectors</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3 style="color: #667eea; margin-bottom: 15px;">📊 Real-time Data</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Precession Rate (φ̇)</div>
+                    <div class="info-value" id="precessionRate">0.00 rad/s</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Angular Momentum (H)</div>
+                    <div class="info-value" id="angularMomentum">0.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Kinetic Energy</div>
+                    <div class="info-value" id="kineticEnergy">0.00 J</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Total Energy</div>
+                    <div class="info-value" id="totalEnergy">0.00 J</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height, centerX, centerY;
+        let isRunning = true;
+        let mode = 'gyroscope';
+        let time = 0;
+        let precessionAngle = 0;
+        let trail = [];
+
+        // Simulation parameters
+        let params = {
+            spinVelocity: 10,
+            theta: Math.PI / 6,
+            gravity: 9.8,
+            mass: 1.0,
+            I: 0.5,
+            I0: 0.3,
+            zG: 0.2
+        };
+
+        function resizeCanvas() {
+            width = canvas.offsetWidth;
+            height = canvas.offsetHeight;
+            canvas.width = width;
+            canvas.height = height;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function setMode(newMode) {
+            mode = newMode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            resetSimulation();
+        }
+
+        function toggleAnimation() {
+            isRunning = !isRunning;
+            document.getElementById('playBtn').textContent = isRunning ? '⏸ Pause' : '▶ Play';
+        }
+
+        function resetSimulation() {
+            time = 0;
+            precessionAngle = 0;
+            trail = [];
+        }
+
+        // Update parameter displays
+        document.getElementById('spinVelocity').addEventListener('input', (e) => {
+            params.spinVelocity = parseFloat(e.target.value);
+            document.getElementById('spinValue').textContent = params.spinVelocity.toFixed(1);
+        });
+
+        document.getElementById('thetaAngle').addEventListener('input', (e) => {
+            params.theta = parseFloat(e.target.value) * Math.PI / 180;
+            document.getElementById('thetaValue').textContent = e.target.value + '°';
+        });
+
+        document.getElementById('gravity').addEventListener('input', (e) => {
+            params.gravity = parseFloat(e.target.value);
+            document.getElementById('gravityValue').textContent = params.gravity.toFixed(1);
+        });
+
+        document.getElementById('mass').addEventListener('input', (e) => {
+            params.mass = parseFloat(e.target.value);
+            document.getElementById('massValue').textContent = params.mass.toFixed(1) + ' kg';
+        });
+
+        function calculatePrecessionRate() {
+            // φ̇ = MgzG / (Iψ̇)
+            const M = params.mass;
+            const g = params.gravity;
+            const zG = params.zG;
+            const I = params.I;
+            const psi_dot = params.spinVelocity;
+            
+            return (M * g * zG) / (I * psi_dot);
+        }
+
+        function draw3DTop(x, y, scale, theta, phi, spin) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Draw ground plane
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = -3; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 40, -120);
+                ctx.lineTo(i * 40, 120);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(-120, i * 40);
+                ctx.lineTo(120, i * 40);
+                ctx.stroke();
+            }
+
+            // Draw vertical Z axis
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, 150);
+            ctx.lineTo(0, -150);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw precession trail
+            if (document.getElementById('showTrail').checked && trail.length > 1) {
+                ctx.strokeStyle = 'rgba(149, 225, 211, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) {
+                    ctx.lineTo(trail[i].x, trail[i].y);
+                }
+                ctx.stroke();
+            }
+
+            // Calculate 3D rotation
+            const cosTheta = Math.cos(theta);
+            const sinTheta = Math.sin(theta);
+            const cosPhi = Math.cos(phi);
+            const sinPhi = Math.sin(phi);
+
+            // Top body (disk and shaft)
+            const topLength = 80;
+            const diskRadius = 30;
+            
+            // Shaft endpoint
+            const shaftX = topLength * sinTheta * cosPhi;
+            const shaftY = -topLength * cosTheta;
+            const shaftZ = topLength * sinTheta * sinPhi;
+
+            // Draw shaft
+            ctx.strokeStyle = '#ffe66d';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(shaftX, shaftY);
+            ctx.stroke();
+
+            // Draw disk at end of shaft
+            const diskX = shaftX;
+            const diskY = shaftY;
+            
+            // Disk with rotation effect
+            ctx.save();
+            ctx.translate(diskX, diskY);
+            ctx.rotate(spin * 0.1);
+            
+            // Draw disk with gradient
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, diskRadius);
+            gradient.addColorStop(0, '#ffd93d');
+            gradient.addColorStop(0.7, '#ffb703');
+            gradient.addColorStop(1, '#fb8500');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, diskRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#fb8500';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Spin lines on disk
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(diskRadius * Math.cos(i * Math.PI / 4), diskRadius * Math.sin(i * Math.PI / 4));
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+
+            // Draw coordinate axes if enabled
+            if (document.getElementById('showVectors').checked) {
+                const axisLength = 60;
+                
+                // X axis (red)
+                ctx.strokeStyle = '#ff6b6b';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(axisLength, 0);
+                ctx.stroke();
+                drawArrow(axisLength, 0, 0, 0, '#ff6b6b');
+                
+                // Y axis (cyan)
+                ctx.strokeStyle = '#4ecdc4';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, -axisLength);
+                ctx.stroke();
+                drawArrow(0, -axisLength, 0, 0, '#4ecdc4');
+                
+                // Angular momentum vector
+                const Hx = params.I0 * params.spinVelocity * sinTheta * cosPhi * 0.5;
+                const Hy = params.I * params.spinVelocity * cosTheta;
+                const scale_H = 1.5;
+                
+                ctx.strokeStyle = '#95e1d3';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Hx * scale_H, -Hy * scale_H);
+                ctx.stroke();
+                drawArrow(Hx * scale_H, -Hy * scale_H, 0, 0, '#95e1d3');
+            }
+
+            ctx.restore();
+        }
+
+        function drawArrow(x, y, fromX, fromY, color) {
+            const angle = Math.atan2(y - fromY, x - fromX);
+            const headLength = 10;
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - headLength * Math.cos(angle - Math.PI / 6),
+                       y - headLength * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x - headLength * Math.cos(angle + Math.PI / 6),
+                       y - headLength * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function updatePhysics(dt) {
+            if (!isRunning) return;
+
+            // Calculate precession rate
+            const precessionRate = calculatePrecessionRate();
+            
+            // Update angles
+            precessionAngle += precessionRate * dt;
+            time += dt;
+
+            // Update trail
+            const trailX = 80 * Math.sin(params.theta) * Math.cos(precessionAngle);
+            const trailY = -80 * Math.cos(params.theta);
+            trail.push({ x: trailX, y: trailY });
+            if (trail.length > 200) trail.shift();
+
+            // Update info displays
+            document.getElementById('precessionRate').textContent = precessionRate.toFixed(3) + ' rad/s';
+            
+            const H = params.I * params.spinVelocity;
+            document.getElementById('angularMomentum').textContent = H.toFixed(2);
+            
+            const KE = 0.5 * params.I * params.spinVelocity * params.spinVelocity;
+            document.getElementById('kineticEnergy').textContent = KE.toFixed(2) + ' J';
+            
+            const PE = params.mass * params.gravity * params.zG * Math.cos(params.theta);
+            const totalE = KE + PE;
+            document.getElementById('totalEnergy').textContent = totalE.toFixed(2) + ' J';
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 14, 39, 0.95)';
+            ctx.fillRect(0, 0, width, height);
+
+            updatePhysics(0.016);
+
+            draw3DTop(centerX, centerY, 1, params.theta, precessionAngle, time * params.spinVelocity);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Proof of (a+b)^3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .identity {
+            font-size: 2.2rem;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .visualization {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .cube-container {
+            perspective: 1000px;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s ease;
+        }
+        
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .front { transform: translateZ(150px); }
+        .back { transform: rotateY(180deg) translateZ(150px); }
+        .right { transform: rotateY(90deg) translateZ(150px); }
+        .left { transform: rotateY(-90deg) translateZ(150px); }
+        .top { transform: rotateX(90deg) translateZ(150px); }
+        .bottom { transform: rotateX(-90deg) translateZ(150px); }
+        
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+        
+        .explanation {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            text-align: left;
+            line-height: 1.6;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .explanation h2 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .explanation p {
+            margin-bottom: 15px;
+        }
+        
+        .components {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .component {
+            width: 180px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .component-value {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .component-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        footer {
+            margin-top: 30px;
+            padding: 20px;
+            text-align: center;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; }
+            .identity { font-size: 1.8rem; }
+            .cube-container { width: 250px; height: 250px; }
+            .face { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Visual Proof of (a + b)³</h1>
+            <p class="subtitle">A geometric demonstration of the algebraic identity</p>
+            <div class="identity">(a + b)³ = a³ + 3a²b + 3ab² + b³</div>
+        </header>
+        
+        <div class="visualization">
+            <div class="cube-container">
+                <div class="cube" id="cube">
+                    <div class="face front">(a+b)³</div>
+                    <div class="face back">a³</div>
+                    <div class="face right">3a²b</div>
+                    <div class="face left">3ab²</div>
+                    <div class="face top">b³</div>
+                    <div class="face bottom">Total Volume</div>
+                </div>
+            </div>
+            
+            <div class="components">
+                <div class="component" id="a3">
+                    <div class="component-value">a³</div>
+                    <div class="component-label">One cube of side a</div>
+                </div>
+                <div class="component" id="a2b">
+                    <div class="component-value">3a²b</div>
+                    <div class="component-label">Three rectangular prisms</div>
+                </div>
+                <div class="component" id="ab2">
+                    <div class="component-value">3ab²</div>
+                    <div class="component-label">Three rectangular prisms</div>
+                </div>
+                <div class="component" id="b3">
+                    <div class="component-value">b³</div>
+                    <div class="component-label">One cube of side b</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="rotate">Rotate Cube</button>
+            <button id="explode">Explode Components</button>
+            <button id="reset">Reset View</button>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>a = <span id="a-value">3</span></span>
+                <span>b = <span id="b-value">2</span></span>
+            </div>
+            <input type="range" min="1" max="5" value="3" class="slider" id="a-slider">
+            <input type="range" min="1" max="5" value="2" class="slider" id="b-slider">
+        </div>
+        
+        <div class="explanation">
+            <h2>How the Visual Proof Works</h2>
+            <p>The cube with side length (a + b) has a total volume of (a + b)³.</p>
+            <p>When we decompose this cube, we find:</p>
+            <ul>
+                <li>One cube of side a (volume a³)</li>
+                <li>Three rectangular prisms with dimensions a × a × b (volume 3a²b)</li>
+                <li>Three rectangular prisms with dimensions a × b × b (volume 3ab²)</li>
+                <li>One cube of side b (volume b³)</li>
+            </ul>
+            <p>Adding these components together gives us the algebraic identity: (a + b)³ = a³ + 3a²b + 3ab² + b³</p>
+        </div>
+        
+        <footer>
+            <p>Created with HTML, CSS, and JavaScript | Inspired by @MathVisualProfs</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cube = document.getElementById('cube');
+            const rotateBtn = document.getElementById('rotate');
+            const explodeBtn = document.getElementById('explode');
+            const resetBtn = document.getElementById('reset');
+            const aSlider = document.getElementById('a-slider');
+            const bSlider = document.getElementById('b-slider');
+            const aValue = document.getElementById('a-value');
+            const bValue = document.getElementById('b-value');
+            
+            let isExploded = false;
+            let rotationX = 0;
+            let rotationY = 0;
+            
+            // Update slider values
+            aSlider.addEventListener('input', function() {
+                aValue.textContent = this.value;
+                updateCube();
+            });
+            
+            bSlider.addEventListener('input', function() {
+                bValue.textContent = this.value;
+                updateCube();
+            });
+            
+            // Rotate cube
+            rotateBtn.addEventListener('click', function() {
+                rotationY += 90;
+                cube.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            });
+            
+            // Explode components
+            explodeBtn.addEventListener('click', function() {
+                if (!isExploded) {
+                    cube.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scale(0.8)`;
+                    document.getElementById('a3').style.transform = 'translate(-150px, -150px)';
+                    document.getElementById('a2b').style.transform = 'translate(150px, -150px)';
+                    document.getElementById('ab2').style.transform = 'translate(-150px, 150px)';
+                    document.getElementById('b3').style.transform = 'translate(150px, 150px)';
+                    isExploded = true;
+                }
+            });
+            
+            // Reset view
+            resetBtn.addEventListener('click', function() {
+                rotationX = 0;
+                rotationY = 0;
+                cube.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+                document.getElementById('a3').style.transform = 'translate(0)';
+                document.getElementById('a2b').style.transform = 'translate(0)';
+                document.getElementById('ab2').style.transform = 'translate(0)';
+                document.getElementById('b3').style.transform = 'translate(0)';
+                isExploded = false;
+            });
+            
+            // Update cube based on a and b values
+            function updateCube() {
+                const a = parseInt(aSlider.value);
+                const b = parseInt(bSlider.value);
+                
+                // Update component values
+                document.querySelector('#a3 .component-value').textContent = `a³ = ${a*a*a}`;
+                document.querySelector('#a2b .component-value').textContent = `3a²b = ${3*a*a*b}`;
+                document.querySelector('#ab2 .component-value').textContent = `3ab² = ${3*a*b*b}`;
+                document.querySelector('#b3 .component-value').textContent = `b³ = ${b*b*b}`;
+                
+                // Update cube face with current calculation
+                cube.querySelector('.bottom').textContent = 
+                    `Total: ${a*a*a + 3*a*a*b + 3*a*b*b + b*b*b}`;
+            }
+            
+            // Initialize
+            updateCube();
+        });
+    </script>
+</body>
+</html>

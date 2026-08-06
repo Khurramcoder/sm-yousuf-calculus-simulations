@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fixed Evolute Explorer</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+body{font-family:Georgia,serif;background:#f5f1e8;margin:0;padding:20px}
+.wrap{display:grid;grid-template-columns:380px 1fr;gap:20px}
+.panel{background:white;padding:15px;border:1px solid #ccc}
+svg{width:100%;height:700px;background:white;border:1px solid #ccc}
+</style>
+</head>
+<body>
+<h1>Centre of Curvature & Evolute (Fixed Version)</h1>
+<div class="wrap">
+<div class="panel">
+<p><b>Curve:</b> \(y=x^2/8\)</p>
+<input id="s" type="range" min="-8" max="8" step="0.05" value="0" style="width:100%">
+<div id="vals"></div>
+<p>
+\(
+h=x-\frac{y'(1+y'^2)}{y''},
+\qquad
+k=y+\frac{1+y'^2}{y''}
+\)
+</p>
+</div>
+<div class="panel">
+<svg id="svg"></svg>
+</div>
+</div>
+
+<script>
+const svg=document.getElementById("svg");
+let evolute=[];
+
+function W(x,y){
+ return {x:500+x*40,y:600-y*40};
+}
+
+function draw(){
+ svg.innerHTML="";
+ let x=parseFloat(document.getElementById("s").value);
+ let y=x*x/8;
+
+ let yp=x/4;
+ let ypp=0.25;
+
+ let h=x-yp*(1+yp*yp)/ypp;
+ let k=y+(1+yp*yp)/ypp;
+
+ let kappa=Math.abs(ypp)/Math.pow(1+yp*yp,1.5);
+ let rho=1/kappa;
+
+ evolute.push({x:h,y:k});
+
+ let curve="";
+ for(let t=-8;t<=8;t+=0.02){
+   let p=W(t,t*t/8);
+   curve+=(curve?" L ":"M ")+p.x+" "+p.y;
+ }
+
+ let path=document.createElementNS("http://www.w3.org/2000/svg","path");
+ path.setAttribute("d",curve);
+ path.setAttribute("fill","none");
+ path.setAttribute("stroke","green");
+ path.setAttribute("stroke-width","4");
+ svg.appendChild(path);
+
+ let P=W(x,y);
+ let C=W(h,k);
+
+ function line(x1,y1,x2,y2,col){
+  let L=document.createElementNS("http://www.w3.org/2000/svg","line");
+  L.setAttribute("x1",x1);L.setAttribute("y1",y1);
+  L.setAttribute("x2",x2);L.setAttribute("y2",y2);
+  L.setAttribute("stroke",col);
+  L.setAttribute("stroke-width",3);
+  svg.appendChild(L);
+ }
+
+ line(P.x-120,P.y+120*yp,P.x+120,P.y-120*yp,"blue");
+ line(P.x,P.y,C.x,C.y,"red");
+
+ let evo="";
+ evolute.forEach((q,i)=>{
+   let p=W(q.x,q.y);
+   evo+=(i?" L ":"M ")+p.x+" "+p.y;
+ });
+ let ep=document.createElementNS("http://www.w3.org/2000/svg","path");
+ ep.setAttribute("d",evo);
+ ep.setAttribute("fill","none");
+ ep.setAttribute("stroke","purple");
+ ep.setAttribute("stroke-width","3");
+ svg.appendChild(ep);
+
+ [["black",P,6],["red",C,6]].forEach(v=>{
+   let c=document.createElementNS("http://www.w3.org/2000/svg","circle");
+   c.setAttribute("cx",v[1].x);
+   c.setAttribute("cy",v[1].y);
+   c.setAttribute("r",v[2]);
+   c.setAttribute("fill",v[0]);
+   svg.appendChild(c);
+ });
+
+ let osc=document.createElementNS("http://www.w3.org/2000/svg","circle");
+ osc.setAttribute("cx",C.x);
+ osc.setAttribute("cy",C.y);
+ osc.setAttribute("r",Math.min(rho*40,500));
+ osc.setAttribute("fill","none");
+ osc.setAttribute("stroke","orange");
+ svg.appendChild(osc);
+
+ document.getElementById("vals").innerHTML=
+ `P=(${x.toFixed(3)},${y.toFixed(3)})<br>
+ κ=${kappa.toFixed(5)}<br>
+ ρ=${rho.toFixed(3)}<br>
+ Centre=(${h.toFixed(3)},${k.toFixed(3)})`;
+}
+document.getElementById("s").oninput=draw;
+draw();
+</script>
+</body>
+</html>

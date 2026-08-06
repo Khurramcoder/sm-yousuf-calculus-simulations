@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolute Explorer v1</title>
+<script>
+window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#f8fafc}
+#app{display:grid;grid-template-columns:320px 1fr;height:100vh}
+.sidebar{padding:20px;background:#111827;border-right:1px solid #334155}
+.main{position:relative}
+button{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px}
+.primary{background:#38bdf8}
+.secondary{background:#334155;color:white}
+.card{background:#1e293b;padding:14px;border-radius:12px;margin-bottom:12px}
+svg{width:100%;height:100%}
+.info{position:absolute;right:15px;top:15px;background:rgba(17,24,39,.9);padding:12px;border-radius:10px;width:280px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="sidebar">
+<h2>Evolute Explorer</h2>
+<div class="card">
+<button class="primary" id="play">Play / Pause</button>
+<button class="secondary" id="reset">Reset</button>
+<input type="range" id="slider" min="0" max="100" value="0" style="width:100%">
+</div>
+<div class="card">
+<div>$$y=\frac{x^2}{8}$$</div>
+<div>$$\kappa=\frac{|y''|}{(1+y'^2)^{3/2}}$$</div>
+<div>$$\rho=\frac1\kappa$$</div>
+</div>
+</div>
+<div class="main">
+<svg id="svg"></svg>
+<div class="info" id="info"></div>
+</div>
+</div>
+<script>
+const svg=document.getElementById('svg');
+let w,h,playing=false,param=0,evolute=[];
+
+function resize(){w=svg.clientWidth;h=svg.clientHeight;render();}
+window.addEventListener('resize',resize);
+
+function S(x,y){return {x:w/2+x*35,y:h/2-y*35};}
+function yv(x){return x*x/8;}
+function dy(x){return x/4;}
+function ddy(x){return 0.25;}
+function curvature(x){return Math.abs(ddy(x))/Math.pow(1+dy(x)**2,1.5);}
+function rho(x){return 1/curvature(x);}
+function center(x){
+ let y=yv(x),d=dy(x),dd=ddy(x);
+ return {
+  x:x-d*(1+d*d)/dd,
+  y:y+(1+d*d)/dd
+ };
+}
+
+function line(x1,y1,x2,y2,color,width=2){
+ let e=document.createElementNS("http://www.w3.org/2000/svg","line");
+ e.setAttribute("x1",x1);e.setAttribute("y1",y1);
+ e.setAttribute("x2",x2);e.setAttribute("y2",y2);
+ e.setAttribute("stroke",color);e.setAttribute("stroke-width",width);
+ svg.appendChild(e);
+}
+
+function circle(cx,cy,r,color,fill="none"){
+ let e=document.createElementNS("http://www.w3.org/2000/svg","circle");
+ e.setAttribute("cx",cx);e.setAttribute("cy",cy);
+ e.setAttribute("r",r);e.setAttribute("stroke",color);
+ e.setAttribute("fill",fill); svg.appendChild(e);
+}
+
+function pathFrom(points,color,width=3){
+ if(points.length<2)return;
+ let d=`M ${points[0].x} ${points[0].y}`;
+ for(let i=1;i<points.length;i++) d+=` L ${points[i].x} ${points[i].y}`;
+ let p=document.createElementNS("http://www.w3.org/2000/svg","path");
+ p.setAttribute("d",d); p.setAttribute("fill","none");
+ p.setAttribute("stroke",color); p.setAttribute("stroke-width",width);
+ svg.appendChild(p);
+}
+
+function render(){
+ svg.innerHTML="";
+ w=svg.clientWidth; h=svg.clientHeight;
+
+ for(let x=0;x<w;x+=40) line(x,0,x,h,"#1e293b",1);
+ for(let y=0;y<h;y+=40) line(0,y,w,y,"#1e293b",1);
+ line(0,h/2,w,h/2,"#64748b");
+ line(w/2,0,w/2,h,"#64748b");
+
+ let pts=[];
+ for(let x=-10;x<=10;x+=0.05){ let p=S(x,yv(x)); pts.push(p);}
+ pathFrom(pts,"#22c55e",4);
+
+ let x0=-8+16*param, y0=yv(x0);
+ let sp=S(x0,y0);
+
+ let m=dy(x0);
+ let t1=S(x0-8,y0+m*(-8));
+ let t2=S(x0+8,y0+m*(8));
+ line(t1.x,t1.y,t2.x,t2.y,"#38bdf8",3);
+
+ let mn=-1/m;
+ if(Math.abs(m)>0.001){
+   let n1=S(x0-5,y0+mn*(-5));
+   let n2=S(x0+5,y0+mn*(5));
+   line(n1.x,n1.y,n2.x,n2.y,"#f59e0b",3);
+ }
+
+ let c=center(x0), cs=S(c.x,c.y);
+ line(sp.x,sp.y,cs.x,cs.y,"#ef4444",2);
+ circle(cs.x,cs.y,6,"#ef4444","#ef4444");
+
+ circle(cs.x,cs.y,rho(x0)*35,"#f59e0b");
+ circle(sp.x,sp.y,7,"white","white");
+
+ let ep=evolute.map(p=>S(p.x,p.y));
+ pathFrom(ep,"#ef4444",4);
+
+ document.getElementById("info").innerHTML=
+ `x=${x0.toFixed(2)}<br>
+ κ=${curvature(x0).toFixed(5)}<br>
+ ρ=${rho(x0).toFixed(3)}<br>
+ Center=(${c.x.toFixed(2)}, ${c.y.toFixed(2)})<br>
+ Evolute points=${evolute.length}`;
+}
+
+document.getElementById("slider").oninput=e=>{
+ param=e.target.value/100; render();
+};
+
+document.getElementById("play").onclick=()=>playing=!playing;
+document.getElementById("reset").onclick=()=>{evolute=[];param=0;render();};
+
+function anim(){
+ if(playing){
+  param+=0.002;
+  if(param>1){param=0;evolute=[];}
+  document.getElementById("slider").value=param*100;
+  evolute.push(center(-8+16*param));
+  render();
+ }
+ requestAnimationFrame(anim);
+}
+resize(); anim();
+</script>
+</body>
+</html>

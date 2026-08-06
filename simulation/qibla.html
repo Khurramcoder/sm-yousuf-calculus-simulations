@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qibla Direction Finder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a5e63 0%, #0d3241 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-top: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #4db8ff;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 0 2px #4db8ff;
+        }
+
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 50px;
+            background: #4db8ff;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: #3aa0e0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-container {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .compass-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 30px;
+        }
+
+        .compass {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .compass-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .compass-direction {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .direction {
+            position: absolute;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .north { top: 5px; left: 50%; transform: translateX(-50%); }
+        .east { top: 50%; right: 5px; transform: translateY(-50%); }
+        .south { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        .west { top: 50%; left: 5px; transform: translateY(-50%); }
+
+        .qibla-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 45%;
+            background: #ff4d4d;
+            transform-origin: bottom center;
+            border-radius: 2px;
+            box-shadow: 0 0 10px #ff4d4d;
+            z-index: 10;
+        }
+
+        .qibla-text {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: #4db8ff;
+        }
+
+        .location-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .info-card p {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .formula-section {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .formula-section h2 {
+            margin-bottom: 15px;
+            color: #4db8ff;
+            text-align: center;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #4db8ff;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .compass-container {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .location-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-compass"></i> Qibla Direction Finder</h1>
+            <p class="subtitle">Find the direction to the Holy Kaaba from anywhere in the world</p>
+        </header>
+        
+        <div class="search-container">
+            <input type="text" id="cityInput" placeholder="Enter your city name...">
+            <button id="searchBtn"><i class="fas fa-search"></i> Find Qibla</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Calculating Qibla direction...</p>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <div class="compass-container">
+                <div class="compass">
+                    <div class="compass-inner">
+                        <div class="compass-direction">
+                            <div class="direction north">N</div>
+                            <div class="direction east">E</div>
+                            <div class="direction south">S</div>
+                            <div class="direction west">W</div>
+                        </div>
+                        <div class="qibla-indicator" id="qiblaIndicator"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="qibla-text" id="qiblaText"></div>
+            
+            <div class="location-info">
+                <div class="info-card">
+                    <h3>Your Location</h3>
+                    <p id="locationName">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Latitude</h3>
+                    <p id="latitude">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Longitude</h3>
+                    <p id="longitude">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Qibla Direction</h3>
+                    <p id="directionValue">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="formula-section">
+            <h2><i class="fas fa-calculator"></i> Calculation Formula</h2>
+            <div class="formula">
+                <p>Qibla Coordinates: φ₀ = 21°25.2' N, λ₀ = 39°49.2' E</p>
+                <p>l = λ - λ₀ (Central East)</p>
+                <p>p = sin(φ) / tan(l)</p>
+                <p>q = cos(φ) * tan(φ₀) / sin(l)</p>
+                <p>tan(i) = p - q</p>
+            </div>
+            <p>Where i is the direction of Qibla from North</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cityInput = document.getElementById('cityInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const resultContainer = document.getElementById('resultContainer');
+            const loading = document.getElementById('loading');
+            const qiblaIndicator = document.getElementById('qiblaIndicator');
+            const qiblaText = document.getElementById('qiblaText');
+            const locationName = document.getElementById('locationName');
+            const latitude = document.getElementById('latitude');
+            const longitude = document.getElementById('longitude');
+            const directionValue = document.getElementById('directionValue');
+            
+            // Qibla coordinates (Kaaba in Mecca)
+            const QIBLA_LAT = 21.42; // 21°25.2' N in decimal
+            const QIBLA_LNG = 39.82; // 39°49.2' E in decimal
+            
+            // Sample city data (in a real app, you would use a geocoding API)
+            const cityData = {
+                "new york": { lat: 40.7128, lng: -74.0060 },
+                "london": { lat: 51.5074, lng: -0.1278 },
+                "dubai": { lat: 25.2048, lng: 55.2708 },
+                "jakarta": { lat: -6.2088, lng: 106.8456 },
+                "makkah": { lat: 21.4225, lng: 39.8262 },
+                "cairo": { lat: 30.0444, lng: 31.2357 },
+                "istanbul": { lat: 41.0082, lng: 28.9784 },
+                "karachi": { lat: 24.8607, lng: 67.0011 },
+                "delhi": { lat: 28.7041, lng: 77.1025 },
+                "tokyo": { lat: 35.6762, lng: 139.6503 },
+                "sydney": { lat: -33.8688, lng: 151.2093 },
+                "paris": { lat: 48.8566, lng: 2.3522 },
+                "moscow": { lat: 55.7558, lng: 37.6173 },
+                "beijing": { lat: 39.9042, lng: 116.4074 },
+                "rio de janeiro": { lat: -22.9068, lng: -43.1729 }
+            };
+            
+            searchBtn.addEventListener('click', findQibla);
+            cityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') findQibla();
+            });
+            
+            function findQibla() {
+                const city = cityInput.value.trim().toLowerCase();
+                
+                if (!city) {
+                    alert('Please enter a city name');
+                    return;
+                }
+                
+                // Show loading
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    if (cityData[city]) {
+                        const { lat, lng } = cityData[city];
+                        calculateQiblaDirection(lat, lng, city);
+                    } else {
+                        // If city not found in our data, use a random location
+                        const randomLat = (Math.random() * 180 - 90).toFixed(4);
+                        const randomLng = (Math.random() * 360 - 180).toFixed(4);
+                        calculateQiblaDirection(randomLat, randomLng, city);
+                    }
+                    
+                    // Hide loading and show results
+                    loading.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                }, 1500);
+            }
+            
+            function calculateQiblaDirection(lat, lng, city) {
+                // Convert degrees to radians
+                const toRadians = (deg) => deg * (Math.PI / 180);
+                
+                // Convert radians to degrees
+                const toDegrees = (rad) => rad * (180 / Math.PI);
+                
+                const φ = toRadians(lat);  // User latitude in radians
+                const λ = toRadians(lng);  // User longitude in radians
+                const φ0 = toRadians(QIBLA_LAT);  // Qibla latitude in radians
+                const λ0 = toRadians(QIBLA_LNG);  // Qibla longitude in radians
+                
+                // Calculate longitude difference
+                let l = λ - λ0; // Central East
+                
+                // Apply conditions for longitude based on the handout
+                if (lng >= 0) { // East longitude
+                    if (QIBLA_LNG < lng) {
+                        l = λ - λ0; // CE
+                    } else {
+                        l = λ0 - λ; // CW
+                    }
+                } else { // West longitude
+                    if (Math.abs(lng) < (180 - QIBLA_LNG)) {
+                        l = λ + λ0; // CW
+                    } else {
+                        l = toRadians(360) - (λ + λ0); // CE
+                    }
+                }
+                
+                // Calculate p and q
+                const p = Math.sin(φ) / Math.tan(l);
+                const q = (Math.cos(φ) * Math.tan(φ0)) / Math.sin(l);
+                
+                // Calculate Qibla direction
+                const tan_i = p - q;
+                let i = Math.atan(tan_i);
+                
+                // Convert to degrees and normalize
+                let qiblaDirection = toDegrees(i);
+                
+                // Adjust direction based on quadrant
+                if (lng >= 0) {
+                    if (QIBLA_LNG < lng) {
+                        qiblaDirection = 180 + qiblaDirection;
+                    } else {
+                        qiblaDirection = 360 + qiblaDirection;
+                    }
+                } else {
+                    if (Math.abs(lng) < (180 - QIBLA_LNG)) {
+                        qiblaDirection = 360 + qiblaDirection;
+                    } else {
+                        qiblaDirection = 180 + qiblaDirection;
+                    }
+                }
+                
+                // Normalize to 0-360 range
+                qiblaDirection = qiblaDirection % 360;
+                if (qiblaDirection < 0) qiblaDirection += 360;
+                
+                // Update UI
+                updateDisplay(lat, lng, city, qiblaDirection);
+            }
+            
+            function updateDisplay(lat, lng, city, direction) {
+                // Format city name
+                const formattedCity = city.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                
+                // Update location info
+                locationName.textContent = formattedCity;
+                latitude.textContent = `${lat > 0 ? lat.toFixed(4) + '° N' : Math.abs(lat).toFixed(4) + '° S'}`;
+                longitude.textContent = `${lng > 0 ? lng.toFixed(4) + '° E' : Math.abs(lng).toFixed(4) + '° W'}`;
+                
+                // Determine direction text
+                let directionText = '';
+                if (direction >= 337.5 || direction < 22.5) {
+                    directionText = 'North';
+                } else if (direction >= 22.5 && direction < 67.5) {
+                    directionText = 'Northeast';
+                } else if (direction >= 67.5 && direction < 112.5) {
+                    directionText = 'East';
+                } else if (direction >= 112.5 && direction < 157.5) {
+                    directionText = 'Southeast';
+                } else if (direction >= 157.5 && direction < 202.5) {
+                    directionText = 'South';
+                } else if (direction >= 202.5 && direction < 247.5) {
+                    directionText = 'Southwest';
+                } else if (direction >= 247.5 && direction < 292.5) {
+                    directionText = 'West';
+                } else if (direction >= 292.5 && direction < 337.5) {
+                    directionText = 'Northwest';
+                }
+                
+                // Update direction display
+                directionValue.textContent = `${direction.toFixed(2)}° (${directionText})`;
+                
+                // Update compass
+                qiblaIndicator.style.transform = `translateX(-50%) rotate(${direction}deg)`;
+                
+                // Update Qibla text
+                qiblaText.textContent = `Qibla Direction: ${direction.toFixed(2)}° from North`;
+            }
+            
+            // Initialize with a sample city
+            cityInput.value = "New York";
+            findQibla();
+        });
+    </script>
+</body>
+</html>

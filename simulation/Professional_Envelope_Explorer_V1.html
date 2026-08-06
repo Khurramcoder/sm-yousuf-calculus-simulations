@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Professional Envelope Explorer V1</title>
+<style>
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#0f172a;color:#fff}
+#app{display:grid;grid-template-columns:340px 1fr;height:100vh}
+#side{background:#111827;padding:14px;overflow:auto}
+.card{background:#1f2937;padding:12px;border-radius:10px;margin-bottom:12px}
+select,input,button{width:100%;padding:8px;margin:5px 0}
+svg{width:100%;height:100%}
+#main{position:relative}
+#info{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.75);padding:10px;border-radius:8px;width:320px}
+small{color:#cbd5e1}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="side">
+<h2>Envelope Explorer V1</h2>
+
+<div class="card">
+<label>Family</label>
+<select id="family">
+<option value="lines">Lines: y = mx + 1/m</option>
+<option value="parabolas">Parabolas: y = (x-a)²</option>
+<option value="circles">Circles: (x-a)²+y²=r²</option>
+</select>
+
+<button id="play">Play / Pause</button>
+<button id="reset">Reset</button>
+<input id="slider" type="range" min="0" max="100" value="50">
+</div>
+
+<div class="card">
+<h3>Envelope Theory</h3>
+<div id="theory"></div>
+</div>
+
+<div class="card">
+<small>
+An envelope is found from:
+<br>F(x,y,c)=0
+<br>∂F/∂c=0
+</small>
+</div>
+</div>
+
+<div id="main">
+<svg id="svg"></svg>
+<div id="info"></div>
+</div>
+</div>
+
+<script>
+const svg=document.getElementById("svg");
+let param=0.5, playing=false;
+
+function S(x,y){
+ const w=svg.clientWidth,h=svg.clientHeight;
+ return {x:w/2+x*40,y:h/2-y*40};
+}
+function add(tag,attrs){
+ const e=document.createElementNS("http://www.w3.org/2000/svg",tag);
+ for(const k in attrs) e.setAttribute(k,attrs[k]);
+ svg.appendChild(e);
+ return e;
+}
+
+function grid(){
+ const w=svg.clientWidth,h=svg.clientHeight;
+ for(let x=0;x<w;x+=40) add("line",{x1:x,y1:0,x2:x,y2:h,stroke:"#1e293b"});
+ for(let y=0;y<h;y+=40) add("line",{x1:0,y1:y,x2:w,y2:y,stroke:"#1e293b"});
+ add("line",{x1:0,y1:h/2,x2:w,y2:h/2,stroke:"#475569"});
+ add("line",{x1:w/2,y1:0,x2:w/2,y2:h,stroke:"#475569"});
+}
+
+function path(points,color,width=3){
+ if(points.length<2) return;
+ let d=`M ${points[0].x} ${points[0].y}`;
+ for(let i=1;i<points.length;i++) d+=` L ${points[i].x} ${points[i].y}`;
+ add("path",{d,fill:"none",stroke:color,"stroke-width":width});
+}
+
+function drawLinesFamily(){
+ const m=-3+6*param;
+ document.getElementById("theory").innerHTML =
+ "F=y-mx-1/m=0<br>∂F/∂m=-x+1/m²=0<br>Envelope: y=±2√x";
+
+ for(let k=-3;k<=3;k+=0.25){
+   if(Math.abs(k)<0.05) continue;
+   const pts=[];
+   for(let x=-2;x<=10;x+=0.1){
+     pts.push(S(x,k*x+1/k));
+   }
+   path(pts,"#64748b",1);
+ }
+
+ const up=[], lo=[];
+ for(let x=0.01;x<=10;x+=0.05){
+   up.push(S(x,2*Math.sqrt(x)));
+   lo.push(S(x,-2*Math.sqrt(x)));
+ }
+ path(up,"#ef4444",4);
+ path(lo,"#ef4444",4);
+
+ if(Math.abs(m)>0.05){
+   const x=1/(m*m), y=2/m;
+   const p=S(x,y);
+   add("circle",{cx:p.x,cy:p.y,r:7,fill:"white"});
+ }
+
+ document.getElementById("info").innerHTML =
+ `Family: Lines<br>m=${m.toFixed(3)}<br>Envelope: y=±2√x`;
+}
+
+function drawParabolasFamily(){
+ const a=-4+8*param;
+ document.getElementById("theory").innerHTML =
+ "Family: y=(x-a)²<br>Envelope: y=0 (x-axis)";
+
+ for(let k=-5;k<=5;k+=0.4){
+   const pts=[];
+   for(let x=-8;x<=8;x+=0.08){
+      pts.push(S(x,(x-k)*(x-k)));
+   }
+   path(pts,"#64748b",1);
+ }
+
+ const env=[];
+ for(let x=-8;x<=8;x+=0.05) env.push(S(x,0));
+ path(env,"#ef4444",4);
+
+ const p=S(a,0);
+ add("circle",{cx:p.x,cy:p.y,r:7,fill:"white"});
+
+ document.getElementById("info").innerHTML =
+ `Family: Parabolas<br>a=${a.toFixed(3)}<br>Envelope: y=0`;
+}
+
+function drawCirclesFamily(){
+ const a=-4+8*param;
+ const r=2.5;
+
+ document.getElementById("theory").innerHTML =
+ "Family: (x-a)²+y²=r²<br>Centers slide on x-axis<br>Envelope: y=±r";
+
+ for(let c=-5;c<=5;c+=0.5){
+   const pts=[];
+   for(let t=0;t<=Math.PI*2;t+=0.03){
+      pts.push(S(c+r*Math.cos(t), r*Math.sin(t)));
+   }
+   path(pts,"#64748b",1);
+ }
+
+ const top=[], bottom=[];
+ for(let x=-8;x<=8;x+=0.05){
+   top.push(S(x,r));
+   bottom.push(S(x,-r));
+ }
+ path(top,"#ef4444",4);
+ path(bottom,"#ef4444",4);
+
+ const p=S(a,r);
+ add("circle",{cx:p.x,cy:p.y,r:7,fill:"white"});
+
+ document.getElementById("info").innerHTML =
+ `Family: Circles<br>a=${a.toFixed(3)}<br>Envelope: y=±${r}`;
+}
+
+function render(){
+ svg.innerHTML="";
+ grid();
+ const f=document.getElementById("family").value;
+ if(f==="lines") drawLinesFamily();
+ else if(f==="parabolas") drawParabolasFamily();
+ else drawCirclesFamily();
+}
+
+document.getElementById("family").onchange=render;
+document.getElementById("slider").oninput=e=>{
+ param=e.target.value/100;
+ render();
+};
+document.getElementById("play").onclick=()=>playing=!playing;
+document.getElementById("reset").onclick=()=>{
+ param=0.5;
+ document.getElementById("slider").value=50;
+ render();
+};
+
+function animate(){
+ if(playing){
+   param += 0.002;
+   if(param>1) param=0;
+   document.getElementById("slider").value=Math.round(param*100);
+   render();
+ }
+ requestAnimationFrame(animate);
+}
+
+window.onresize=render;
+render();
+animate();
+</script>
+</body>
+</html>

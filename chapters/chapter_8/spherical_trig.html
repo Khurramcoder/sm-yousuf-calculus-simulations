@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spherical Trigonometry — An Instrument-Built Proof</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+<style>
+  :root{
+    --void:#0a0e1a;
+    --panel:#111a2c;
+    --panel-edge:#1d2942;
+    --parchment:#ece3c8;
+    --ink:#211c12;
+    --starlight:#f2efe4;
+    --muted:#8b93a8;
+    --brass:#c9a24c;
+    --brass-dim:#7c6636;
+    --arc-a:#6fb9b0;
+    --arc-b:#bf6e46;
+    --arc-c:#9081b8;
+    --serif: "Cormorant Garamond", serif;
+    --sans: "Inter", sans-serif;
+    --mono: "IBM Plex Mono", monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--starlight);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{ background:var(--brass); color:var(--ink); }
+
+  a{ color:var(--brass); }
+
+  /* ---------- layout shell ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns: 46vw 1fr;
+    min-height:100vh;
+  }
+  .instrument-col{
+    position:sticky;
+    top:0;
+    height:100vh;
+    border-right:1px solid var(--panel-edge);
+    background:
+      radial-gradient(ellipse at 50% 38%, #16223a 0%, var(--void) 70%);
+    overflow:hidden;
+  }
+  .narrative-col{
+    padding: 0 6vw 14vh 6vw;
+  }
+
+  /* ---------- instrument panel chrome ---------- */
+  #scene-canvas{ position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+
+  .rings{
+    position:absolute; inset:0; pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ring{
+    position:absolute;
+    border:1px solid var(--panel-edge);
+    border-radius:50%;
+  }
+
+  .instrument-frame{
+    position:absolute; inset:18px;
+    border:1px solid var(--brass-dim);
+    border-radius:6px;
+    pointer-events:none;
+    opacity:.55;
+  }
+  .instrument-frame::before, .instrument-frame::after{
+    content:"";
+    position:absolute; width:9px; height:9px;
+    border:1px solid var(--brass);
+    opacity:.8;
+  }
+  .instrument-frame::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .instrument-frame::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  .plate{
+    position:absolute; left:34px; bottom:30px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    pointer-events:none;
+  }
+  .plate strong{ color:var(--brass); font-weight:500; }
+
+  .hint{
+    position:absolute; right:34px; bottom:30px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.06em;
+    color:var(--muted);
+    text-align:right;
+    pointer-events:none;
+    max-width:200px;
+    transition:opacity .4s ease;
+  }
+
+  .label3d{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    font-family:var(--mono);
+    font-size:13px;
+    padding:1px 5px;
+    pointer-events:none;
+    white-space:nowrap;
+    transition:opacity .25s ease;
+  }
+  .label-vertex{ font-family:var(--serif); font-style:italic; font-size:20px; }
+  .label-A{ color:var(--starlight); }
+  .label-B{ color:var(--starlight); }
+  .label-C{ color:var(--brass); }
+  .label-a{ color:var(--arc-a); }
+  .label-b{ color:var(--arc-b); }
+  .label-c{ color:var(--arc-c); }
+  .label-u, .label-v{ color:var(--brass); font-size:12px; }
+
+  /* HUD readout, shown only while explorer stage is active */
+  .hud{
+    position:absolute; top:26px; left:34px; right:34px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px 18px;
+    opacity:0;
+    transform:translateY(-6px);
+    transition:opacity .5s ease, transform .5s ease;
+    pointer-events:none;
+  }
+  .hud.on{ opacity:1; transform:translateY(0); }
+  .hud .row{ display:flex; justify-content:space-between; border-bottom:1px dotted var(--panel-edge); padding-bottom:3px; }
+  .hud .row span:last-child{ color:var(--starlight); }
+  .hud .row.match span:last-child{ color:var(--arc-a); }
+  .hud .verify{ grid-column:1/-1; margin-top:4px; font-size:11px; color:var(--brass); letter-spacing:.05em; }
+
+  /* ---------- narrative typography ---------- */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin: 0 0 .9em 0;
+  }
+  h1,h2,h3{ font-family:var(--serif); font-weight:500; margin:0 0 .4em 0; color:var(--starlight); }
+  h1{ font-size:clamp(2.6rem, 5vw, 4.4rem); font-style:italic; line-height:1.02; letter-spacing:-.01em; }
+  h2{ font-size:clamp(1.9rem, 3vw, 2.6rem); font-style:italic; }
+  h3{ font-size:1.15rem; font-style:normal; text-transform:uppercase; letter-spacing:.06em; color:var(--brass); font-family:var(--sans); font-weight:600; }
+
+  p{ color:#c7cddb; max-width:56ch; font-size:1.02rem; }
+  .lede{ font-size:1.18rem; color:var(--starlight); max-width:52ch; }
+
+  section{ padding: 13vh 0 4vh 0; border-bottom:1px solid var(--panel-edge); }
+  section:last-of-type{ border-bottom:none; }
+  section.hero-text{ padding-top:0; min-height:100vh; display:flex; flex-direction:column; justify-content:center; border-bottom:1px solid var(--panel-edge); }
+
+  .reveal{ opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  .formula-card{
+    background:var(--parchment);
+    color:var(--ink);
+    border-radius:3px;
+    padding:1.1rem 1.4rem;
+    margin:1.3rem 0;
+    box-shadow: 0 10px 30px -14px rgba(0,0,0,.6);
+    overflow-x:auto;
+  }
+  .formula-card .katex{ font-size:1.15em; }
+  .formula-card.result{
+    border-left:4px solid var(--brass);
+  }
+  .formula-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--brass-dim);
+    margin-bottom:.5rem;
+  }
+
+  .step-num{
+    font-family:var(--serif); font-style:italic; font-size:2.1rem; color:var(--brass-dim);
+    display:block; margin-bottom:-.2rem;
+  }
+
+  .legend{ display:flex; gap:1.4rem; flex-wrap:wrap; margin:1rem 0 1.6rem 0; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:.4rem; }
+  .swatch{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .callout{
+    border-left:2px solid var(--brass-dim);
+    padding-left:1rem;
+    color:var(--muted);
+    font-size:.94rem;
+    margin:1.4rem 0;
+  }
+
+  /* explorer controls */
+  .controls{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:1.2rem;
+    margin:1.6rem 0;
+  }
+  .dial-group{ background:var(--panel); border:1px solid var(--panel-edge); border-radius:6px; padding:.9rem 1rem; }
+  .dial-group h4{ margin:0 0 .6rem 0; font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .dial-group.vA h4{ color:var(--starlight); }
+  .dial-group.vB h4{ color:var(--starlight); }
+  .dial-group.vC h4{ color:var(--brass); }
+  .dial-row{ display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
+  .dial-row label{ font-family:var(--mono); font-size:10.5px; color:var(--muted); width:34px; }
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:2px; background:var(--panel-edge); border-radius:2px; outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:12px; height:12px; border-radius:50%;
+    background:var(--brass); border:2px solid var(--void); cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:12px; height:12px; border-radius:50%;
+    background:var(--brass); border:2px solid var(--void); cursor:pointer;
+  }
+  .drag-note{ font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:-.4rem; }
+
+  footer{
+    padding:6vh 0 10vh 0;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--muted);
+    letter-spacing:.03em;
+  }
+
+  @media (max-width: 900px){
+    .layout{ grid-template-columns:1fr; }
+    .instrument-col{ position:sticky; top:0; height:52vh; border-right:none; border-bottom:1px solid var(--panel-edge); z-index:2;}
+    .narrative-col{ padding:0 6vw 14vh 6vw; }
+    section.hero-text{ min-height:auto; padding:6vh 0 4vh; }
+    .controls{ grid-template-columns:1fr; }
+    .plate, .hint{ display:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ================= STICKY 3D INSTRUMENT ================= -->
+  <div class="instrument-col" id="instrument">
+    <canvas id="scene-canvas"></canvas>
+    <div class="rings"></div>
+    <div class="instrument-frame"></div>
+    <div class="hud" id="hud">
+      <div class="row"><span>side a</span><span id="hud-a">—</span></div>
+      <div class="row"><span>side b</span><span id="hud-b">—</span></div>
+      <div class="row"><span>side c</span><span id="hud-c">—</span></div>
+      <div class="row"><span>angle A</span><span id="hud-A">—</span></div>
+      <div class="row"><span>angle B</span><span id="hud-B">—</span></div>
+      <div class="row"><span>angle C</span><span id="hud-C">—</span></div>
+      <div class="verify" id="hud-verify">cos c = cos a cos b + sin a sin b cos C</div>
+    </div>
+    <div class="plate">SPH‑TRIG&nbsp; <strong>No. 01</strong>&nbsp; · &nbsp;unit sphere, r = 1</div>
+    <div class="hint" id="hint">drag empty space to rotate<br>scroll to advance the proof</div>
+    <div id="labels-layer"></div>
+  </div>
+
+  <!-- ================= SCROLLING NARRATIVE ================= -->
+  <div class="narrative-col">
+
+    <section class="hero-text">
+      <div class="eyebrow">An observational proof · three dimensions</div>
+      <h1>Spherical<br>Trigonometry</h1>
+      <p class="lede" style="margin-top:.9rem;">Two laws govern every triangle drawn on a sphere. Both are derived here directly from vectors — and then verified live, on a triangle you can reshape with your own hand.</p>
+      <p class="drag-note" style="margin-top:2rem;">↓ scroll to begin</p>
+    </section>
+
+    <!-- I. FOUNDATIONS -->
+    <section data-stage="intro">
+      <div class="eyebrow">I · The setting</div>
+      <h2>A triangle without<br>straight lines</h2>
+      <p>Place three points <em>A</em>, <em>B</em>, <em>C</em> on a sphere of radius&nbsp;1, and connect each pair by the shorter arc of the great circle through them. This is a <strong style="color:var(--starlight)">spherical triangle</strong> — its "straight lines" are geodesics, the sphere's equivalent of straight lines.</p>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--arc-a)"></i>side a = arc BC</span>
+        <span><i class="swatch" style="background:var(--arc-b)"></i>side b = arc AC</span>
+        <span><i class="swatch" style="background:var(--arc-c)"></i>side c = arc AB</span>
+      </div>
+
+      <p>Because the sphere has unit radius, an arc's length equals the angle it subtends at the center, in radians. This single fact is what makes the whole proof possible: it lets us replace <em>lengths</em> with <em>angles between vectors</em> — and angles between unit vectors are just dot products.</p>
+
+      <div class="formula-card">
+        <div class="formula-label">reading sides off the sphere</div>
+        <div class="tex" data-tex="A\cdot B=\cos c,\qquad B\cdot C=\cos a,\qquad A\cdot C=\cos b"></div>
+      </div>
+
+      <p class="callout">Each vertex also carries an <strong>angle</strong> — A, B, C — the angle between the two great-circle arcs that meet there, measured in the tangent plane at that point. These six quantities, three sides and three angles, are exactly what the two laws below relate to one another.</p>
+    </section>
+
+    <!-- II. LAW OF COSINES -->
+    <section data-stage="frame">
+      <div class="eyebrow">II · The law of cosines</div>
+      <h2>Building a frame<br>at the vertex C</h2>
+      <p>To relate all three sides through the angle at <em>C</em>, we build a local coordinate system there: the outward direction <em>C</em> itself, plus two directions tangent to the sphere's surface, perpendicular to each other.</p>
+
+      <span class="step-num">01</span>
+      <div class="formula-card">
+        <div class="formula-label">tangent frame at C</div>
+        <div class="tex" data-tex="u=\dfrac{A-(A\cdot C)\,C}{\sin b}\ \ (\text{points toward }A),\qquad v = C\times u"></div>
+      </div>
+      <p><em>u</em> is what remains of <em>A</em> once you subtract away its component along <em>C</em> — normalized. <em>v</em> completes a right-handed, all-perpendicular basis. Watch the instrument: these two brass arrows are exactly that frame, live at vertex <em>C</em>.</p>
+    </section>
+
+    <section data-stage="decompose">
+      <span class="step-num">02</span>
+      <h3 style="margin-top:0;">Decompose A and B in that frame</h3>
+      <p>Every vector splits into a component along <em>C</em> and a component in the tangent plane. Since the arc from <em>C</em> to <em>A</em> has length <em>b</em>, and the arc from <em>C</em> to <em>B</em> has length <em>a</em>, separated by angle <em>C</em>:</p>
+
+      <div class="formula-card">
+        <div class="formula-label">position vectors, in the C-frame</div>
+        <div class="tex" data-tex="A=\cos b\,C+\sin b\,u"></div>
+        <div class="tex" data-tex="B=\cos a\,C+\sin a\big(\cos C\,u+\sin C\,v\big)" style="margin-top:.6rem;"></div>
+      </div>
+      <p class="callout">The dashed line on the instrument shows exactly this: <em>A</em>'s shadow along <em>C</em>, and what's left over along <em>u</em>.</p>
+    </section>
+
+    <section data-stage="result">
+      <span class="step-num">03</span>
+      <h3 style="margin-top:0;">Dot them together</h3>
+      <p>Expand <span class="tex" data-tex="A\cdot B" style="display:inline;"></span> term by term. Because <em>C</em>, <em>u</em>, <em>v</em> are mutually orthonormal — <span class="tex" data-tex="C\!\cdot\!u=C\!\cdot\!v=u\!\cdot\!v=0" style="display:inline;font-size:.92em;"></span>, each of unit length — every cross term vanishes except two:</p>
+
+      <div class="formula-card">
+        <div class="formula-label">expansion</div>
+        <div class="tex" data-tex="A\cdot B=\cos a\cos b\,\underbrace{(C\cdot C)}_{1}+\sin a\sin b\cos C\,\underbrace{(u\cdot u)}_{1}+(\text{terms}\times 0)"></div>
+      </div>
+
+      <div class="formula-card result">
+        <div class="formula-label">the spherical law of cosines</div>
+        <div class="tex" data-tex="\boxed{\ \cos c=\cos a\cos b+\sin a\sin b\cos C\ }"></div>
+      </div>
+      <p>This single identity — a Pythagorean theorem for curved space — reduces to the ordinary plane law of cosines when a, b, c are small, since <span class="tex" data-tex="\cos x\approx 1-x^2/2" style="display:inline;font-size:.92em;"></span> recovers Euclid's flat formula in the limit.</p>
+    </section>
+
+    <!-- III. LAW OF SINES -->
+    <section data-stage="sines">
+      <div class="eyebrow">III · The law of sines</div>
+      <h2>A volume that doesn't<br>care where you start</h2>
+      <p>Now inscribe the tetrahedron <em>O‑A‑B‑C</em>, with <em>O</em> the sphere's center. Its volume can be written with the scalar triple product — and computed by expanding around <em>any</em> of the three vertices, always giving the same number.</p>
+
+      <div class="formula-card">
+        <div class="formula-label">tetrahedron volume, three ways</div>
+        <div class="tex" data-tex="\big|[A,B,C]\big| \;=\; \sin b\sin c\sin A \;=\; \sin a\sin c\sin B \;=\; \sin a\sin b\sin C"></div>
+      </div>
+      <p>Each expansion isolates one vertex's angle, flanked by the sines of its two adjacent sides — the instrument highlights the three tetrahedral faces this argument depends on. Divide the middle two expressions through by <span class="tex" data-tex="\sin a\sin b\sin c" style="display:inline;font-size:.92em;"></span> and rearrange:</p>
+
+      <div class="formula-card result">
+        <div class="formula-label">the spherical law of sines</div>
+        <div class="tex" data-tex="\boxed{\ \dfrac{\sin A}{\sin a}=\dfrac{\sin B}{\sin b}=\dfrac{\sin C}{\sin c}\ }"></div>
+      </div>
+    </section>
+
+    <!-- IV. EXPLORER -->
+    <section data-stage="explorer">
+      <div class="eyebrow">IV · Verification</div>
+      <h2>Build your own<br>triangle</h2>
+      <p class="lede">Drag any of the three points on the instrument — or use the dials below. Two independent computations of the same quantity run continuously underneath. They always agree.</p>
+
+      <div class="controls">
+        <div class="dial-group vA">
+          <h4>Vertex A</h4>
+          <div class="dial-row"><label>θ</label><input type="range" id="A-theta" min="0" max="360" step="1"></div>
+          <div class="dial-row"><label>φ</label><input type="range" id="A-phi" min="1" max="179" step="1"></div>
+        </div>
+        <div class="dial-group vB">
+          <h4>Vertex B</h4>
+          <div class="dial-row"><label>θ</label><input type="range" id="B-theta" min="0" max="360" step="1"></div>
+          <div class="dial-row"><label>φ</label><input type="range" id="B-phi" min="1" max="179" step="1"></div>
+        </div>
+        <div class="dial-group vC">
+          <h4>Vertex C</h4>
+          <div class="dial-row"><label>θ</label><input type="range" id="C-theta" min="0" max="360" step="1"></div>
+          <div class="dial-row"><label>φ</label><input type="range" id="C-phi" min="1" max="179" step="1"></div>
+        </div>
+      </div>
+
+      <div class="formula-card">
+        <div class="formula-label">what the HUD is checking, live</div>
+        <div class="tex" data-tex="\underbrace{\cos c}_{\text{measured directly}} \;\overset{?}{=}\; \underbrace{\cos a\cos b+\sin a\sin b\cos C}_{\text{built from the other five}}"></div>
+      </div>
+      <p class="callout">No matter how you reshape the triangle — even flattening it nearly into a line, or ballooning it across a full hemisphere — the readout in the top-right of the instrument keeps confirming the identity to four decimal places.</p>
+    </section>
+
+    <footer>
+      Rendered in WebGL, in your browser — no video, no pre-baked frames. Derivations follow the classical vector proof of the spherical laws of cosines and sines.
+    </footer>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from "three";
+
+/* ============================================================
+   0. TYPESET ALL FORMULAS
+   ============================================================ */
+document.querySelectorAll(".tex").forEach(el=>{
+  try{
+    katex.render(el.dataset.tex, el, { throwOnError:false, displayMode: !el.style.display });
+  }catch(e){ el.textContent = el.dataset.tex; }
+});
+
+/* ============================================================
+   1. SCROLL REVEALS
+   ============================================================ */
+document.querySelectorAll("section > *").forEach(el=> el.classList.add("reveal"));
+const revealObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add("in"); });
+},{ threshold:.15 });
+document.querySelectorAll(".reveal").forEach(el=>revealObs.observe(el));
+
+/* ============================================================
+   2. MATH HELPERS (mirrors the derivation above)
+   ============================================================ */
+const sphToCart = (theta, phi)=> new THREE.Vector3(
+  Math.sin(phi)*Math.cos(theta),
+  Math.sin(phi)*Math.sin(theta),
+  Math.cos(phi)
+);
+
+function greatCirclePoints(p1, p2, segments=64){
+  const angle = p1.angleTo(p2);
+  if(angle < 1e-5) return [p1.clone(), p2.clone()];
+  const axis = new THREE.Vector3().crossVectors(p1,p2).normalize();
+  const pts = [];
+  for(let i=0;i<=segments;i++){
+    const t = i/segments;
+    const w = new THREE.Vector3().crossVectors(axis,p1);
+    pts.push(
+      p1.clone().multiplyScalar(Math.cos(t*angle)).add(w.multiplyScalar(Math.sin(t*angle)))
+    );
+  }
+  return pts;
+}
+
+function tangentAt(vertex, other){
+  const proj = other.clone().sub(vertex.clone().multiplyScalar(other.dot(vertex)));
+  return proj.normalize();
+}
+
+function angleArcPoints(vertex, dir1, dir2, radius=0.26, segments=24){
+  let vPerp = dir2.clone().sub(dir1.clone().multiplyScalar(dir2.dot(dir1)));
+  const n = vPerp.length();
+  vPerp = n < 1e-6 ? new THREE.Vector3().crossVectors(vertex,dir1).normalize() : vPerp.normalize();
+  const span = Math.acos(THREE.MathUtils.clamp(dir1.dot(dir2), -1, 1));
+  const pts = [];
+  for(let i=0;i<=segments;i++){
+    const t = i/segments;
+    const local = dir1.clone().multiplyScalar(Math.cos(t*span)).add(vPerp.clone().multiplyScalar(Math.sin(t*span)));
+    pts.push(vertex.clone().multiplyScalar(Math.cos(radius)).add(local.multiplyScalar(Math.sin(radius))));
+  }
+  return pts;
+}
+
+const deg = r => (r*180/Math.PI);
+
+/* ============================================================
+   3. SCENE SETUP
+   ============================================================ */
+const canvas = document.getElementById("scene-canvas");
+const instrumentEl = document.getElementById("instrument");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
+
+let camTheta = 0.9, camPhi = 1.15, camRadius = 4.4;
+function updateCamera(){
+  camPhi = THREE.MathUtils.clamp(camPhi, 0.25, Math.PI-0.25);
+  camera.position.set(
+    camRadius*Math.sin(camPhi)*Math.cos(camTheta),
+    camRadius*Math.sin(camPhi)*Math.sin(camTheta),
+    camRadius*Math.cos(camPhi)
+  );
+  camera.lookAt(0,0,0);
+}
+updateCamera();
+
+function resize(){
+  const w = instrumentEl.clientWidth, h = instrumentEl.clientHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(instrumentEl);
+resize();
+
+/* -- sphere shell -- */
+const sphereGroup = new THREE.Group();
+scene.add(sphereGroup);
+
+const wireGeo = new THREE.SphereGeometry(1, 28, 18);
+const wireMat = new THREE.MeshBasicMaterial({ color:0x2a3a5c, wireframe:true, transparent:true, opacity:0.35 });
+sphereGroup.add(new THREE.Mesh(wireGeo, wireMat));
+
+const fillMat = new THREE.MeshBasicMaterial({ color:0x16223a, transparent:true, opacity:0.55, side:THREE.BackSide });
+sphereGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1,28,18), fillMat));
+
+/* faint reference equator + meridian, like an armillary ring */
+function refCircle(axis){
+  const pts=[];
+  for(let i=0;i<=64;i++){
+    const t=(i/64)*Math.PI*2;
+    const p = new THREE.Vector3(Math.cos(t), Math.sin(t), 0);
+    if(axis==="x") p.set(0, Math.cos(t), Math.sin(t));
+    if(axis==="y") p.set(Math.cos(t), 0, Math.sin(t));
+    pts.push(p);
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  return new THREE.Line(geo, new THREE.LineBasicMaterial({ color:0x7c6636, transparent:true, opacity:0.4 }));
+}
+sphereGroup.add(refCircle("z"), refCircle("x"));
+
+/* -- vertices -- */
+let A = sphToCart(0.25, 1.15);
+let B = sphToCart(2.35, 1.35);
+let C = sphToCart(4.35, 0.55);
+
+const dotGeo = new THREE.SphereGeometry(0.028, 16, 16);
+const dotA = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color:0xf2efe4 }));
+const dotB = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color:0xf2efe4 }));
+const dotC = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color:0xc9a24c }));
+sphereGroup.add(dotA, dotB, dotC);
+
+/* -- arcs -- */
+function makeArc(color){
+  const geo = new THREE.BufferGeometry();
+  const mat = new THREE.LineBasicMaterial({ color });
+  return new THREE.Line(geo, mat);
+}
+const arcA = makeArc(0x6fb9b0); // BC
+const arcB = makeArc(0xbf6e46); // AC
+const arcC = makeArc(0x9081b8); // AB
+sphereGroup.add(arcA, arcB, arcC);
+
+function setLine(line, pts){
+  line.geometry.dispose();
+  line.geometry = new THREE.BufferGeometry().setFromPoints(pts);
+}
+
+/* -- angle arc at C -- */
+const angleArc = makeArc(0xc9a24c);
+angleArc.material.linewidth = 2;
+sphereGroup.add(angleArc);
+
+/* -- tangent frame (u, v) shown during "frame"/"decompose" stages -- */
+const frameGroup = new THREE.Group();
+const arrowU = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 0.6, 0xc9a24c, 0.09, 0.045);
+const arrowV = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(), 0.6, 0xc9a24c, 0.09, 0.045);
+frameGroup.add(arrowU, arrowV);
+const projLine = makeArc(0xc9a24c);
+projLine.material.transparent = true; projLine.material.opacity = 0.7;
+frameGroup.add(projLine);
+sphereGroup.add(frameGroup);
+frameGroup.visible = false;
+
+/* -- tetrahedron faces, shown during "sines" stage -- */
+const tetraGroup = new THREE.Group();
+function tetraFace(p1,p2,color){
+  const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), p1, p2]);
+  geo.setIndex([0,1,2]);
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.16, side:THREE.DoubleSide, depthWrite:false });
+  return new THREE.Mesh(geo, mat);
+}
+sphereGroup.add(tetraGroup);
+tetraGroup.visible = false;
+
+/* ============================================================
+   4. LABELS (HTML overlay, projected each frame)
+   ============================================================ */
+const labelsLayer = document.getElementById("labels-layer");
+function makeLabel(text, cls){
+  const d = document.createElement("div");
+  d.className = "label3d " + cls;
+  d.textContent = text;
+  labelsLayer.appendChild(d);
+  return d;
+}
+const lblA = makeLabel("A","label-vertex label-A");
+const lblB = makeLabel("B","label-vertex label-B");
+const lblC = makeLabel("C","label-vertex label-C");
+const lblSideA = makeLabel("a","label-a");
+const lblSideB = makeLabel("b","label-b");
+const lblSideC = makeLabel("c","label-c");
+const lblU = makeLabel("u","label-u");
+const lblV = makeLabel("v","label-v");
+lblU.style.display = "none"; lblV.style.display = "none";
+
+function project(vec, el){
+  const p = vec.clone().project(camera);
+  const w = instrumentEl.clientWidth, h = instrumentEl.clientHeight;
+  const x = (p.x*0.5+0.5)*w;
+  const y = (-p.y*0.5+0.5)*h;
+  el.style.left = x+"px";
+  el.style.top = y+"px";
+  const facing = vec.dot(camera.position) > -0.05 ? 1 : 0.15;
+  el.style.opacity = facing;
+}
+
+/* ============================================================
+   5. GEOMETRY REBUILD (called whenever A/B/C change)
+   ============================================================ */
+function rebuildGeometry(){
+  dotA.position.copy(A); dotB.position.copy(B); dotC.position.copy(C);
+
+  setLine(arcA, greatCirclePoints(B,C));
+  setLine(arcB, greatCirclePoints(A,C));
+  setLine(arcC, greatCirclePoints(A,B));
+
+  const uDir = tangentAt(C,A);
+  const vDir = new THREE.Vector3().crossVectors(C,uDir);
+
+  setLine(angleArc, angleArcPoints(C, uDir, tangentAt(C,B)));
+
+  arrowU.position.copy(C);
+  arrowU.setDirection(uDir);
+  arrowV.position.copy(C);
+  arrowV.setDirection(vDir);
+
+  const bArc = A.angleTo(C);
+  const cShadow = C.clone().multiplyScalar(Math.cos(bArc));
+  setLine(projLine, [cShadow, A.clone()]);
+
+  tetraGroup.clear();
+  tetraGroup.add(
+    tetraFace(A,B,0xbf6e46),
+    tetraFace(B,C,0x6fb9b0),
+    tetraFace(A,C,0x9081b8)
+  );
+}
+rebuildGeometry();
+
+/* ============================================================
+   6. LIVE HUD (explorer stage)
+   ============================================================ */
+const hud = document.getElementById("hud");
+const hudEls = {
+  a:document.getElementById("hud-a"), b:document.getElementById("hud-b"), c:document.getElementById("hud-c"),
+  A:document.getElementById("hud-A"), B:document.getElementById("hud-B"), C:document.getElementById("hud-C"),
+  verify:document.getElementById("hud-verify")
+};
+function updateHUD(){
+  const a = B.angleTo(C), b = A.angleTo(C), c = A.angleTo(B);
+  const angA = Math.acos(THREE.MathUtils.clamp(tangentAt(A,B).dot(tangentAt(A,C)), -1, 1));
+  const angB = Math.acos(THREE.MathUtils.clamp(tangentAt(B,A).dot(tangentAt(B,C)), -1, 1));
+  const angC = Math.acos(THREE.MathUtils.clamp(tangentAt(C,A).dot(tangentAt(C,B)), -1, 1));
+
+  hudEls.a.textContent = deg(a).toFixed(1)+"°";
+  hudEls.b.textContent = deg(b).toFixed(1)+"°";
+  hudEls.c.textContent = deg(c).toFixed(1)+"°";
+  hudEls.A.textContent = deg(angA).toFixed(1)+"°";
+  hudEls.B.textContent = deg(angB).toFixed(1)+"°";
+  hudEls.C.textContent = deg(angC).toFixed(1)+"°";
+
+  const lhs = Math.cos(c);
+  const rhs = Math.cos(a)*Math.cos(b) + Math.sin(a)*Math.sin(b)*Math.cos(angC);
+  hudEls.verify.textContent = `cos c = ${lhs.toFixed(4)}   |   cos a cos b + sin a sin b cos C = ${rhs.toFixed(4)}`;
+}
+
+/* ============================================================
+   7. SCROLL STAGES
+   ============================================================ */
+let currentStage = "hero";
+function setStage(stage){
+  if(stage === currentStage) return;
+  currentStage = stage;
+
+  frameGroup.visible = (stage==="frame" || stage==="decompose" || stage==="result");
+  projLine.visible = (stage==="decompose" || stage==="result");
+  tetraGroup.visible = (stage==="sines");
+  angleArc.visible = (stage!=="hero" && stage!=="intro");
+
+  lblU.style.display = frameGroup.visible ? "" : "none";
+  lblV.style.display = frameGroup.visible ? "" : "none";
+
+  hud.classList.toggle("on", stage==="explorer");
+  dragEnabled = (stage==="explorer");
+  document.getElementById("hint").style.opacity = (stage==="explorer") ? 0 : 1;
+}
+
+const stageObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting) setStage(e.target.dataset.stage);
+  });
+},{ threshold:0.5, rootMargin:"-10% 0px -10% 0px" });
+document.querySelectorAll("section[data-stage]").forEach(s=>stageObs.observe(s));
+
+const heroObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) setStage("hero"); });
+},{ threshold:0.5 });
+document.querySelector("section.hero-text") && heroObs.observe(document.querySelector("section.hero-text"));
+
+/* ============================================================
+   8. POINTER INTERACTION: orbit camera, or drag a vertex
+   ============================================================ */
+let dragEnabled = false;
+let draggingVertex = null; // 'A' | 'B' | 'C' | null
+let orbiting = false;
+let lastPointer = {x:0,y:0};
+let lastInteraction = 0;
+const raycaster = new THREE.Raycaster();
+const pointerNDC = new THREE.Vector2();
+const sphereHit = new THREE.Mesh(new THREE.SphereGeometry(1.02,32,32));
+
+function ndcFromEvent(e){
+  const rect = canvas.getBoundingClientRect();
+  pointerNDC.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  pointerNDC.y = -((e.clientY-rect.top)/rect.height)*2+1;
+}
+
+canvas.addEventListener("pointerdown", (e)=>{
+  ndcFromEvent(e);
+  lastPointer = {x:e.clientX, y:e.clientY};
+  lastInteraction = performance.now();
+
+  if(dragEnabled){
+    raycaster.setFromCamera(pointerNDC, camera);
+    const hits = raycaster.intersectObjects([dotA,dotB,dotC]);
+    if(hits.length){
+      draggingVertex = hits[0].object===dotA ? "A" : hits[0].object===dotB ? "B" : "C";
+      canvas.setPointerCapture(e.pointerId);
+      return;
+    }
+  }
+  orbiting = true;
+  canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener("pointermove", (e)=>{
+  lastInteraction = performance.now();
+  if(draggingVertex){
+    ndcFromEvent(e);
+    raycaster.setFromCamera(pointerNDC, camera);
+    const hit = raycaster.intersectObject(sphereHit)[0];
+    if(hit){
+      const p = hit.point.clone().normalize();
+      if(draggingVertex==="A") A = p; else if(draggingVertex==="B") B = p; else C = p;
+      rebuildGeometry();
+      updateHUD();
+    }
+    return;
+  }
+  if(orbiting){
+    const dx = e.clientX-lastPointer.x, dy = e.clientY-lastPointer.y;
+    camTheta -= dx*0.006;
+    camPhi -= dy*0.006;
+    updateCamera();
+    lastPointer = {x:e.clientX, y:e.clientY};
+  }
+});
+
+function endPointer(e){
+  draggingVertex = null;
+  orbiting = false;
+  try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointerleave", endPointer);
+
+canvas.addEventListener("wheel", (e)=>{
+  e.preventDefault();
+  camRadius = THREE.MathUtils.clamp(camRadius + e.deltaY*0.0035, 2.6, 7);
+  updateCamera();
+  lastInteraction = performance.now();
+},{ passive:false });
+
+/* dial sliders (explorer) */
+const dials = {
+  A:{theta:document.getElementById("A-theta"), phi:document.getElementById("A-phi")},
+  B:{theta:document.getElementById("B-theta"), phi:document.getElementById("B-phi")},
+  C:{theta:document.getElementById("C-theta"), phi:document.getElementById("C-phi")},
+};
+function syncDialsFromVectors(){
+  const toSph = v => ({ theta: (Math.atan2(v.y,v.x)+Math.PI*2)%(Math.PI*2), phi: Math.acos(THREE.MathUtils.clamp(v.z,-1,1)) });
+  const sa=toSph(A), sb=toSph(B), sc=toSph(C);
+  dials.A.theta.value = deg(sa.theta); dials.A.phi.value = deg(sa.phi);
+  dials.B.theta.value = deg(sb.theta); dials.B.phi.value = deg(sb.phi);
+  dials.C.theta.value = deg(sc.theta); dials.C.phi.value = deg(sc.phi);
+}
+syncDialsFromVectors();
+
+function bindDial(key){
+  const onInput = ()=>{
+    const theta = THREE.MathUtils.degToRad(+dials[key].theta.value);
+    const phi = THREE.MathUtils.degToRad(+dials[key].phi.value);
+    const v = sphToCart(theta,phi);
+    if(key==="A") A=v; else if(key==="B") B=v; else C=v;
+    rebuildGeometry(); updateHUD();
+    lastInteraction = performance.now();
+  };
+  dials[key].theta.addEventListener("input", onInput);
+  dials[key].phi.addEventListener("input", onInput);
+}
+["A","B","C"].forEach(bindDial);
+
+/* ============================================================
+   9. ANIMATION LOOP
+   ============================================================ */
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function tick(){
+  requestAnimationFrame(tick);
+
+  if(!orbiting && !draggingVertex && !reducedMotion && performance.now()-lastInteraction > 2600){
+    camTheta += 0.0012;
+    updateCamera();
+  }
+
+  renderer.render(scene, camera);
+
+  project(A, lblA); project(B, lblB); project(C, lblC);
+  const midAB = A.clone().add(B).normalize().multiplyScalar(1.14);
+  const midBC = B.clone().add(C).normalize().multiplyScalar(1.14);
+  const midAC = A.clone().add(C).normalize().multiplyScalar(1.14);
+  project(midAB, lblSideC); project(midBC, lblSideA); project(midAC, lblSideB);
+  project(A.clone().multiplyScalar(1.13), lblA);
+  project(B.clone().multiplyScalar(1.13), lblB);
+  project(C.clone().multiplyScalar(1.13), lblC);
+
+  if(frameGroup.visible){
+    const uDir = tangentAt(C,A);
+    const vDir = new THREE.Vector3().crossVectors(C,uDir);
+    project(C.clone().add(uDir.clone().multiplyScalar(0.72)), lblU);
+    project(C.clone().add(vDir.clone().multiplyScalar(0.72)), lblV);
+  }
+}
+tick();
+updateHUD();
+</script>
+</body>
+</html>

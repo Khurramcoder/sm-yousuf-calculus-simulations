@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spherical Trigonometry & Qibla Simulator</title>
+    <!-- Tailwind CSS for clean UI styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Three.js for 3D graphics rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls to allow students to rotate/zoom the globe -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-md">
+        <h1 class="text-2xl font-bold text-emerald-400 text-center">Spherical Trigonometry Simulator</h1>
+        <p class="text-xs text-slate-400 text-center mt-1">Interactive 3D Simulation for Deriving the Direction of Qibla</p>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col lg:flex-row p-4 gap-4 max-w-7xl mx-auto w-full">
+        
+        <!-- Left Side: Controls & Mathematics -->
+        <div class="w-full lg:w-5/12 flex flex-col gap-4">
+            
+            <!-- Controls Card -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
+                <h2 class="text-lg font-semibold text-slate-200 mb-3 border-b border-slate-700 pb-2">1. Input Coordinates</h2>
+                
+                <!-- Fixed Ka'bah Specs -->
+                <div class="mb-4 bg-slate-900/50 p-3 rounded-lg border border-emerald-500/20">
+                    <span class="text-xs font-bold text-emerald-400 uppercase tracking-wide block mb-1">Ka'bah Reference (Point K)</span>
+                    <p class="text-sm text-slate-300">Latitude ($\phi_0$): <span class="font-mono text-emerald-300">21° 25.2' N</span> (21.42°)</p>
+                    <p class="text-sm text-slate-300">Longitude ($\lambda_0$): <span class="font-mono text-emerald-300">39° 49.2' E</span> (39.82°)</p>
+                </div>
+
+                <!-- Custom Presets -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Quick Presets</label>
+                    <select id="presetSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <option value="31.5204,74.3587">Lahore, Pakistan</option>
+                        <option value="40.7128,-74.0060">New York, USA</option>
+                        <option value="51.5074,-0.1278">London, UK</option>
+                        <option value="-33.8688,151.2093">Sydney, Australia</option>
+                        <option value="35.6762,139.6503">Tokyo, Japan</option>
+                    </select>
+                </div>
+
+                <!-- Custom Manual Inputs -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Local Lat ($\phi$)</label>
+                        <input type="number" id="latInput" value="31.5204" step="0.0001" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 font-mono text-sm focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Local Lon ($\lambda$)</label>
+                        <input type="number" id="lonInput" value="74.3587" step="0.0001" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 font-mono text-sm focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mathematical Output Card -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex-1">
+                <h2 class="text-lg font-semibold text-slate-200 mb-3 border-b border-slate-700 pb-2">2. Cotangent Step-by-Step Derivation</h2>
+                <div class="space-y-3 text-sm text-slate-300 overflow-y-auto max-h-[320px] pr-2">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Step A: Longitude Separation ($l$)</span>
+                        <p class="font-mono bg-slate-900 p-2 rounded mt-1 border border-slate-800" id="calcL">l = |λ - λ₀| = ...</p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Step B: Apply Four-Parts Formula</span>
+                        <div class="bg-slate-900 p-2 rounded mt-1 border border-slate-800 font-mono text-xs space-y-1">
+                            <p>cot P sin l = cos φ tan φ₀ - sin φ cos l</p>
+                            <p class="text-emerald-400" id="calcCot">cot P = ...</p>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Step C: Final Compass Bearing Result</span>
+                        <div class="bg-emerald-950/40 border border-emerald-500/30 p-3 rounded-lg mt-1 text-center">
+                            <p class="text-xs text-slate-400">Angle Clockwise from True North ($P$):</p>
+                            <p class="text-2xl font-bold font-mono text-emerald-400 mt-1" id="bearingResult">0.00°</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Interactive 3D Canvas -->
+        <div class="w-full lg:w-7/12 flex flex-col bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg relative min-h-[450px] lg:min-h-0">
+            <!-- Legend Overlay -->
+            <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md p-3 rounded-lg border border-slate-700 text-xs space-y-2 z-10 pointer-events-none">
+                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div> <span>North Pole (N)</span></div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-emerald-400 rounded-full"></div> <span>Ka'bah (K)</span></div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-cyan-400 rounded-full"></div> <span>Local User Location (P)</span></div>
+                <hr class="border-slate-700 my-1">
+                <div class="flex items-center gap-2"><div class="w-4 h-0.5 bg-yellow-400"></div> <span>Shortest Path (Great Circle Arc $a$)</span></div>
+            </div>
+            
+            <!-- Canvas Container -->
+            <div id="canvasContainer" class="w-full h-full flex-1 bg-slate-950"></div>
+            
+            <!-- Interaction Prompt -->
+            <div class="p-3 bg-slate-850 border-t border-slate-700 text-center text-xs text-slate-400">
+                🖱️ Left-Click & drag to rotate globe | Scroll wheel to zoom in/out
+            </div>
+        </div>
+    </main>
+
+    <!-- App Engine JavaScript Framework -->
+    <script>
+        // Constants & Coordinates
+        const MAKKAH_LAT = 21.4200;
+        const MAKKAH_LON = 39.8200;
+
+        // Target Document Elements
+        const latInput = document.getElementById('latInput');
+        const lonInput = document.getElementById('lonInput');
+        const presetSelect = document.getElementById('presetSelect');
+        const calcL = document.getElementById('calcL');
+        const calcCot = document.getElementById('calcCot');
+        const bearingResult = document.getElementById('bearingResult');
+        const container = document.getElementById('canvasContainer');
+
+        // Three.js Scene Setup Variables
+        let scene, camera, renderer, controls;
+        let globeMesh, gridHelper;
+        let markers = { pole: null, makkah: null, user: null };
+        let paths = { pToN: null, mToN: null, qibla: null };
+
+        init3D();
+        updateSimulation();
+
+        // Event Listeners for UI interaction
+        latInput.addEventListener('input', updateSimulation);
+        lonInput.addEventListener('input', updateSimulation);
+        presetSelect.addEventListener('change', (e) => {
+            const [lat, lon] = e.target.value.split(',').map(Number);
+            latInput.value = lat;
+            lonInput.value = lon;
+            updateSimulation();
+        });
+
+        function init3D() {
+            // Build Scene
+            scene = new THREE.Scene();
+
+            // Setup View Camera
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(2.5, 2, 2.5);
+
+            // WebGL Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Orbit Interaction controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 1.5;
+            controls.maxDistance = 10;
+
+            // Lighting setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 3, 5);
+            scene.add(dirLight);
+
+            // Base Globe Construction
+            const sphereGeo = new THREE.SphereGeometry(1, 48, 48);
+            const sphereMat = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                roughness: 0.8,
+                metalness: 0.1,
+                wireframe: false
+            });
+            globeMesh = new THREE.Mesh(sphereGeo, sphereMat);
+            scene.add(globeMesh);
+
+            // Wireframe mesh layer overlay for spherical grid context
+            const wireframeGeo = new THREE.SphereGeometry(1.002, 24, 24);
+            const wireframeMat = new THREE.MeshBasicMaterial({
+                color: 0x334155,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.25
+            });
+            const wireframeMesh = new THREE.Mesh(wireframeGeo, wireframeMat);
+            scene.add(wireframeMesh);
+
+            // Create Point Reference Nodes
+            markers.pole = createMarker(0xff4444, 0.03); // Red North Pole
+            markers.makkah = createMarker(0x34d399, 0.03); // Emerald Ka'bah
+            markers.user = createMarker(0x22d3ee, 0.03); // Cyan User Node
+            
+            // Fixed North pole alignment coordinates
+            const poleXYZ = latLonToVector3(90, 0);
+            markers.pole.position.copy(poleXYZ);
+            scene.add(markers.pole);
+            scene.add(markers.makkah);
+            scene.add(markers.user);
+
+            // Window Resizing Pipeline
+            window.addEventListener('resize', onWindowResize);
+
+            // Start Animation Tick Loop
+            animate();
+        }
+
+        function createMarker(color, radius) {
+            const geo = new THREE.SphereGeometry(radius, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: color });
+            return new THREE.Mesh(geo, mat);
+        }
+
+        // Project Spherical Coordinates into Cartesian 3D Space
+        function latLonToVector3(lat, lon) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+            
+            const x = -(Math.sin(phi) * Math.sin(theta));
+            const y = Math.cos(phi);
+            const z = Math.sin(phi) * Math.cos(theta);
+            
+            return new THREE.Vector3(x, y, z);
+        }
+
+        // Interpolate points on sphere surface to construct Great Circle arcs
+        function createGreatCircleArc(v1, v2, color, isQibla = false) {
+            const points = [];
+            const segments = 64;
+            
+            // Find angle between spatial vectors
+            const angleBetween = v1.angleTo(v2);
+
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                // Spherical Linear Interpolation (SLERP) mechanics
+                const interpolated = new THREE.Vector3().copy(v1).lerp(v2, t).normalize();
+                // Push slightly outward past core mesh radius boundary to avoid clipping artifacts
+                interpolated.multiplyScalar(isQibla ? 1.015 : 1.008);
+                points.push(interpolated);
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: color,
+                linewidth: isQibla ? 3 : 1.5
+            });
+            return new THREE.Line(geometry, material);
+        }
+
+        function updateSimulation() {
+            let lat = parseFloat(latInput.value);
+            let lon = parseFloat(lonInput.value);
+
+            // Input Validation Boundaries
+            if (isNaN(lat)) lat = 0;
+            if (isNaN(lon)) lon = 0;
+            lat = Math.max(-89.9, Math.min(89.9, lat)); // Prevent pole divide-by-zero bounds singularities
+            lon = Math.max(-180, Math.min(180, lon));
+
+            // Compute Analytical Geometry Calculations
+            const phi0 = MAKKAH_LAT * Math.PI / 180;
+            const phi = lat * Math.PI / 180;
+            const lambda0 = MAKKAH_LON * Math.PI / 180;
+            const lambda = lon * Math.PI / 180;
+            
+            const dLon = lambda - lambda0;
+
+            // Spherical trigonometry cotangent computation syntax
+            const numerator = Math.sin(phi) * Math.cos(dLon) - Math.cos(phi) * Math.tan(phi0);
+            const denominator = Math.sin(dLon);
+            
+            // Bearing structural calculation angle relative to local standard north reference line
+            let bearingRad = Math.atan2(-denominator, numerator);
+            let bearingDeg = bearingRad * (180 / Math.PI);
+            bearingDeg = (bearingDeg + 360) % 360; // Standardize orientation output bounds [0, 360)
+
+            // Inject analytical text segments into markdown elements
+            calcL.innerHTML = `l = |${lon.toFixed(2)}° - ${MAKKAH_LON.toFixed(2)}°| = <span class="text-emerald-400 font-bold">${Math.abs(lon - MAKKAH_LON).toFixed(2)}°</span>`;
+            calcCot.innerHTML = `cot P = (cos(${lat.toFixed(1)}°)·tan(${MAKKAH_LAT.toFixed(1)}°) / sin(l)) - ... <br>= <span class="text-cyan-400 font-bold">${(numerator/denominator).toFixed(4)}</span>`;
+            bearingResult.innerText = `${bearingDeg.toFixed(2)}°`;
+
+            // Structural Node Relocations on spatial frame grid
+            const makkahXYZ = latLonToVector3(MAKKAH_LAT, MAKKAH_LON);
+            const userXYZ = latLonToVector3(lat, lon);
+            const poleXYZ = latLonToVector3(90, 0);
+
+            markers.makkah.position.copy(makkahXYZ);
+            markers.user.position.copy(userXYZ);
+
+            // Flush old spatial line components out of current running memory buffer space
+            if (paths.pToN) scene.remove(paths.pToN);
+            if (paths.mToN) scene.remove(paths.mToN);
+            if (paths.qibla) scene.remove(paths.qibla);
+
+            // Construct new arcs representing the sides of the spherical triangle
+            paths.pToN = createGreatCircleArc(userXYZ, poleXYZ, 0x06b6d4); // Cyan line to pole
+            paths.mToN = createGreatCircleArc(makkahXYZ, poleXYZ, 0x10b981); // Emerald line to pole
+            paths.qibla = createGreatCircleArc(userXYZ, makkahXYZ, 0xfacc15, true); // Yellow thick Qibla vector
+
+            scene.add(paths.pToN);
+            scene.add(paths.mToN);
+            scene.add(paths.qibla);
+        }
+
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

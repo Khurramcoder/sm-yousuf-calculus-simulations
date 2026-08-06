@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Epicycloid Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#080b0c;
+    --panel:#0f1518;
+    --panel2:#131b1f;
+    --border:#1c282c;
+    --grid:#182226;
+    --text:#e7eef0;
+    --text-dim:#7c8f96;
+    --text-dimmer:#48565c;
+    --green:#4dffb0;
+    --green-dim:#2a8f68;
+    --amber:#ffb454;
+    --amber-dim:#8a6530;
+    --cyan:#5ec8ff;
+    --red:#ff6b6b;
+    --radius:10px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(78,255,176,0.05), transparent 45%),
+      radial-gradient(ellipse at 90% 0%, rgba(255,180,84,0.04), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  .mono{ font-family:'JetBrains Mono', 'SF Mono', Consolas, monospace; }
+
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:16px;
+    flex-wrap:wrap;
+    padding-bottom:20px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.22em;
+    color:var(--green);
+    text-transform:uppercase;
+    margin:0 0 8px;
+    opacity:.85;
+  }
+  h1{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:clamp(22px,3.4vw,32px);
+    letter-spacing:-0.01em;
+    margin:0;
+    color:var(--text);
+  }
+  h1 span{ color:var(--text-dimmer); font-weight:500; }
+  .sub{
+    color:var(--text-dim);
+    font-size:13.5px;
+    max-width:500px;
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .readout{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--text-dim);
+    text-align:right;
+    line-height:1.9;
+  }
+  .readout b{ color:var(--green); font-weight:600; }
+
+  /* ---------- panels ---------- */
+  .panel{
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.15em;
+    color:var(--text-dimmer);
+    text-transform:uppercase;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .panel-label .tag{
+    color:var(--cyan);
+    background:rgba(94,200,255,0.08);
+    border:1px solid rgba(94,200,255,0.25);
+    padding:2px 7px;
+    border-radius:5px;
+    font-size:10px;
+    letter-spacing:.05em;
+  }
+
+  /* ---------- viz ---------- */
+  .viz-panel{ margin-bottom:18px; }
+  #mainCanvas{
+    display:block; width:100%; height:460px; border-radius:6px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.015), transparent 40%),
+      #070a0b;
+    border:1px solid var(--grid);
+  }
+  @media (max-width:700px){
+    #mainCanvas{ height:680px; }
+  }
+
+  /* ---------- controls ---------- */
+  .controls{ margin-bottom:18px; }
+  .controls-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:22px 28px;
+  }
+  .field{ display:flex; flex-direction:column; gap:8px; }
+  .field-label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text-dim); font-family:'JetBrains Mono', monospace;
+  }
+  .field-label b{ color:var(--text); font-size:13px; letter-spacing:0; }
+
+  .wave-btns{ display:flex; gap:6px; flex-wrap:wrap; }
+  .wave-btn{
+    flex:1 1 auto;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    padding:9px 6px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:all .15s ease;
+    text-align:center;
+  }
+  .wave-btn:hover{ color:var(--text); border-color:#2a3a40; }
+  .wave-btn.active{
+    color:#04120c;
+    background:var(--green);
+    border-color:var(--green);
+    font-weight:600;
+    box-shadow:0 0 18px rgba(77,255,176,0.35);
+  }
+
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:4px; border-radius:2px;
+    background:var(--grid); outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:15px; height:15px; border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 10px rgba(77,255,176,0.6), 0 0 0 3px rgba(77,255,176,0.12);
+    cursor:pointer; margin-top:-5.5px;
+    border:2px solid #04120c;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--green); border:2px solid #04120c; cursor:pointer;
+    box-shadow:0 0 10px rgba(77,255,176,0.6);
+  }
+  input[type=range]::-webkit-slider-runnable-track{ height:4px; border-radius:2px; }
+
+  .row-buttons{ display:flex; gap:8px; align-items:center; }
+  .icon-btn{
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    background:var(--panel); border:1px solid var(--border);
+    color:var(--text); font-family:'JetBrains Mono', monospace; font-size:12px;
+    padding:10px 14px; border-radius:7px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .icon-btn:hover{ border-color:var(--green); color:var(--green); }
+  .icon-btn.primary{
+    background:var(--green); color:#04120c; border-color:var(--green); font-weight:600;
+  }
+  .icon-btn.primary:hover{ filter:brightness(1.08); color:#04120c; }
+
+  .toggle-row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:2px; }
+  .toggle{
+    display:flex; align-items:center; gap:8px; cursor:pointer;
+    font-size:12.5px; color:var(--text-dim); user-select:none;
+  }
+  .toggle input{ accent-color:var(--green); width:14px; height:14px; cursor:pointer; }
+  .toggle:hover{ color:var(--text); }
+
+  /* ---------- formula / stats ---------- */
+  .bottom-grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr;
+    gap:18px;
+    margin-top:18px;
+  }
+  @media (max-width:760px){ .bottom-grid{ grid-template-columns:1fr; } }
+
+  .formula-box{
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    line-height:1.9;
+    color:var(--text);
+    overflow-x:auto;
+  }
+  .formula-box .op{ color:var(--text-dim); }
+  .formula-box .term{ color:var(--amber); }
+  .formula-box .n{ color:var(--cyan); }
+  .formula-expand{
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);
+    font-size:12.5px; color:var(--text-dim); word-break:break-word;
+  }
+
+  .stat-list{ display:flex; flex-direction:column; gap:10px; }
+  .stat{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px;
+    padding:8px 10px; background:var(--panel); border:1px solid var(--border); border-radius:6px;
+  }
+  .stat .label{ color:var(--text-dim); }
+  .stat .value{ color:var(--green); font-weight:600; }
+  .stat .value.warn{ color:var(--red); }
+
+  footer{
+    margin-top:26px; text-align:center; color:var(--text-dimmer);
+    font-size:11.5px; font-family:'JetBrains Mono', monospace; letter-spacing:.04em;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <p class="eyebrow">Roulette Curves Lab</p>
+      <h1>Epicycloid <span>&amp; Hypocycloid Simulator</span></h1>
+      <p class="sub">A small circle rolls around a fixed circle, tracing a roulette curve — the geometric construction and its X(θ), Y(θ) reconstructed signal share a single canvas, connected live.</p>
+    </div>
+    <div class="readout mono">
+      MODE <b id="roMode">EPICYCLOID</b><br>
+      R∶r <b id="roRatio">3∶1</b><br>
+      θ(t) <b id="roTheta">0.00</b> rad
+    </div>
+  </header>
+
+  <section class="panel viz-panel">
+    <div class="panel-label"><span>Construction + Reconstructed Signal</span><span class="tag" id="curveTag">R:r = 3:1 · Trefoiloid</span></div>
+    <canvas id="mainCanvas"></canvas>
+  </section>
+
+  <section class="panel controls">
+    <div class="controls-grid">
+
+      <div class="field" style="grid-column:span 2;">
+        <div class="field-label"><span>Preset shapes</span></div>
+        <div class="wave-btns" id="presetBtns">
+          <button class="wave-btn" data-preset="cardioid">Cardioid</button>
+          <button class="wave-btn" data-preset="nephroid">Nephroid</button>
+          <button class="wave-btn active" data-preset="trefoiloid">Trefoiloid</button>
+          <button class="wave-btn" data-preset="ranunculoid">Ranunculoid</button>
+          <button class="wave-btn" data-preset="deltoid">Deltoid</button>
+          <button class="wave-btn" data-preset="astroid">Astroid</button>
+          <button class="wave-btn" data-preset="spirograph">Spirograph</button>
+          <button class="wave-btn" data-preset="epitrochoid">Epitrochoid</button>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column:span 2;">
+        <div class="field-label"><span>Curve family (manual)</span></div>
+        <div class="wave-btns">
+          <button class="wave-btn active" id="modeEpiBtn">Epicycloid — rolls outside</button>
+          <button class="wave-btn" id="modeHypoBtn">Hypocycloid — rolls inside</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Fixed radius R</span><b id="rLabelBig">3</b></div>
+        <input type="range" id="Rslider" min="1" max="10" value="3" step="1">
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Rolling radius r</span><b id="rLabelSmall">1</b></div>
+        <input type="range" id="rslider" min="1" max="8" value="1" step="1">
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Pen offset d/r</span><b id="dLabel">1.00</b></div>
+        <input type="range" id="dslider" min="20" max="180" value="100" step="5">
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Rotation speed</span><b id="speedLabel">1.0×</b></div>
+        <input type="range" id="speedSlider" min="10" max="300" value="100" step="5">
+      </div>
+
+      <div class="field">
+        <div class="field-label"><span>Playback</span></div>
+        <div class="row-buttons">
+          <button class="icon-btn primary" id="playBtn">⏸ Pause</button>
+          <button class="icon-btn" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column:span 2;">
+        <div class="field-label"><span>Display</span></div>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="showCircles" checked> Show construction circles</label>
+          <label class="toggle"><input type="checkbox" id="fadeTrail"> Comet trail (fade) instead of full trace</label>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="bottom-grid">
+    <div class="panel">
+      <div class="panel-label"><span>Parametric Definition</span></div>
+      <div class="formula-box" id="formulaMain"></div>
+      <div class="formula-expand" id="formulaExpand"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Curve Properties</span></div>
+      <div class="stat-list" id="statList"></div>
+    </div>
+  </section>
+
+  <footer>ROULETTE CURVES &nbsp;·&nbsp; SUM OF TWO ROTATING VECTORS &nbsp;·&nbsp; BUILT WITH CLAUDE</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------------- presets ----------------
+  const PRESETS = {
+    cardioid:    { name:'Cardioid',    mode:'epi',  R:1, r:1, d:1 },
+    nephroid:    { name:'Nephroid',    mode:'epi',  R:2, r:1, d:1 },
+    trefoiloid:  { name:'Trefoiloid',  mode:'epi',  R:3, r:1, d:1 },
+    ranunculoid: { name:'Ranunculoid', mode:'epi',  R:5, r:1, d:1 },
+    deltoid:     { name:'Deltoid',     mode:'hypo', R:3, r:1, d:1 },
+    astroid:     { name:'Astroid',     mode:'hypo', R:4, r:1, d:1 },
+    spirograph:  { name:'Spirograph',  mode:'hypo', R:5, r:3, d:4 },
+    epitrochoid: { name:'Epitrochoid', mode:'epi',  R:5, r:3, d:5 }
+  };
+
+  // ---------------- state ----------------
+  const state = {
+    R:3, r:1, d:1, mode:'epi',
+    presetKey:'trefoiloid',
+    speed:1.0,
+    playing:!prefersReduced,
+    showCircles:true,
+    fadeTrail:false,
+    theta:0
+  };
+
+  let curveData = null;
+  let trailPoints = [];
+
+  // ---------------- math ----------------
+  function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a||1; }
+
+  function pointAt(theta,R,r,d,mode){
+    const L1 = mode==='epi' ? (R+r) : (R-r);
+    const k  = mode==='epi' ? (R+r)/r : (R-r)/r;
+    let X,Y;
+    if(mode==='epi'){
+      X = L1*Math.cos(theta) - d*Math.cos(k*theta);
+      Y = L1*Math.sin(theta) - d*Math.sin(k*theta);
+    } else {
+      X = L1*Math.cos(theta) + d*Math.cos(k*theta);
+      Y = L1*Math.sin(theta) - d*Math.sin(k*theta);
+    }
+    return { X, Y };
+  }
+
+  function vectorChain(theta,R,r,d,mode){
+    const L1 = mode==='epi' ? (R+r) : (R-r);
+    const k  = mode==='epi' ? (R+r)/r : (R-r)/r;
+    const v1 = { x:L1*Math.cos(theta), y:L1*Math.sin(theta) };
+    const angle2 = mode==='epi' ? (k*theta+Math.PI) : (-k*theta);
+    const v2 = { x:d*Math.cos(angle2), y:d*Math.sin(angle2) };
+    return { v1, v2, tip:{ x:v1.x+v2.x, y:v1.y+v2.y } };
+  }
+
+  function computeCurve(){
+    const { R, r, d, mode } = state;
+    const g = gcd(R,r);
+    const cusps = R/g;
+    const period = 2*Math.PI*(r/g);
+    const STEPS = Math.max(360, Math.min(4000, Math.round(220*(period/(2*Math.PI)))));
+    const pts = [];
+    let maxRad = 0;
+    for(let i=0;i<=STEPS;i++){
+      const th = period*i/STEPS;
+      const { X, Y } = pointAt(th,R,r,d,mode);
+      pts.push({ x:X, y:Y });
+      const rad = Math.hypot(X,Y);
+      if(rad>maxRad) maxRad = rad;
+    }
+    maxRad = Math.max(maxRad, R, 0.5);
+    return { pts, cusps, period, g, maxRad };
+  }
+
+  function refreshCurve(resetTrail){
+    curveData = computeCurve();
+    if(resetTrail) trailPoints = [];
+    updateFormula();
+    updateStats();
+    updateTag();
+  }
+
+  // ---------------- canvas setup ----------------
+  const mainCanvas = document.getElementById('mainCanvas');
+
+  function fitCanvas(canvas){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width));
+    const h = Math.max(1, Math.round(rect.height));
+    if(canvas._w !== w || canvas._h !== h || canvas._dpr !== dpr){
+      canvas.width = w*dpr; canvas.height = h*dpr;
+      canvas._w = w; canvas._h = h; canvas._dpr = dpr;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return { ctx, w, h };
+  }
+
+  function getLayout(w,h){
+    const stacked = w < 680;
+    if(stacked){
+      const conH = h*0.56;
+      const conSize = Math.min(w, conH) - 8;
+      const con = { x:(w-conSize)/2, y:6, w:conSize, h:conSize };
+      const scope = { x:10, y:conH+14, w:w-20, h:h-conH-22 };
+      return { stacked, con, scope };
+    } else {
+      const conW = Math.min(w*0.4, h-12);
+      const con = { x:6, y:(h-conW)/2, w:conW, h:conW };
+      const scope = { x:conW+34, y:8, w:w-conW-44, h:h-16 };
+      return { stacked, con, scope };
+    }
+  }
+
+  // ---------------- drawing ----------------
+  let lastTipScreen = { x:0, y:0 };
+  let lastScopeNow = { x:0, y:0 };
+
+  function drawConstruction(ctx, region){
+    const { R, r, d, mode, theta } = state;
+    const scale = (Math.min(region.w, region.h)/2 - 20) / curveData.maxRad;
+    const ox = region.x + region.w/2;
+    const oy = region.y + region.h/2;
+    const toScreen = (mx,my)=>({ x: ox+mx*scale, y: oy-my*scale });
+
+    // fixed circle
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+    ctx.setLineDash([4,4]);
+    ctx.lineWidth = 1;
+    ctx.arc(ox,oy,R*scale,0,Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // full closed curve, faint reference
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(94,200,255,0.22)';
+    ctx.lineWidth = 1.2;
+    curveData.pts.forEach((p,i)=>{
+      const s = toScreen(p.x,p.y);
+      if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+    });
+    ctx.stroke();
+
+    // traced trail
+    if(trailPoints.length>1){
+      if(state.fadeTrail){
+        for(let i=1;i<trailPoints.length;i++){
+          const a = trailPoints[i-1], b = trailPoints[i];
+          const sa = toScreen(a.x,a.y), sb = toScreen(b.x,b.y);
+          const alpha = i/trailPoints.length;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(77,255,176,${(0.08+0.7*alpha).toFixed(3)})`;
+          ctx.lineWidth = 2;
+          ctx.moveTo(sa.x,sa.y); ctx.lineTo(sb.x,sb.y);
+          ctx.stroke();
+        }
+      } else {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(77,255,176,0.85)';
+        ctx.lineWidth = 2;
+        trailPoints.forEach((p,i)=>{
+          const s = toScreen(p.x,p.y);
+          if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+        });
+        ctx.stroke();
+      }
+    }
+
+    const chain = vectorChain(theta,R,r,d,mode);
+    const s0 = { x:ox, y:oy };
+    const s1 = toScreen(chain.v1.x, chain.v1.y);
+    const s2 = toScreen(chain.tip.x, chain.tip.y);
+
+    if(state.showCircles){
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,180,84,0.55)';
+      ctx.lineWidth = 1;
+      ctx.arc(s1.x, s1.y, r*scale, 0, Math.PI*2);
+      ctx.stroke();
+    }
+
+    // v1: origin -> rolling circle center
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(94,200,255,0.9)';
+    ctx.lineWidth = 1.6;
+    ctx.moveTo(s0.x,s0.y); ctx.lineTo(s1.x,s1.y);
+    ctx.stroke();
+
+    // v2: rolling circle center -> tracer point
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 1.2;
+    ctx.moveTo(s1.x,s1.y); ctx.lineTo(s2.x,s2.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.arc(s0.x,s0.y,2.6,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,180,84,0.9)';
+    ctx.arc(s1.x,s1.y,3,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = '#4dffb0';
+    ctx.shadowColor = '#4dffb0'; ctx.shadowBlur = 10;
+    ctx.arc(s2.x,s2.y,4.2,0,Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    lastTipScreen = s2;
+
+    if(state.playing){
+      trailPoints.push({ x:chain.tip.x, y:chain.tip.y });
+      const maxLen = state.fadeTrail ? 260 : 3600;
+      if(trailPoints.length>maxLen) trailPoints.shift();
+    }
+  }
+
+  function drawScope(ctx, region){
+    const ampScale = (region.h/2 - 16) / curveData.maxRad;
+    const midY = region.y + region.h/2;
+    const windowSpan = curveData.period * 1.25;
+    const STEP_PX = 2;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    [-curveData.maxRad, 0, curveData.maxRad].forEach(v=>{
+      const y = midY - v*ampScale;
+      ctx.beginPath(); ctx.moveTo(region.x,y); ctx.lineTo(region.x+region.w,y); ctx.stroke();
+    });
+
+    // Y(θ) trace
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255,180,84,0.75)';
+    ctx.lineWidth = 1.6;
+    for(let x=0; x<=region.w; x+=STEP_PX){
+      const theta = state.theta - (x/region.w)*windowSpan;
+      const { Y } = pointAt(theta, state.R, state.r, state.d, state.mode);
+      const sx = region.x+x, sy = midY - Y*ampScale;
+      if(x===0) ctx.moveTo(sx,sy); else ctx.lineTo(sx,sy);
+    }
+    ctx.stroke();
+
+    // X(θ) trace — primary reconstructed signal
+    ctx.beginPath();
+    ctx.strokeStyle = '#4dffb0';
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = 'rgba(77,255,176,0.6)'; ctx.shadowBlur = 6;
+    let nowY = midY;
+    for(let x=0; x<=region.w; x+=STEP_PX){
+      const theta = state.theta - (x/region.w)*windowSpan;
+      const { X } = pointAt(theta, state.R, state.r, state.d, state.mode);
+      const sx = region.x+x, sy = midY - X*ampScale;
+      if(x===0){ ctx.moveTo(sx,sy); nowY = sy; } else ctx.lineTo(sx,sy);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    lastScopeNow = { x: region.x, y: nowY };
+
+    ctx.beginPath();
+    ctx.fillStyle = '#4dffb0';
+    ctx.shadowColor = '#4dffb0'; ctx.shadowBlur = 10;
+    ctx.arc(region.x, nowY, 4.2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = 'rgba(124,143,150,0.8)';
+    ctx.textAlign = 'left';
+    ctx.fillText('NOW', region.x+6, region.y+14);
+    ctx.textAlign = 'right';
+    ctx.fillText('PAST', region.x+region.w-6, region.y+14);
+    ctx.textAlign = 'left';
+
+    ctx.fillStyle = 'rgba(77,255,176,0.9)';
+    ctx.fillText('X(θ)', region.x+6, region.y+region.h-22);
+    ctx.fillStyle = 'rgba(255,180,84,0.9)';
+    ctx.fillText('Y(θ)', region.x+6, region.y+region.h-8);
+  }
+
+  function drawConnector(ctx){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(77,255,176,0.35)';
+    ctx.setLineDash([3,5]);
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(lastTipScreen.x, lastTipScreen.y);
+    ctx.lineTo(lastScopeNow.x, lastScopeNow.y);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.fillStyle = '#4dffb0';
+    ctx.shadowColor = '#4dffb0'; ctx.shadowBlur = 12;
+    ctx.arc(lastScopeNow.x, lastScopeNow.y, 3.4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawMain(){
+    const { ctx, w, h } = fitCanvas(mainCanvas);
+    ctx.clearRect(0,0,w,h);
+    const layout = getLayout(w,h);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if(layout.stacked){
+      const y = layout.scope.y - 8;
+      ctx.moveTo(10,y); ctx.lineTo(w-10,y);
+    } else {
+      const x = layout.con.x + layout.con.w + 16;
+      ctx.moveTo(x,10); ctx.lineTo(x,h-10);
+    }
+    ctx.stroke();
+
+    drawConstruction(ctx, layout.con);
+    drawScope(ctx, layout.scope);
+    drawConnector(ctx);
+  }
+
+  // ---------------- formula / stats ----------------
+  function fmt(v,d){ return v.toFixed(d===undefined?2:d); }
+
+  function updateFormula(){
+    const { R, r, d, mode } = state;
+    const k = mode==='epi' ? (R+r)/r : (R-r)/r;
+    let general;
+    if(mode==='epi'){
+      general = `X(θ) = <span class="op">(R+r)</span>cosθ <span class="op">−</span> <span class="term">d·cos(kθ)</span><br>Y(θ) = <span class="op">(R+r)</span>sinθ <span class="op">−</span> <span class="term">d·sin(kθ)</span>`;
+    } else {
+      general = `X(θ) = <span class="op">(R−r)</span>cosθ <span class="op">+</span> <span class="term">d·cos(kθ)</span><br>Y(θ) = <span class="op">(R−r)</span>sinθ <span class="op">−</span> <span class="term">d·sin(kθ)</span>`;
+    }
+    document.getElementById('formulaMain').innerHTML = general + `<br><span class="op" style="font-size:12px;">k = (R${mode==='epi'?'+':'−'}r)/r &nbsp;·&nbsp; <span class="n">θ = ωt</span></span>`;
+    document.getElementById('formulaExpand').textContent =
+      `R = ${R}, r = ${r}, d = ${fmt(d,2)}  →  k = ${fmt(k,3)}, period T = ${fmt(curveData.period/Math.PI,2)}π`;
+  }
+
+  function updateStats(){
+    const { R, r, d } = state;
+    const g = curveData.g;
+    let penType;
+    if(Math.abs(d-r) < 0.02) penType = 'Cusped (d = r)';
+    else if(d < r) penType = 'Curtate (d &lt; r) — smooth loops';
+    else penType = 'Prolate (d &gt; r) — self-intersecting';
+    const list = document.getElementById('statList');
+    list.innerHTML = `
+      <div class="stat"><span class="label">Curve family</span><span class="value">${state.mode==='epi'?'Epicycloid':'Hypocycloid'}</span></div>
+      <div class="stat"><span class="label">Cusps / lobes</span><span class="value">${curveData.cusps}</span></div>
+      <div class="stat"><span class="label">Reduced ratio R∶r (gcd=${g})</span><span class="value">${R/g}∶${r/g}</span></div>
+      <div class="stat"><span class="label">Period T</span><span class="value">${fmt(curveData.period/Math.PI,2)}π</span></div>
+      <div class="stat"><span class="label">Pen type</span><span class="value">${penType}</span></div>
+    `;
+  }
+
+  function updateTag(){
+    document.getElementById('curveTag').textContent = `R:r = ${state.R}:${state.r} · ${PRESETS[state.presetKey] ? PRESETS[state.presetKey].name : 'Custom'}`;
+    document.getElementById('roMode').textContent = state.mode==='epi' ? 'EPICYCLOID' : 'HYPOCYCLOID';
+    document.getElementById('roRatio').textContent = `${state.R}∶${state.r}`;
+  }
+
+  // ---------------- controls wiring ----------------
+  const RSlider = document.getElementById('Rslider');
+  const rSlider = document.getElementById('rslider');
+  const dSlider = document.getElementById('dslider');
+  const speedSlider = document.getElementById('speedSlider');
+  const playBtn = document.getElementById('playBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const showCirclesBox = document.getElementById('showCircles');
+  const fadeTrailBox = document.getElementById('fadeTrail');
+  const modeEpiBtn = document.getElementById('modeEpiBtn');
+  const modeHypoBtn = document.getElementById('modeHypoBtn');
+
+  function setModeButtons(){
+    modeEpiBtn.classList.toggle('active', state.mode==='epi');
+    modeHypoBtn.classList.toggle('active', state.mode==='hypo');
+  }
+
+  function markCustom(){
+    state.presetKey = null;
+    document.querySelectorAll('#presetBtns .wave-btn').forEach(b=>b.classList.remove('active'));
+  }
+
+  function applyPreset(key){
+    const p = PRESETS[key];
+    state.presetKey = key;
+    state.mode = p.mode;
+    state.R = p.R; state.r = p.r; state.d = p.d;
+    RSlider.value = p.R; rSlider.value = p.r;
+    dSlider.value = Math.round((p.d/p.r)*100);
+    document.getElementById('rLabelBig').textContent = p.R;
+    document.getElementById('rLabelSmall').textContent = p.r;
+    document.getElementById('dLabel').textContent = (p.d/p.r).toFixed(2);
+    document.querySelectorAll('#presetBtns .wave-btn').forEach(b=>b.classList.toggle('active', b.dataset.preset===key));
+    setModeButtons();
+    state.theta = 0;
+    refreshCurve(true);
+  }
+
+  document.querySelectorAll('#presetBtns .wave-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> applyPreset(btn.dataset.preset));
+  });
+
+  modeEpiBtn.addEventListener('click', ()=>{
+    state.mode = 'epi'; markCustom(); setModeButtons(); refreshCurve(true);
+  });
+  modeHypoBtn.addEventListener('click', ()=>{
+    state.mode = 'hypo'; markCustom(); setModeButtons(); refreshCurve(true);
+  });
+
+  RSlider.addEventListener('input', ()=>{
+    state.R = parseInt(RSlider.value,10);
+    document.getElementById('rLabelBig').textContent = state.R;
+    markCustom(); refreshCurve(true);
+  });
+
+  rSlider.addEventListener('input', ()=>{
+    state.r = parseInt(rSlider.value,10);
+    document.getElementById('rLabelSmall').textContent = state.r;
+    const ratio = parseInt(dSlider.value,10)/100;
+    state.d = ratio*state.r;
+    markCustom(); refreshCurve(true);
+  });
+
+  dSlider.addEventListener('input', ()=>{
+    const ratio = parseInt(dSlider.value,10)/100;
+    state.d = ratio*state.r;
+    document.getElementById('dLabel').textContent = ratio.toFixed(2);
+    markCustom(); refreshCurve(true);
+  });
+
+  speedSlider.addEventListener('input', ()=>{
+    state.speed = parseInt(speedSlider.value,10)/100;
+    document.getElementById('speedLabel').textContent = state.speed.toFixed(1) + '×';
+  });
+
+  playBtn.addEventListener('click', ()=>{
+    state.playing = !state.playing;
+    playBtn.innerHTML = state.playing ? '⏸ Pause' : '▶ Play';
+    playBtn.classList.toggle('primary', state.playing);
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    state.theta = 0;
+    trailPoints = [];
+  });
+
+  showCirclesBox.addEventListener('change', ()=>{ state.showCircles = showCirclesBox.checked; });
+  fadeTrailBox.addEventListener('change', ()=>{ state.fadeTrail = fadeTrailBox.checked; trailPoints = []; });
+
+  window.addEventListener('resize', ()=>{});
+
+  // ---------------- animation loop ----------------
+  let lastTs = null;
+  function frame(ts){
+    if(lastTs === null) lastTs = ts;
+    const dt = Math.min((ts-lastTs)/1000, 0.05);
+    lastTs = ts;
+    if(state.playing){ state.theta += dt * state.speed * 0.9; }
+    document.getElementById('roTheta').textContent = (state.theta % (2*Math.PI*1000)).toFixed(2);
+    drawMain();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------- init ----------------
+  if(prefersReduced){
+    playBtn.innerHTML = '▶ Play';
+    playBtn.classList.remove('primary');
+  }
+  applyPreset('trefoiloid');
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maclaurin Series Interactive Simulator</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --border-color: #dee2e6;
+            --fx-color: #dc3545;
+            --px-color: #198754;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.8rem;
+            text-align: center;
+            color: #343a40;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        select, input[type="range"] {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            background: white;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        .term-badge {
+            font-weight: bold;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .equation-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.05rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .math-symbol {
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Maclaurin Series Interactive Simulator</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="functionSelect">Target Function f(x)</label>
+            <select id="functionSelect">
+                <option value="sin">sin(x)</option>
+                <option value="cos">cos(x)</option>
+                <option value="exp">e^x</option>
+                <option value="ln">ln(1 + x)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="termsSlider">Degree of Polynomial (n)</label>
+            <div class="slider-container">
+                <input type="range" id="termsSlider" min="0" max="11" value="1">
+                <span class="term-badge" id="termDisplay">1</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="color-box" style="background-color: var(--fx-color);"></div>
+            <span>True Function f(x)</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: var(--px-color);"></div>
+            <span>Maclaurin Polynomial P<sub>n</sub>(x)</span>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="plotCanvas" width="800" height="450"></canvas>
+    </div>
+
+    <div class="control-group">
+        <label>Polynomial Equation:</label>
+        <div class="equation-box" id="equationDisplay">
+            P<sub>1</sub>(x) = x
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('plotCanvas');
+    const ctx = canvas.getContext('2d');
+    const functionSelect = document.getElementById('functionSelect');
+    const termsSlider = document.getElementById('termsSlider');
+    const termDisplay = document.getElementById('termDisplay');
+    const equationDisplay = document.getElementById('equationDisplay');
+
+    // Plotting dimensions and configurations
+    const scaleX = 80; // pixels per unit
+    const scaleY = 80; // pixels per unit
+    let originX = canvas.width / 2;
+    let originY = canvas.height / 2;
+
+    // Mathematical definition of targets and approximations
+    const targetFunctions = {
+        sin: {
+            eval: Math.sin,
+            label: 'sin(x)',
+            getPolynomialTerms: (n) => {
+                let terms = [];
+                // sin(x) = x - x^3/3! + x^5/5! - x^7/7! ...
+                for (let i = 1; i <= n; i += 2) {
+                    const sign = ((i - 1) / 2) % 2 === 0 ? 1 : -1;
+                    terms.push({ coeff: sign / factorial(i), power: i });
+                }
+                return terms;
+            }
+        },
+        cos: {
+            eval: Math.cos,
+            label: 'cos(x)',
+            getPolynomialTerms: (n) => {
+                let terms = [];
+                // cos(x) = 1 - x^2/2! + x^4/4! - x^6/6! ...
+                for (let i = 0; i <= n; i += 2) {
+                    const sign = (i / 2) % 2 === 0 ? 1 : -1;
+                    terms.push({ coeff: sign / factorial(i), power: i });
+                }
+                return terms;
+            }
+        },
+        exp: {
+            eval: Math.exp,
+            label: 'e^x',
+            getPolynomialTerms: (n) => {
+                let terms = [];
+                // e^x = 1 + x + x^2/2! + x^3/3! ...
+                for (let i = 0; i <= n; i++) {
+                    terms.push({ coeff: 1 / factorial(i), power: i });
+                }
+                return terms;
+            }
+        },
+        ln: {
+            eval: (x) => x > -1 ? Math.log(1 + x) : NaN,
+            label: 'ln(1 + x)',
+            getPolynomialTerms: (n) => {
+                let terms = [];
+                // ln(1+x) = x - x^2/2 + x^3/3 - x^4/4 ...
+                for (let i = 1; i <= n; i++) {
+                    const sign = (i % 2 === 0) ? -1 : 1;
+                    terms.push({ coeff: sign / i, power: i });
+                }
+                return terms;
+            }
+        }
+    };
+
+    function factorial(num) {
+        if (num <= 1) return 1;
+        let result = 1;
+        for (let i = 2; i <= num; i++) result *= i;
+        return result;
+    }
+
+    function evaluatePolynomial(terms, x) {
+        return terms.reduce((sum, term) => sum + term.coeff * Math.pow(x, term.power), 0);
+    }
+
+    function updateEquationText(funcKey, n, terms) {
+        const funcLabel = targetFunctions[funcKey].label;
+        if (terms.length === 0) {
+            equationDisplay.innerHTML = `P<sub>${n}</sub>(x) = 0`;
+            return;
+        }
+
+        let html = `P<sub>${n}</sub>(x) = `;
+        terms.forEach((term, index) => {
+            let c = term.coeff;
+            let p = term.power;
+            
+            if (c === 0) return;
+
+            let signStr = '';
+            if (index > 0) {
+                signStr = c > 0 ? ' + ' : ' - ';
+                c = Math.abs(c);
+            } else if (c < 0) {
+                signStr = '-';
+                c = Math.abs(c);
+            }
+
+            let termStr = '';
+            if (p === 0) {
+                termStr = `${formatCoeff(c)}`;
+            } else {
+                let coeffStr = '';
+                // Formatting clean fractional looks or integers where possible
+                if (funcKey === 'sin' || funcKey === 'cos' || funcKey === 'exp') {
+                    coeffStr = c === 1 ? '' : `1/${factorial(p)}`;
+                } else if (funcKey === 'ln') {
+                    coeffStr = p === 1 ? '' : `1/${p}`;
+                } else {
+                    coeffStr = c === 1 ? '' : c.toFixed(3);
+                }
+
+                let xStr = p === 1 ? 'x' : `x<sup>${p}</sup>`;
+                termStr = coeffStr === '' ? xStr : `${coeffStr}${xStr}`;
+            }
+
+            html += signStr + termStr;
+        });
+
+        equationDisplay.innerHTML = html;
+    }
+
+    function formatCoeff(val) {
+        return Number.isInteger(val) ? val : val.toFixed(2);
+    }
+
+    function drawGrid() {
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 1;
+
+        // Vertical grid lines
+        for (let x = originX % scaleX; x < canvas.width; x += scaleX) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+
+        // Horizontal grid lines
+        for (let y = originY % scaleY; y < canvas.height; y += scaleY) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        // Main Axes
+        ctx.strokeStyle = '#adb5bd';
+        ctx.lineWidth = 2;
+
+        // X Axis
+        ctx.beginPath();
+        ctx.moveTo(0, originY);
+        ctx.lineTo(canvas.width, originY);
+        ctx.stroke();
+
+        // Y Axis
+        ctx.beginPath();
+        ctx.moveTo(originX, 0);
+        ctx.lineTo(originX, canvas.height);
+        ctx.stroke();
+
+        // Label Origin anchor point
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('0', originX + 5, originY + 15);
+        ctx.fillStyle = '#212529';
+        ctx.beginPath();
+        ctx.arc(originX, originY, 4, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
+    function drawGraph() {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        drawGrid();
+
+        const funcKey = functionSelect.value;
+        const n = parseInt(termsSlider.value);
+        const currentFunc = targetFunctions[funcKey];
+        const polyTerms = currentFunc.getPolynomialTerms(n);
+
+        updateEquationText(funcKey, n, polyTerms);
+
+        // Plot True Function
+        ctx.beginPath();
+        ctx.strokeStyle = '#dc3545'; // --fx-color
+        ctx.lineWidth = 3;
+        let started = false;
+
+        for (let px = 0; px < canvas.width; px++) {
+            let x = (px - originX) / scaleX;
+            let y = currentFunc.eval(x);
+
+            if (isNaN(y) || !isFinite(y)) {
+                started = false;
+                continue;
+            }
+
+            let py = originY - (y * scaleY);
+
+            if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+            } else {
+                ctx.lineTo(px, py);
+            }
+        }
+        ctx.stroke();
+
+        // Plot Maclaurin Polynomial Approximation
+        ctx.beginPath();
+        ctx.strokeStyle = '#198754'; // --px-color
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]); // Dashed representation
+        started = false;
+
+        for (let px = 0; px < canvas.width; px++) {
+            let x = (px - originX) / scaleX;
+            let y = evaluatePolynomial(polyTerms, x);
+
+            if (isNaN(y) || !isFinite(y)) {
+                started = false;
+                continue;
+            }
+
+            let py = originY - (y * scaleY);
+
+            // Cap the rendering limits safely inside bounds
+            if (py < -500 || py > canvas.height + 500) {
+                started = false;
+                continue;
+            }
+
+            if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+            } else {
+                ctx.lineTo(px, py);
+            }
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset line formatting
+    }
+
+    // Interactivity Listeners
+    termsSlider.addEventListener('input', (e) => {
+        termDisplay.textContent = e.target.value;
+        drawGraph();
+    });
+
+    functionSelect.addEventListener('change', () => {
+        // Dynamic alignment tweaking for log variant view range
+        if (functionSelect.value === 'ln') {
+            originX = canvas.width / 3; 
+        } else {
+            originX = canvas.width / 2;
+        }
+        drawGraph();
+    });
+
+    // Initial load trigger
+    drawGraph();
+</script>
+
+</body>
+</html>

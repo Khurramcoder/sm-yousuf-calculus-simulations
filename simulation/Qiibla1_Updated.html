@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qibla Learning Simulator</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#fff}
+header{padding:20px;text-align:center;background:#111827}
+.container{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:16px}
+.card{background:#1e293b;border-radius:12px;padding:16px}
+.step{margin:10px 0;padding:10px;background:#0f172a;border-radius:8px}
+canvas{width:100%;height:600px;background:#020617;border-radius:12px}
+.compass{font-size:28px;text-align:center;padding:15px}
+.result{font-size:36px;color:#34d399;text-align:center}
+button{padding:10px 16px;border:none;border-radius:8px;background:#10b981;color:white}
+</style>
+</head>
+<body>
+<header>
+<h1>🌍 Interactive Qibla Learning Simulator</h1>
+<p>Educational version with guided lesson flow</p>
+</header>
+
+<div class="container">
+<div>
+<div class="card">
+<h2>🎓 Guided Lesson</h2>
+<div class="step">1. Locate your position (P)</div>
+<div class="step">2. Locate the Ka'bah (K)</div>
+<div class="step">3. Locate the North Pole (N)</div>
+<div class="step">4. Construct spherical triangle PNK</div>
+<div class="step">5. Measure angle P</div>
+<div class="step">6. Determine Qibla direction</div>
+<button onclick="startLesson()">▶ Start Lesson</button>
+</div>
+
+<div class="card">
+<h2>🧭 Qibla Direction</h2>
+<div class="result" id="bearing">281.41°</div>
+<div class="compass" id="compass">↖ WNW</div>
+</div>
+
+<div class="card">
+<h2>📚 Educational Notes</h2>
+<p>A great circle is the shortest path between two points on a sphere.</p>
+<p>The Qibla direction follows a great-circle route to the Ka'bah.</p>
+<p>The spherical triangle consists of:</p>
+<ul>
+<li>P = Your Location</li>
+<li>K = Ka'bah</li>
+<li>N = North Pole</li>
+</ul>
+</div>
+</div>
+
+<div class="card">
+<canvas id="scene"></canvas>
+<h3>Triangle PNK</h3>
+<pre>
+        N
+       /\\
+      /  \\
+     /    \\
+    K------P
+</pre>
+</div>
+</div>
+
+<script>
+function startLesson(){
+    alert("Lesson Mode: Earth → North Pole → Ka'bah → User Location → Triangle → Compass Bearing");
+}
+
+const canvas=document.getElementById('scene');
+const ctx=canvas.getContext('2d');
+canvas.width=900;
+canvas.height=600;
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.strokeStyle="#334155";
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.arc(450,300,200,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.fillStyle="red";
+    ctx.beginPath();
+    ctx.arc(450,100,8,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillText("N",465,100);
+
+    ctx.fillStyle="#34d399";
+    ctx.beginPath();
+    ctx.arc(550,240,8,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillText("K",565,240);
+
+    ctx.fillStyle="#22d3ee";
+    ctx.beginPath();
+    ctx.arc(320,220,8,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillText("P",335,220);
+
+    ctx.strokeStyle="yellow";
+    ctx.lineWidth=4;
+    ctx.beginPath();
+    ctx.moveTo(320,220);
+    ctx.lineTo(550,240);
+    ctx.stroke();
+
+    requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

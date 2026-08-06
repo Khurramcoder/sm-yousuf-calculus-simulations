@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaussian Integral Visualization</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        h3 {
+            color: var(--secondary);
+            margin: 1.5rem 0 1rem;
+        }
+        
+        .intro {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .theorem {
+            background-color: var(--light);
+            padding: 1.5rem;
+            border-left: 4px solid var(--secondary);
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .proof-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .proof {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .proof:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .proof h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .proof-number {
+            background-color: var(--secondary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .proof-content {
+            margin-top: 1rem;
+        }
+        
+        .proof-equation {
+            background-color: var(--light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        .proof-equation code {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+        
+        .visualization {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin: 2rem 0;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 400px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: var(--primary);
+        }
+        
+        .active {
+            background-color: var(--accent);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--secondary);
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        footer {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .proof-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>The Gaussian Integral</h1>
+            <p>Visualizing and Understanding ∫e⁻ˣ² dx = √π</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <section class="intro">
+            <h2>Introduction</h2>
+            <p>The Gaussian integral, also known as the Euler-Poisson integral, is the integral of the Gaussian function e⁻ˣ² over the entire real line. It is named after the mathematician Carl Friedrich Gauss.</p>
+            
+            <div class="theorem">
+                <h3>Theorem</h3>
+                <p>With the notation:</p>
+                <p>I = ∫<sub>-∞</sub><sup>∞</sup> e⁻¹⁄₂ˣ² dx, J = ∫<sub>0</sub><sup>∞</sup> e⁻ˣ² dx, and K = ∫<sub>-∞</sub><sup>∞</sup> e⁻ᴾᴵˣ² dx</p>
+                <p>We have:</p>
+                <p>I = √(2π), or equivalently J = √π/2, or equivalently K = 1</p>
+            </div>
+            
+            <p>This integral is fundamental in probability theory, statistics, and quantum mechanics. Despite its simple appearance, it has no elementary antiderivative, which makes its evaluation particularly interesting.</p>
+        </section>
+        
+        <section class="visualization">
+            <h2>Visualization</h2>
+            <p>Explore the Gaussian function and its integral through these interactive visualizations:</p>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="gaussian">Gaussian Function</div>
+                <div class="tab" data-tab="polar">Polar Coordinates</div>
+                <div class="tab" data-tab="volume">Volume of Revolution</div>
+            </div>
+            
+            <div class="tab-content active" id="gaussian-tab">
+                <p>The Gaussian function f(x) = e⁻ˣ² is symmetric about the y-axis and approaches zero as x approaches ±∞.</p>
+                <div class="canvas-container" id="gaussian-canvas">
+                    <canvas id="gaussian-plot"></canvas>
+                </div>
+                <div class="controls">
+                    <button id="show-area">Show Area Under Curve</button>
+                    <button id="show-symmetry">Show Symmetry</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="polar-tab">
+                <p>The classic proof squares the integral and converts to polar coordinates:</p>
+                <div class="proof-equation">
+                    <code>J² = ∫∫ e⁻⁽ˣ²⁺ʸ²⁾ dxdy = ∫∫ e⁻ʳ² r drdθ</code>
+                </div>
+                <div class="canvas-container" id="polar-canvas">
+                    <canvas id="polar-plot"></canvas>
+                </div>
+                <div class="controls">
+                    <button id="show-cartesian">Show Cartesian</button>
+                    <button id="show-polar">Show Polar</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="volume-tab">
+                <p>Revolving the curve z = e⁻¹⁄₂ˣ² around the z-axis creates a bell surface. The volume below this surface can be computed in two ways:</p>
+                <div class="canvas-container" id="volume-canvas">
+                    <canvas id="volume-plot"></canvas>
+                </div>
+                <div class="controls">
+                    <button id="show-surface">Show Surface</button>
+                    <button id="show-slices">Show Horizontal Slices</button>
+                    <button id="show-vertical">Show Vertical Slices</button>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Proofs of the Gaussian Integral</h2>
+            <p>The Gaussian integral can be proven in many different ways. Here are some of the most elegant proofs:</p>
+            
+            <div class="proof-container">
+                <div class="proof">
+                    <h3><span class="proof-number">1</span> Polar Coordinates</h3>
+                    <div class="proof-content">
+                        <p>The most famous proof squares the integral and converts to polar coordinates:</p>
+                        <div class="proof-equation">
+                            <code>J² = ∫∫ e⁻⁽ˣ²⁺ʸ²⁾ dxdy = ∫∫ e⁻ʳ² r drdθ = π/4</code>
+                        </div>
+                        <p>Thus J = √π/2. This method was popularized by Poisson.</p>
+                    </div>
+                </div>
+                
+                <div class="proof">
+                    <h3><span class="proof-number">2</span> Change of Variables</h3>
+                    <div class="proof-content">
+                        <p>By substituting x = yt in the inner integral and applying Fubini's theorem:</p>
+                        <div class="proof-equation">
+                            <code>J² = ∫∫ ye⁻ʸ²⁽ᵗ²⁺¹⁾ dtdy = ∫ dt/(2(t²+1)) = π/4</code>
+                        </div>
+                        <p>This proof is due to Laplace and historically precedes the polar coordinates method.</p>
+                    </div>
+                </div>
+                
+                <div class="proof">
+                    <h3><span class="proof-number">3</span> Differentiation Under Integral</h3>
+                    <div class="proof-content">
+                        <p>Define A(t) = (∫₀ᵗ e⁻ˣ² dx)² and differentiate with respect to t:</p>
+                        <div class="proof-equation">
+                            <code>A'(t) = -B'(t) where B(t) = ∫₀¹ e⁻ᵗ²⁽¹⁺ˣ²⁾/(1+x²) dx</code>
+                        </div>
+                        <p>This leads to A(t) = -B(t) + C, and taking limits gives J² = π/4.</p>
+                    </div>
+                </div>
+                
+                <div class="proof">
+                    <h3><span class="proof-number">4</span> Volume of Revolution</h3>
+                    <div class="proof-content">
+                        <p>Revolve z = e⁻¹⁄₂ˣ² around the z-axis and compute the volume in two ways:</p>
+                        <div class="proof-equation">
+                            <code>V = ∫₀¹ πr(z)² dz = 2π (horizontal slices)</code><br>
+                            <code>V = ∫ A(x) dx = I² (vertical slices)</code>
+                        </div>
+                        <p>Equating gives I² = 2π, so I = √(2π).</p>
+                    </div>
+                </div>
+                
+                <div class="proof">
+                    <h3><span class="proof-number">5</span> Gamma Function</h3>
+                    <div class="proof-content">
+                        <p>Using the Gamma function property:</p>
+                        <div class="proof-equation">
+                            <code>Γ(1/2) = 2∫₀∞ e⁻ˣ² dx = 2J</code><br>
+                            <code>Γ(1/2)² = π ⇒ 4J² = π ⇒ J = √π/2</code>
+                        </div>
+                        <p>This connects the Gaussian integral to the Gamma function.</p>
+                    </div>
+                </div>
+                
+                <div class="proof">
+                    <h3><span class="proof-number">6</span> Fourier Transform</h3>
+                    <div class="proof-content">
+                        <p>Using properties of the Fourier transform:</p>
+                        <div class="proof-equation">
+                            <code>If f(x) = e⁻ˣ²⁄² then (ℱf)(y) = Ce⁻ʸ²⁄²</code>
+                        </div>
+                        <p>Applying the Fourier transform twice gives 2πf(-x) = I²f(x), so I² = 2π.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>Based on the paper "The Gaussian Integral" by Keith Conrad</p>
+            <p>Interactive Visualization &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Canvas setup for Gaussian function
+        const gaussianCanvas = document.getElementById('gaussian-plot');
+        const gaussianCtx = gaussianCanvas.getContext('2d');
+        
+        // Set canvas dimensions
+        function setupCanvas(canvas) {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        
+        setupCanvas(gaussianCanvas);
+        
+        // Draw Gaussian function
+        function drawGaussian(ctx, showArea = false, showSymmetry = false) {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Set up coordinate system
+            ctx.save();
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(1, -1); // Flip y-axis to have positive up
+            
+            // Draw axes
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-width/2, 0);
+            ctx.lineTo(width/2, 0);
+            ctx.moveTo(0, -height/2);
+            ctx.lineTo(0, height/2);
+            ctx.stroke();
+            
+            // Draw Gaussian curve
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            const scaleX = width / 8;
+            const scaleY = height / 2;
+            
+            for (let x = -4; x <= 4; x += 0.01) {
+                const y = Math.exp(-x*x);
+                ctx.lineTo(x * scaleX, y * scaleY);
+            }
+            ctx.stroke();
+            
+            // Fill area under curve if requested
+            if (showArea) {
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
+                ctx.beginPath();
+                ctx.moveTo(-4 * scaleX, 0);
+                for (let x = -4; x <= 4; x += 0.01) {
+                    const y = Math.exp(-x*x);
+                    ctx.lineTo(x * scaleX, y * scaleY);
+                }
+                ctx.lineTo(4 * scaleX, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Add text showing the integral value
+                ctx.scale(1, -1); // Flip back for text
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Area = √π ≈ ' + Math.sqrt(Math.PI).toFixed(4), 0, -height/2 + 30);
+                ctx.scale(1, -1); // Flip again for coordinate system
+            }
+            
+            // Show symmetry if requested
+            if (showSymmetry) {
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(0, -height/2);
+                ctx.lineTo(0, height/2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                ctx.scale(1, -1); // Flip back for text
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Symmetry axis', 0, -height/2 + 50);
+                ctx.scale(1, -1); // Flip again for coordinate system
+            }
+            
+            ctx.restore();
+        }
+        
+        // Initial draw
+        drawGaussian(gaussianCtx);
+        
+        // Button event listeners
+        document.getElementById('show-area').addEventListener('click', function() {
+            const isActive = this.classList.contains('active');
+            document.querySelectorAll('#gaussian-tab button').forEach(btn => btn.classList.remove('active'));
+            
+            if (!isActive) {
+                this.classList.add('active');
+                drawGaussian(gaussianCtx, true, false);
+            } else {
+                drawGaussian(gaussianCtx, false, false);
+            }
+        });
+        
+        document.getElementById('show-symmetry').addEventListener('click', function() {
+            const isActive = this.classList.contains('active');
+            document.querySelectorAll('#gaussian-tab button').forEach(btn => btn.classList.remove('active'));
+            
+            if (!isActive) {
+                this.classList.add('active');
+                drawGaussian(gaussianCtx, false, true);
+            } else {
+                drawGaussian(gaussianCtx, false, false);
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            setupCanvas(gaussianCanvas);
+            drawGaussian(gaussianCtx);
+        });
+        
+        // Set up polar coordinates visualization
+        const polarCanvas = document.getElementById('polar-plot');
+        const polarCtx = polarCanvas.getContext('2d');
+        setupCanvas(polarCanvas);
+        
+        function drawPolar(ctx, showPolar = false) {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            if (showPolar) {
+                // Draw polar grid
+                ctx.save();
+                ctx.translate(width/2, height/2);
+                
+                // Draw concentric circles
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = 1;
+                
+                const maxRadius = Math.min(width, height) / 2 - 20;
+                for (let r = 1; r <= 4; r++) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * maxRadius / 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Label radius
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('r = ' + r, 0, -r * maxRadius / 4 - 5);
+                }
+                
+                // Draw radial lines
+                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(angle) * maxRadius, Math.sin(angle) * maxRadius);
+                    ctx.stroke();
+                    
+                    // Label angle
+                    const labelRadius = maxRadius + 15;
+                    ctx.fillText(
+                        (angle * 180 / Math.PI).toFixed(0) + '°', 
+                        Math.cos(angle) * labelRadius, 
+                        Math.sin(angle) * labelRadius
+                    );
+                }
+                
+                // Draw Gaussian surface in polar coordinates
+                ctx.strokeStyle = 'rgba(52, 152, 219, 0.7)';
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+                ctx.beginPath();
+                
+                for (let r = 0; r <= 4; r += 0.05) {
+                    const x = r * Math.cos(0) * maxRadius / 4;
+                    const y = r * Math.sin(0) * maxRadius / 4;
+                    const z = Math.exp(-r*r);
+                    
+                    if (r === 0) {
+                        ctx.moveTo(x, -y * z);
+                    } else {
+                        ctx.lineTo(x, -y * z);
+                    }
+                }
+                
+                // Complete the surface by rotating
+                for (let angle = 0; angle <= Math.PI * 2; angle += 0.1) {
+                    const points = [];
+                    for (let r = 0; r <= 4; r += 0.05) {
+                        const x = r * Math.cos(angle) * maxRadius / 4;
+                        const y = r * Math.sin(angle) * maxRadius / 4;
+                        const z = Math.exp(-r*r);
+                        points.push({x, y: -y * z});
+                    }
+                    
+                    ctx.beginPath();
+                    points.forEach((point, i) => {
+                        if (i === 0) ctx.moveTo(point.x, point.y);
+                        else ctx.lineTo(point.x, point.y);
+                    });
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+                
+                // Add explanation
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Polar Coordinates: J² = ∫∫ e⁻ʳ² r drdθ = π/4', width/2, 30);
+            } else {
+                // Draw Cartesian grid
+                ctx.save();
+                ctx.translate(width/2, height/2);
+                
+                // Draw grid lines
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = 1;
+                
+                const cellSize = Math.min(width, height) / 8;
+                for (let i = -4; i <= 4; i++) {
+                    // Vertical lines
+                    ctx.beginPath();
+                    ctx.moveTo(i * cellSize, -height/2);
+                    ctx.lineTo(i * cellSize, height/2);
+                    ctx.stroke();
+                    
+                    // Horizontal lines
+                    ctx.beginPath();
+                    ctx.moveTo(-width/2, i * cellSize);
+                    ctx.lineTo(width/2, i * cellSize);
+                    ctx.stroke();
+                }
+                
+                // Draw Gaussian surface in Cartesian coordinates
+                ctx.strokeStyle = 'rgba(52, 152, 219, 0.7)';
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+                
+                // Draw contour lines
+                for (let x = -4; x <= 4; x += 0.5) {
+                    for (let y = -4; y <= 4; y += 0.5) {
+                        const z = Math.exp(-(x*x + y*y));
+                        const intensity = Math.floor(z * 10);
+                        
+                        ctx.fillStyle = `rgba(52, 152, 219, ${z * 0.3})`;
+                        ctx.fillRect(x * cellSize - cellSize/2, y * cellSize - cellSize/2, cellSize, cellSize);
+                    }
+                }
+                
+                ctx.restore();
+                
+                // Add explanation
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Cartesian Coordinates: J² = ∫∫ e⁻⁽ˣ²⁺ʸ²⁾ dxdy', width/2, 30);
+            }
+        }
+        
+        // Initial draw for polar visualization
+        drawPolar(polarCtx);
+        
+        // Button event listeners for polar visualization
+        document.getElementById('show-cartesian').addEventListener('click', function() {
+            document.querySelectorAll('#polar-tab button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            drawPolar(polarCtx, false);
+        });
+        
+        document.getElementById('show-polar').addEventListener('click', function() {
+            document.querySelectorAll('#polar-tab button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            drawPolar(polarCtx, true);
+        });
+        
+        // Handle window resize for polar canvas
+        window.addEventListener('resize', function() {
+            setupCanvas(polarCanvas);
+            drawPolar(polarCtx);
+        });
+        
+        // Set up volume visualization
+        const volumeCanvas = document.getElementById('volume-plot');
+        const volumeCtx = volumeCanvas.getContext('2d');
+        setupCanvas(volumeCanvas);
+        
+        let volumeMode = 'surface';
+        
+        function drawVolume(ctx, mode = 'surface') {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            ctx.save();
+            ctx.translate(width/2, height/2);
+            
+            if (mode === 'surface') {
+                // Draw the bell surface
+                ctx.strokeStyle = 'rgba(52, 152, 219, 0.7)';
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                
+                // Draw the surface by drawing contours at different heights
+                for (let z = 0.1; z <= 1; z += 0.1) {
+                    const radius = Math.sqrt(-2 * Math.log(z));
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius * width/10, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Label the height
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`z = ${z.toFixed(1)}`, 0, -radius * width/10 - 10);
+                }
+                
+                // Add explanation
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Bell Surface: z = e⁻¹⁄₂⁽ˣ²⁺ʸ²⁾', 0, -height/2 + 30);
+                
+            } else if (mode === 'slices') {
+                // Draw horizontal slices (discs)
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.7)';
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.2)';
+                
+                for (let z = 0.1; z <= 1; z += 0.2) {
+                    const radius = Math.sqrt(-2 * Math.log(z));
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius * width/10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Label the slice
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`A(z) = πr² = -2π ln z`, 0, -radius * width/10 - 10);
+                }
+                
+                // Add explanation
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Horizontal Slices: V = ∫₀¹ A(z) dz = 2π', 0, -height/2 + 30);
+                
+            } else if (mode === 'vertical') {
+                // Draw vertical slices (Gaussian curves)
+                ctx.strokeStyle = 'rgba(46, 204, 113, 0.7)';
+                
+                // Draw several vertical slices at different x positions
+                for (let x = -3; x <= 3; x += 1) {
+                    ctx.beginPath();
+                    
+                    for (let y = -4; y <= 4; y += 0.1) {
+                        const z = Math.exp(-0.5 * (x*x + y*y));
+                        
+                        if (y === -4) {
+                            ctx.moveTo(x * width/10, -z * height/3);
+                        } else {
+                            ctx.lineTo(x * width/10, -z * height/3);
+                        }
+                    }
+                    
+                    ctx.stroke();
+                    
+                    // Label the slice
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`x = ${x}`, x * width/10, height/2 - 20);
+                }
+                
+                // Add explanation
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Vertical Slices: V = ∫ A(x) dx = I²', 0, -height/2 + 30);
+            }
+            
+            ctx.restore();
+        }
+        
+        // Initial draw for volume visualization
+        drawVolume(volumeCtx);
+        
+        // Button event listeners for volume visualization
+        document.getElementById('show-surface').addEventListener('click', function() {
+            document.querySelectorAll('#volume-tab button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            drawVolume(volumeCtx, 'surface');
+        });
+        
+        document.getElementById('show-slices').addEventListener('click', function() {
+            document.querySelectorAll('#volume-tab button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            drawVolume(volumeCtx, 'slices');
+        });
+        
+        document.getElementById('show-vertical').addEventListener('click', function() {
+            document.querySelectorAll('#volume-tab button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            drawVolume(volumeCtx, 'vertical');
+        });
+        
+        // Handle window resize for volume canvas
+        window.addEventListener('resize', function() {
+            setupCanvas(volumeCanvas);
+            drawVolume(volumeCtx, volumeMode);
+        });
+    </script>
+</body>
+</html>

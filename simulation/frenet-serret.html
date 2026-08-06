@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Frenet–Serret Apparatus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+  :root{
+    --ink:#0a0e17;
+    --panel:#0f1520;
+    --panel-2:#141c2b;
+    --line:#232d40;
+    --line-soft:#1a2334;
+    --paper:#ece7db;
+    --paper-dim:#c9c4b6;
+    --muted:#7c8598;
+    --tangent:#e8593f;
+    --tangent-dim:#7a3a2e;
+    --normal:#42c4a6;
+    --normal-dim:#2a5a4d;
+    --binormal:#e0ac3f;
+    --binormal-dim:#6b5327;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--tangent-dim);color:var(--paper);}
+
+  h1,h2,h3{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+
+  a{color:inherit;}
+
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- layout shells ---------- */
+  .section{
+    padding:6rem 8vw;
+    border-bottom:1px solid var(--line-soft);
+    position:relative;
+  }
+  @media (max-width:900px){ .section{padding:4rem 6vw;} }
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    font-size:0.72rem;
+    color:var(--muted);
+    margin:0 0 1.1rem 0;
+  }
+  .eyebrow::before{content:"— ";color:var(--tangent);}
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.1rem 8vw;
+    background:rgba(10,14,23,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .nav-brand{
+    font-family:'Fraunces',serif; font-weight:600; font-size:1.02rem;
+    display:flex; align-items:center; gap:0.55rem;
+  }
+  .nav-brand .glyph{
+    width:9px;height:9px;border-radius:50%;
+    background:conic-gradient(var(--tangent),var(--normal),var(--binormal),var(--tangent));
+    display:inline-block;
+  }
+  .nav-links{display:flex; gap:1.7rem; font-size:0.83rem;}
+  .nav-links a{
+    text-decoration:none; color:var(--muted);
+    transition:color 0.2s ease;
+    letter-spacing:0.01em;
+  }
+  .nav-links a:hover{color:var(--paper);}
+  @media (max-width:760px){ .nav-links{display:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding-top:4.5rem;
+    display:grid;
+    grid-template-columns:minmax(320px,0.92fr) 1.08fr;
+    gap:4vw;
+    align-items:start;
+  }
+  @media (max-width:980px){ .hero{grid-template-columns:1fr;} }
+
+  .hero h1{
+    font-size:clamp(2.3rem,4.1vw,3.6rem);
+    line-height:1.04;
+    margin:0.5rem 0 1.2rem 0;
+  }
+  .hero h1 em{
+    font-style:italic;
+    color:var(--tangent);
+  }
+  .lede{
+    color:var(--paper-dim);
+    max-width:46ch;
+    font-size:1.02rem;
+  }
+
+  .curve-picker{
+    display:flex; gap:0.5rem; margin:1.8rem 0 1rem 0; flex-wrap:wrap;
+  }
+  .chip{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.76rem;
+    padding:0.5rem 0.9rem;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--paper-dim);
+    cursor:pointer;
+    border-radius:var(--radius);
+    transition:all 0.15s ease;
+  }
+  .chip:hover{border-color:var(--muted); color:var(--paper);}
+  .chip.active{
+    background:var(--paper); color:var(--ink); border-color:var(--paper);
+    font-weight:600;
+  }
+
+  .transport{
+    display:flex; align-items:center; gap:0.9rem;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:0.85rem 1rem;
+    margin-bottom:1.4rem;
+  }
+  .play-btn{
+    width:34px;height:34px;flex:0 0 auto;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--paper);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color 0.15s ease;
+  }
+  .play-btn:hover{border-color:var(--tangent);}
+  .play-btn svg{width:13px;height:13px;}
+  .t-slider-wrap{flex:1; display:flex; flex-direction:column; gap:0.35rem;}
+  .t-slider-label{
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--muted);
+  }
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:2px; background:var(--line);
+    outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--tangent); cursor:pointer;
+    border:2px solid var(--ink);
+    box-shadow:0 0 0 1px var(--tangent);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:12px;height:12px;border-radius:50%;
+    background:var(--tangent); cursor:pointer; border:2px solid var(--ink);
+  }
+  .speed-label{font-size:0.68rem;color:var(--muted); font-family:'JetBrains Mono',monospace; white-space:nowrap;}
+
+  .readout-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line);
+    border-radius:var(--radius); overflow:hidden;
+  }
+  .readout{
+    background:var(--panel); padding:0.75rem 0.9rem;
+  }
+  .readout .k{font-family:'JetBrains Mono',monospace; font-size:0.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;}
+  .readout .v{font-family:'JetBrains Mono',monospace; font-size:0.92rem; margin-top:0.25rem;}
+  .readout.t .v{color:var(--tangent);}
+  .readout.n .v{color:var(--normal);}
+  .readout.b .v{color:var(--binormal);}
+
+  /* ---------- hero visual ---------- */
+  .hero-visual{
+    position:relative;
+    background:radial-gradient(ellipse at 50% 30%, #0d1420 0%, #090c13 70%);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    aspect-ratio:1.05/1;
+  }
+  #scene{width:100%; height:100%; display:block; cursor:grab;}
+  #scene:active{cursor:grabbing;}
+  .legend{
+    position:absolute; top:1rem; left:1rem;
+    display:flex; flex-direction:column; gap:0.4rem;
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem;
+    background:rgba(10,14,23,0.55); padding:0.6rem 0.75rem;
+    border:1px solid var(--line-soft); border-radius:var(--radius);
+    backdrop-filter:blur(4px);
+  }
+  .legend-row{display:flex; align-items:center; gap:0.5rem;}
+  .legend-swatch{width:10px;height:10px;border-radius:2px;}
+  .drag-hint{
+    position:absolute; bottom:1rem; right:1rem;
+    font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted);
+    background:rgba(10,14,23,0.55); padding:0.4rem 0.6rem; border-radius:var(--radius);
+    border:1px solid var(--line-soft);
+  }
+
+  /* ---------- frame section ---------- */
+  .frame-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-top:2.5rem;
+  }
+  @media (max-width:900px){ .frame-grid{grid-template-columns:1fr;} }
+  .frame-card{
+    background:var(--panel); padding:2rem 1.8rem;
+    border-top:3px solid transparent;
+  }
+  .frame-card.tangent{border-top-color:var(--tangent);}
+  .frame-card.normal{border-top-color:var(--normal);}
+  .frame-card.binormal{border-top-color:var(--binormal);}
+  .frame-card .tag{
+    font-family:'JetBrains Mono',monospace; font-size:0.7rem;
+    text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);
+    margin-bottom:0.4rem;
+  }
+  .frame-card h3{font-size:1.35rem; margin-bottom:0.8rem;}
+  .frame-card.tangent h3{color:var(--tangent);}
+  .frame-card.normal h3{color:var(--normal);}
+  .frame-card.binormal h3{color:var(--binormal);}
+  .frame-card p{color:var(--paper-dim); font-size:0.93rem; margin:0 0 1rem 0;}
+  .frame-card .eq{
+    background:var(--panel-2); padding:0.9rem 1rem; border-radius:var(--radius);
+    border:1px solid var(--line-soft); overflow-x:auto;
+  }
+
+  /* ---------- curvature/torsion section ---------- */
+  .plots-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-top:2.5rem;
+  }
+  @media (max-width:900px){ .plots-grid{grid-template-columns:1fr;} }
+  .plot-card{background:var(--panel); padding:1.8rem;}
+  .plot-card h4{
+    font-family:'JetBrains Mono',monospace; font-size:0.78rem; text-transform:uppercase;
+    letter-spacing:0.06em; margin:0 0 1rem 0; display:flex; align-items:center; gap:0.5rem;
+  }
+  .plot-card canvas{width:100%; height:150px; display:block;}
+  .plot-card .eq{margin-top:1rem; font-size:0.9rem; color:var(--paper-dim);}
+
+  /* ---------- formulas section ---------- */
+  .formula-wrap{
+    margin-top:2.5rem;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:3rem clamp(1.2rem,4vw,3.5rem);
+    text-align:center;
+    overflow-x:auto;
+  }
+  .formula-wrap .katex{font-size:1.15em;}
+  .formula-legend{
+    display:flex; gap:2rem; justify-content:center; margin-top:2rem; flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--muted);
+  }
+  .formula-legend span.k{padding:0.1rem 0.4rem; border-radius:2px; font-weight:600;}
+  .k-tangent{color:var(--tangent);}
+  .k-normal{color:var(--normal);}
+  .k-binormal{color:var(--binormal);}
+
+  .explain-rows{margin-top:2.5rem; display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line);}
+  .explain-row{background:var(--panel); padding:1.3rem 1.6rem; display:grid; grid-template-columns:120px 1fr; gap:1.5rem; align-items:center;}
+  @media (max-width:700px){ .explain-row{grid-template-columns:1fr;} }
+  .explain-row .eq-mini{font-size:1.05rem;}
+  .explain-row p{margin:0; color:var(--paper-dim); font-size:0.9rem;}
+
+  /* ---------- derivation ---------- */
+  details{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    margin-top:2rem; padding:1.2rem 1.6rem;
+  }
+  summary{
+    cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:0.85rem;
+    color:var(--paper); letter-spacing:0.02em;
+  }
+  details[open] summary{margin-bottom:1rem; color:var(--tangent);}
+  .derivation-step{margin:1.1rem 0; color:var(--paper-dim); font-size:0.92rem;}
+  .derivation-step .eq{margin-top:0.5rem;}
+
+  footer{
+    padding:3rem 8vw; display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--muted); flex-wrap:wrap; gap:1rem;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand"><span class="glyph"></span> Frenet–Serret</div>
+  <div class="nav-links">
+    <a href="#frame">Moving Frame</a>
+    <a href="#curvature">Curvature &amp; Torsion</a>
+    <a href="#formulas">The Formulas</a>
+    <a href="#derivation">Derivation</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="section hero" id="hero">
+    <div class="hero-text">
+      <p class="eyebrow">Differential geometry of space curves</p>
+      <h1>A curve carries<br>its own <em>frame</em>.</h1>
+      <p class="lede">At every point along a curve in space, three mutually perpendicular vectors&nbsp;&mdash; tangent, normal, binormal&nbsp;&mdash; rotate to track how the curve bends and twists. The Frenet&ndash;Serret formulas describe exactly how.</p>
+
+      <div class="curve-picker" id="curvePicker">
+        <button class="chip active" data-curve="helix">Helix</button>
+        <button class="chip" data-curve="trefoil">Trefoil knot</button>
+        <button class="chip" data-curve="torus">Torus knot (2,3)</button>
+      </div>
+
+      <div class="transport">
+        <button class="play-btn" id="playBtn" aria-label="Play">
+          <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="t-slider-wrap">
+          <div class="t-slider-label"><span>PARAMETER  t</span><span id="tValue">0.00</span></div>
+          <input type="range" id="tSlider" min="0" max="1000" value="0">
+        </div>
+        <span class="speed-label" id="speedLabel">0.4×</span>
+      </div>
+
+      <div class="readout-grid">
+        <div class="readout t"><div class="k">Curvature κ</div><div class="v" id="kappaVal">–</div></div>
+        <div class="readout n"><div class="k">Torsion τ</div><div class="v" id="tauVal">–</div></div>
+        <div class="readout b"><div class="k">Position r(t)</div><div class="v" id="posVal">–</div></div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <canvas id="scene"></canvas>
+      <div class="legend">
+        <div class="legend-row"><span class="legend-swatch" style="background:var(--tangent)"></span> T — tangent</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:var(--normal)"></span> N — normal</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:var(--binormal)"></span> B — binormal</div>
+      </div>
+      <div class="drag-hint">drag to orbit · scroll to zoom</div>
+    </div>
+  </section>
+
+  <!-- ============ MOVING FRAME ============ -->
+  <section class="section" id="frame">
+    <p class="eyebrow">Part one</p>
+    <h2>The moving frame</h2>
+    <p class="lede" style="margin-top:0.8rem;">Three vectors, recomputed at every point, form a local coordinate system that travels with the curve &mdash; often called the <strong>TNB frame</strong> or the <em>trihedron</em>.</p>
+
+    <div class="frame-grid">
+      <div class="frame-card tangent">
+        <div class="tag">Direction of travel</div>
+        <h3>Tangent, T</h3>
+        <p>Points along the curve's direction of motion. It is simply the velocity vector, rescaled to unit length.</p>
+        <div class="eq">$$\mathbf{T}(t) = \frac{\mathbf{r}'(t)}{\lVert \mathbf{r}'(t) \rVert}$$</div>
+      </div>
+      <div class="frame-card normal">
+        <div class="tag">Direction of turning</div>
+        <h3>Normal, N</h3>
+        <p>Points toward the center of the curve's turn &mdash; the direction T is instantaneously rotating into.</p>
+        <div class="eq">$$\mathbf{N}(t) = \frac{\mathbf{T}'(t)}{\lVert \mathbf{T}'(t) \rVert}$$</div>
+      </div>
+      <div class="frame-card binormal">
+        <div class="tag">Completes the frame</div>
+        <h3>Binormal, B</h3>
+        <p>Perpendicular to the plane of T and N. Its rate of change measures how the curve twists out of that plane.</p>
+        <div class="eq">$$\mathbf{B}(t) = \mathbf{T}(t) \times \mathbf{N}(t)$$</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CURVATURE & TORSION ============ -->
+  <section class="section" id="curvature">
+    <p class="eyebrow">Part two</p>
+    <h2>Curvature &amp; torsion</h2>
+    <p class="lede" style="margin-top:0.8rem;">Two scalar functions of <span class="mono">t</span> quantify everything about the curve's shape: how sharply it bends, and how sharply it twists out of its own bending plane. Both plots track the marker as it moves.</p>
+
+    <div class="plots-grid">
+      <div class="plot-card">
+        <h4><span style="color:var(--tangent)">●</span> Curvature κ(t) — rate of bending</h4>
+        <canvas id="kappaPlot" width="600" height="150"></canvas>
+        <div class="eq">$$\kappa = \frac{\lVert \mathbf{r}' \times \mathbf{r}'' \rVert}{\lVert \mathbf{r}' \rVert^{3}}$$</div>
+      </div>
+      <div class="plot-card">
+        <h4><span style="color:var(--binormal)">●</span> Torsion τ(t) — rate of twisting</h4>
+        <canvas id="tauPlot" width="600" height="150"></canvas>
+        <div class="eq">$$\tau = \frac{(\mathbf{r}' \times \mathbf{r}'') \cdot \mathbf{r}'''}{\lVert \mathbf{r}' \times \mathbf{r}'' \rVert^{2}}$$</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE FORMULAS ============ -->
+  <section class="section" id="formulas">
+    <p class="eyebrow">Part three</p>
+    <h2>The Frenet&ndash;Serret formulas</h2>
+    <p class="lede" style="margin-top:0.8rem;">The punchline: the derivatives of T, N and B &mdash; with respect to arc length <span class="mono">s</span> &mdash; are expressed entirely in terms of each other, weighted only by κ and τ.</p>
+
+    <div class="formula-wrap">
+      $$
+      \frac{d}{ds}\begin{pmatrix}\mathbf{T}\\ \mathbf{N}\\ \mathbf{B}\end{pmatrix}
+      =
+      \begin{pmatrix}
+      0 & \kappa & 0 \\
+      -\kappa & 0 & \tau \\
+      0 & -\tau & 0
+      \end{pmatrix}
+      \begin{pmatrix}\mathbf{T}\\ \mathbf{N}\\ \mathbf{B}\end{pmatrix}
+      $$
+      <div class="formula-legend">
+        <div><span class="k k-tangent">T</span> tangent</div>
+        <div><span class="k k-normal">N</span> normal</div>
+        <div><span class="k k-binormal">B</span> binormal</div>
+        <div><span class="k k-tangent">κ</span> curvature</div>
+        <div><span class="k k-binormal">τ</span> torsion</div>
+      </div>
+    </div>
+
+    <div class="explain-rows">
+      <div class="explain-row">
+        <div class="eq-mini">$$\mathbf{T}' = \kappa \mathbf{N}$$</div>
+        <p>T changes purely toward N. How fast it turns is exactly the curvature κ &mdash; this is the definition of curvature made rigorous.</p>
+      </div>
+      <div class="explain-row">
+        <div class="eq-mini">$$\mathbf{N}' = -\kappa \mathbf{T} + \tau \mathbf{B}$$</div>
+        <p>N's rotation has two parts: it falls back toward &minus;T to keep the frame orthonormal, and swings toward B at a rate set by torsion τ.</p>
+      </div>
+      <div class="explain-row">
+        <div class="eq-mini">$$\mathbf{B}' = -\tau \mathbf{N}$$</div>
+        <p>B tips toward &minus;N. This is the twisting motion: a nonzero τ means the curve is leaving its instantaneous osculating plane.</p>
+      </div>
+    </div>
+
+    <details id="derivation">
+      <summary>▸ Why the matrix is skew-symmetric (short derivation)</summary>
+      <div class="derivation-step">Because T, N, B stay mutually orthonormal for every s, differentiating each dot-product identity forces structure on their derivatives.
+        <div class="eq">$$\mathbf{T}\cdot\mathbf{T}=1 \;\Rightarrow\; \mathbf{T}'\cdot\mathbf{T}=0$$</div>
+        so T′ has no component along T &mdash; it must live in the N–B plane.
+      </div>
+      <div class="derivation-step">Differentiating <span class="mono">T·N = 0</span> and <span class="mono">N·B = 0</span> and <span class="mono">B·T = 0</span> in turn, and defining κ = T′·N and τ = N′·B, pins down every remaining coefficient. The result is forced to be skew-symmetric — that's what guarantees T, N, B stay an orthonormal frame at every point along the curve, not just at the start.
+        <div class="eq">$$\mathbf{T}'=\kappa\mathbf{N},\qquad \mathbf{N}'=-\kappa\mathbf{T}+\tau\mathbf{B},\qquad \mathbf{B}'=-\tau\mathbf{N}$$</div>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  <span>Rendered live · not a canned animation</span>
+  <span>κ and τ computed numerically along the visible curve</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+/* ===================== render math ===================== */
+window.addEventListener('DOMContentLoaded', () => {
+  renderMathInElement(document.body, {
+    delimiters: [
+      {left:'$$', right:'$$', display:true},
+      {left:'$', right:'$', display:false}
+    ]
+  });
+});
+
+/* ===================== curve definitions ===================== */
+// each curve returns a raw (unscaled) THREE.Vector3 for a given t,
+// plus a domain [0, tMax] and a display scale.
+const CURVES = {
+  helix: {
+    tMax: 4*Math.PI,
+    scale: 0.62,
+    fn: (t) => new THREE.Vector3(
+      1.25*Math.cos(t),
+      1.25*Math.sin(t),
+      0.62*t - 0.62*2*Math.PI
+    )
+  },
+  trefoil: {
+    tMax: 2*Math.PI,
+    scale: 0.62,
+    fn: (t) => new THREE.Vector3(
+      Math.sin(t) + 2*Math.sin(2*t),
+      Math.cos(t) - 2*Math.cos(2*t),
+      -Math.sin(3*t)
+    )
+  },
+  torus: {
+    tMax: 2*Math.PI,
+    scale: 0.85,
+    fn: (t) => {
+      const p=2, q=3, R=1.5, r=0.6;
+      return new THREE.Vector3(
+        (R + r*Math.cos(q*t)) * Math.cos(p*t),
+        (R + r*Math.cos(q*t)) * Math.sin(p*t),
+        r*Math.sin(q*t)
+      );
+    }
+  }
+};
+
+let currentCurveName = 'helix';
+
+function rawPoint(name, t){ return CURVES[name].fn(t); }
+
+// numeric derivatives (central differences) — exact enough for display + kappa/tau
+function derivatives(name, t){
+  const c = CURVES[name];
+  const h = c.tMax / 20000;
+  const f = (tt)=>rawPoint(name, tt);
+  const r0 = f(t);
+  const r1 = f(t+h), r_1 = f(t-h);
+  const r2 = f(t+2*h), r_2 = f(t-2*h);
+  // first derivative, 5-point-ish central difference
+  const d1 = r1.clone().sub(r_1).multiplyScalar(1/(2*h));
+  // second derivative
+  const d2 = r1.clone().add(r_1).sub(r0.clone().multiplyScalar(2)).multiplyScalar(1/(h*h));
+  // third derivative
+  const d3 = r2.clone().multiplyScalar(-1).add(r1.clone().multiplyScalar(2)).sub(r_1.clone().multiplyScalar(2)).add(r_2).multiplyScalar(1/(2*h*h*h));
+  return {r0, d1, d2, d3};
+}
+
+function frameAt(name, t){
+  const {r0, d1, d2, d3} = derivatives(name, t);
+  const rp = d1, rpp = d2, rppp = d3;
+  const speed = rp.length();
+  const T = rp.clone().normalize();
+  const cross1 = new THREE.Vector3().crossVectors(rp, rpp);
+  const crossLen = cross1.length();
+  let B, N;
+  if (crossLen < 1e-8){
+    // fall back for near-straight sections
+    B = new THREE.Vector3(0,0,1);
+    if (Math.abs(T.dot(B)) > 0.9) B.set(0,1,0);
+    N = new THREE.Vector3().crossVectors(B, T).normalize();
+    B = new THREE.Vector3().crossVectors(T, N).normalize();
+  } else {
+    B = cross1.clone().normalize();
+    N = new THREE.Vector3().crossVectors(B, T).normalize();
+  }
+  const kappa = crossLen / Math.pow(speed, 3);
+  const tau = crossLen > 1e-8 ? cross1.dot(rppp) / (crossLen*crossLen) : 0;
+  return {pos:r0, T, N, B, kappa, tau};
+}
+
+function scaledPoint(name, t){
+  return rawPoint(name, t).clone().multiplyScalar(CURVES[name].scale);
+}
+
+/* ===================== three.js scene ===================== */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+
+// simple custom orbit control (no external addon dependency)
+let camTheta = 0.9, camPhi = 1.15, camRadius = 7.5;
+const camTarget = new THREE.Vector3(0,0,0);
+function updateCamera(){
+  camPhi = Math.max(0.25, Math.min(Math.PI-0.25, camPhi));
+  camera.position.set(
+    camTarget.x + camRadius*Math.sin(camPhi)*Math.cos(camTheta),
+    camTarget.y + camRadius*Math.cos(camPhi),
+    camTarget.z + camRadius*Math.sin(camPhi)*Math.sin(camTheta)
+  );
+  camera.lookAt(camTarget);
+}
+updateCamera();
+
+let dragging=false, lastX=0, lastY=0;
+canvas.addEventListener('pointerdown', (e)=>{dragging=true; lastX=e.clientX; lastY=e.clientY; canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointerup', ()=>{dragging=false;});
+canvas.addEventListener('pointerleave', ()=>{dragging=false;});
+canvas.addEventListener('pointermove', (e)=>{
+  if(!dragging) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  lastX=e.clientX; lastY=e.clientY;
+  camTheta -= dx*0.006;
+  camPhi -= dy*0.006;
+  updateCamera();
+});
+canvas.addEventListener('wheel', (e)=>{
+  e.preventDefault();
+  camRadius = Math.max(3, Math.min(16, camRadius + e.deltaY*0.006));
+  updateCamera();
+}, {passive:false});
+
+// lights
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const dl = new THREE.DirectionalLight(0xffffff, 0.9);
+dl.position.set(4,6,5);
+scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0x4477ff, 0.25);
+dl2.position.set(-4,-2,-5);
+scene.add(dl2);
+
+// curve tube
+let tubeMesh = null;
+function buildTube(name){
+  if(tubeMesh){ scene.remove(tubeMesh); tubeMesh.geometry.dispose(); tubeMesh.material.dispose(); }
+  const N_SAMPLES = 400;
+  const pts = [];
+  const tMax = CURVES[name].tMax;
+  for(let i=0;i<=N_SAMPLES;i++){
+    const t = (i/N_SAMPLES)*tMax;
+    pts.push(scaledPoint(name, t));
+  }
+  const curve3 = new THREE.CatmullRomCurve3(pts, name!=='helix', name==='helix'?'catmullrom':'catmullrom');
+  const geo = new THREE.TubeGeometry(curve3, 500, 0.028, 10, name!=='helix');
+  const mat = new THREE.MeshStandardMaterial({color:0xece7db, roughness:0.45, metalness:0.15, emissive:0x0, transparent:true, opacity:0.85});
+  tubeMesh = new THREE.Mesh(geo, mat);
+  scene.add(tubeMesh);
+}
+
+// moving point + TNB arrows
+const dotGeo = new THREE.SphereGeometry(0.06, 20, 20);
+const dotMat = new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x333333});
+const dot = new THREE.Mesh(dotGeo, dotMat);
+scene.add(dot);
+
+function makeArrow(color){
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,0), 1, color, 0.16, 0.09);
+  arrow.line.material.linewidth = 2;
+  scene.add(arrow);
+  return arrow;
+}
+const arrowT = makeArrow(0xe8593f);
+const arrowN = makeArrow(0x42c4a6);
+const arrowB = makeArrow(0xe0ac3f);
+
+function resizeRenderer(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w===0||h===0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resizeRenderer).observe(canvas);
+
+/* ===================== plots (2D canvas) ===================== */
+const kappaCanvas = document.getElementById('kappaPlot');
+const tauCanvas = document.getElementById('tauPlot');
+const kctx = kappaCanvas.getContext('2d');
+const tctx = tauCanvas.getContext('2d');
+
+function fitCanvas(c){
+  const ratio = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w*ratio; c.height = h*ratio;
+  const ctx = c.getContext('2d');
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+}
+
+function sampleSeries(name, fnKey, count){
+  const tMax = CURVES[name].tMax;
+  const arr = [];
+  for(let i=0;i<count;i++){
+    const t = (i/(count-1))*tMax;
+    const f = frameAt(name, Math.max(1e-4, Math.min(tMax-1e-4, t)));
+    arr.push(f[fnKey]);
+  }
+  return arr;
+}
+
+let kappaSeries = [], tauSeries = [];
+function rebuildSeries(name){
+  kappaSeries = sampleSeries(name, 'kappa', 140);
+  tauSeries = sampleSeries(name, 'tau', 140);
+}
+
+function drawPlot(ctx, canvasEl, series, color, markerFrac){
+  fitCanvas(canvasEl);
+  const w = canvasEl.clientWidth, h = canvasEl.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  const pad = 8;
+  const maxAbs = Math.max(0.4, ...series.map(v=>Math.abs(v)));
+  const zeroY = h/2;
+  const scaleY = (h/2 - pad) / maxAbs;
+
+  // zero line
+  ctx.strokeStyle = 'rgba(124,133,152,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, zeroY); ctx.lineTo(w, zeroY);
+  ctx.stroke();
+
+  // series line
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  series.forEach((v,i)=>{
+    const x = (i/(series.length-1))*w;
+    const y = zeroY - v*scaleY;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // fill
+  ctx.lineTo(w, zeroY); ctx.lineTo(0, zeroY); ctx.closePath();
+  ctx.fillStyle = color.replace('rgb', 'rgba').replace(')', ',0.08)');
+  ctx.fill();
+
+  // marker
+  const mx = markerFrac*w;
+  ctx.strokeStyle = 'rgba(236,231,221,0.55)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(mx,0); ctx.lineTo(mx,h); ctx.stroke();
+  const idx = Math.round(markerFrac*(series.length-1));
+  const mv = series[idx] ?? 0;
+  const my = zeroY - mv*scaleY;
+  ctx.fillStyle = '#ece7db';
+  ctx.beginPath(); ctx.arc(mx, my, 3.2, 0, Math.PI*2); ctx.fill();
+}
+
+/* ===================== global state & animation ===================== */
+let tFrac = 0; // 0..1 across current curve's domain
+let playing = true;
+const speed = 0.00022; // fraction-per-ms baseline
+
+const tSlider = document.getElementById('tSlider');
+const tValue = document.getElementById('tValue');
+const kappaVal = document.getElementById('kappaVal');
+const tauVal = document.getElementById('tauVal');
+const posVal = document.getElementById('posVal');
+const playBtn = document.getElementById('playBtn');
+const playIcon = document.getElementById('playIcon');
+
+function setPlaying(p){
+  playing = p;
+  playIcon.innerHTML = playing
+    ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+playBtn.addEventListener('click', ()=> setPlaying(!playing));
+
+tSlider.addEventListener('input', ()=>{
+  setPlaying(false);
+  tFrac = tSlider.value/1000;
+});
+
+document.getElementById('curvePicker').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  currentCurveName = btn.dataset.curve;
+  buildTube(currentCurveName);
+  rebuildSeries(currentCurveName);
+});
+
+function fmtVec(v){
+  return `${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)}`;
+}
+
+function updateFrame(){
+  const tMax = CURVES[currentCurveName].tMax;
+  const t = Math.max(1e-4, Math.min(tMax-1e-4, tFrac*tMax));
+  const f = frameAt(currentCurveName, t);
+  const scale = CURVES[currentCurveName].scale;
+  const p = f.pos.clone().multiplyScalar(scale);
+
+  dot.position.copy(p);
+  const arrowLen = 0.85;
+  arrowT.position.copy(p); arrowT.setDirection(f.T); arrowT.setLength(arrowLen, 0.16, 0.08);
+  arrowN.position.copy(p); arrowN.setDirection(f.N); arrowN.setLength(arrowLen, 0.16, 0.08);
+  arrowB.position.copy(p); arrowB.setDirection(f.B); arrowB.setLength(arrowLen, 0.16, 0.08);
+
+  kappaVal.textContent = f.kappa.toFixed(3);
+  tauVal.textContent = f.tau.toFixed(3);
+  posVal.textContent = fmtVec(f.pos);
+  tValue.textContent = t.toFixed(2);
+  tSlider.value = Math.round(tFrac*1000);
+
+  drawPlot(kctx, kappaCanvas, kappaSeries, '#e8593f', tFrac);
+  drawPlot(tctx, tauCanvas, tauSeries, '#e0ac3f', tFrac);
+}
+
+let lastTime = performance.now();
+function animate(now){
+  const dt = now - lastTime;
+  lastTime = now;
+  if(playing){
+    tFrac += speed*dt;
+    if(tFrac > 1) tFrac -= 1;
+  }
+  resizeRenderer();
+  updateFrame();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+buildTube(currentCurveName);
+rebuildSeries(currentCurveName);
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
