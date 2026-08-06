@@ -5,7 +5,7 @@ Interactive mathematical visualizations, simulations, and educational tools base
 This project aims to transform traditional mathematical concepts into dynamic, interactive, and visually intuitive learning experiences using modern web technologies.
 
 ---
-
+[Play Live Simulator](https://khurramcoder.github.io/sm-yousuf-calculus-simulations/simulation/fourier_series_simulator.html)
 ## 🌟 Project Vision
 
 Mathematics is best understood when learners can **see**, **explore**, and **interact** with concepts.
