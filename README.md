@@ -5,7 +5,9 @@ Interactive mathematical visualizations, simulations, and educational tools base
 This project aims to transform traditional mathematical concepts into dynamic, interactive, and visually intuitive learning experiences using modern web technologies.
 
 ---
-[![Launch Simulator](https://img.shields.io/badge/Launch-Fourier%20Series%20Simulator-brightgreen?style=for-the-badge&logo=html5)](https://khurramcoder.github.io/sm-yousuf-calculus-simulations/simulation/fourier_series_simulator.html)
+* [Fourier Series Simulator](simulation/fourier_series_simulator.html)
+* [Moving Sofa Problem Solver](simulation/Moving%20Sofa%20Problem%20Solver.html)
+* [Bessel & Legendre's Equations](simulation/Bessel's%20&%20Legendre's%20Equations.html)
 ## 🌟 Project Vision
 
 Mathematics is best understood when learners can **see**, **explore**, and **interact** with concepts.
