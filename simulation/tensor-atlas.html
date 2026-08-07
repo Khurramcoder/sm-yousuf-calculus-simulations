@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tensor Atlas — An Interactive Monograph on Tensor Calculus</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='88' fill='%23ffb454'>∇</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<style>
+/* ============================================================
+   TENSOR ATLAS — design tokens
+============================================================ */
+:root{
+  --ink0:#070d18; --ink1:#0b1322; --ink2:#101a2e; --ink3:#16223a;
+  --line:rgba(146,176,230,.14); --line2:rgba(146,176,230,.30);
+  --txt:#d9e4f5; --txt-dim:#9aabc9; --txt-faint:#5f7396;
+  --amber:#ffb454; --coral:#ff6b6b; --mint:#3ddc97; --azure:#5aa9ff; --cyan:#67e8f9;
+  --paper:#f7f6f0; --paper-ink:#1a2333; --paper-dim:#4c5a72; --paper-line:rgba(26,35,51,.14);
+  --disp:"STIX Two Text", Georgia, serif;
+  --body:"IBM Plex Sans", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, monospace;
+  --rad:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{
+  font-family:var(--body); color:var(--txt); background:var(--ink0);
+  overflow-x:hidden; line-height:1.6; font-size:16px;
+}
+::selection{background:rgba(255,180,84,.35)}
+
+/* layered ambient background */
+.bgfx{position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(1100px 700px at 82% -10%, rgba(48,84,146,.30), transparent 60%),
+  radial-gradient(900px 600px at -10% 40%, rgba(22,78,84,.26), transparent 60%),
+  var(--ink0);}
+.bgfx::before{content:"";position:absolute;inset:0;opacity:.5;background:
+  repeating-linear-gradient(0deg, rgba(148,180,255,.045) 0 1px, transparent 1px 56px),
+  repeating-linear-gradient(90deg, rgba(148,180,255,.045) 0 1px, transparent 1px 56px);}
+.bgfx::after{content:"";position:absolute;inset:-30%;background:
+  radial-gradient(600px 420px at 30% 30%, rgba(90,169,255,.10), transparent 70%),
+  radial-gradient(700px 520px at 70% 65%, rgba(255,180,84,.07), transparent 70%);
+  animation:drift 46s ease-in-out infinite alternate;}
+@keyframes drift{from{transform:translate(-3%,-2%) scale(1)}to{transform:translate(3%,3%) scale(1.06)}}
+
+/* ============================================================ nav */
+nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:1.5rem;
+  padding:.7rem clamp(1rem,4vw,2.6rem);background:rgba(9,15,28,.78);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.brand{font-family:var(--disp);font-style:italic;font-weight:600;font-size:1.25rem;color:#fff;
+  display:flex;align-items:baseline;gap:.55rem;white-space:nowrap;}
+.brand sup{font-size:.62em;color:var(--amber);font-style:normal;font-family:var(--mono)}
+.brand small{font-family:var(--mono);font-style:normal;font-size:.62rem;letter-spacing:.22em;
+  color:var(--txt-faint);text-transform:uppercase}
+nav .links{display:flex;gap:.2rem;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .links::-webkit-scrollbar{display:none}
+nav a.nl{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--txt-dim);text-decoration:none;padding:.5rem .75rem;border-radius:8px;
+  position:relative;white-space:nowrap;transition:color .25s;}
+nav a.nl::after{content:"";position:absolute;left:.75rem;right:.75rem;bottom:.3rem;height:2px;
+  background:var(--amber);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+nav a.nl:hover{color:#fff}
+nav a.nl.on{color:var(--amber)}
+nav a.nl.on::after{transform:scaleX(1)}
+
+/* ============================================================ masthead */
+header.mh{max-width:1280px;margin:0 auto;padding:clamp(2.5rem,6vh,5rem) clamp(1rem,4vw,2.6rem) 2.4rem;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(2rem,5vw,4.5rem);align-items:center;}
+.kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--amber)}
+header.mh h1{font-family:var(--disp);font-weight:700;line-height:1.02;
+  font-size:clamp(3rem,7vw,5.1rem);margin:.7rem 0 1.2rem;color:#fff;}
+header.mh h1 em{font-style:italic;font-weight:600;color:var(--azure)}
+header.mh .lead{color:var(--txt-dim);max-width:54ch;font-size:1.06rem}
+header.mh .lead strong{color:var(--txt);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.6rem}
+.chips span{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;color:var(--txt-dim);
+  border:1px solid var(--line2);border-radius:999px;padding:.35rem .8rem;transition:border-color .3s,color .3s}
+.chips span:hover{border-color:var(--amber);color:var(--amber)}
+.scrollcue{margin-top:2.2rem;font-family:var(--mono);font-size:.7rem;color:var(--txt-faint);
+  display:flex;align-items:center;gap:.6rem}
+.scrollcue i{display:inline-block;width:1px;height:34px;background:linear-gradient(var(--amber),transparent);
+  animation:cue 2.2s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleY(.4);opacity:.4;transform-origin:top}50%{transform:scaleY(1);opacity:1}}
+
+.specimen{border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;
+  background:linear-gradient(180deg,var(--ink2),var(--ink1));
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.7);}
+.specimen .sp-head{display:flex;justify-content:space-between;align-items:center;
+  padding:.65rem 1rem;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-faint)}
+.specimen .sp-head b{color:var(--mint);font-weight:400}
+.specimen canvas{display:block;width:100%;height:340px;cursor:default}
+.specimen .sp-cap{padding:.6rem 1rem .8rem;font-size:.78rem;color:var(--txt-faint);border-top:1px solid var(--line)}
+.specimen .sp-cap i{color:var(--txt-dim)}
+
+/* formula ticker */
+.ticker{border-block:1px solid var(--line);overflow:hidden;background:rgba(13,21,38,.6)}
+.ticker-track{display:flex;width:max-content;gap:0;animation:tick 70s linear infinite;padding:.85rem 0}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.tick-half{display:flex;align-items:center;gap:3.2rem;padding-right:3.2rem}
+.tick-half .sep{color:var(--txt-faint);font-size:.7rem}
+.tick-half .katex{font-size:1.02rem;color:var(--txt-dim)}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ============================================================ sections */
+main{max-width:1280px;margin:0 auto;padding:0 clamp(1rem,4vw,2.6rem)}
+section.lab{padding:clamp(4rem,8vh,6.5rem) 0 1rem}
+.sec-head{display:flex;gap:1.6rem;align-items:flex-start;margin-bottom:2rem}
+.sec-no{font-family:var(--disp);font-style:italic;font-weight:700;font-size:clamp(3rem,6vw,4.6rem);
+  line-height:.9;color:transparent;-webkit-text-stroke:1.5px var(--line2);flex:none;transform:translateY(.1em)}
+.sec-head .kicker{margin-bottom:.35rem}
+.sec-head h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.7rem,3.4vw,2.5rem);color:#fff;line-height:1.15}
+.sec-lede{margin-top:.6rem;color:var(--txt-dim);max-width:70ch}
+
+.labcard{border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;
+  background:linear-gradient(180deg,var(--ink2) 0%,var(--ink1) 100%);
+  box-shadow:0 30px 80px -35px rgba(0,0,0,.75);transition:border-color .4s}
+.labcard:hover{border-color:var(--line2)}
+.labgrid{display:grid;grid-template-columns:1fr 340px;min-height:520px}
+.labgrid.flip{grid-template-columns:340px 1fr}
+.viewport{position:relative;min-height:480px;background:
+  radial-gradient(120% 90% at 50% 30%, rgba(42,66,110,.35), transparent 70%)}
+.viewport canvas.gl{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+.viewport canvas.gl.grabbing{cursor:grabbing}
+.viewport::after{content:"";position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 90px rgba(4,8,18,.55)}
+.vp-hint{position:absolute;top:.8rem;right:.9rem;font-family:var(--mono);font-size:.62rem;
+  letter-spacing:.14em;color:var(--txt-faint);pointer-events:none;text-transform:uppercase}
+.legend{position:absolute;left:.9rem;bottom:.8rem;display:flex;flex-direction:column;gap:.28rem;pointer-events:none}
+.legend span{font-family:var(--mono);font-size:.64rem;color:var(--txt-dim);display:flex;align-items:center;gap:.5rem}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.glfail{position:absolute;inset:0;display:grid;place-items:center;color:var(--txt-faint);
+  font-family:var(--mono);font-size:.8rem;padding:2rem;text-align:center}
+
+.panel{border-left:1px solid var(--line);padding:1.3rem 1.3rem 1.5rem;display:flex;flex-direction:column;gap:1.1rem;overflow-y:auto;max-height:640px}
+.labgrid.flip .panel{border-left:none;border-right:1px solid var(--line)}
+.grp{font-family:var(--mono);font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-faint);
+  padding-bottom:.35rem;border-bottom:1px solid var(--line);margin-bottom:.15rem}
+
+/* sliders */
+.ctl{display:block;padding:.28rem 0}
+.ctl-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem}
+.ctl-name{font-family:var(--disp);font-style:italic;font-size:1.02rem;color:var(--txt)}
+.ctl-name sub,.ctl-name sup{font-size:.62em;font-family:var(--mono);font-style:normal}
+.ctl output{font-family:var(--mono);font-size:.8rem;color:var(--amber);font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--line2),var(--line2))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--ink1);border:2px solid var(--amber);margin-top:-6px;transition:box-shadow .2s,transform .2s}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(255,180,84,.15);transform:scale(1.1)}
+input[type=range]::-moz-range-track{height:3px;border-radius:2px;background:var(--line2)}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--ink1);border:2px solid var(--amber)}
+input[type=range]:focus-visible{outline:2px solid var(--amber);outline-offset:4px;border-radius:4px}
+
+/* toggle chips */
+.tgls{display:flex;flex-wrap:wrap;gap:.45rem}
+.tgl{position:relative}
+.tgl input{position:absolute;opacity:0;pointer-events:none}
+.tgl span{display:inline-block;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;
+  padding:.36rem .7rem;border:1px solid var(--line2);border-radius:999px;color:var(--txt-dim);
+  cursor:pointer;transition:all .25s;user-select:none}
+.tgl input:checked+span{border-color:var(--mint);color:var(--mint);background:rgba(61,220,151,.08)}
+.tgl span:hover{border-color:var(--txt-dim)}
+.tgl input:focus-visible+span{outline:2px solid var(--amber);outline-offset:2px}
+.btn{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  background:none;border:1px solid var(--line2);color:var(--txt-dim);padding:.5rem .95rem;
+  border-radius:9px;cursor:pointer;transition:all .25s}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn.warm{border-color:rgba(255,180,84,.5);color:var(--amber)}
+.btn.warm:hover{background:rgba(255,180,84,.1)}
+
+/* matrices & stats */
+.mat{position:relative;display:inline-grid;gap:.12em .6em;padding:.35em .75em;vertical-align:middle;--brk:#7f97c0}
+.mat.m3{grid-template-columns:repeat(3,auto)} .mat.m2{grid-template-columns:repeat(2,auto)}
+.mat::before,.mat::after{content:"";position:absolute;top:0;bottom:0;width:.5em;border:1.5px solid var(--brk)}
+.mat::before{left:0;border-right:none} .mat::after{right:0;border-left:none}
+.mat span{font-family:var(--mono);font-size:.86rem;text-align:right;min-width:3.4ch;
+  font-variant-numeric:tabular-nums;color:var(--txt);transition:color .3s}
+.mat .lbl{color:var(--txt-faint)}
+.matwrap{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.matwrap .mname{font-family:var(--disp);font-style:italic;font-size:1.15rem;color:var(--txt-dim)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.55rem}
+.stat{border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem;transition:border-color .3s}
+.stat:hover{border-color:var(--line2)}
+.stat .sl{display:block;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--txt-faint);margin-bottom:.15rem}
+.stat .sv{font-family:var(--mono);font-size:1rem;color:var(--txt);font-variant-numeric:tabular-nums}
+.stat .sv.pos{color:var(--mint)} .stat .sv.neg{color:var(--coral)} .stat .sv.hl{color:var(--amber)}
+.evrow{display:flex;flex-direction:column;gap:.4rem}
+
+/* prose */
+.prose{max-width:76ch;margin:2.4rem auto 0;color:var(--txt-dim)}
+.prose p{margin-bottom:1.1rem}
+.prose strong{color:var(--txt);font-weight:600}
+.prose .eq{margin:1.4rem 0;padding:1rem 1.2rem;border:1px solid var(--line);border-left:3px solid var(--amber);
+  border-radius:0 10px 10px 0;background:rgba(16,26,46,.65);overflow-x:auto;text-align:center}
+.prose .eq .katex-display{margin:.4rem 0}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent);margin:3.5rem 0 0}
+
+/* 2D canvases */
+.plain2d{position:relative}
+.plain2d canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.mohrbox{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 340px}
+.mohrbox .mohr-cv{position:relative;height:300px;background:
+  radial-gradient(110% 100% at 50% 40%, rgba(42,66,110,.25), transparent 75%)}
+.mohrbox canvas{position:absolute;inset:0;width:100%;height:100%}
+.mohr-note{border-left:1px solid var(--line);padding:1.3rem;font-size:.9rem;color:var(--txt-dim)}
+.mohr-note h4{font-family:var(--disp);font-style:italic;font-weight:600;color:#fff;margin-bottom:.5rem;font-size:1.15rem}
+
+/* ============================================================ paper / theory */
+section.paper{background:var(--paper);color:var(--paper-ink);margin-top:4rem;
+  background-image:repeating-linear-gradient(0deg, rgba(26,35,51,.05) 0 1px, transparent 1px 34px),
+                   repeating-linear-gradient(90deg, rgba(26,35,51,.05) 0 1px, transparent 1px 34px);}
+.paper-inner{max-width:920px;margin:0 auto;padding:clamp(4rem,8vh,6rem) clamp(1rem,4vw,2rem)}
+.paper .kicker{color:#b3541e}
+.paper h2{font-family:var(--disp);font-weight:700;font-size:clamp(2rem,4vw,3rem);color:var(--paper-ink);margin:.6rem 0 1rem}
+.paper .sec-lede{color:var(--paper-dim)}
+.toc{display:flex;flex-wrap:wrap;gap:.5rem;margin:2rem 0 3rem}
+.toc a{font-family:var(--mono);font-size:.72rem;color:var(--paper-ink);text-decoration:none;
+  border:1px solid var(--paper-line);border-radius:999px;padding:.4rem .85rem;transition:all .25s;background:rgba(255,255,255,.5)}
+.toc a:hover{border-color:#b3541e;color:#b3541e;transform:translateY(-2px)}
+article.th{margin-bottom:3.2rem;scroll-margin-top:90px}
+article.th h3{font-family:var(--disp);font-weight:700;font-size:1.5rem;margin-bottom:.9rem;color:var(--paper-ink);
+  display:flex;gap:.8rem;align-items:baseline}
+article.th h3 .sn{color:#b3541e;font-style:italic}
+article.th p{margin-bottom:1rem;color:#2c3850;max-width:72ch}
+article.th p .katex, .th-list .katex{font-size:1.04em}
+article.th .eq{margin:1.3rem 0;padding:.9rem 1.2rem;background:#fff;border:1px solid var(--paper-line);
+  border-left:3px solid #b3541e;border-radius:0 8px 8px 0;overflow-x:auto;text-align:center}
+article.th .eq .katex-display{margin:.35rem 0}
+.callout{border:1px solid var(--paper-line);border-radius:10px;background:#fff;padding:1rem 1.3rem;margin:1.4rem 0;
+  box-shadow:0 8px 24px -18px rgba(26,35,51,.4)}
+.callout .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;display:block;margin-bottom:.4rem}
+.callout.def .tag{color:#155e94}
+.callout.thm .tag{color:#b3541e}
+.callout.rem .tag{color:#57606f}
+.callout.def{border-left:4px solid #155e94}
+.callout.thm{border-left:4px solid #b3541e}
+.callout.rem{border-left:4px solid #57606f}
+.callout p:last-child{margin-bottom:0}
+table.rules{width:100%;border-collapse:collapse;margin:1.4rem 0;font-size:.95rem;background:#fff;
+  border:1px solid var(--paper-line)}
+table.rules th{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;
+  text-align:left;color:var(--paper-dim);padding:.7rem .9rem;border-bottom:2px solid var(--paper-line)}
+table.rules td{padding:.65rem .9rem;border-bottom:1px solid var(--paper-line);vertical-align:middle}
+table.rules tr:last-child td{border-bottom:none}
+table.rules tr{transition:background .2s}
+table.rules tbody tr:hover{background:rgba(179,84,30,.05)}
+
+/* ============================================================ footer */
+footer{border-top:1px solid var(--line);margin-top:0;background:var(--ink1)}
+.foot{max-width:1280px;margin:0 auto;padding:3.5rem clamp(1rem,4vw,2.6rem);
+  display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2.5rem}
+footer h5{font-family:var(--mono);font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;color:var(--txt-faint);margin-bottom:.9rem}
+footer p, footer li{font-size:.86rem;color:var(--txt-dim)}
+footer ul{list-style:none}
+footer li{padding:.2rem 0;font-family:var(--mono);font-size:.78rem}
+footer li b{color:var(--amber);font-weight:400}
+.footline{border-top:1px solid var(--line);padding:1.1rem clamp(1rem,4vw,2.6rem);
+  display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;color:var(--txt-faint)}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:1020px){
+  header.mh{grid-template-columns:1fr}
+  .labgrid,.labgrid.flip{grid-template-columns:1fr}
+  .panel{border-left:none;border-top:1px solid var(--line);max-height:none}
+  .labgrid.flip .panel{border-right:none;border-top:1px solid var(--line)}
+  .mohrbox{grid-template-columns:1fr}
+  .mohr-note{border-left:none;border-top:1px solid var(--line)}
+  .foot{grid-template-columns:1fr}
+  .viewport{min-height:400px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="bgfx" aria-hidden="true"></div>
+
+<nav>
+  <div class="brand">T<sup>ij</sup>&nbsp;Tensor Atlas <small>interactive monograph</small></div>
+  <div class="links">
+    <a class="nl" href="#map">01 · Linear Map</a>
+    <a class="nl" href="#duality">02 · Bases &amp; Duality</a>
+    <a class="nl" href="#stress">03 · Stress</a>
+    <a class="nl" href="#transport">04 · Transport</a>
+    <a class="nl" href="#theory">05 · Theory</a>
+  </div>
+</nav>
+
+<!-- ============================ MASTHEAD ============================ -->
+<header class="mh">
+  <div>
+    <p class="kicker">An interactive monograph · est. MMXXVI</p>
+    <h1>Tensor<br><em>Calculus</em></h1>
+    <p class="lead">A tensor is an object defined not by its coordinates but by <strong>how it transforms</strong> —
+      the grammar in which geometry and physics speak to each other. Below: <strong>four living laboratories</strong>
+      and a short course in the differential geometry underneath them. Drag, slide, and watch the invariants survive.</p>
+    <div class="chips">
+      <span>3 × WebGL laboratories</span><span>2 × plane instruments</span>
+      <span>KaTeX typesetting</span><span>single self-contained file</span>
+    </div>
+    <div class="scrollcue"><i></i>scroll to begin — Laboratory I awaits</div>
+  </div>
+  <figure class="specimen" aria-label="Rotating spectral decomposition of a symmetric tensor">
+    <div class="sp-head"><span>Specimen — spectral decomposition</span><b>● live</b></div>
+    <canvas id="cv-spec" height="340"></canvas>
+    <figcaption class="sp-cap">A symmetric 2-tensor $T$: its <i>eigenframe</i> (three arrows) and the ellipsoid
+      $T(S^2)$ — the image of the dashed unit sphere. Rotate, and note: the eigenvalues never change.</figcaption>
+  </figure>
+</header>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack">
+    <div class="tick-half">
+      <span>$T^{i'}{}_{j'} = \frac{\partial x^{i'}}{\partial x^{a}}\frac{\partial x^{b}}{\partial x^{j'}}\,T^{a}{}_{b}$</span><span class="sep">✦</span>
+      <span>$ds^{2} = g_{ij}\,dx^{i}\,dx^{j}$</span><span class="sep">✦</span>
+      <span>$\nabla_{j} v^{i} = \partial_{j} v^{i} + \Gamma^{i}_{jk}\,v^{k}$</span><span class="sep">✦</span>
+      <span>$\Gamma^{i}_{jk} = \tfrac{1}{2}\,g^{i\ell}\!\left(\partial_{j} g_{k\ell} + \partial_{k} g_{j\ell} - \partial_{\ell} g_{jk}\right)$</span><span class="sep">✦</span>
+      <span>$R^{\rho}{}_{\sigma\mu\nu} = \partial_{\mu}\Gamma^{\rho}_{\nu\sigma} - \partial_{\nu}\Gamma^{\rho}_{\mu\sigma} + \Gamma^{\rho}_{\mu\lambda}\Gamma^{\lambda}_{\nu\sigma} - \Gamma^{\rho}_{\nu\lambda}\Gamma^{\lambda}_{\mu\sigma}$</span><span class="sep">✦</span>
+      <span>$G_{\mu\nu} + \Lambda g_{\mu\nu} = \dfrac{8\pi G}{c^{4}}\,T_{\mu\nu}$</span><span class="sep">✦</span>
+      <span>$\Delta\psi = \iint_{\Sigma} K\,dA$</span><span class="sep">✦</span>
+      <span>$T = \textstyle\sum_{k}\lambda_{k}\,\hat n_{k}\otimes \hat n_{k}$</span><span class="sep">✦</span>
+      <span>$t^{(\hat n)}_{i} = \sigma_{ij}\,n^{j}$</span><span class="sep">✦</span>
+    </div>
+    <div class="tick-half">
+      <span>$T^{i'}{}_{j'} = \frac{\partial x^{i'}}{\partial x^{a}}\frac{\partial x^{b}}{\partial x^{j'}}\,T^{a}{}_{b}$</span><span class="sep">✦</span>
+      <span>$ds^{2} = g_{ij}\,dx^{i}\,dx^{j}$</span><span class="sep">✦</span>
+      <span>$\nabla_{j} v^{i} = \partial_{j} v^{i} + \Gamma^{i}_{jk}\,v^{k}$</span><span class="sep">✦</span>
+      <span>$\Gamma^{i}_{jk} = \tfrac{1}{2}\,g^{i\ell}\!\left(\partial_{j} g_{k\ell} + \partial_{k} g_{j\ell} - \partial_{\ell} g_{jk}\right)$</span><span class="sep">✦</span>
+      <span>$R^{\rho}{}_{\sigma\mu\nu} = \partial_{\mu}\Gamma^{\rho}_{\nu\sigma} - \partial_{\nu}\Gamma^{\rho}_{\mu\sigma} + \Gamma^{\rho}_{\mu\lambda}\Gamma^{\lambda}_{\nu\sigma} - \Gamma^{\rho}_{\nu\lambda}\Gamma^{\lambda}_{\mu\sigma}$</span><span class="sep">✦</span>
+      <span>$G_{\mu\nu} + \Lambda g_{\mu\nu} = \dfrac{8\pi G}{c^{4}}\,T_{\mu\nu}$</span><span class="sep">✦</span>
+      <span>$\Delta\psi = \iint_{\Sigma} K\,dA$</span><span class="sep">✦</span>
+      <span>$T = \textstyle\sum_{k}\lambda_{k}\,\hat n_{k}\otimes \hat n_{k}$</span><span class="sep">✦</span>
+      <span>$t^{(\hat n)}_{i} = \sigma_{ij}\,n^{j}$</span><span class="sep">✦</span>
+    </div>
+  </div>
+</div>
+
+<main>
+<!-- ============================ 01 LINEAR MAP ============================ -->
+<section class="lab" id="map">
+  <div class="sec-head reveal">
+    <span class="sec-no">01</span>
+    <div>
+      <p class="kicker">Laboratory I — rank-(1,1) tensors</p>
+      <h2>The Tensor as a Linear Map</h2>
+      <p class="sec-lede">Every matrix is a tensor once you promise to transform it honestly. Sculpt the entries of a
+        symmetric tensor $T^{i}{}_{j}$ and watch the unit sphere (dashed) get stretched into its fingerprint: an ellipsoid.</p>
+    </div>
+  </div>
+
+  <div class="labcard reveal">
+    <div class="labgrid">
+      <div class="viewport" id="vp-map">
+        <canvas class="gl" id="cv-map" role="img" aria-label="3D ellipsoid image of unit sphere under tensor"></canvas>
+        <div class="vp-hint">drag orbit · wheel zoom · dbl-click reset</div>
+        <div class="legend">
+          <span><i style="background:#ffb454"></i>principal axis $\lambda_1$</span>
+          <span><i style="background:#3ddc97"></i>principal axis $\lambda_2$</span>
+          <span><i style="background:#5aa9ff"></i>principal axis $\lambda_3$</span>
+          <span><i style="background:#8fa5c9"></i>$T\hat e_i$ — image of the basis</span>
+        </div>
+      </div>
+      <aside class="panel">
+        <div>
+          <p class="grp">Components of $T$ (symmetric)</p>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">T<sub>11</sub></span><output id="o-mt11"></output></span>
+            <input type="range" id="mt11" min="-2" max="2" step="0.01" value="1.50" aria-label="T11"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">T<sub>22</sub></span><output id="o-mt22"></output></span>
+            <input type="range" id="mt22" min="-2" max="2" step="0.01" value="0.90" aria-label="T22"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">T<sub>33</sub></span><output id="o-mt33"></output></span>
+            <input type="range" id="mt33" min="-2" max="2" step="0.01" value="0.55" aria-label="T33"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">T<sub>12</sub></span><output id="o-mt12"></output></span>
+            <input type="range" id="mt12" min="-2" max="2" step="0.01" value="0.60" aria-label="T12"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">T<sub>13</sub></span><output id="o-mt13"></output></span>
+            <input type="range" id="mt13" min="-2" max="2" step="0.01" value="0.20" aria-label="T13"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">T<sub>23</sub></span><output id="o-mt23"></output></span>
+            <input type="range" id="mt23" min="-2" max="2" step="0.01" value="0.35" aria-label="T23"></label>
+        </div>
+        <div>
+          <p class="grp">Display</p>
+          <div class="tgls">
+            <label class="tgl"><input type="checkbox" id="tg-sphere" checked><span>unit sphere</span></label>
+            <label class="tgl"><input type="checkbox" id="tg-basis" checked><span>T·basis</span></label>
+            <label class="tgl"><input type="checkbox" id="tg-prin" checked><span>principal axes</span></label>
+            <label class="tgl"><input type="checkbox" id="tg-spin" checked><span>auto-orbit</span></label>
+          </div>
+        </div>
+        <div>
+          <p class="grp">Matrix &amp; spectrum</p>
+          <div class="matwrap">
+            <span class="mname">$T$ =</span>
+            <span class="mat m3"><span id="mm11"></span><span id="mm12"></span><span id="mm13"></span>
+              <span id="mm21"></span><span id="mm22"></span><span id="mm23"></span>
+              <span id="mm31"></span><span id="mm32"></span><span id="mm33"></span></span>
+          </div>
+          <div class="evrow" style="margin-top:.7rem">
+            <div class="stats">
+              <div class="stat"><span class="sl">λ₁</span><span class="sv hl" id="ev1">—</span></div>
+              <div class="stat"><span class="sl">λ₂</span><span class="sv" id="ev2">—</span></div>
+              <div class="stat"><span class="sl">λ₃</span><span class="sv" id="ev3">—</span></div>
+            </div>
+            <div class="stats">
+              <div class="stat"><span class="sl">I₁ = tr</span><span class="sv" id="s-tr">—</span></div>
+              <div class="stat"><span class="sl">I₂</span><span class="sv" id="s-i2">—</span></div>
+              <div class="stat"><span class="sl">I₃ = det</span><span class="sv" id="s-det">—</span></div>
+              <div class="stat"><span class="sl">κ = λ₁/λ₃</span><span class="sv" id="s-cond">—</span></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="prose reveal">
+    <p>A <strong>rank-(1,1) tensor</strong> is a linear map $T:V\to V$. Choose a basis and it wears the costume of a
+      matrix $T^{i}{}_{j}$; change the basis by $x^{i'}=x^{i'}(x)$ and the entries reorganise by the
+      <strong>transformation law</strong>, so the map itself never changes:</p>
+    <div class="eq">$$T^{i'}{}_{j'} \;=\; \frac{\partial x^{i'}}{\partial x^{a}}\;\frac{\partial x^{b}}{\partial x^{j'}}\;T^{a}{}_{b}$$</div>
+    <p>Because $T$ is symmetric here, the <strong>spectral theorem</strong> guarantees an orthonormal eigenframe
+      $\{\hat n_k\}$ in which it is diagonal — the three glowing axes of the simulation:</p>
+    <div class="eq">$$T \;=\; \sum_{k=1}^{3}\lambda_{k}\;\hat n_{k}\otimes\hat n_{k}, \qquad T\hat n_k = \lambda_k \hat n_k$$</div>
+    <p>The ellipsoid is the image of the unit sphere, with semi-axes $|\lambda_k|$ along $\hat n_k$. Its shape encodes
+      three <strong>invariants</strong> — quantities every observer agrees on, no matter the basis:</p>
+    <div class="eq">$$I_{1}=\operatorname{tr}T,\qquad I_{2}=\tfrac{1}{2}\big[(\operatorname{tr}T)^{2}-\operatorname{tr}(T^{2})\big],\qquad I_{3}=\det T$$</div>
+    <p>Try it: rotate the components with the sliders. The matrix churns, yet $\lambda_k$, $I_1, I_2, I_3$ — and the
+      ellipsoid — stand perfectly still. <strong>That stillness is what a tensor is.</strong> Note also that
+      $|\det T|$ is the factor by which volumes scale under the map.</p>
+  </div>
+  <div class="rule"></div>
+</section>
+
+<!-- ============================ 02 DUALITY ============================ -->
+<section class="lab" id="duality">
+  <div class="sec-head reveal">
+    <span class="sec-no">02</span>
+    <div>
+      <p class="kicker">Laboratory II — the metric &amp; index positions</p>
+      <h2>Contravariant vs. Covariant</h2>
+      <p class="sec-lede">The same vector, two book-keepings. Shear the basis away from orthogonality and watch
+        parallel-projection components $v^{i}$ part ways with perpendicular-projection components $v_{i}$.
+        <strong>Drag the white arrow-tip.</strong></p>
+    </div>
+  </div>
+
+  <div class="labcard reveal">
+    <div class="labgrid flip">
+      <aside class="panel">
+        <div>
+          <p class="grp">Basis geometry</p>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">angle θ between $\hat e_1, \hat e_2$</span><output id="o-btheta"></output></span>
+            <input type="range" id="btheta" min="35" max="145" step="0.5" value="62" aria-label="basis angle"></label>
+          <div class="tgls" style="margin-top:.4rem">
+            <button class="btn" id="p-ortho">θ = 90°</button>
+            <button class="btn" id="p-sixty">θ = 60°</button>
+          </div>
+        </div>
+        <div>
+          <p class="grp">Vector components (contravariant)</p>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">v<sup>1</sup></span><output id="o-bv1"></output></span>
+            <input type="range" id="bv1" min="-1.8" max="1.8" step="0.01" value="1.00" aria-label="v contravariant 1"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">v<sup>2</sup></span><output id="o-bv2"></output></span>
+            <input type="range" id="bv2" min="-1.8" max="1.8" step="0.01" value="0.80" aria-label="v contravariant 2"></label>
+        </div>
+        <div>
+          <p class="grp">Metric &amp; its inverse</p>
+          <div class="matwrap"><span class="mname">$g_{ij}$</span>
+            <span class="mat m2"><span id="g11"></span><span id="g12"></span><span id="g21"></span><span id="g22"></span></span></div>
+          <div class="matwrap" style="margin-top:.5rem"><span class="mname">$g^{ij}$</span>
+            <span class="mat m2"><span id="gi11"></span><span id="gi12"></span><span id="gi21"></span><span id="gi22"></span></span></div>
+        </div>
+        <div>
+          <p class="grp">Two component sets, one vector</p>
+          <div class="stats">
+            <div class="stat"><span class="sl">v¹ (upper)</span><span class="sv hl" id="c-up1">—</span></div>
+            <div class="stat"><span class="sl">v² (upper)</span><span class="sv hl" id="c-up2">—</span></div>
+            <div class="stat"><span class="sl">v₁ (lower)</span><span class="sv" id="c-dn1" style="color:var(--cyan)">—</span></div>
+            <div class="stat"><span class="sl">v₂ (lower)</span><span class="sv" id="c-dn2" style="color:var(--cyan)">—</span></div>
+            <div class="stat"><span class="sl">v·v</span><span class="sv" id="c-norm">—</span></div>
+            <div class="stat"><span class="sl">vⁱvᵢ ✓</span><span class="sv pos" id="c-check">—</span></div>
+          </div>
+        </div>
+      </aside>
+      <div class="viewport plain2d" id="vp-basis">
+        <canvas id="cv-basis" role="img" aria-label="2D oblique basis with contravariant and covariant decomposition"></canvas>
+        <div class="legend">
+          <span><i style="background:#ffb454"></i>$\hat e_i$ basis · upper components $v^i$ (parallels)</span>
+          <span><i style="background:#67e8f9"></i>$e^{i}$ dual basis · lower components $v_i$ (perpendiculars)</span>
+          <span><i style="background:#e8eefc"></i>the vector $\vec v$ itself — invariant</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose reveal">
+    <p>In an <strong>orthonormal</strong> basis there is nothing to discuss: components are shadows cast at right
+      angles. But let the basis go oblique — angle $\theta\neq 90°$ — and two inequivalent readings of
+      “the components of $\vec v$” appear.</p>
+    <p><strong>Contravariant components</strong> $v^{i}$ answer: <em>how much of each basis vector do I add?</em>
+      They are read off by sliding <em>parallel</em> to the other basis direction (the amber parallelogram).
+      Basis stretches → components shrink, <em>contra</em>-variantly.</p>
+    <p><strong>Covariant components</strong> $v_{i}$ answer: <em>what does $\vec v$ measure against the dual basis?</em>
+      Geometrically they are <em>perpendicular</em> projections (the cyan construction), and they are produced from
+      the upper components by the <strong>metric tensor</strong> $g_{ij} = \hat e_i\cdot\hat e_j$, which for our unit-length
+      oblique pair is exactly:</p>
+    <div class="eq">$$g_{ij}=\begin{pmatrix}1 & \cos\theta\\ \cos\theta & 1\end{pmatrix},\qquad
+       v_{i} = g_{ij}\,v^{j},\qquad v^{i} = g^{ij}\,v_{j}$$</div>
+    <p>The <strong>dual basis</strong> $\{e^{1},e^{2}\}$, defined by $e^{i}\cdot\hat e_{j}=\delta^{i}_{j}$, is drawn dashed:
+      each dual vector is perpendicular to the <em>other</em> basis vector, and blows up as $\theta\to 0$.
+      Both expansions describe the same arrow: $\;\vec v = v^{i}\hat e_{i} = v_{i}\,e^{i}.$</p>
+    <p>The check panel verifies the contraction $v^{i}v_{i} = |\vec v|^{2}$ live — a scalar, immune to every
+      coordinate change. This raise/lower machinery, powered by $g_{ij}$ and $g^{ij}$, is the engine room of
+      general relativity.</p>
+  </div>
+  <div class="rule"></div>
+</section>
+
+<!-- ============================ 03 STRESS ============================ -->
+<section class="lab" id="stress">
+  <div class="sec-head reveal">
+    <span class="sec-no">03</span>
+    <div>
+      <p class="kicker">Laboratory III — rank-2 tensors in the wild</p>
+      <h2>The Stress Tensor &amp; Cauchy's Theorem</h2>
+      <p class="sec-lede">Inside a loaded solid, the force on a cut depends on the cut's orientation $\hat n$ — and depends
+        on it <em>linearly</em>. That linearity is a tensor: $\sigma_{ij}$. Steer the cutting plane and read the traction live.</p>
+    </div>
+  </div>
+
+  <div class="labcard reveal">
+    <div class="labgrid">
+      <div class="viewport" id="vp-stress">
+        <canvas class="gl" id="cv-stress" role="img" aria-label="3D stress element with traction vector on arbitrary plane"></canvas>
+        <div class="vp-hint">drag orbit · wheel zoom</div>
+        <div class="legend">
+          <span><i style="background:#e8eefc"></i>$\hat n$ — plane normal</span>
+          <span><i style="background:#ffb454"></i>$\vec t^{\,(\hat n)}=\sigma\hat n$ — traction</span>
+          <span><i style="background:#5aa9ff"></i>normal part $\sigma_n\hat n$</span>
+          <span><i style="background:#ff6b6b"></i>shear part $\vec\tau$</span>
+        </div>
+      </div>
+      <aside class="panel">
+        <div>
+          <p class="grp">Stress components σᵢⱼ</p>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">σ<sub>11</sub></span><output id="o-s11"></output></span>
+            <input type="range" id="s11" min="-2" max="2" step="0.01" value="1.40" aria-label="sigma 11"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">σ<sub>22</sub></span><output id="o-s22"></output></span>
+            <input type="range" id="s22" min="-2" max="2" step="0.01" value="0.20" aria-label="sigma 22"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">σ<sub>33</sub></span><output id="o-s33"></output></span>
+            <input type="range" id="s33" min="-2" max="2" step="0.01" value="-0.80" aria-label="sigma 33"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">σ<sub>12</sub></span><output id="o-s12"></output></span>
+            <input type="range" id="s12" min="-2" max="2" step="0.01" value="0.50" aria-label="sigma 12"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">σ<sub>13</sub></span><output id="o-s13"></output></span>
+            <input type="range" id="s13" min="-2" max="2" step="0.01" value="0.00" aria-label="sigma 13"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">σ<sub>23</sub></span><output id="o-s23"></output></span>
+            <input type="range" id="s23" min="-2" max="2" step="0.01" value="0.30" aria-label="sigma 23"></label>
+        </div>
+        <div>
+          <p class="grp">Cutting plane orientation</p>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">polar θ</span><output id="o-sth"></output></span>
+            <input type="range" id="sth" min="1" max="179" step="0.5" value="55" aria-label="normal polar angle"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">azimuth φ</span><output id="o-sph"></output></span>
+            <input type="range" id="sph" min="0" max="360" step="0.5" value="40" aria-label="normal azimuth"></label>
+        </div>
+        <div>
+          <p class="grp">Reading</p>
+          <div class="stats">
+            <div class="stat"><span class="sl">|t|</span><span class="sv" id="st-tmag">—</span></div>
+            <div class="stat"><span class="sl">σₙ normal</span><span class="sv hl" id="st-sn">—</span></div>
+            <div class="stat"><span class="sl">|τ| shear</span><span class="sv neg" id="st-tau">—</span></div>
+            <div class="stat"><span class="sl">τ_max</span><span class="sv" id="st-tmax">—</span></div>
+          </div>
+          <div class="stats" style="margin-top:.55rem">
+            <div class="stat"><span class="sl">σ₁</span><span class="sv pos" id="sp1">—</span></div>
+            <div class="stat"><span class="sl">σ₂</span><span class="sv" id="sp2">—</span></div>
+            <div class="stat"><span class="sl">σ₃</span><span class="sv neg" id="sp3">—</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="mohrbox">
+      <div class="mohr-cv"><canvas id="cv-mohr" role="img" aria-label="Mohr's circle diagram with current stress point"></canvas></div>
+      <div class="mohr-note">
+        <h4>Mohr's circle, live</h4>
+        <p>Every possible cutting plane maps to one point $(\sigma_n,\tau)$ inside the shaded region bounded by the
+          three circles on the principal stresses. The glowing dot is your current plane — sweep $\theta,\phi$ above
+          and watch it explore the admissible zone.</p>
+        <p style="margin-top:.6rem">The outermost circle carries the extremes: max normal stress $\sigma_1$, max shear
+          $\tau_{\max}=(\sigma_1-\sigma_3)/2$ — the numbers engineers fail parts with.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose reveal">
+    <p>Cauchy's tetrahedron argument (1822) is one of the great quiet miracles of mechanics. The traction
+      $\vec t^{\,(\hat n)}$ — force per unit area on a surface of normal $\hat n$ — must be <strong>linear in
+      $\hat n$</strong> for momentum balance to hold on arbitrarily small tetrahedra. Linearity in a direction is
+      precisely a rank-2 tensor:</p>
+    <div class="eq">$$t^{\,(\hat n)}_{i} \;=\; \sigma_{ij}\,n^{j}, \qquad
+       \sigma_{n} = n^{i}\sigma_{ij}n^{j}, \qquad
+       |\tau| = \sqrt{\,\big|t^{\,(\hat n)}\big|^{2} - \sigma_{n}^{2}\,}$$</div>
+    <p>Angular momentum balance further forces <strong>symmetry</strong> $\sigma_{ij}=\sigma_{ji}$: nine components
+      collapse to six — exactly the six sliders above. Being symmetric, $\sigma$ owns three real
+      <strong>principal stresses</strong> $\sigma_1\ge\sigma_2\ge\sigma_3$ and an orthogonal principal frame in which
+      all shear vanishes. On a principal plane the traction is pure pressure or tension; the most dangerous planes
+      sit at $45°$ to them, where shear peaks at $(\sigma_1-\sigma_3)/2$.</p>
+    <p>The 3D arrows on the cube's faces are the three <em>columns</em> of $\sigma$: tractions on the $+x,+y,+z$
+      planes. The full traction on any oblique plane is their weighted sum — the tensor, doing its one job.</p>
+  </div>
+  <div class="rule"></div>
+</section>
+
+<!-- ============================ 04 TRANSPORT ============================ -->
+<section class="lab" id="transport">
+  <div class="sec-head reveal">
+    <span class="sec-no">04</span>
+    <div>
+      <p class="kicker">Laboratory IV — connections &amp; curvature</p>
+      <h2>Parallel Transport &amp; Holonomy</h2>
+      <p class="sec-lede">“Keep the vector parallel to itself” is obvious on a plane and profound on a sphere.
+        Carry the amber arrow around a line of latitude and measure the angle by which it fails to return — curvature,
+        made visible.</p>
+    </div>
+  </div>
+
+  <div class="labcard reveal">
+    <div class="labgrid">
+      <div class="viewport" id="vp-transp">
+        <canvas class="gl" id="cv-transp" role="img" aria-label="Vector parallel transported around latitude circle on a sphere"></canvas>
+        <div class="vp-hint">drag orbit · wheel zoom</div>
+        <div class="legend">
+          <span><i style="background:#ffb454"></i>vector being transported</span>
+          <span><i style="background:#67e8f9"></i>ghosts — its history along the loop</span>
+          <span><i style="background:#e8eefc"></i>initial direction, kept for comparison</span>
+        </div>
+      </div>
+      <aside class="panel">
+        <div>
+          <p class="grp">The loop</p>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">colatitude θ₀</span><output id="o-trth"></output></span>
+            <input type="range" id="trth" min="12" max="168" step="0.5" value="55" aria-label="loop colatitude"></label>
+          <label class="ctl"><span class="ctl-head"><span class="ctl-name">speed</span><output id="o-trsp"></output></span>
+            <input type="range" id="trsp" min="0.1" max="1.5" step="0.05" value="0.6" aria-label="transport speed"></label>
+          <div class="tgls" style="margin-top:.4rem">
+            <button class="btn warm" id="tr-play" aria-pressed="true">❚❚ pause</button>
+            <button class="btn" id="tr-eq">equator</button>
+            <button class="btn" id="tr-pole">near pole</button>
+          </div>
+        </div>
+        <div>
+          <p class="grp">Holonomy readout</p>
+          <div class="stats">
+            <div class="stat"><span class="sl">Δψ holonomy</span><span class="sv hl" id="tr-hol">—</span></div>
+            <div class="stat"><span class="sl">Ω solid angle</span><span class="sv" id="tr-omega">—</span></div>
+            <div class="stat"><span class="sl">enclosed area</span><span class="sv" id="tr-area">—</span></div>
+            <div class="stat"><span class="sl">loop length</span><span class="sv" id="tr-len">—</span></div>
+            <div class="stat"><span class="sl">K (sphere, R=1)</span><span class="sv pos">1.00</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="grp">What to look for</p>
+          <p style="font-size:.85rem;color:var(--txt-dim)">Near the pole the loop is tiny and the arrow returns almost
+          unchanged. At $\theta_0=60°$ it returns rotated a full $180°$. Transport along the equator (a geodesic)
+          keeps it locked to the path. The deficit is exactly the enclosed curvature: $\Delta\psi = \iint K\,dA$.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="prose reveal">
+    <p>On a curved space there is no global notion of “the same direction at two different points” — tangent planes
+      at different points are different vector spaces. A <strong>connection</strong> $\nabla$ is the extra structure
+      that bridges them, and a vector field $v$ is <strong>parallel transported</strong> along a curve with tangent
+      $u$ when</p>
+    <div class="eq">$$u^{a}\nabla_{a}v^{b} \;=\; 0 \qquad\Longleftrightarrow\qquad \frac{dv^{i}}{ds} + \Gamma^{i}_{jk}\,u^{j}v^{k} = 0$$</div>
+    <p>The simulation integrates exactly this on the unit sphere, using the fact that the Levi-Civita covariant
+      derivative is the ordinary derivative <em>projected onto the tangent plane</em>: each step the vector is dragged
+      to the next point and re-projected, preserving length and inner products.</p>
+    <p>Take the vector around a closed loop and it generally returns rotated. This <strong>holonomy</strong> is not a
+      defect of the procedure — it is the curvature of the space speaking. For a surface, the
+      <strong>Gauss–Bonnet theorem</strong> gives the angle in one line:</p>
+    <div class="eq">$$\Delta\psi \;=\; \iint_{\Sigma} K\,dA \qquad\underset{\text{sphere}}{=}\qquad \Omega \;=\; 2\pi\big(1-\cos\theta_{0}\big)$$</div>
+    <p>On the sphere the enclosed curvature is simply the solid angle $\Omega$ of the cap. Flat space has
+      $K\equiv 0$: holonomy vanishes for every loop — which is why your intuition, trained on paper, finds the
+      amber arrow's misbehaviour so unsettling. In general relativity the same mechanism, promoted to the Riemann
+      tensor, is what we call <em>gravity</em>.</p>
+  </div>
+</section>
+</main>
+
+<!-- ============================ 05 THEORY ============================ -->
+<section class="paper" id="theory">
+  <div class="paper-inner">
+    <div class="reveal">
+      <p class="kicker">Foundations · a short course</p>
+      <h2>§ 5 — The Machinery, Written Down</h2>
+      <p class="sec-lede">Everything the laboratories demonstrated, in the form it appears on blackboards from
+      Göttingen to Geneva. Eight sections; read in order, or raid the index card at the end.</p>
+      <nav class="toc">
+        <a href="#s1">§1 What a tensor is</a><a href="#s2">§2 Einstein convention</a>
+        <a href="#s3">§3 Transformation law</a><a href="#s4">§4 The metric</a>
+        <a href="#s5">§5 Covariant derivative</a><a href="#s6">§6 Curvature</a>
+        <a href="#s7">§7 Transport &amp; Gauss–Bonnet</a><a href="#s8">§8 Tensors in the wild</a>
+        <a href="#s9">Index card</a>
+      </nav>
+    </div>
+
+    <article class="th reveal" id="s1">
+      <h3><span class="sn">§ 1</span> What a tensor actually is</h3>
+      <div class="callout def"><span class="tag">Definition · tensor of type (p, q)</span>
+        <p>Given a vector space $V$ with dual $V^{*}$, a tensor of type $(p,q)$ is a multilinear map
+        $$T : \underbrace{V^{*}\times\cdots\times V^{*}}_{p}\times\underbrace{V\times\cdots\times V}_{q}\;\longrightarrow\;\mathbb{R}.$$
+        Multilinear means linear in each slot separately. Scalars are type $(0,0)$; vectors type $(1,0)$; covectors
+        (linear forms) type $(0,1)$; bilinear forms such as the metric type $(0,2)$.</p></div>
+      <p>Once bases are chosen for $V$ and $V^{*}$, the tensor is completely described by
+      $n^{p+q}$ components $T^{i_1\dots i_p}{}_{j_1\dots j_q}$, where $n=\dim V$. Upper indices count contravariant
+      slots, lower indices covariant ones. The definition sounds austere, but it earns its keep instantly: because a
+      tensor is a <em>coordinate-free machine for producing numbers</em>, its components in different coordinate
+      systems are forced into a rigid relationship — the transformation law of §3.</p>
+    </article>
+
+    <article class="th reveal" id="s2">
+      <h3><span class="sn">§ 2</span> The Einstein summation convention</h3>
+      <p>Einstein's “greatest contribution to mathematics”, by his own wry account, was a notational deal:
+      <strong>an index repeated once up and once down is summed over</strong>, and the summation sign is banned.</p>
+      <div class="eq">$$u\cdot v = u_{i}\,v^{i} \;\equiv\; \sum_{i=1}^{n}u_{i}v^{i}, \qquad (AB)^{i}{}_{j} = A^{i}{}_{k}\,B^{k}{}_{j}, \qquad \operatorname{tr}T = T^{i}{}_{i}$$</div>
+      <p>A repeated pair is a <em>dummy</em> index (rename it freely: $u_i v^i = u_k v^k$); an index appearing only
+      once is <em>free</em> and must balance on both sides of any equation — a built-in type system that catches
+      errors before arithmetic begins. The pairing of one upper with one lower index is not pedantry: it is exactly
+      the pattern that survives coordinate changes, as §3 shows.</p>
+    </article>
+
+    <article class="th reveal" id="s3">
+      <h3><span class="sn">§ 3</span> The transformation law</h3>
+      <p>Let $x\mapsto x'$ be a change of coordinates with Jacobian $\Lambda^{i'}{}_{i}=\partial x^{i'}/\partial x^{i}$.
+      Components transform with one Jacobian per upper index and one inverse Jacobian per lower index:</p>
+      <div class="eq">$$v^{i'}=\frac{\partial x^{i'}}{\partial x^{a}}\,v^{a}, \qquad \omega_{j'}=\frac{\partial x^{b}}{\partial x^{j'}}\,\omega_{b}, \qquad
+      T^{i'j'}{}_{k'}=\frac{\partial x^{i'}}{\partial x^{a}}\frac{\partial x^{j'}}{\partial x^{b}}\frac{\partial x^{c}}{\partial x^{k'}}\,T^{ab}{}_{c}$$</div>
+      <p>Upper indices travel <em>against</em> the coordinate flow (contra-variant), lower ones travel
+      <em>with</em> it (co-variant) — precisely the split you sheared apart in Laboratory II. The modern slogan:
+      <strong>a tensor is anything that transforms like a tensor</strong>. The quotient theorem makes the slogan a
+      test: if $A^{i}{}_{j}v^{j}$ is a vector for every vector $v$, then $A^{i}{}_{j}$ are the components of a
+      genuine $(1,1)$ tensor.</p>
+    </article>
+
+    <article class="th reveal" id="s4">
+      <h3><span class="sn">§ 4</span> The metric tensor</h3>
+      <div class="callout def"><span class="tag">Definition · metric</span>
+      <p>A metric is a symmetric, non-degenerate $(0,2)$-tensor $g$ giving lengths and angles:
+      $\;ds^{2} = g_{ij}\,dx^{i}\,dx^{j}$. In a coordinate basis $g_{ij}=\hat e_i\cdot\hat e_j$.</p></div>
+      <p>Examples that do most of physics: Cartesian $g_{ij}=\delta_{ij}$; polar
+      $ds^{2}=dr^{2}+r^{2}d\theta^{2}$; spherical $ds^{2}=dr^{2}+r^{2}d\theta^{2}+r^{2}\sin^{2}\!\theta\,d\phi^{2}$;
+      and Minkowski spacetime $\eta_{\mu\nu}=\mathrm{diag}(-1,1,1,1)$, whose minus sign is the entire plot of special
+      relativity. The inverse matrix $g^{ij}$ raises indices exactly as Laboratory II demonstrated:</p>
+      <div class="eq">$$v_{i}=g_{ij}v^{j},\qquad v^{i}=g^{ij}v_{j},\qquad g^{ik}g_{kj}=\delta^{i}_{j}$$</div>
+      <p>There is no canonical way to compare two vectors' lengths without $g$ — the metric is the
+      <em>infrastructure</em> of the space, and (as §5 reveals) its derivatives secretly run the show.</p>
+    </article>
+
+    <article class="th reveal" id="s5">
+      <h3><span class="sn">§ 5</span> The covariant derivative</h3>
+      <p>The partial derivative $\partial_j v^i$ of vector components is <em>not</em> a tensor: differentiating
+      $\vec v = v^{i}\hat e_i$ also differentiates the basis, which itself changes from point to point in curvilinear
+      coordinates. The correction terms are the <strong>Christoffel symbols</strong>, built from the metric alone:</p>
+      <div class="eq">$$\nabla_{j}v^{i}=\partial_{j}v^{i}+\Gamma^{i}_{jk}v^{k}, \qquad \nabla_{j}\omega_{i}=\partial_{j}\omega_{i}-\Gamma^{k}_{ij}\omega_{k}, \qquad
+      \Gamma^{i}_{jk}=\tfrac{1}{2}g^{i\ell}\big(\partial_{j}g_{k\ell}+\partial_{k}g_{j\ell}-\partial_{\ell}g_{jk}\big)$$</div>
+      <div class="callout rem"><span class="tag">Remark · why these two signs</span>
+      <p>The $+$ on vectors and $-$ on covectors are forced by the Leibniz rule applied to the contraction
+      $\nabla(\omega_i v^i)=\partial(\omega_i v^i)$: the correction terms must cancel in any fully-contracted scalar.
+      The same consistency gives metric compatibility $\nabla g = 0$ — lengths survive parallel transport, as
+      Laboratory IV's arrow visibly preserved its own.</p></div>
+      <p>$\nabla$ differentiates <em>tensors into tensors</em>, which is the entire point: equations written with it,
+      like $\nabla_{\mu}T^{\mu\nu}=0$, are automatically true in every coordinate system.</p>
+    </article>
+
+    <article class="th reveal" id="s6">
+      <h3><span class="sn">§ 6</span> Curvature: the Riemann tensor</h3>
+      <p>Covariant derivatives fail to commute, and the obstruction is curvature itself:</p>
+      <div class="eq">$$(\nabla_{\mu}\nabla_{\nu}-\nabla_{\nu}\nabla_{\mu})\,v^{\rho} = R^{\rho}{}_{\sigma\mu\nu}\,v^{\sigma}$$</div>
+      <div class="eq">$$R^{\rho}{}_{\sigma\mu\nu}=\partial_{\mu}\Gamma^{\rho}_{\nu\sigma}-\partial_{\nu}\Gamma^{\rho}_{\mu\sigma}
+      +\Gamma^{\rho}_{\mu\lambda}\Gamma^{\lambda}_{\nu\sigma}-\Gamma^{\rho}_{\nu\lambda}\Gamma^{\lambda}_{\mu\sigma}$$</div>
+      <p>Its symmetries ($R_{\rho\sigma\mu\nu}=-R_{\sigma\rho\mu\nu}=-R_{\rho\sigma\nu\mu}=R_{\mu\nu\rho\sigma}$, plus
+      the first Bianchi identity) pare the naive $n^4$ components to $\frac{n^2(n^2-1)}{12}$: twenty independent
+      numbers in 4D spacetime, six on a surface. Contract once for the <strong>Ricci tensor</strong>
+      $R_{\mu\nu}=R^{\alpha}{}_{\mu\alpha\nu}$, again for the <strong>scalar curvature</strong> $R=g^{\mu\nu}R_{\mu\nu}$;
+      on a 2-surface $R=2K$. Nearby geodesics accelerate apart under its influence:</p>
+      <div class="eq">$$\frac{D^{2}\xi^{i}}{ds^{2}} + R^{i}{}_{jkl}\,u^{j}\xi^{k}u^{l} = 0 \qquad\text{(geodesic deviation)}$$</div>
+    </article>
+
+    <article class="th reveal" id="s7">
+      <h3><span class="sn">§ 7</span> Holonomy &amp; Gauss–Bonnet</h3>
+      <div class="callout thm"><span class="tag">Theorem · Gauss–Bonnet (local form)</span>
+      <p>Parallel transport of a tangent vector around a simple closed curve $\partial\Sigma$ on a surface rotates it by
+      $$\Delta\psi = \iint_{\Sigma} K\,dA,$$ the total curvature enclosed. Holonomy around every loop $\Leftrightarrow$
+      flatness.</p></div>
+      <p>Laboratory IV is this theorem rendered at 60 fps. Globally, Gauss–Bonnet hardens further: on a closed
+      surface $\iint K\,dA = 2\pi\chi$, tying curvature to topology ($\chi=2$ for the sphere, $0$ for the torus).
+      In higher dimensions the holonomy <em>group</em> of a manifold — which rotations can accumulate around loops —
+      classifies its geometry; this is how Calabi–Yau manifolds get their fame in string theory.</p>
+    </article>
+
+    <article class="th reveal" id="s8">
+      <h3><span class="sn">§ 8</span> Tensors in the wild</h3>
+      <p>The same machinery, everywhere: elasticity stores material stiffness in a rank-4 tensor
+      $C_{ijkl}$ (21 independent constants in the triclinic worst case); electromagnetism packs $\vec E$ and $\vec B$
+      into the antisymmetric $F_{\mu\nu}$ with Maxwell's equations collapsing to
+      $\nabla_{\mu}F^{\mu\nu}=\mu_0 J^{\nu}$; general relativity declares stress-energy the source of geometry:</p>
+      <div class="eq">$$G_{\mu\nu}+\Lambda g_{\mu\nu}=\frac{8\pi G}{c^{4}}\,T_{\mu\nu}, \qquad G_{\mu\nu}=R_{\mu\nu}-\tfrac{1}{2}Rg_{\mu\nu}$$</div>
+      <p>The left side is pure geometry (built from $g$ and its first two derivatives); the right side is pure matter.
+      The equation's power — and the reason this whole apparatus exists — is that both sides are tensors, so the
+      statement needs no coordinates, no observer, no apology. As Weyl put it: <em>invariants are what remains when
+      the arbitrary has been burned away.</em></p>
+    </article>
+
+    <article class="th reveal" id="s9">
+      <h3><span class="sn">☰</span> The index card</h3>
+      <table class="rules">
+        <thead><tr><th>Operation</th><th>Components</th><th>Invariant meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Inner product</td><td>$u_{i}v^{i}$</td><td>length of $v$'s shadow on $u$; a scalar</td></tr>
+          <tr><td>Lower an index</td><td>$v_{i}=g_{ij}v^{j}$</td><td>turn vector into measuring device $v(\cdot)$</td></tr>
+          <tr><td>Raise an index</td><td>$\omega^{i}=g^{ij}\omega_{j}$</td><td>the inverse operation</td></tr>
+          <tr><td>Trace / contract</td><td>$T^{i}{}_{i}$</td><td>sum of eigenvalues; basis-free</td></tr>
+          <tr><td>Composition</td><td>$(AB)^{i}{}_{j}=A^{i}{}_{k}B^{k}{}_{j}$</td><td>do $B$, then $A$</td></tr>
+          <tr><td>Outer product</td><td>$(u\otimes v)^{ij}=u^{i}v^{j}$</td><td>rank up; building block of spectral forms</td></tr>
+          <tr><td>Gradient</td><td>$(\nabla f)_{i}=\partial_{i}f$</td><td>covector — naturally lower!</td></tr>
+          <tr><td>Divergence</td><td>$\nabla_{i}v^{i}$</td><td>source density; flux per volume</td></tr>
+          <tr><td>Identity</td><td>$\delta^{i}{}_{j}$</td><td>the Kronecker tensor, in every basis</td></tr>
+          <tr><td>Volume element</td><td>$\sqrt{|g|}\;d^{n}x$</td><td>integration that respects curvature</td></tr>
+        </tbody>
+      </table>
+    </article>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div>
+      <h5>Tensor Atlas</h5>
+      <p>An interactive monograph on tensor calculus: four simulations and a short course, typeset live.
+      Drag the labs, shear the bases, steer the cutting plane, and carry the vector home rotated.</p>
+    </div>
+    <div>
+      <h5>Instrumentation</h5>
+      <ul>
+        <li><b>three.js r128</b> — WebGL laboratories</li>
+        <li><b>KaTeX 0.16</b> — mathematical typesetting</li>
+        <li><b>STIX Two Text / IBM Plex</b> — typefaces</li>
+        <li><b>hand-rolled</b> — orbit cameras, eigensolver, transport integrator</li>
+      </ul>
+    </div>
+    <div>
+      <h5>Colophon</h5>
+      <p>One HTML file, no build step. Eigendecomposition by the trigonometric method; parallel transport by
+      ambient projection; Mohr's zone from the principal spectrum. Best served with curiosity.</p>
+    </div>
+  </div>
+  <div class="footline">
+    <span>MMXXVI · TENSOR ATLAS · AN INTERACTIVE MONOGRAPH</span>
+    <span>$\nabla_{a} g_{bc} = 0$ — always</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+"use strict";
+/* ================================================================ utils */
+const TAU=Math.PI*2, D2R=Math.PI/180;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(x,d=2)=>{const v=Math.abs(x)<5e-11?0:x;return v.toFixed(d);};
+const REDUCED=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* KaTeX */
+if(window.renderMathInElement){
+  renderMathInElement(document.body,{delimiters:[
+    {left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}
+  ],throwOnError:false});
+}
+
+/* ================================================================ scroll fx */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.12});
+$$(".reveal").forEach(el=>io.observe(el));
+
+const spy=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    $$(".nl").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id));
+  }});
+},{rootMargin:"-35% 0px -55% 0px"});
+["map","duality","stress","transport","theory"].forEach(id=>{const el=document.getElementById(id); if(el)spy.observe(el);});
+
+/* range binding */
+function bindRange(id,cb){
+  const el=$("#"+id), out=$("#o-"+id);
+  const f=()=>{const v=parseFloat(el.value); if(out)out.textContent=fmt(v,2); if(cb)cb(v);};
+  el.addEventListener("input",f); f();
+  return {set(v){el.value=v;f();}, get:()=>parseFloat(el.value), refresh:f};
+}
+function setCells(ids,vals){ids.forEach((id,i)=>{const el=$("#"+id); if(el)el.textContent=fmt(vals[i]);});}
+
+/* ================================================================ 3D plumbing */
+const TICKS=[];
+function addTick(f){TICKS.push(f);}
+let lastT=performance.now();
+(function loop(now){
+  const dt=Math.min(.05,((now||performance.now())-lastT)/1000); lastT=now||performance.now();
+  for(const f of TICKS)f(dt,lastT/1000);
+  requestAnimationFrame(loop);
+})(performance.now());
+
+class Orbit{
+  constructor(dom,cam,o={}){
+    this.dom=dom;this.cam=cam;
+    this.iTheta=o.theta??.9; this.iPhi=o.phi??1.05; this.iR=o.r??6.5;
+    this.theta=this.iTheta;this.phi=this.iPhi;this.r=this.iR;
+    this.tTheta=this.theta;this.tPhi=this.phi;this.tR=this.r;
+    this.min=o.min??3.2;this.max=o.max??13;
+    this.auto=REDUCED?false:(o.auto??true); this.autoSpeed=o.autoSpeed??.12;
+    this.target=new THREE.Vector3(0,o.targetY??0,0);
+    this._p=new Map();this._pinch=0;
+    dom.addEventListener("pointerdown",e=>{dom.setPointerCapture(e.pointerId);
+      this._p.set(e.pointerId,{x:e.clientX,y:e.clientY});dom.classList.add("grabbing");});
+    dom.addEventListener("pointermove",e=>{
+      if(!this._p.has(e.pointerId))return;
+      const q=this._p.get(e.pointerId),dx=e.clientX-q.x,dy=e.clientY-q.y;
+      q.x=e.clientX;q.y=e.clientY;
+      if(this._p.size===1){this.tTheta-=dx*.0052;this.tPhi=clamp(this.tPhi-dy*.0052,.12,Math.PI-.12);}
+      else if(this._p.size===2){const a=[...this._p.values()];
+        const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+        if(this._pinch)this.tR=clamp(this.tR*this._pinch/d,this.min,this.max);
+        this._pinch=d;}
+    });
+    const up=e=>{this._p.delete(e.pointerId);if(this._p.size<2)this._pinch=0;
+      if(!this._p.size)dom.classList.remove("grabbing");};
+    dom.addEventListener("pointerup",up);dom.addEventListener("pointercancel",up);
+    dom.addEventListener("wheel",e=>{e.preventDefault();
+      this.tR=clamp(this.tR*Math.exp(e.deltaY*.0011),this.min,this.max);},{passive:false});
+    dom.addEventListener("dblclick",()=>{this.tTheta=this.iTheta;this.tPhi=this.iPhi;this.tR=this.iR;});
+  }
+  update(dt){
+    if(this.auto&&!this._p.size)this.tTheta+=this.autoSpeed*dt;
+    const k=1-Math.exp(-9*dt);
+    this.theta+=(this.tTheta-this.theta)*k;
+    this.phi+=(this.tPhi-this.phi)*k;
+    this.r+=(this.tR-this.r)*k;
+    const sp=Math.sin(this.phi),cp=Math.cos(this.phi),st=Math.sin(this.theta),ct=Math.cos(this.theta);
+    this.cam.position.set(this.r*sp*ct,this.r*cp,this.r*sp*st).add(this.target);
+    this.cam.lookAt(this.target);
+  }
+}
+function makeGL(cv){
+  const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  r.outputEncoding=THREE.sRGBEncoding;
+  return r;
+}
+function stdLights(s){
+  s.add(new THREE.HemisphereLight(0xcfe0ff,0x0b1120,.95));
+  const d=new THREE.DirectionalLight(0xffffff,.85);d.position.set(5,8,4);s.add(d);
+  const d2=new THREE.DirectionalLight(0x7aa2ff,.4);d2.position.set(-6,-3,-5);s.add(d2);
+}
+function watch(el,fn){new ResizeObserver(fn).observe(el);}
+class Arrow3D{
+  constructor(color,radius=.035){
+    this.g=new THREE.Group();
+    const mat=new THREE.MeshStandardMaterial({color,roughness:.35,metalness:.15});
+    const cg=new THREE.CylinderGeometry(radius,radius,1,14);cg.translate(0,.5,0);
+    this.cyl=new THREE.Mesh(cg,mat);
+    const hg=new THREE.ConeGeometry(1,1,18);hg.translate(0,.5,0);
+    this.cone=new THREE.Mesh(hg,mat);
+    this.g.add(this.cyl,this.cone);
+  }
+  setVec(origin,v){
+    const len=v.length();
+    if(len<1e-4){this.g.visible=false;return;}
+    this.g.visible=true;
+    this.g.position.copy(origin);
+    this.g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.clone().normalize());
+    const h=clamp(len*.26,.09,.34),L=Math.max(len-h,.002);
+    this.cyl.scale.set(1,L,1);
+    this.cone.scale.set(h*.62,h,h*.62);this.cone.position.y=L;
+  }
+}
+function makeLabel(txt,color){
+  const c=document.createElement("canvas");c.width=384;c.height=96;
+  const x=c.getContext("2d");
+  const tex=new THREE.CanvasTexture(c);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  sp.scale.set(1.5,.375,1);sp.renderOrder=99;
+  const draw=t=>{x.clearRect(0,0,384,96);
+    x.font="600 46px 'IBM Plex Mono',monospace";x.textAlign="center";x.textBaseline="middle";
+    x.fillStyle=color;x.fillText(t,192,50);tex.needsUpdate=true;};
+  draw(txt);
+  return {sprite:sp,draw};
+}
+
+/* symmetric 3x3 eigensolver (trigonometric method) */
+function eigSym3(m){
+  const a11=m.t11,a22=m.t22,a33=m.t33,a12=m.t12,a13=m.t13,a23=m.t23;
+  const q=(a11+a22+a33)/3, p1=a12*a12+a13*a13+a23*a23;
+  let ev;
+  if(p1<1e-12){ev=[a11,a22,a33];}
+  else{
+    const p2=(a11-q)**2+(a22-q)**2+(a33-q)**2+2*p1, p=Math.sqrt(p2/6);
+    const B=[[ (a11-q)/p,a12/p,a13/p],[a12/p,(a22-q)/p,a23/p],[a13/p,a23/p,(a33-q)/p]];
+    const detB=B[0][0]*(B[1][1]*B[2][2]-B[1][2]*B[2][1])
+              -B[0][1]*(B[1][0]*B[2][2]-B[1][2]*B[2][0])
+              +B[0][2]*(B[1][0]*B[2][1]-B[1][1]*B[2][0]);
+    const phi=Math.acos(clamp(detB/2,-1,1))/3;
+    const e1=q+2*p*Math.cos(phi), e3=q+2*p*Math.cos(phi+TAU/3), e2=3*q-e1-e3;
+    ev=[e1,e2,e3];
+  }
+  const out=ev.map(l=>{
+    const A=[[a11-l,a12,a13],[a12,a22-l,a23],[a13,a23,a33-l]];
+    let best=null,bn=1e-9;
+    for(let i=0;i<3;i++)for(let j=i+1;j<3;j++){
+      const u=A[i],v=A[j];
+      const c=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+      const n=Math.hypot(c[0],c[1],c[2]);
+      if(n>bn){bn=n;best=c;}
+    }
+    if(!best)best=Math.abs(l-a11)<1e-6?[1,0,0]:Math.abs(l-a22)<1e-6?[0,1,0]:[0,0,1];
+    const n=Math.hypot(best[0],best[1],best[2])||1;
+    return {l,v:[best[0]/n,best[1]/n,best[2]/n]};
+  });
+  out.sort((a,b)=>b.l-a.l);
+  // Gram–Schmidt polish
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+        cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
+        norm=a=>{const n=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/n,a[1]/n,a[2]/n];};
+  const v0=out[0].v;
+  let v1=[out[1].v[0]-dot(out[1].v,v0)*v0[0],out[1].v[1]-dot(out[1].v,v0)*v0[1],out[1].v[2]-dot(out[1].v,v0)*v0[2]];
+  if(Math.hypot(...v1)<1e-6){v1=Math.abs(v0[0])<.9?[1,0,0]:[0,1,0];
+    v1=[v1[0]-dot(v1,v0)*v0[0],v1[1]-dot(v1,v0)*v0[1],v1[2]-dot(v1,v0)*v0[2]];}
+  v1=norm(v1);
+  let v2=cross(v0,v1); if(dot(v2,out[2].v)<0)v2=[-v2[0],-v2[1],-v2[2]]; v2=norm(v2);
+  out[1].v=v1;out[2].v=v2;
+  return out;
+}
+
+const GL_OK=!!window.THREE;
+function glFail(id){const el=document.getElementById(id);
+  if(el)el.innerHTML='<div class="glfail">WebGL is unavailable in this browser — the laboratory is dark, but the mathematics below still stands.</div>';}
+
+/* ================================================================ 0 · masthead specimen (2D) */
+(function(){
+  const cv=$("#cv-spec"); if(!cv)return;
+  const ctx=cv.getContext("2d");
+  // fixed eigenframe
+  const L=[1.62,1.04,.60];
+  const rotX=a=>[[1,0,0],[0,Math.cos(a),-Math.sin(a)],[0,Math.sin(a),Math.cos(a)]];
+  const rotY=a=>[[Math.cos(a),0,Math.sin(a)],[0,1,0],[-Math.sin(a),0,Math.cos(a)]];
+  const mm=(a,b)=>[[0,1,2],[0,1,2],[0,1,2]].map((r,i)=>r.map((_,j)=>a[i][0]*b[0][j]+a[i][1]*b[1][j]+a[i][2]*b[2][j]));
+  const mv=(a,v)=>[a[0][0]*v[0]+a[0][1]*v[1]+a[0][2]*v[2],a[1][0]*v[0]+a[1][1]*v[1]+a[1][2]*v[2],a[2][0]*v[0]+a[2][1]*v[1]+a[2][2]*v[2]];
+  const tr=m=>[[m[0][0],m[1][0],m[2][0]],[m[0][1],m[1][1],m[2][1]],[m[0][2],m[1][2],m[2][2]]];
+  const V0=mm(rotY(.66),rotX(.42)); // columns = eigenvectors
+  const M=mm(mm(V0,[[L[0],0,0],[0,L[1],0],[0,0,L[2]]]),tr(V0));
+  const cols=[[1,0,0],[0,1,0],[0,0,1]].map(c=>mv(M,c)); // not used directly; rings via eigvecs:
+  const eigv=[[V0[0][0],V0[1][0],V0[2][0]],[V0[0][1],V0[1][1],V0[2][1]],[V0[0][2],V0[1][2],V0[2][2]]];
+  const pairs=[[0,1],[1,2],[0,2]], rc=["rgba(255,180,84,","rgba(61,220,151,","rgba(90,169,255,"];
+  const ac=["#ffb454","#3ddc97","#5aa9ff"];
+  let W=0,H=0,dpr=1;
+  function size(){const r=cv.parentElement.getBoundingClientRect();
+    dpr=Math.min(devicePixelRatio||1,2);
+    W=r.width;H=340;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  size(); new ResizeObserver(size).observe(cv.parentElement);
+  function frame(t){
+    if(!W)return;
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2, cy=H/2, S=Math.min(W,H)*.285;
+    const R=mm(rotY(t*(REDUCED?.05:.4)),rotX(.5));
+    const Mr=mm(R,M);
+    // silhouette ellipse from S = Mr Mr^T projected onto x,y
+    const S2=mm(Mr,tr(Mr));
+    const A=S2[0][0],Bc=S2[0][1],C=S2[1][1];
+    const tr2=A+C, det=A*C-Bc*Bc, disc=Math.sqrt(Math.max(tr2*tr2/4-det,0));
+    const l1=tr2/2+disc, l2=Math.max(tr2/2-disc,1e-6);
+    const ang=.5*Math.atan2(2*Bc,A-C);
+    // unit sphere ghost
+    ctx.save();ctx.setLineDash([3,5]);ctx.strokeStyle="rgba(148,180,255,.28)";ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(cx,cy,S,0,TAU);ctx.stroke();ctx.restore();
+    // silhouette
+    ctx.save();ctx.shadowColor="rgba(255,180,84,.5)";ctx.shadowBlur=14;
+    ctx.strokeStyle="rgba(255,180,84,.85)";ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.ellipse(cx,cy,Math.sqrt(l1)*S,Math.sqrt(l2)*S,ang,0,TAU);ctx.stroke();ctx.restore();
+    // principal-plane rings with depth alpha
+    pairs.forEach((pr,k)=>{
+      const vi=eigv[pr[0]],vj=eigv[pr[1]];
+      const Ri=mv(R,vi),Rj=mv(R,vj);
+      const N=90; let prev=null;
+      for(let i=0;i<=N;i++){
+        const u=i/N*TAU;
+        const p=[Ri[0]*L[pr[0]]*Math.cos(u)+Rj[0]*L[pr[1]]*Math.sin(u),
+                 Ri[1]*L[pr[0]]*Math.cos(u)+Rj[1]*L[pr[1]]*Math.sin(u),
+                 Ri[2]*L[pr[0]]*Math.cos(u)+Rj[2]*L[pr[1]]*Math.sin(u)];
+        const sx=cx+p[0]*S, sy=cy-p[1]*S;
+        if(prev){const zm=(prev[2]+p[2])/2, al=clamp(.14+.42*(zm+.6)/1.2,.08,.6);
+          ctx.strokeStyle=rc[k]+al+")";ctx.lineWidth=1.2;
+          ctx.beginPath();ctx.moveTo(prev[0],prev[1]);ctx.lineTo(sx,sy);ctx.stroke();}
+        prev=[sx,sy,p[2]];
+      }
+    });
+    // eigen-arrows
+    eigv.forEach((v,i)=>{
+      const w=mv(R,v), tip=[w[0]*L[i]*S,-w[1]*L[i]*S], tail=[-tip[0]*.92,-tip[1]*.92];
+      ctx.strokeStyle=ac[i];ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(cx+tail[0],cy+tail[1]);ctx.lineTo(cx+tip[0],cy+tip[1]);ctx.stroke();
+      const a=Math.atan2(tip[1],tip[0]);
+      ctx.beginPath();ctx.moveTo(cx+tip[0],cy+tip[1]);
+      ctx.lineTo(cx+tip[0]-10*Math.cos(a-.4),cy+tip[1]-10*Math.sin(a-.4));
+      ctx.moveTo(cx+tip[0],cy+tip[1]);
+      ctx.lineTo(cx+tip[0]-10*Math.cos(a+.4),cy+tip[1]-10*Math.sin(a+.4));ctx.stroke();
+      ctx.fillStyle=ac[i];ctx.font="600 11px 'IBM Plex Mono',monospace";ctx.textAlign="center";
+      ctx.fillText("λ"+(i+1)+"="+L[i].toFixed(2),cx+tip[0]*1.22,cy+tip[1]*1.22);
+    });
+  }
+  addTick((dt,t)=>frame(t));
+})();
+
+if(GL_OK){
+/* ================================================================ LAB I — linear map */
+(function(){
+  const cv=$("#cv-map"),vp=$("#vp-map");
+  let renderer;try{renderer=makeGL(cv);}catch(e){glFail("vp-map");return;}
+  const scene=new THREE.Scene();stdLights(scene);
+  const camera=new THREE.PerspectiveCamera(42,1,.1,100);
+  const orbit=new Orbit(cv,camera,{theta:.85,phi:1.02,r:6.4,min:3.4,max:12,autoSpeed:.12});
+
+  const grid=new THREE.GridHelper(7,14,0x33477a,0x1c2b4d);
+  grid.material.transparent=true;grid.material.opacity=.5;grid.position.y=-2.25;scene.add(grid);
+
+  // reference axes
+  [[ [1,0,0],0xff6b6b,"x"],[[0,1,0],0x3ddc97,"y"],[[0,0,1],0x5aa9ff,"z"]].forEach(([d,c,n])=>{
+    const dir=new THREE.Vector3(...d);
+    const a=new THREE.ArrowHelper(dir,new THREE.Vector3(),2.7,c,.22,.12);
+    a.line.material.transparent=true;a.line.material.opacity=.55;
+    a.cone.material.transparent=true;a.cone.material.opacity=.55;scene.add(a);
+    const lb=makeLabel(n,"rgba(217,228,245,.8)");lb.sprite.position.copy(dir.clone().multiplyScalar(3.05));scene.add(lb.sprite);
+  });
+
+  const ghost=new THREE.Mesh(new THREE.SphereGeometry(1,26,18),
+    new THREE.MeshBasicMaterial({color:0x8fb4ff,wireframe:true,transparent:true,opacity:.16}));
+  scene.add(ghost);
+  const ell=new THREE.Mesh(new THREE.SphereGeometry(1,48,32),
+    new THREE.MeshStandardMaterial({color:0x5aa9ff,transparent:true,opacity:.34,roughness:.3,metalness:.15,side:THREE.DoubleSide}));
+  ell.matrixAutoUpdate=false;scene.add(ell);
+  const ellw=new THREE.Mesh(new THREE.SphereGeometry(1,30,20),
+    new THREE.MeshBasicMaterial({color:0xa9c6ff,wireframe:true,transparent:true,opacity:.22}));
+  ellw.matrixAutoUpdate=false;scene.add(ellw);
+
+  const prinG=new THREE.Group();scene.add(prinG);
+  const prinCols=[0xffb454,0x3ddc97,0x5aa9ff];
+  const prinA=[0,1,2].map(i=>{const a=new Arrow3D(prinCols[i],.04);prinG.add(a.g);return a;});
+  const prinL=[0,1,2].map(i=>{const l=makeLabel("",["#ffb454","#3ddc97","#5aa9ff"][i]);prinG.add(l.sprite);return l;});
+  const basisG=new THREE.Group();scene.add(basisG);
+  const basisA=[0xff6b6b,0x3ddc97,0x5aa9ff].map(c=>{const a=new Arrow3D(c,.024);a.g.children.forEach(m=>{});basisG.add(a.g);return a;});
+
+  const O=new THREE.Vector3();
+  const ids=["mt11","mt22","mt33","mt12","mt13","mt23"];
+  function read(){return {t11:$("#mt11").valueAsNumber,t22:$("#mt22").valueAsNumber,t33:$("#mt33").valueAsNumber,
+    t12:$("#mt12").valueAsNumber,t13:$("#mt13").valueAsNumber,t23:$("#mt23").valueAsNumber};}
+  function update(){
+    const T=read();
+    const tr=T.t11+T.t22+T.t33;
+    const det=T.t11*(T.t22*T.t33-T.t23*T.t23)-T.t12*(T.t12*T.t33-T.t23*T.t13)+T.t13*(T.t12*T.t23-T.t22*T.t13);
+    const i2=T.t11*T.t22+T.t11*T.t33+T.t22*T.t33-(T.t12*T.t12+T.t13*T.t13+T.t23*T.t23);
+    const ev=eigSym3(T);
+    // ellipsoid matrix M = Σ λ v vᵀ
+    let m=[0,0,0,0,0,0,0,0,0];
+    ev.forEach(({l,v})=>{m[0]+=l*v[0]*v[0];m[1]+=l*v[0]*v[1];m[2]+=l*v[0]*v[2];
+      m[4]+=l*v[1]*v[1];m[5]+=l*v[1]*v[2];m[8]+=l*v[2]*v[2];});
+    m[3]=m[1];m[6]=m[2];m[7]=m[5];
+    const M4=new THREE.Matrix4(m[0],m[1],m[2],0, m[3],m[4],m[5],0, m[6],m[7],m[8],0, 0,0,0,1);
+    ell.matrix.copy(M4);ellw.matrix.copy(M4);
+    ev.forEach(({l,v},i)=>{
+      const vec=new THREE.Vector3(v[0]*l,v[1]*l,v[2]*l);
+      prinA[i].setVec(O,vec);
+      prinL[i].draw("λ"+(i+1)+" = "+fmt(l));
+      prinL[i].sprite.position.copy(vec.clone().multiplyScalar(1.18).add(new THREE.Vector3(0,.16,0)));
+    });
+    const c1=new THREE.Vector3(T.t11,T.t12,T.t13),c2=new THREE.Vector3(T.t12,T.t22,T.t23),c3=new THREE.Vector3(T.t13,T.t23,T.t33);
+    basisA[0].setVec(O,c1);basisA[1].setVec(O,c2);basisA[2].setVec(O,c3);
+    setCells(["mm11","mm12","mm13","mm21","mm22","mm23","mm31","mm32","mm33"],
+      [T.t11,T.t12,T.t13,T.t12,T.t22,T.t23,T.t13,T.t23,T.t33]);
+    ["ev1","ev2","ev3"].forEach((id,i)=>{const el=$("#"+id);el.textContent=fmt(ev[i].l);
+      el.className="sv "+(ev[i].l>1e-9?"pos":ev[i].l<-1e-9?"neg":"");});
+    $("#s-tr").textContent=fmt(tr);$("#s-i2").textContent=fmt(i2);$("#s-det").textContent=fmt(det);
+    const k=Math.abs(ev[2].l)>1e-6?ev[0].l/ev[2].l:Infinity;
+    $("#s-cond").textContent=isFinite(k)?fmt(Math.abs(k)):"∞";
+  }
+  ids.forEach(id=>bindRange(id,update));
+  $("#tg-sphere").addEventListener("change",e=>ghost.visible=e.target.checked);
+  $("#tg-basis").addEventListener("change",e=>basisG.visible=e.target.checked);
+  $("#tg-prin").addEventListener("change",e=>prinG.visible=e.target.checked);
+  $("#tg-spin").addEventListener("change",e=>orbit.auto=e.target.checked);
+  update();
+  watch(vp,()=>{const w=vp.clientWidth,h=vp.clientHeight;renderer.setSize(w,h,false);
+    camera.aspect=w/h;camera.updateProjectionMatrix();});
+  addTick(dt=>{orbit.update(dt);renderer.render(scene,camera);});
+})();
+
+/* ================================================================ LAB III — stress */
+(function(){
+  const cv=$("#cv-stress"),vp=$("#vp-stress");
+  let renderer;try{renderer=makeGL(cv);}catch(e){glFail("vp-stress");return;}
+  const scene=new THREE.Scene();stdLights(scene);
+  const camera=new THREE.PerspectiveCamera(42,1,.1,100);
+  const orbit=new Orbit(cv,camera,{theta:1.1,phi:1.0,r:5.6,min:3,max:11,autoSpeed:.08});
+
+  const cube=new THREE.Mesh(new THREE.BoxGeometry(1.3,1.3,1.3),
+    new THREE.MeshStandardMaterial({color:0x3b5986,transparent:true,opacity:.13,roughness:.6,side:THREE.DoubleSide}));
+  scene.add(cube);
+  const edges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.3,1.3,1.3)),
+    new THREE.LineBasicMaterial({color:0x7f97c0,transparent:true,opacity:.9}));
+  scene.add(edges);
+
+  // face tractions (columns of σ) + face normal stubs
+  const faceG=new THREE.Group();scene.add(faceG);
+  const faceCols=[0xff6b6b,0x3ddc97,0x5aa9ff];
+  const faceA=[0,1,2].map(i=>{const a=new Arrow3D(faceCols[i],.024);faceG.add(a.g);return a;});
+  const faceN=[[.65,0,0],[0,.65,0],[0,0,.65]].map(p=>{
+    const a=new THREE.ArrowHelper(new THREE.Vector3(...p).normalize(),new THREE.Vector3(...p),.35,0x7f97c0,.12,.07);
+    a.line.material.transparent=true;a.line.material.opacity=.5;faceG.add(a);return a;});
+
+  const wire=new THREE.Mesh(new THREE.SphereGeometry(1.58,28,20),
+    new THREE.MeshBasicMaterial({color:0x5aa9ff,wireframe:true,transparent:true,opacity:.06}));
+  scene.add(wire);
+
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.05),
+    new THREE.MeshBasicMaterial({color:0xffb454,transparent:true,opacity:.24,side:THREE.DoubleSide}));
+  scene.add(plane);
+  const pedge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.05,1.05)),
+    new THREE.LineBasicMaterial({color:0xffb454,transparent:true,opacity:.85}));
+  scene.add(pedge);
+
+  const nA=new Arrow3D(0xe8eefc,.03);scene.add(nA.g);
+  const tA=new Arrow3D(0xffb454,.045);scene.add(tA.g);
+  const tnA=new Arrow3D(0x5aa9ff,.03);scene.add(tnA.g);
+  const tsA=new Arrow3D(0xff6b6b,.03);scene.add(tsA.g);
+
+  const Z=new THREE.Vector3(0,0,1);
+  function readS(){return {t11:$("#s11").valueAsNumber,t22:$("#s22").valueAsNumber,t33:$("#s33").valueAsNumber,
+    t12:$("#s12").valueAsNumber,t13:$("#s13").valueAsNumber,t23:$("#s23").valueAsNumber};}
+  let mohrState=null;
+  function update(){
+    const S=readS();
+    const th=$("#sth").valueAsNumber*D2R, ph=$("#sph").valueAsNumber*D2R;
+    const n=new THREE.Vector3(Math.sin(th)*Math.cos(ph),Math.cos(th),Math.sin(th)*Math.sin(ph));
+    const mul=v=>new THREE.Vector3(
+      S.t11*v.x+S.t12*v.y+S.t13*v.z,
+      S.t12*v.x+S.t22*v.y+S.t23*v.z,
+      S.t13*v.x+S.t23*v.y+S.t33*v.z);
+    // face tractions
+    faceA[0].setVec(new THREE.Vector3(.65,0,0),mul(new THREE.Vector3(1,0,0)).multiplyScalar(.5));
+    faceA[1].setVec(new THREE.Vector3(0,.65,0),mul(new THREE.Vector3(0,1,0)).multiplyScalar(.5));
+    faceA[2].setVec(new THREE.Vector3(0,0,.65),mul(new THREE.Vector3(0,0,1)).multiplyScalar(.5));
+    // plane
+    const p=n.clone().multiplyScalar(1.08);
+    plane.position.copy(p);pedge.position.copy(p);
+    const q=new THREE.Quaternion().setFromUnitVectors(Z,n);
+    plane.quaternion.copy(q);pedge.quaternion.copy(q);
+    // traction & decomposition
+    const t=mul(n);
+    const sn=t.dot(n);
+    const tn=n.clone().multiplyScalar(sn);
+    const ts=t.clone().sub(tn);
+    const tau=ts.length();
+    nA.setVec(new THREE.Vector3(),n.clone().multiplyScalar(1.62));
+    tA.setVec(p,t.clone().multiplyScalar(.85));
+    tnA.setVec(p,tn.clone().multiplyScalar(.85));
+    tsA.setVec(p.clone().add(tn.clone().multiplyScalar(.85)),ts.clone().multiplyScalar(.85));
+    // principal
+    const ev=eigSym3(S);
+    $("#sp1").textContent=fmt(ev[0].l);$("#sp2").textContent=fmt(ev[1].l);$("#sp3").textContent=fmt(ev[2].l);
+    $("#st-tmag").textContent=fmt(t.length());
+    const snEl=$("#st-sn");snEl.textContent=fmt(sn);snEl.className="sv "+(sn>=0?"pos":"neg");
+    $("#st-tau").textContent=fmt(tau);
+    $("#st-tmax").textContent=fmt((ev[0].l-ev[2].l)/2);
+    mohrState={e:ev.map(x=>x.l),sn,tau};
+    drawMohr();
+  }
+  // Mohr's circle canvas
+  const mcv=$("#cv-mohr"),mctx=mcv.getContext("2d");let mW=0,mH=0,mdpr=1;
+  function msize(){const r=mcv.parentElement.getBoundingClientRect();
+    mdpr=Math.min(devicePixelRatio||1,2);mW=r.width;mH=r.height;
+    mcv.width=mW*mdpr;mcv.height=mH*mdpr;mctx.setTransform(mdpr,0,0,mdpr,0,0);}
+  msize();watch(mcv.parentElement,()=>{msize();drawMohr();});
+  function drawMohr(){
+    if(!mohrState||!mW)return;
+    const {e,sn,tau}=mohrState;const [s1,s2,s3]=e;
+    mctx.clearRect(0,0,mW,mH);
+    const pad=1.15*Math.max((s1-s3)/2,Math.abs(tau),.4)+.5;
+    const lo=Math.min(s3,sn)-pad, hi=Math.max(s1,sn)+pad, tmax=pad;
+    const mL=54,mR=18,mT=18,mB=34;
+    const X=v=>mL+(v-lo)/(hi-lo)*(mW-mL-mR);
+    const Y=v=>mT+(1-(v+tmax)/(2*tmax))*(mH-mT-mB);
+    // grid
+    mctx.strokeStyle="rgba(148,180,255,.08)";mctx.lineWidth=1;
+    for(let g=Math.ceil(lo);g<=hi;g++){mctx.beginPath();mctx.moveTo(X(g),mT);mctx.lineTo(X(g),mH-mB);mctx.stroke();}
+    // axes
+    mctx.strokeStyle="rgba(148,180,255,.35)";
+    mctx.beginPath();mctx.moveTo(mL,Y(0));mctx.lineTo(mW-mR,Y(0));mctx.stroke();
+    mctx.beginPath();mctx.moveTo(X(0),mT);mctx.lineTo(X(0),mH-mB);mctx.stroke();
+    mctx.fillStyle="rgba(154,171,201,.9)";mctx.font="11px 'IBM Plex Mono',monospace";
+    mctx.fillText("σ",mW-mR-4,Y(0)-8);mctx.fillText("τ",X(0)+8,mT+10);
+    mctx.textAlign="center";
+    [s1,s2,s3].forEach((s,i)=>{mctx.fillText("σ"+(i+1),X(s),Y(0)+16);});
+    mctx.textAlign="left";
+    // circles
+    const circles=[[s1,s3,"rgba(255,180,84,.9)"],[s1,s2,"rgba(255,180,84,.35)"],[s2,s3,"rgba(255,180,84,.35)"]];
+    const kx=(mW-mL-mR)/(hi-lo), ky=(mH-mT-mB)/(2*tmax);
+    // region fill: big circle minus two smalls
+    mctx.save();
+    mctx.beginPath();mctx.ellipse(X((s1+s3)/2),Y(0),(s1-s3)/2*kx,(s1-s3)/2*ky,0,0,TAU);
+    mctx.fillStyle="rgba(255,180,84,.10)";mctx.fill();
+    mctx.globalCompositeOperation="destination-out";
+    [[s1,s2],[s2,s3]].forEach(([a,b])=>{mctx.beginPath();
+      mctx.ellipse(X((a+b)/2),Y(0),Math.abs(a-b)/2*kx,Math.abs(a-b)/2*ky,0,0,TAU);mctx.fill();});
+    mctx.restore();
+    circles.forEach(([a,b,col])=>{const r=Math.abs(a-b)/2;
+      if(r<1e-6)return;
+      mctx.strokeStyle=col;mctx.lineWidth=a===s1&&b===s3?1.8:1.2;
+      mctx.beginPath();mctx.ellipse(X((a+b)/2),Y(0),r*kx,r*ky,0,0,TAU);mctx.stroke();});
+    // current point
+    if(sn>=lo&&sn<=hi){
+      [tau,-tau].forEach(tv=>{
+        mctx.save();mctx.shadowColor="rgba(255,180,84,.9)";mctx.shadowBlur=12;
+        mctx.fillStyle="#ffb454";mctx.beginPath();mctx.arc(X(sn),Y(tv),4.5,0,TAU);mctx.fill();mctx.restore();});
+      mctx.fillStyle="rgba(255,180,84,.95)";mctx.font="600 11px 'IBM Plex Mono',monospace";
+      mctx.fillText("("+fmt(sn)+", "+fmt(Math.abs(tau))+")",X(sn)+9,Y(-tau)+4);
+    }
+  }
+  ["s11","s22","s33","s12","s13","s23","sth","sph"].forEach(id=>bindRange(id,update));
+  update();
+  watch(vp,()=>{const w=vp.clientWidth,h=vp.clientHeight;renderer.setSize(w,h,false);
+    camera.aspect=w/h;camera.updateProjectionMatrix();});
+  addTick(dt=>{orbit.update(dt);renderer.render(scene,camera);});
+})();
+
+/* ================================================================ LAB IV — parallel transport */
+(function(){
+  const cv=$("#cv-transp"),vp=$("#vp-transp");
+  let renderer;try{renderer=makeGL(cv);}catch(e){glFail("vp-transp");return;}
+  const scene=new THREE.Scene();stdLights(scene);
+  const camera=new THREE.PerspectiveCamera(42,1,.1,100);
+  const orbit=new Orbit(cv,camera,{theta:.95,phi:.95,r:4.3,min:2.4,max:9,autoSpeed:.1});
+
+  const sph=new THREE.Mesh(new THREE.SphereGeometry(1,48,32),
+    new THREE.MeshStandardMaterial({color:0x1d2c49,roughness:.85,metalness:.05,transparent:true,opacity:.97}));
+  scene.add(sph);
+  const grat=new THREE.Mesh(new THREE.SphereGeometry(1.003,24,16),
+    new THREE.MeshBasicMaterial({color:0x6f87b8,wireframe:true,transparent:true,opacity:.12}));
+  scene.add(grat);
+
+  const loopG=new THREE.Group();scene.add(loopG);
+  const ghostG=new THREE.Group();scene.add(ghostG);
+  const cur=new Arrow3D(0xffb454,.05);scene.add(cur.g);
+  const startMark=new THREE.Mesh(new THREE.SphereGeometry(.035,12,10),
+    new THREE.MeshBasicMaterial({color:0xffffff}));scene.add(startMark);
+  let refA=null;
+
+  const N=480;let pts=[],vecs=[],playing=!REDUCED,u=0;
+  function pt(th0,ph){return new THREE.Vector3(Math.sin(th0)*Math.cos(ph),Math.cos(th0),Math.sin(th0)*Math.sin(ph));}
+  function recompute(){
+    const th0=$("#trth").valueAsNumber*D2R;
+    pts=[];vecs=[];
+    let p=pt(th0,0);
+    let V=new THREE.Vector3(Math.cos(th0),-Math.sin(th0),0); // e_θ at φ=0
+    pts.push(p.clone());vecs.push(V.clone());
+    for(let i=1;i<=N;i++){
+      const ph=i/N*TAU, np=pt(th0,ph);
+      const nn=np.clone(); // R=1
+      V=V.clone().sub(nn.multiplyScalar(V.dot(nn)));V.normalize();
+      pts.push(np);vecs.push(V.clone());p=np;
+    }
+    // loop line
+    while(loopG.children.length){const c=loopG.children.pop();c.geometry&&c.geometry.dispose();c.material&&c.material.dispose();}
+    const g=new THREE.BufferGeometry().setFromPoints(pts);
+    loopG.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0xffb454,transparent:true,opacity:.9})));
+    // ghosts
+    while(ghostG.children.length){const c=ghostG.children.pop();c.dispose&&c.dispose();}
+    for(let k=1;k<=18;k++){
+      const i=Math.floor(k/18*N);
+      const a=new THREE.ArrowHelper(vecs[i].clone(),pts[i],.42,0x67e8f9,.14,.08);
+      a.line.material.transparent=true;a.line.material.opacity=.45;
+      a.cone.material.transparent=true;a.cone.material.opacity=.45;
+      ghostG.add(a);
+    }
+    // reference initial vector
+    if(refA){scene.remove(refA);refA.dispose&&refA.dispose();}
+    refA=new THREE.ArrowHelper(vecs[0].clone(),pts[0],.75,0xe8eefc,.18,.1);
+    refA.line.material.transparent=true;refA.line.material.opacity=.85;scene.add(refA);
+    startMark.position.copy(pts[0]);
+    // stats
+    const hol=TAU*(1-Math.cos(th0));
+    $("#tr-hol").textContent=fmt(hol/D2R,1)+"°";
+    $("#tr-omega").textContent=fmt(hol,2)+" sr";
+    $("#tr-area").textContent=fmt(hol,2)+" R²";
+    $("#tr-len").textContent=fmt(TAU*Math.sin(th0),2);
+  }
+  function setTh(v){$("#trth").value=v;$("#o-trth").textContent=fmt(v,2);recompute();}
+  bindRange("trth",recompute);
+  bindRange("trsp");
+  $("#tr-play").addEventListener("click",e=>{playing=!playing;
+    e.currentTarget.textContent=playing?"❚❚ pause":"▶ play";
+    e.currentTarget.setAttribute("aria-pressed",playing);});
+  $("#tr-eq").addEventListener("click",()=>setTh(90));
+  $("#tr-pole").addEventListener("click",()=>setTh(16));
+  recompute();
+  watch(vp,()=>{const w=vp.clientWidth,h=vp.clientHeight;renderer.setSize(w,h,false);
+    camera.aspect=w/h;camera.updateProjectionMatrix();});
+  addTick(dt=>{
+    orbit.update(dt);
+    if(playing)u=(u+dt*$("#trsp").valueAsNumber*.14)%1;
+    const f=u*N, i=Math.floor(f), s=f-i;
+    const p=pts[i].clone().lerp(pts[Math.min(i+1,N)],s);
+    const V=vecs[i].clone().lerp(vecs[Math.min(i+1,N)],s).normalize().multiplyScalar(.8);
+    cur.setVec(p,V);
+    renderer.render(scene,camera);
+  });
+})();
+}else{["vp-map","vp-stress","vp-transp"].forEach(glFail);}
+
+/* ================================================================ LAB II — bases & duality (2D) */
+(function(){
+  const cv=$("#cv-basis"),vp=$("#vp-basis"),ctx=cv.getContext("2d");
+  let W=0,H=0,dpr=1;
+  function size(){const r=vp.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);
+    W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw();}
+  const state={V:{x:1,y:.8}};
+  function basis(){const th=$("#btheta").valueAsNumber*D2R;
+    return {e1:{x:1,y:0},e2:{x:Math.cos(th),y:Math.sin(th)},c:Math.cos(th),s:Math.sin(th)};}
+  function comps(){ // contravariant components of state.V in current basis
+    const b=basis();
+    const c2=state.V.y/b.s, c1=state.V.x-c2*b.c;
+    return {v1:c1,v2:c2};}
+  function draw(){
+    if(!W)return;
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2,cy=H/2,S=Math.min(W,H)/5.4;
+    const X=p=>cx+p.x*S, Y=p=>cy-p.y*S;
+    const b=basis();
+    // grid
+    ctx.strokeStyle="rgba(148,180,255,.07)";ctx.lineWidth=1;
+    for(let g=-2.5;g<=2.5;g+=.5){
+      ctx.beginPath();ctx.moveTo(X({x:g,y:-2.6}),Y({x:g,y:-2.6}));ctx.lineTo(X({x:g,y:2.6}),Y({x:g,y:2.6}));ctx.stroke();
+      ctx.beginPath();ctx.moveTo(X({x:-2.6,y:g}),Y({x:-2.6,y:g}));ctx.lineTo(X({x:2.6,y:g}),Y({x:2.6,y:g}));ctx.stroke();}
+    ctx.strokeStyle="rgba(148,180,255,.18)";
+    ctx.beginPath();ctx.moveTo(X({x:-2.6,y:0}),Y({x:-2.6,y:0}));ctx.lineTo(X({x:2.6,y:0}),Y({x:2.6,y:0}));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(X({x:0,y:-2.6}),Y({x:0,y:-2.6}));ctx.lineTo(X({x:0,y:2.6}),Y({x:0,y:2.6}));ctx.stroke();
+    // unit circle
+    ctx.save();ctx.setLineDash([3,5]);ctx.strokeStyle="rgba(148,180,255,.25)";
+    ctx.beginPath();ctx.arc(cx,cy,S,0,TAU);ctx.stroke();ctx.restore();
+
+    const v=state.V;
+    const cov={x:v.x*b.e1.x+v.y*b.e1.y /*v·e1*/, y:v.x*b.e2.x+v.y*b.e2.y /*v·e2*/};
+    const s2=b.s*b.s;
+    const E1={x:(1*b.e1.x-b.c*b.e2.x)/s2, y:(1*b.e1.y-b.c*b.e2.y)/s2};
+    const E2={x:(-b.c*b.e1.x+1*b.e2.x)/s2, y:(-b.c*b.e1.y+1*b.e2.y)/s2};
+    const comp=comps();
+    const arrow=(p,q,color,w,dash)=>{
+      ctx.save();if(dash)ctx.setLineDash(dash);
+      ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w;
+      ctx.beginPath();ctx.moveTo(X(p),Y(p));ctx.lineTo(X(q),Y(q));ctx.stroke();
+      const a=Math.atan2(-(q.y-p.y),(q.x-p.x));
+      const L=Math.hypot(q.x-p.x,q.y-p.y);
+      if(L>.05){const hx=X(q),hy=Y(q);
+        ctx.beginPath();ctx.moveTo(hx,hy);
+        ctx.lineTo(hx-9*Math.cos(a-.38),hy+9*Math.sin(a-.38));
+        ctx.lineTo(hx-9*Math.cos(a+.38),hy+9*Math.sin(a+.38));
+        ctx.closePath();ctx.fill();}
+      ctx.restore();};
+    const O={x:0,y:0};
+    const add=(p,q,k=1)=>({x:p.x+q.x*k,y:p.y+q.y*k});
+    const mul=(q,k)=>({x:q.x*k,y:q.y*k});
+
+    // dual parallelogram (cyan): v = v₁E¹ + v₂E²
+    ctx.fillStyle="rgba(103,232,249,.06)";
+    ctx.beginPath();ctx.moveTo(X(O),Y(O));ctx.lineTo(X(add(O,mul(E1,cov.x))),Y(add(O,mul(E1,cov.x))));
+    ctx.lineTo(X(v),Y(v));ctx.lineTo(X(add(O,mul(E2,cov.y))),Y(add(O,mul(E2,cov.y))));
+    ctx.closePath();ctx.fill();
+    // primal parallelogram (amber)
+    ctx.fillStyle="rgba(255,180,84,.09)";
+    ctx.beginPath();ctx.moveTo(X(O),Y(O));ctx.lineTo(X(add(O,mul(b.e1,comp.v1))),Y(add(O,mul(b.e1,comp.v1))));
+    ctx.lineTo(X(v),Y(v));ctx.lineTo(X(add(O,mul(b.e2,comp.v2))),Y(add(O,mul(b.e2,comp.v2))));
+    ctx.closePath();ctx.fill();
+    // perpendicular projections (covariant)
+    const f1=mul(b.e1,cov.x), f2=mul(b.e2,cov.y);
+    ctx.save();ctx.setLineDash([2,4]);ctx.strokeStyle="rgba(103,232,249,.5)";ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(X(v),Y(v));ctx.lineTo(X(f1),Y(f1));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(X(v),Y(v));ctx.lineTo(X(f2),Y(f2));ctx.stroke();ctx.restore();
+    // dual basis (dashed)
+    arrow(O,E1,"rgba(103,232,249,.8)",1.6,[6,4]);
+    arrow(O,E2,"rgba(103,232,249,.8)",1.6,[6,4]);
+    // primal basis
+    arrow(O,b.e1,"#ffb454",2.8);
+    arrow(O,b.e2,"#3ddc97",2.8);
+    // component arrows
+    arrow(O,mul(b.e1,comp.v1),"rgba(255,180,84,.95)",2.2);
+    arrow(O,mul(b.e2,comp.v2),"rgba(255,180,84,.95)",2.2);
+    arrow(O,mul(E1,cov.x),"rgba(103,232,249,.95)",1.8,[5,3]);
+    arrow(O,mul(E2,cov.y),"rgba(103,232,249,.95)",1.8,[5,3]);
+    // the vector itself
+    arrow(O,v,"#e8eefc",3.4);
+    // tip knob
+    ctx.beginPath();ctx.arc(X(v),Y(v),7,0,TAU);
+    ctx.fillStyle="rgba(232,238,252,.15)";ctx.fill();
+    ctx.strokeStyle="#e8eefc";ctx.lineWidth=1.6;ctx.stroke();
+    // labels
+    ctx.font="italic 600 15px 'STIX Two Text',serif";ctx.fillStyle="#ffb454";
+    ctx.fillText("ê₁",X(mul(b.e1,1.16)),Y(mul(b.e1,1.16)));
+    ctx.fillStyle="#3ddc97";ctx.fillText("ê₂",X(mul(b.e2,1.16)),Y(mul(b.e2,1.16)));
+    ctx.fillStyle="rgba(103,232,249,.9)";ctx.font="italic 600 13px 'STIX Two Text',serif";
+    ctx.fillText("e¹",X(mul(E1,1.1)),Y(mul(E1,1.1)));
+    ctx.fillText("e²",X(mul(E2,1.1)),Y(mul(E2,1.1)));
+    ctx.fillStyle="#e8eefc";ctx.font="italic 600 16px 'STIX Two Text',serif";
+    ctx.fillText("v",X(add(v,{x:.08,y:.1})),Y(add(v,{x:.08,y:.1})));
+    ctx.font="600 11px 'IBM Plex Mono',monospace";ctx.fillStyle="rgba(255,180,84,.95)";
+    ctx.fillText("v¹="+fmt(comp.v1),X(add(O,mul(b.e1,comp.v1*.55)))+8,Y(add(O,mul(b.e1,comp.v1*.55)))-8);
+    ctx.fillText("v²="+fmt(comp.v2),X(add(O,mul(b.e2,comp.v2*.55)))+8,Y(add(O,mul(b.e2,comp.v2*.55)))-4);
+    ctx.fillStyle="rgba(103,232,249,.95)";
+    ctx.fillText("v₁="+fmt(cov.x),X(mul(E1,cov.x*.6))+8,Y(mul(E1,cov.x*.6))+14);
+    ctx.fillText("v₂="+fmt(cov.y),X(mul(E2,cov.y*.6))-42,Y(mul(E2,cov.y*.6))-8);
+  }
+  function panel(){
+    const b=basis(),comp=comps(),v=state.V;
+    const cov={x:v.x*b.e1.x+v.y*b.e1.y,y:v.x*b.e2.x+v.y*b.e2.y};
+    const s2=b.s*b.s;
+    setCells(["g11","g12","g21","g22"],[1,b.c,b.c,1]);
+    setCells(["gi11","gi12","gi21","gi22"],[1/s2,-b.c/s2,-b.c/s2,1/s2]);
+    $("#c-up1").textContent=fmt(comp.v1);$("#c-up2").textContent=fmt(comp.v2);
+    $("#c-dn1").textContent=fmt(cov.x);$("#c-dn2").textContent=fmt(cov.y);
+    const nn=v.x*v.x+v.y*v.y;
+    $("#c-norm").textContent=fmt(nn);
+    $("#c-check").textContent=fmt(comp.v1*cov.x+comp.v2*cov.y);
+  }
+  // bindings — vector kept geometrically fixed when basis shears
+  bindRange("btheta",()=>{const comp=comps();
+    $("#bv1").value=clamp(comp.v1,-1.8,1.8);$("#o-bv1").textContent=fmt(clamp(comp.v1,-1.8,1.8));
+    $("#bv2").value=clamp(comp.v2,-1.8,1.8);$("#o-bv2").textContent=fmt(clamp(comp.v2,-1.8,1.8));
+    draw();panel();});
+  bindRange("bv1",v1=>{const b=basis();state.V={x:v1+$("#bv2").valueAsNumber*b.c,y:$("#bv2").valueAsNumber*b.s};draw();panel();});
+  bindRange("bv2",v2=>{const b=basis();state.V={x:$("#bv1").valueAsNumber+v2*b.c,y:v2*b.s};draw();panel();});
+  $("#p-ortho").addEventListener("click",()=>{$("#btheta").value=90;$("#o-btheta").textContent="90.00";draw();panel();});
+  $("#p-sixty").addEventListener("click",()=>{$("#btheta").value=60;$("#o-btheta").textContent="60.00";draw();panel();});
+  // drag tip
+  let drag=false;
+  const toWorld=e=>{const r=cv.getBoundingClientRect(),S=Math.min(r.width,r.height)/5.4;
+    return {x:(e.clientX-r.left-r.width/2)/S, y:-(e.clientY-r.top-r.height/2)/S};};
+  cv.addEventListener("pointerdown",e=>{const p=toWorld(e);
+    if(Math.hypot(p.x-state.V.x,p.y-state.V.y)<.22){drag=true;cv.setPointerCapture(e.pointerId);cv.style.cursor="grabbing";}});
+  cv.addEventListener("pointermove",e=>{const p=toWorld(e);
+    if(drag){const b=basis();
+      let c2=p.y/b.s, c1=p.x-c2*b.c;
+      c1=clamp(c1,-1.8,1.8);c2=clamp(c2,-1.8,1.8);
+      state.V={x:c1+c2*b.c,y:c2*b.s};
+      $("#bv1").value=c1;$("#o-bv1").textContent=fmt(c1);
+      $("#bv2").value=c2;$("#o-bv2").textContent=fmt(c2);
+      draw();panel();}
+    else cv.style.cursor=Math.hypot(p.x-state.V.x,p.y-state.V.y)<.22?"grab":"crosshair";});
+  cv.addEventListener("pointerup",()=>{drag=false;cv.style.cursor="crosshair";});
+  size();watch(vp,size);
+  draw();panel();
+})();
+</script>
+</body>
+</html>

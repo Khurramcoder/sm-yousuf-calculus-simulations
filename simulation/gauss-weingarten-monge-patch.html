@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gauss–Weingarten Equations · Monge Patch</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+  :root{
+    --ink:        #0d151f;
+    --ink-2:      #14202e;
+    --parchment:  #f4ecd9;
+    --parchment-2:#ece1c8;
+    --indigo:     #24344a;
+    --brass:      #c9973f;
+    --brass-dim:  #8f6c2e;
+    --teal:       #4f8a72;
+    --rust:       #b6532a;
+    --gold:       #d8b463;
+    --rule:       rgba(244,236,217,0.14);
+    --rule-dark:  rgba(13,21,31,0.12);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--parchment);
+    font-family:'Lora', serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{background:var(--brass); color:var(--ink);}
+
+  a{color:var(--gold);}
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    position:relative;
+    padding:96px 0 48px;
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(201,151,63,0.10), transparent 55%),
+      radial-gradient(ellipse at 85% 20%, rgba(79,138,114,0.08), transparent 50%),
+      var(--ink);
+    border-bottom:1px solid var(--rule);
+    overflow:hidden;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--brass);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:26px; height:1px; background:var(--brass);
+    display:inline-block;
+  }
+  h1.title{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:clamp(38px, 6vw, 68px);
+    line-height:1.02;
+    margin:18px 0 6px;
+    letter-spacing:0.002em;
+  }
+  h1.title em{
+    font-style:italic;
+    color:var(--brass);
+    font-weight:500;
+  }
+  .subtitle{
+    font-family:'Lora', serif;
+    font-style:italic;
+    color:#cdbf9c;
+    font-size:18px;
+    max-width:640px;
+    margin:0 0 40px;
+  }
+
+  /* ---------- 3D PANEL ---------- */
+  .stage{
+    display:grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap:0;
+    border:1px solid var(--rule);
+    background:var(--ink-2);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  @media (max-width: 880px){ .stage{grid-template-columns:1fr;} }
+
+  .canvas-holder{
+    position:relative;
+    aspect-ratio: 4 / 3;
+    background:
+      radial-gradient(circle at 50% 30%, #17253590, #0b1119 75%);
+    cursor:grab;
+  }
+  .canvas-holder:active{cursor:grabbing;}
+  .canvas-holder canvas{display:block; width:100%; height:100%;}
+
+  .canvas-caption{
+    position:absolute; left:16px; bottom:14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.04em;
+    color:#8ea0b3;
+    pointer-events:none;
+  }
+  .legend{
+    position:absolute; top:14px; right:16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    display:flex; flex-direction:column; gap:6px;
+    pointer-events:none;
+    text-align:right;
+  }
+  .legend span{display:inline-flex; align-items:center; gap:7px; justify-content:flex-end;}
+  .legend i{width:16px; height:2px; display:inline-block; border-radius:1px;}
+
+  .control-panel{
+    background:linear-gradient(180deg, #16222f, #121b26);
+    padding:28px 26px;
+    display:flex; flex-direction:column;
+    gap:22px;
+  }
+  .control-panel h3{
+    font-family:'Cormorant Garamond', serif;
+    font-size:21px; font-weight:600;
+    margin:0;
+    color:var(--parchment);
+    border-bottom:1px solid var(--rule);
+    padding-bottom:10px;
+  }
+  .slider-row label{
+    display:flex; justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; color:#a8b8c6;
+    margin-bottom:6px;
+  }
+  .slider-row label b{color:var(--gold); font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;
+    width:100%; height:3px;
+    background:var(--indigo);
+    border-radius:2px;
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--brass);
+    border:2px solid #0d151f;
+    cursor:pointer;
+    margin-top:-1px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--brass); border:2px solid #0d151f; cursor:pointer;
+  }
+
+  .readout{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    row-gap:9px; column-gap:10px;
+    padding-top:6px;
+    border-top:1px solid var(--rule);
+  }
+  .readout div{display:flex; justify-content:space-between; gap:8px;}
+  .readout .k{color:#8ea0b3;}
+  .readout .v{color:var(--parchment); font-weight:500;}
+  .readout .v.hi{color:var(--brass);}
+
+  .hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:#69798a;
+    letter-spacing:0.03em;
+  }
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{background:var(--parchment); color:#1c1712;}
+  section.leaf{
+    position:relative;
+    padding:64px 0 64px 84px;
+    border-bottom:1px solid var(--rule-dark);
+  }
+  section.leaf::before{
+    content:attr(data-mark);
+    position:absolute;
+    left:0; top:66px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--brass-dim);
+    writing-mode:vertical-rl;
+    letter-spacing:0.08em;
+  }
+  section.leaf .wrap{padding-left:0;}
+
+  .leaf-kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--rust);
+    margin-bottom:10px;
+  }
+  h2.leaf-title{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:clamp(26px,3.4vw,36px);
+    margin:0 0 20px;
+    color:#1c1712;
+  }
+  p.lede{
+    max-width:700px;
+    font-size:16.5px;
+    line-height:1.75;
+    color:#3a3225;
+    margin:0 0 28px;
+  }
+  p.lede + p.lede{margin-top:-14px;}
+
+  .eq-block{
+    background:var(--parchment-2);
+    border:1px solid rgba(28,23,18,0.10);
+    border-left:3px solid var(--brass);
+    padding:20px 26px;
+    margin:22px 0;
+    overflow-x:auto;
+    font-size:15.5px;
+  }
+  .eq-block.center{text-align:center;}
+  .eq-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px 32px;
+  }
+  @media (max-width:640px){.eq-grid{grid-template-columns:1fr;}}
+
+  .eq-num{
+    float:right;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--brass-dim);
+  }
+
+  .two-col{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:36px;
+    max-width:920px;
+  }
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--parchment-2);
+    border:1px solid rgba(28,23,18,0.10);
+    padding:20px 22px;
+  }
+  .card h4{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--rust);
+    margin:0 0 12px;
+  }
+
+  .final-block{
+    background:var(--ink);
+    color:var(--parchment);
+    border-left:3px solid var(--gold);
+    padding:30px 32px;
+    margin:26px 0 6px;
+  }
+  .final-block .eq-num{color:var(--gold);}
+
+  footer{
+    background:var(--ink);
+    color:#8194a3;
+    padding:40px 0 60px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    line-height:1.8;
+  }
+  footer a{color:var(--brass);}
+
+  .katex{font-size:1.06em;}
+  .katex-display{margin:0.4em 0;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Theory of Surfaces &nbsp;·&nbsp; Solved Problem 10.1</div>
+    <h1 class="title">The Gauss–Weingarten<br><em>Equations</em></h1>
+    <p class="subtitle">Derived for a Monge patch <span id="hero-eq"></span> — with a live surface you can turn, and a moving frame that updates as the point moves.</p>
+
+    <div class="stage">
+      <div class="canvas-holder" id="canvas-holder">
+        <div class="legend">
+          <span><i style="background:#4f8a72"></i> tangent&nbsp;<b style="color:#4f8a72">x</b><sub>u</sub></span>
+          <span><i style="background:#b6532a"></i> tangent&nbsp;<b style="color:#b6532a">x</b><sub>v</sub></span>
+          <span><i style="background:#d8b463"></i> normal&nbsp;<b style="color:#d8b463">N</b></span>
+        </div>
+        <div class="canvas-caption">drag to orbit · scroll to zoom · x = u e₁ + v e₂ + f(u,v) e₃</div>
+      </div>
+
+      <div class="control-panel">
+        <h3>Moving frame at (u, v)</h3>
+
+        <div class="slider-row">
+          <label>u &nbsp;<b id="u-val">0.00</b></label>
+          <input type="range" id="u-slider" min="-2.4" max="2.4" step="0.02" value="0.9">
+        </div>
+        <div class="slider-row">
+          <label>v &nbsp;<b id="v-val">0.00</b></label>
+          <input type="range" id="v-slider" min="-2.4" max="2.4" step="0.02" value="-0.6">
+        </div>
+
+        <div class="readout" id="readout"></div>
+        <div class="hint">values recomputed live from p, q, r, s, t at the marked point</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="leaf" data-mark="I · PATCH">
+    <div class="wrap">
+      <div class="leaf-kicker">Setting up the patch</div>
+      <h2 class="leaf-title">A surface written as a height function</h2>
+      <p class="lede">A Monge patch describes a surface as the graph of a function: every point is displaced above a plane by an amount <span class="kx">f(u,v)</span>. Fixing this simple form lets every geometric quantity — tangents, normal, curvature — collapse to derivatives of one scalar function.</p>
+
+      <div class="eq-block center">
+        $$\mathbf{x}(u,v) = u\,\mathbf{e}_1 + v\,\mathbf{e}_2 + f(u,v)\,\mathbf{e}_3$$
+      </div>
+
+      <p class="lede">Differentiating twice introduces five shorthand quantities that carry the whole computation:</p>
+
+      <div class="eq-block">
+        <div class="eq-grid">
+          <div>$$p=f_u \qquad q=f_v$$</div>
+          <div>$$r=f_{uu} \qquad s=f_{uv} \qquad t=f_{vv}$$</div>
+        </div>
+      </div>
+
+      <p class="lede">Because the base coordinates <span class="kx">u, v</span> are themselves independent directions, the tangent vectors are immediate:</p>
+
+      <div class="eq-block">
+        $$\mathbf{x}_u=\mathbf{e}_1+p\,\mathbf{e}_3 \qquad \mathbf{x}_v=\mathbf{e}_2+q\,\mathbf{e}_3 \qquad \mathbf{x}_{uu}=r\,\mathbf{e}_3 \qquad \mathbf{x}_{uv}=s\,\mathbf{e}_3 \qquad \mathbf{x}_{vv}=t\,\mathbf{e}_3$$
+      </div>
+    </div>
+  </section>
+
+  <section class="leaf" data-mark="II · METRIC">
+    <div class="wrap">
+      <div class="leaf-kicker">First fundamental form</div>
+      <h2 class="leaf-title">How the patch measures length</h2>
+      <p class="lede">Dotting the tangent vectors together gives the metric coefficients <span class="kx">E, F, G</span>, and their determinant defines the single scalar <span class="kx">g</span> that will appear under every square root from here on.</p>
+
+      <div class="two-col">
+        <div class="card">
+          <h4>Metric coefficients</h4>
+          $$E=\mathbf{x}_u\!\cdot\!\mathbf{x}_u=1+p^2$$
+          $$F=\mathbf{x}_u\!\cdot\!\mathbf{x}_v=pq$$
+          $$G=\mathbf{x}_v\!\cdot\!\mathbf{x}_v=1+q^2$$
+        </div>
+        <div class="card">
+          <h4>Determinant &amp; unit normal</h4>
+          $$g \equiv EG-F^2 = 1+p^2+q^2$$
+          $$\mathbf{N}=\frac{\mathbf{x}_u\times\mathbf{x}_v}{|\mathbf{x}_u\times\mathbf{x}_v|}=\frac{-(p\,\mathbf{e}_1+q\,\mathbf{e}_2-\mathbf{e}_3)}{\sqrt{g}}$$
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="leaf" data-mark="III · CURVATURE">
+    <div class="wrap">
+      <div class="leaf-kicker">Second fundamental form</div>
+      <h2 class="leaf-title">How the patch bends away from its tangent plane</h2>
+      <p class="lede">Projecting the second derivatives onto the unit normal <span class="kx">N</span> measures curvature directly — each coefficient is just <span class="kx">r, s, t</span> rescaled by <span class="kx">1/√g</span>:</p>
+
+      <div class="eq-block">
+        <div class="eq-grid">
+          <div>$$L=\mathbf{x}_{uu}\!\cdot\!\mathbf{N}=\dfrac{r}{\sqrt{g}}$$</div>
+          <div>$$M=\mathbf{x}_{uv}\!\cdot\!\mathbf{N}=\dfrac{s}{\sqrt{g}}$$</div>
+        </div>
+        <div style="margin-top:6px">$$\mathcal{N}=\mathbf{x}_{vv}\!\cdot\!\mathbf{N}=\dfrac{t}{\sqrt{g}}$$</div>
+      </div>
+
+      <p class="lede">Two more derivatives — of <span class="kx">E, F, G</span> themselves — will feed the Christoffel symbols below:</p>
+      <div class="eq-block center">
+        $$E_u=2pr \qquad E_v=2ps \qquad F_u=ps+qr \qquad F_v=pt+qs \qquad G_u=2qs \qquad G_v=2qt$$
+      </div>
+    </div>
+  </section>
+
+  <section class="leaf" data-mark="IV · SYMBOLS">
+    <div class="wrap">
+      <div class="leaf-kicker">Christoffel symbols &amp; Weingarten coefficients</div>
+      <h2 class="leaf-title">The two ingredients of a moving frame</h2>
+      <p class="lede">Every derivative of the frame <span class="kx">{x</span><sub>u</sub><span class="kx">, x</span><sub>v</sub><span class="kx">, N}</span> can be re-expressed in terms of the frame itself. The tangential part is governed by the Christoffel symbols <span class="kx">Γ</span>; the way the normal tilts is governed by the Weingarten coefficients <span class="kx">β</span>. For a Monge patch both reduce to clean rational expressions in <span class="kx">p, q, r, s, t</span>:</p>
+
+      <div class="two-col">
+        <div class="card">
+          <h4>Christoffel symbols</h4>
+          $$\Gamma^1_{11}=\dfrac{pr}{g}\quad \Gamma^1_{12}=\dfrac{ps}{g}\quad \Gamma^1_{22}=\dfrac{pt}{g}$$
+          $$\Gamma^2_{11}=\dfrac{qr}{g}\quad \Gamma^2_{12}=\dfrac{qs}{g}\quad \Gamma^2_{22}=\dfrac{qt}{g}$$
+        </div>
+        <div class="card">
+          <h4>Weingarten coefficients</h4>
+          $$\beta^1_1=\dfrac{spq-rq^2-r}{g^{3/2}} \qquad \beta^1_2=\dfrac{tpq-sq^2-s}{g^{3/2}}$$
+          $$\beta^2_1=\dfrac{rpq-sp^2-s}{g^{3/2}} \qquad \beta^2_2=\dfrac{spq-tp^2-t}{g^{3/2}}$$
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="leaf" data-mark="V · RESULT">
+    <div class="wrap">
+      <div class="leaf-kicker">Assembling the result</div>
+      <h2 class="leaf-title">The Gauss–Weingarten equations</h2>
+      <p class="lede">Substituting E, F, G, L, M, 𝒩 into the general Gauss and Weingarten formulas, and multiplying through by <span class="kx">g</span>, every coefficient collapses to the same handful of terms — <span class="kx">p, q, r, s, t</span> and <span class="kx">g</span> — closing the derivation.</p>
+
+      <div class="final-block">
+        $$g\,\mathbf{x}_{uu}=pr\,\mathbf{x}_u+qr\,\mathbf{x}_v+r\,g^{1/2}\mathbf{N}$$
+        $$g\,\mathbf{x}_{uv}=ps\,\mathbf{x}_u+qs\,\mathbf{x}_v+s\,g^{1/2}\mathbf{N}$$
+        $$g\,\mathbf{x}_{vv}=pt\,\mathbf{x}_u+qt\,\mathbf{x}_v+t\,g^{1/2}\mathbf{N}$$
+        <div style="height:14px"></div>
+        $$g^{3/2}\mathbf{N}_u=(spq-rq^2-r)\,\mathbf{x}_u+(rpq-sp^2-s)\,\mathbf{x}_v$$
+        $$g^{3/2}\mathbf{N}_v=(tpq-sq^2-s)\,\mathbf{x}_u+(spq-tp^2-t)\,\mathbf{x}_v$$
+      </div>
+      <p class="lede" style="margin-top:22px">Each line is exactly the Gauss formula <span class="kx">x</span><sub>ij</sub> <span class="kx">= Γ</span><sup>k</sup><sub>ij</sub><span class="kx">x</span><sub>k</sub> <span class="kx">+ L</span><sub>ij</sub><span class="kx">N</span> or Weingarten formula <span class="kx">N</span><sub>i</sub> <span class="kx">= β</span><sup>k</sup><sub>i</sub><span class="kx">x</span><sub>k</sub>, multiplied through by <span class="kx">g</span> (or <span class="kx">g</span><sup>3/2</sup>) to clear the denominators derived above.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    From Solved Problem 10.1, Theory of Surfaces — Gauss–Weingarten equations for a Monge patch.<br>
+    Interactive figure computes p, q, r, s, t analytically for f(u,v) = 1.2·sin(u)·cos(v) and updates the frame in real time.
+  </div>
+</footer>
+
+<script>
+/* ---------------- math core ---------------- */
+const A = 1.2;
+function f(u,v){ return A*Math.sin(u)*Math.cos(v); }
+function compute(u,v){
+  const p = A*Math.cos(u)*Math.cos(v);
+  const q = -A*Math.sin(u)*Math.sin(v);
+  const r = -A*Math.sin(u)*Math.cos(v);
+  const s = -A*Math.cos(u)*Math.sin(v);
+  const t = -A*Math.sin(u)*Math.cos(v);
+  const g = 1+p*p+q*q;
+  const sg = Math.sqrt(g);
+  const g32 = g*sg;
+  return {
+    p,q,r,s,t,g,sg,
+    E:1+p*p, F:p*q, G:1+q*q,
+    L:r/sg, M:s/sg, Nn:t/sg,
+    G111:p*r/g, G112:p*s/g, G122:p*t/g,
+    G211:q*r/g, G212:q*s/g, G222:q*t/g,
+    b11:(s*p*q-r*q*q-r)/g32,
+    b12:(t*p*q-s*q*q-s)/g32,
+    b21:(r*p*q-s*p*p-s)/g32,
+    b22:(s*p*q-t*p*p-t)/g32
+  };
+}
+
+/* ---------------- three.js scene ---------------- */
+const holder = document.getElementById('canvas-holder');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, holder.clientWidth/holder.clientHeight, 0.1, 100);
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(holder.clientWidth, holder.clientHeight);
+holder.appendChild(renderer.domElement);
+
+const rig = new THREE.Group();
+scene.add(rig);
+
+const key = new THREE.DirectionalLight(0xffffff, 1.1);
+key.position.set(4,6,5);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x5580aa, 0.5);
+fill.position.set(-5,-2,-4);
+scene.add(fill);
+scene.add(new THREE.AmbientLight(0x445566, 0.7));
+
+/* surface mesh: X=u, Y=f(u,v), Z=v */
+const RES = 70, RANGE = 2.9;
+const geo = new THREE.BufferGeometry();
+const positions = [], colors = [], indices = [];
+const cA = new THREE.Color('#1c3d52'), cB = new THREE.Color('#3f7a63'), cC = new THREE.Color('#c9973f');
+for(let i=0;i<=RES;i++){
+  for(let j=0;j<=RES;j++){
+    const u = -RANGE + (2*RANGE)*i/RES;
+    const v = -RANGE + (2*RANGE)*j/RES;
+    const y = f(u,v);
+    positions.push(u,y,v);
+    const h = (y+A)/(2*A);
+    const col = h<0.5 ? cA.clone().lerp(cB, h*2) : cB.clone().lerp(cC, (h-0.5)*2);
+    colors.push(col.r,col.g,col.b);
+  }
+}
+for(let i=0;i<RES;i++){
+  for(let j=0;j<RES;j++){
+    const a = i*(RES+1)+j, b = a+1, c = a+(RES+1), d = c+1;
+    indices.push(a,c,b, b,c,d);
+  }
+}
+geo.setIndex(indices);
+geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+geo.computeVertexNormals();
+const mat = new THREE.MeshStandardMaterial({vertexColors:true, side:THREE.DoubleSide, roughness:0.55, metalness:0.05, flatShading:false});
+const mesh = new THREE.Mesh(geo, mat);
+rig.add(mesh);
+
+const wire = new THREE.LineSegments(new THREE.WireframeGeometry(geo), new THREE.LineBasicMaterial({color:0x0d151f, transparent:true, opacity:0.10}));
+rig.add(wire);
+
+/* marker + arrows */
+const markerGeo = new THREE.SphereGeometry(0.055,20,20);
+const marker = new THREE.Mesh(markerGeo, new THREE.MeshStandardMaterial({color:0xf4ecd9, emissive:0x332200, emissiveIntensity:0.3}));
+rig.add(marker);
+
+function makeArrow(color){
+  const a = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,0), 1, color, 0.14, 0.07);
+  rig.add(a);
+  return a;
+}
+const arrowU = makeArrow(0x4f8a72);
+const arrowV = makeArrow(0xb6532a);
+const arrowN = makeArrow(0xd8b463);
+
+camera.position.set(4.6,3.4,5.2);
+camera.lookAt(0,0,0);
+
+/* readout element order */
+const readoutEl = document.getElementById('readout');
+const rows = [
+  ['p = f_u','p'], ['q = f_v','q'], ['g = 1+p²+q²','g'],
+  ['E','E'], ['F','F'], ['G','G'],
+  ['L','L'], ['M','M'], ['𝒩','Nn'],
+  ['Γ¹₁₁','G111'], ['Γ¹₁₂','G112'], ['Γ¹₂₂','G122'],
+  ['Γ²₁₁','G211'], ['Γ²₁₂','G212'], ['Γ²₂₂','G222'],
+  ['β¹₁','b11'], ['β¹₂','b12'], ['β²₁','b21'], ['β²₂','b22']
+];
+readoutEl.innerHTML = rows.map(([label,key])=>
+  `<div><span class="k">${label}</span><span class="v" id="ro-${key}">0.000</span></div>`
+).join('');
+
+function updateFrame(){
+  const u = parseFloat(uSlider.value), v = parseFloat(vSlider.value);
+  document.getElementById('u-val').textContent = u.toFixed(2);
+  document.getElementById('v-val').textContent = v.toFixed(2);
+
+  const c = compute(u,v);
+  rows.forEach(([label,key])=>{
+    document.getElementById('ro-'+key).textContent = c[key].toFixed(3);
+  });
+
+  const y = f(u,v);
+  marker.position.set(u,y,v);
+
+  const xu = new THREE.Vector3(1, c.p, 0).normalize();
+  const xv = new THREE.Vector3(0, c.q, 1).normalize();
+  const nrm = new THREE.Vector3(-c.p, 1, -c.q).normalize();
+
+  const base = new THREE.Vector3(u,y,v);
+  arrowU.position.copy(base); arrowU.setDirection(xu); arrowU.setLength(1.1,0.16,0.08);
+  arrowV.position.copy(base); arrowV.setDirection(xv); arrowV.setLength(1.1,0.16,0.08);
+  arrowN.position.copy(base); arrowN.setDirection(nrm); arrowN.setLength(1.0,0.15,0.075);
+}
+
+const uSlider = document.getElementById('u-slider');
+const vSlider = document.getElementById('v-slider');
+uSlider.addEventListener('input', updateFrame);
+vSlider.addEventListener('input', updateFrame);
+updateFrame();
+
+/* manual orbit controls */
+let dragging=false, lastX=0, lastY=0, rotX=-0.28, rotY=0.55, dist=7.6;
+function applyCam(){
+  const cx = dist*Math.sin(rotY)*Math.cos(rotX);
+  const cy = dist*Math.sin(rotX);
+  const cz = dist*Math.cos(rotY)*Math.cos(rotX);
+  camera.position.set(cx,cy,cz);
+  camera.lookAt(0,0,0);
+}
+applyCam();
+holder.addEventListener('pointerdown', e=>{dragging=true; lastX=e.clientX; lastY=e.clientY;});
+window.addEventListener('pointerup', ()=>dragging=false);
+window.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  const dx = e.clientX-lastX, dy = e.clientY-lastY;
+  lastX=e.clientX; lastY=e.clientY;
+  rotY += dx*0.006;
+  rotX = Math.max(-1.3, Math.min(1.3, rotX + dy*0.006));
+  applyCam();
+});
+holder.addEventListener('wheel', e=>{
+  e.preventDefault();
+  dist = Math.max(3.5, Math.min(14, dist + e.deltaY*0.01));
+  applyCam();
+}, {passive:false});
+
+function onResize(){
+  const w = holder.clientWidth, h = holder.clientHeight;
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+}
+window.addEventListener('resize', onResize);
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene,camera);
+}
+animate();
+
+/* ---------------- KaTeX render ---------------- */
+document.addEventListener('DOMContentLoaded', function(){
+  renderMathInElement(document.body, {
+    delimiters:[
+      {left:'$$', right:'$$', display:true},
+      {left:'$', right:'$', display:false}
+    ]
+  });
+  document.getElementById('hero-eq').innerHTML = katex.renderToString('\\mathbf{x}=u\\mathbf{e}_1+v\\mathbf{e}_2+f(u,v)\\mathbf{e}_3', {displayMode:false});
+});
+if(document.readyState !== 'loading'){
+  renderMathInElement(document.body, {
+    delimiters:[{left:'$$', right:'$$', display:true},{left:'$', right:'$', display:false}]
+  });
+  document.getElementById('hero-eq').innerHTML = katex.renderToString('\\mathbf{x}=u\\mathbf{e}_1+v\\mathbf{e}_2+f(u,v)\\mathbf{e}_3', {displayMode:false});
+}
+</script>
+</body>
+</html>

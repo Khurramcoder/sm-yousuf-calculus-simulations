@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Integrals 3D Explorer | Based on S.M. Yusuf's Calculus & Analytic Geometry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Georgia', 'Inter', serif;
+            background: #0f172a; 
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+        #three-canvas { width: 100%; height: 100%; display: block; }
+        .neon-cyan { color: #06b6d4; text-shadow: 0 0 10px #06b6d4; }
+        .neon-emerald { color: #10b981; text-shadow: 0 0 10px #10b981; }
+        .neon-amber { color: #f59e0b; text-shadow: 0 0 10px #f59e0b; }
+        .neon-rose { color: #f43f5e; text-shadow: 0 0 10px #f43f5e; }
+        .neon-purple { color: #a855f7; text-shadow: 0 0 10px #a855f7; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.15); }
+        .scrollbar::-webkit-scrollbar { width: 8px; }
+        .scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+        .scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+        input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            height: 6px; border-radius: 3px;
+            background: rgba(148, 163, 184, 0.2);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #06b6d4; cursor: pointer;
+            box-shadow: 0 0 10px #06b6d4;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #06b6d4; cursor: pointer; border: none;
+            box-shadow: 0 0 10px #06b6d4;
+        }
+        .tab-btn.active { background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; }
+        .card { 
+            background: rgba(30, 41, 59, 0.6); 
+            border: 1px solid rgba(148, 163, 184, 0.15); 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: rgba(6, 182, 212, 0.4); background: rgba(30, 41, 59, 0.8); }
+        .theorem-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(168, 85, 247, 0.08));
+            border-left: 4px solid #06b6d4;
+        }
+        .example-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(245, 158, 11, 0.08));
+            border-left: 4px solid #10b981;
+        }
+        .exercise-card {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.08), rgba(245, 158, 11, 0.08));
+            border-left: 4px solid #f43f5e;
+        }
+        .quiz-option {
+            cursor: pointer; padding: 12px; border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            transition: all 0.2s;
+        }
+        .quiz-option:hover { border-color: rgba(6, 182, 212, 0.5); background: rgba(6, 182, 212, 0.1); }
+        .quiz-option.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.2); }
+        .quiz-option.incorrect { border-color: #f43f5e; background: rgba(244, 63, 94, 0.2); }
+        .katex { font-size: 1em !important; }
+        .katex-display { margin: 0.5em 0 !important; }
+        #overlay-controls { pointer-events: auto; }
+        #three-container { pointer-events: none; }
+        .book-reference {
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), rgba(6, 182, 212, 0.15));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+        details summary { cursor: pointer; list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
+        details[open] summary .chevron { transform: rotate(90deg); }
+        .chevron { transition: transform 0.2s; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- Header -->
+    <header class="glass border-b border-slate-700/50 px-4 py-2 flex items-center justify-between z-50 relative">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 via-cyan-400 to-emerald-500 flex items-center justify-center">
+                <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400 bg-clip-text text-transparent leading-tight">
+                    Multiple Integrals 3D Explorer
+                </h1>
+                <p class="text-[10px] text-slate-400 leading-tight">Aligned with <em class="neon-purple text-[10px]">Calculus &amp; Analytic Geometry</em> — S.M. Yusuf</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Mode Switcher -->
+            <select id="mode-select" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-cyan-400">
+                <option value="double">§ Double Integrals</option>
+                <option value="triple">§ Triple Integrals</option>
+                <option value="centroid">§ Centroid &amp; C.G.</option>
+                <option value="moment">§ Moments of Inertia</option>
+            </select>
+            <!-- Presets -->
+            <select id="preset-select" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-cyan-400">
+                <option value="paraboloid">Paraboloid</option>
+            </select>
+            <!-- Chapter Reference -->
+            <div class="hidden md:flex items-center gap-1 px-2 py-1 bg-slate-800/50 border border-purple-500/30 rounded-lg text-xs">
+                <i data-lucide="bookmark" class="w-3 h-3 text-purple-400"></i>
+                <span id="chapter-ref" class="text-slate-300">Ch. Multiple Integration</span>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-lg bg-slate-800 border border-slate-600 hover:border-cyan-400 transition" title="Theme">
+                <i data-lucide="moon" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Left Panel: 3D Viewport -->
+        <div class="w-full lg:w-[60%] relative border-r border-slate-700/50 flex flex-col">
+            <div id="three-container" class="flex-1 relative">
+                <canvas id="three-canvas"></canvas>
+            </div>
+            <!-- Overlay Controls -->
+            <div id="overlay-controls" class="absolute bottom-4 left-4 right-4 glass rounded-xl p-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">X Min: <span id="xmin-val" class="text-cyan-400">-1.0</span></label>
+                        <input type="range" id="xmin-slider" min="-3" max="0" step="0.1" value="-1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">X Max: <span id="xmax-val" class="text-cyan-400">1.0</span></label>
+                        <input type="range" id="xmax-slider" min="0" max="3" step="0.1" value="1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">Y Min: <span id="ymin-val" class="text-emerald-400">-1.0</span></label>
+                        <input type="range" id="ymin-slider" min="-3" max="0" step="0.1" value="-1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">Y Max: <span id="ymax-val" class="text-emerald-400">1.0</span></label>
+                        <input type="range" id="ymax-slider" min="0" max="3" step="0.1" value="1" class="w-full">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-2" id="triple-controls" style="display:none;">
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">Z Min: <span id="zmin-val">-1.0</span></label>
+                        <input type="range" id="zmin-slider" min="-3" max="0" step="0.1" value="-1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">Z Max: <span id="zmax-val">1.0</span></label>
+                        <input type="range" id="zmax-slider" min="0" max="3" step="0.1" value="1" class="w-full">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 items-center">
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">Subdivisions \(n\): <span id="res-val" class="text-amber-400">10</span></label>
+                        <input type="range" id="resolution-slider" min="4" max="50" step="1" value="10" class="w-full">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] text-slate-400">Wireframe</label>
+                        <input type="checkbox" id="wireframe-toggle" class="w-4 h-4 rounded">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 mb-1 block">Opacity: <span id="opacity-val">0.70</span></label>
+                        <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.7" class="w-full">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="play-btn" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                            <i data-lucide="play" class="w-3 h-3"></i>
+                            <span>Sweep</span>
+                        </button>
+                        <button id="reset-btn" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Educational Hub -->
+        <div class="w-full lg:w-[40%] flex flex-col bg-slate-900/50">
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-700/50 overflow-x-auto">
+                <button class="tab-btn active whitespace-nowrap px-3 py-2.5 text-xs font-medium border-b-2 border-transparent transition" data-tab="concepts">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 inline mr-1"></i>
+                    Theory
+                </button>
+                <button class="tab-btn whitespace-nowrap px-3 py-2.5 text-xs font-medium border-b-2 border-transparent transition" data-tab="properties">
+                    <i data-lucide="sigma" class="w-3.5 h-3.5 inline mr-1"></i>
+                    Theorems
+                </button>
+                <button class="tab-btn whitespace-nowrap px-3 py-2.5 text-xs font-medium border-b-2 border-transparent transition" data-tab="examples">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5 inline mr-1"></i>
+                    Examples
+                </button>
+                <button class="tab-btn whitespace-nowrap px-3 py-2.5 text-xs font-medium border-b-2 border-transparent transition" data-tab="quiz">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5 inline mr-1"></i>
+                    Exercises
+                </button>
+            </div>
+            <!-- Tab Content -->
+            <div class="flex-1 overflow-y-auto scrollbar p-4">
+                <!-- Tab 1: Concepts (Theory per Yousuf's organization) -->
+                <div id="tab-concepts" class="tab-content">
+                    <div class="book-reference mb-4 flex items-center gap-2">
+                        <i data-lucide="book-marked" class="w-4 h-4 text-purple-400"></i>
+                        <span class="text-xs">Following <strong class="neon-purple">S.M. Yusuf</strong> — Chapter: <em>Multiple Integration</em></span>
+                    </div>
+                    <h2 class="text-lg font-bold mb-3 neon-cyan">§ 1. From One to Higher Dimensions</h2>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-cyan-400 text-sm">1.1 Single Integral → Area</h3>
+                        <p class="text-xs text-slate-300 mb-2">As in Yousuf §5, the definite integral of a non-negative function \(f(x)\) gives the area under the curve:</p>
+                        <div class="bg-slate-800/50 p-2 rounded" id="eq-1d"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-emerald-400 text-sm">1.2 Double Integral → Volume</h3>
+                        <p class="text-xs text-slate-300 mb-2">Extending to two variables, the double integral of \(f(x,y)\) over region \(R\) yields the volume between the surface \(z=f(x,y)\) and the xy-plane:</p>
+                        <div class="bg-slate-800/50 p-2 rounded" id="eq-2d-vol"></div>
+                        <p class="text-xs text-slate-400 mt-2">The element of area \(dA = dx\,dy\) replaces the length element \(dx\).</p>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-amber-400 text-sm">1.3 Triple Integral → Mass &amp; Volume in 3D</h3>
+                        <p class="text-xs text-slate-300 mb-2">For a solid region \(E\) with density \(\rho(x,y,z)\), the total mass is:</p>
+                        <div class="bg-slate-800/50 p-2 rounded" id="eq-3d-mass"></div>
+                        <p class="text-xs text-slate-300 mt-2">Setting \(\rho=1\) recovers the volume: \(V = \iiint_E dV\).</p>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-rose-400 text-sm">1.4 Centroid and Centre of Gravity</h3>
+                        <p class="text-xs text-slate-300 mb-2">Following Yousuf's treatment of the centre of gravity of plane areas and solid bodies:</p>
+                        <div class="bg-slate-800/50 p-2 rounded" id="eq-centroid"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-purple-400 text-sm">1.5 Moments of Inertia</h3>
+                        <p class="text-xs text-slate-300 mb-2">As detailed in Yousuf's applications chapter, the second moments about the coordinate axes:</p>
+                        <div class="bg-slate-800/50 p-2 rounded" id="eq-moments"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-3 text-amber-400 text-sm">📐 Live Computation</h3>
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Current §:</span>
+                                <span id="live-mode" class="font-medium neon-cyan">Double Integral</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Function:</span>
+                                <span id="live-function" class="font-medium text-right truncate ml-2">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Domain \(R\):</span>
+                                <span id="live-domain" class="font-medium">—</span>
+                            </div>
+                            <hr class="border-slate-700 my-1">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Riemann Sum \(\Sigma f_{ij}\Delta A\):</span>
+                                <span id="live-riemann" class="font-bold neon-amber">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Exact Integral:</span>
+                                <span id="live-exact" class="font-bold neon-emerald">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Relative Error:</span>
+                                <span id="live-error" class="font-bold neon-rose">—</span>
+                            </div>
+                            <hr class="border-slate-700 my-1">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Area / Volume:</span>
+                                <span id="live-av" class="font-medium text-cyan-300">—</span>
+                            </div>
+                            <div class="flex justify-between" id="centroid-row">
+                                <span class="text-slate-400">Centroid \((\bar x,\bar y)\):</span>
+                                <span id="live-centroid" class="font-medium text-emerald-300">—</span>
+                            </div>
+                            <div class="flex justify-between" id="moment-row">
+                                <span class="text-slate-400">\(I_x, I_y\):</span>
+                                <span id="live-moments" class="font-medium text-purple-300">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Theorems & Properties -->
+                <div id="tab-properties" class="tab-content hidden">
+                    <h2 class="text-lg font-bold mb-3 neon-cyan">Fundamental Theorems</h2>
+                    <div class="book-reference mb-3 flex items-center gap-2">
+                        <i data-lucide="scroll" class="w-4 h-4 text-purple-400"></i>
+                        <span class="text-xs">As presented in <strong>Yousuf's</strong> formal theorem-proof style</span>
+                    </div>
+                    <input type="text" id="property-search" placeholder="Search theorems..." class="w-full mb-3 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-xs focus:outline-none focus:border-cyan-400">
+                    
+                    <div id="properties-list" class="space-y-3">
+                        <!-- Fubini -->
+                        <div class="card theorem-card property-card" data-keywords="fubini order iterated switch dx dy">
+                            <h3 class="font-bold text-cyan-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="scroll-text" class="w-4 h-4"></i>
+                                Theorem (Fubini)
+                            </h3>
+                            <p class="text-[10px] text-slate-400 italic mb-2">If \(f(x,y)\) is continuous on rectangle \(R = [a,b]\times[c,d]\), then:</p>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-fubini"></div>
+                            <p class="text-xs text-slate-300">This allows us to evaluate double integrals as iterated single integrals — the computational foundation of the chapter.</p>
+                        </div>
+
+                        <!-- Linearity -->
+                        <div class="card theorem-card property-card" data-keywords="linearity linear sum scalar">
+                            <h3 class="font-bold text-emerald-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="sigma" class="w-4 h-4"></i>
+                                Theorem (Linearity)
+                            </h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-linearity"></div>
+                        </div>
+
+                        <!-- Additivity -->
+                        <div class="card theorem-card property-card" data-keywords="additivity domain region split partition">
+                            <h3 class="font-bold text-amber-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="split" class="w-4 h-4"></i>
+                                Theorem (Additivity of Domains)
+                            </h3>
+                            <p class="text-[10px] text-slate-400 italic mb-2">If \(R = R_1 \cup R_2\) with \(R_1 \cap R_2\) of zero area:</p>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-additivity"></div>
+                        </div>
+
+                        <!-- Bounds -->
+                        <div class="card theorem-card property-card" data-keywords="bound inequality minimum maximum">
+                            <h3 class="font-bold text-rose-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="ruler" class="w-4 h-4"></i>
+                                Theorem (Bounding)
+                            </h3>
+                            <p class="text-[10px] text-slate-400 italic mb-2">If \(m \le f(x,y) \le M\) on \(R\):</p>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-bound"></div>
+                        </div>
+
+                        <!-- Change of Variables / Jacobian -->
+                        <div class="card theorem-card property-card" data-keywords="change variables transformation jacobian determinant coordinate">
+                            <h3 class="font-bold text-purple-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="shuffle" class="w-4 h-4"></i>
+                                Theorem (Change of Variables)
+                            </h3>
+                            <p class="text-[10px] text-slate-400 italic mb-2">If \(x = x(u,v), y = y(u,v)\) is a \(C^1\) bijection with non-zero Jacobian:</p>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-jacobian"></div>
+                            <p class="text-xs text-slate-300 mb-3">The Jacobian determinant accounts for the distortion of area elements under the transformation.</p>
+                            
+                            <div class="grid grid-cols-3 gap-2 text-xs">
+                                <div class="bg-slate-800/50 p-2 rounded text-center">
+                                    <div class="font-bold text-cyan-300 mb-1 text-[10px] uppercase tracking-wide">Polar</div>
+                                    <div id="jacob-polar"></div>
+                                    <p class="text-[9px] text-slate-500 mt-1">\(x = r\cos\theta,\ y = r\sin\theta\)</p>
+                                </div>
+                                <div class="bg-slate-800/50 p-2 rounded text-center">
+                                    <div class="font-bold text-emerald-300 mb-1 text-[10px] uppercase tracking-wide">Cylindrical</div>
+                                    <div id="jacob-cylind"></div>
+                                    <p class="text-[9px] text-slate-500 mt-1">Adds \(z\) unchanged</p>
+                                </div>
+                                <div class="bg-slate-800/50 p-2 rounded text-center">
+                                    <div class="font-bold text-amber-300 mb-1 text-[10px] uppercase tracking-wide">Spherical</div>
+                                    <div id="jacob-sphere"></div>
+                                    <p class="text-[9px] text-slate-500 mt-1">\(\rho,\phi,\theta\)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dirichlet's Theorem -->
+                        <div class="card theorem-card property-card" data-keywords="dirichlet tetrahedron gamma beta factorial">
+                            <h3 class="font-bold text-purple-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                Dirichlet's Theorem
+                            </h3>
+                            <p class="text-[10px] text-slate-400 italic mb-2">Over the standard tetrahedron \(x+y+z \le 1,\ x,y,z \ge 0\):</p>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-dirichlet"></div>
+                            <p class="text-xs text-slate-300">A powerful tool featured in Yousuf's exercises for evaluating integrals of monomials over simplices.</p>
+                        </div>
+
+                        <!-- Beta and Gamma -->
+                        <div class="card theorem-card property-card" data-keywords="beta gamma function euler integral factorial">
+                            <h3 class="font-bold text-amber-400 mb-1 text-sm flex items-center gap-2">
+                                <i data-lucide="infinity" class="w-4 h-4"></i>
+                                Beta and Gamma Functions
+                            </h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-gamma"></div>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-beta"></div>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-beta-gamma"></div>
+                            <p class="text-xs text-slate-300">Yousuf introduces these as essential tools for evaluating definite integrals arising in multiple integration.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Worked Examples from Yousuf -->
+                <div id="tab-examples" class="tab-content hidden">
+                    <h2 class="text-lg font-bold mb-3 neon-cyan">Worked Examples</h2>
+                    <div class="book-reference mb-3 flex items-center gap-2">
+                        <i data-lucide="pencil-ruler" class="w-4 h-4 text-purple-400"></i>
+                        <span class="text-xs">Classic examples from <strong>S.M. Yusuf</strong>, with step-by-step solutions</span>
+                    </div>
+
+                    <!-- Example 1: Volume under paraboloid -->
+                    <details class="card example-card" open>
+                        <summary class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                                Example 1 — Volume under \(z = x^2 + y^2\) over \([-1,1]^2\)
+                            </h3>
+                            <i data-lucide="chevron-right" class="w-4 h-4 chevron text-slate-400"></i>
+                        </summary>
+                        <div class="mt-3 space-y-2 text-xs text-slate-300">
+                            <p><strong class="text-cyan-400">Step 1:</strong> Set up the iterated integral using Fubini's theorem:</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex1-step1"></div>
+                            <p><strong class="text-cyan-400">Step 2:</strong> Integrate w.r.t. \(x\) first:</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex1-step2"></div>
+                            <p><strong class="text-cyan-400">Step 3:</strong> Integrate the result w.r.t. \(y\):</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex1-step3"></div>
+                            <p><strong class="neon-emerald">Result:</strong> \(V = \frac{8}{3}\) cubic units. <em>Try this preset above!</em></p>
+                        </div>
+                    </details>
+
+                    <!-- Example 2: Area of circle via polar -->
+                    <details class="card example-card">
+                        <summary class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                                Example 2 — Area of circle \(x^2 + y^2 \le a^2\) via polar coordinates
+                            </h3>
+                            <i data-lucide="chevron-right" class="w-4 h-4 chevron text-slate-400"></i>
+                        </summary>
+                        <div class="mt-3 space-y-2 text-xs text-slate-300">
+                            <p><strong class="text-cyan-400">Step 1:</strong> Change to polar: \(x = r\cos\theta,\ y = r\sin\theta\), \(dA = r\,dr\,d\theta\)</p>
+                            <p><strong class="text-cyan-400">Step 2:</strong> Limits: \(0 \le r \le a,\ 0 \le \theta \le 2\pi\)</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex2-setup"></div>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex2-result"></div>
+                        </div>
+                    </details>
+
+                    <!-- Example 3: Volume of hemisphere -->
+                    <details class="card example-card">
+                        <summary class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                                Example 3 — Volume of the hemisphere \(z = \sqrt{a^2 - x^2 - y^2}\)
+                            </h3>
+                            <i data-lucide="chevron-right" class="w-4 h-4 chevron text-slate-400"></i>
+                        </summary>
+                        <div class="mt-3 space-y-2 text-xs text-slate-300">
+                            <p><strong class="text-cyan-400">Step 1:</strong> In polar: region is \(r \in [0,a],\ \theta \in [0,2\pi]\)</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex3-setup"></div>
+                            <p><strong class="text-cyan-400">Step 2:</strong> Substitute \(u = a^2 - r^2\), \(du = -2r\,dr\):</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex3-result"></div>
+                        </div>
+                    </details>
+
+                    <!-- Example 4: Centroid of paraboloid -->
+                    <details class="card example-card">
+                        <summary class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                                Example 4 — Centroid of the solid bounded by \(z = x^2+y^2\) and \(z = 1\)
+                            </h3>
+                            <i data-lucide="chevron-right" class="w-4 h-4 chevron text-slate-400"></i>
+                        </summary>
+                        <div class="mt-3 space-y-2 text-xs text-slate-300">
+                            <p><strong class="text-cyan-400">By symmetry:</strong> \(\bar x = \bar y = 0\). Only \(\bar z\) needs computation.</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex4-vol"></div>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex4-zbar"></div>
+                        </div>
+                    </details>
+
+                    <!-- Example 5: Dirichlet -->
+                    <details class="card example-card">
+                        <summary class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                                Example 5 — Applying Dirichlet's Theorem
+                            </h3>
+                            <i data-lucide="chevron-right" class="w-4 h-4 chevron text-slate-400"></i>
+                        </summary>
+                        <div class="mt-3 space-y-2 text-xs text-slate-300">
+                            <p><strong class="text-cyan-400">Evaluate:</strong> \(\iiint_V x^2 y^2 z^2 \, dV\) over tetrahedron \(x+y+z \le 1,\ x,y,z\ge 0\).</p>
+                            <p>Apply Dirichlet with \(l=3, m=3, n=3\):</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex5-result"></div>
+                        </div>
+                    </details>
+
+                    <!-- Example 6: Moment of inertia -->
+                    <details class="card example-card">
+                        <summary class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                                Example 6 — Moment of inertia of a lamina
+                            </h3>
+                            <i data-lucide="chevron-right" class="w-4 h-4 chevron text-slate-400"></i>
+                        </summary>
+                        <div class="mt-3 space-y-2 text-xs text-slate-300">
+                            <p><strong class="text-cyan-400">Find</strong> \(I_x\) for the square \([0,1]\times[0,1]\) with \(f(x,y) = x^2+y^2\).</p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex6-setup"></div>
+                            <div class="bg-slate-800/50 p-2 rounded" id="ex6-result"></div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Tab 4: Exercises (Yousuf-style) -->
+                <div id="tab-quiz" class="tab-content hidden">
+                    <h2 class="text-lg font-bold mb-3 neon-cyan">Exercise Set</h2>
+                    <div class="book-reference mb-3 flex items-center gap-2">
+                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400"></i>
+                        <span class="text-xs">Self-assessment problems in the style of Yousuf's exercises</span>
+                    </div>
+                    <div class="mb-3 p-3 bg-slate-800/50 rounded-lg flex justify-between items-center">
+                        <span class="text-xs text-slate-400">Progress</span>
+                        <span id="quiz-progress" class="text-xs font-bold neon-amber">0 / 6</span>
+                        <span id="quiz-score" class="text-xs font-bold neon-emerald">0 correct</span>
+                    </div>
+                    <div id="quiz-container"></div>
+                    <button id="quiz-reset" class="mt-3 w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-medium transition">
+                        Reset Exercises
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // ==================== GLOBAL STATE ====================
+    const STATE = {
+        mode: 'double',
+        preset: 'paraboloid',
+        bounds: { xmin: -1, xmax: 1, ymin: -1, ymax: 1, zmin: -1, zmax: 1 },
+        resolution: 10,
+        wireframe: false,
+        opacity: 0.7,
+        animating: false,
+        animProgress: 0,
+        sweepAxis: 'x'
+    };
+
+    // ==================== FUNCTION LIBRARY (Yousuf-style) ====================
+    const FUNCTIONS = {
+        double: {
+            paraboloid: {
+                name: 'Paraboloid: z = x² + y²',
+                expr: 'f(x,y) = x^2 + y^2',
+                fn: (x, y) => x*x + y*y,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const intX = (x) => x*x*x/3;
+                    const intY = (y) => y*y*y/3;
+                    const part1 = (intX(xmax) - intX(xmin)) * (ymax - ymin);
+                    const part2 = (xmax - xmin) * (intY(ymax) - intY(ymin));
+                    return part1 + part2;
+                }
+            },
+            hemisphere: {
+                name: 'Hemisphere: z = √(1 − x² − y²)',
+                expr: 'f(x,y) = \\sqrt{1 - x^2 - y^2}',
+                fn: (x, y) => {
+                    const val = 1 - x*x - y*y;
+                    return val >= 0 ? Math.sqrt(val) : 0;
+                },
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const N = 300;
+                    const dx = (xmax - xmin) / N;
+                    const dy = (ymax - ymin) / N;
+                    let sum = 0;
+                    for (let i = 0; i < N; i++) {
+                        for (let j = 0; j < N; j++) {
+                            const x = xmin + (i + 0.5) * dx;
+                            const y = ymin + (j + 0.5) * dy;
+                            const val = 1 - x*x - y*y;
+                            if (val > 0) sum += Math.sqrt(val) * dx * dy;
+                        }
+                    }
+                    return sum;
+                }
+            },
+            saddle: {
+                name: 'Hyperbolic Paraboloid: z = x² − y²',
+                expr: 'f(x,y) = x^2 - y^2',
+                fn: (x, y) => x*x - y*y,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const intX = (x) => x*x*x/3;
+                    const intY = (y) => y*y*y/3;
+                    const part1 = (intX(xmax) - intX(xmin)) * (ymax - ymin);
+                    const part2 = -(xmax - xmin) * (intY(ymax) - intY(ymin));
+                    return part1 + part2;
+                }
+            },
+            plane: {
+                name: 'Plane: z = ½x + ⅓y + 1',
+                expr: 'f(x,y) = \\tfrac{1}{2}x + \\tfrac{1}{3}y + 1',
+                fn: (x, y) => 0.5*x + (1/3)*y + 1,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const area = (xmax-xmin)*(ymax-ymin);
+                    const part1 = 0.5 * 0.5 * (xmax*xmax - xmin*xmin) * (ymax - ymin);
+                    const part2 = (1/3) * 0.5 * (ymax*ymax - ymin*ymin) * (xmax - xmin);
+                    return part1 + part2 + area;
+                }
+            },
+            cone: {
+                name: 'Cone: z = √(x² + y²)',
+                expr: 'f(x,y) = \\sqrt{x^2 + y^2}',
+                fn: (x, y) => Math.sqrt(x*x + y*y),
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const N = 300;
+                    const dx = (xmax - xmin) / N;
+                    const dy = (ymax - ymin) / N;
+                    let sum = 0;
+                    for (let i = 0; i < N; i++) {
+                        for (let j = 0; j < N; j++) {
+                            const x = xmin + (i + 0.5) * dx;
+                            const y = ymin + (j + 0.5) * dy;
+                            sum += Math.sqrt(x*x + y*y) * dx * dy;
+                        }
+                    }
+                    return sum;
+                }
+            },
+            exponential: {
+                name: 'Exponential: z = e^(x+y)',
+                expr: 'f(x,y) = e^{x+y}',
+                fn: (x, y) => Math.exp(x + y),
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    return (Math.exp(xmax) - Math.exp(xmin)) * (Math.exp(ymax) - Math.exp(ymin));
+                }
+            }
+        },
+        triple: {
+            sphere: {
+                name: 'Unit Sphere',
+                expr: '\\rho(x,y,z) = 1 \\text{ (solid ball)}',
+                zUpper: (x, y) => Math.sqrt(Math.max(0, 1 - x*x - y*y)),
+                zLower: (x, y) => -Math.sqrt(Math.max(0, 1 - x*x - y*y)),
+                density: (x, y, z) => 1,
+                exactVolume: () => 4/3 * Math.PI
+            },
+            cylinder: {
+                name: 'Cylinder x²+y² ≤ 1, |z| ≤ 1',
+                expr: '\\text{Solid cylinder}',
+                zUpper: (x, y) => 1,
+                zLower: (x, y) => -1,
+                density: (x, y, z) => 1,
+                exactVolume: () => 2 * Math.PI
+            },
+            paraboloids: {
+                name: 'Between z = x²+y² and z = 2−x²−y²',
+                expr: 'x^2+y^2 \\le z \\le 2 - x^2 - y^2',
+                zUpper: (x, y) => 2 - x*x - y*y,
+                zLower: (x, y) => x*x + y*y,
+                density: (x, y, z) => 1,
+                exactVolume: () => Math.PI  // Volume = π·1²·1 = π
+            },
+            tetrahedron: {
+                name: 'Tetrahedron x+y+z ≤ 1',
+                expr: '\\text{Standard tetrahedron}',
+                zUpper: (x, y) => Math.max(0, 1 - x - y),
+                zLower: (x, y) => 0,
+                density: (x, y, z) => 1,
+                exactVolume: () => 1/6
+            }
+        },
+        centroid: {
+            paraboloid: {
+                name: 'Volume under z = x² + y², [-1,1]²',
+                expr: 'z = x^2 + y^2',
+                fn: (x, y) => x*x + y*y,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const intX = (x) => x*x*x/3;
+                    const intY = (y) => y*y*y/3;
+                    return (intX(xmax) - intX(xmin)) * (ymax - ymin) + (xmax - xmin) * (intY(ymax) - intY(ymin));
+                },
+                momentX: (xmin, xmax, ymin, ymax) => {
+                    // ∫∫ x·f(x,y) dA = ∫∫ x(x²+y²) dA = ∫ x³ dx · ∫ dy + ∫ x dx · ∫ y² dy
+                    const intX3 = (x) => x*x*x*x/4;
+                    const intX1 = (x) => x*x/2;
+                    const intY = (y) => y;
+                    const intY2 = (y) => y*y*y/3;
+                    return (intX3(xmax)-intX3(xmin))*(intY(ymax)-intY(ymin)) + (intX1(xmax)-intX1(xmin))*(intY2(ymax)-intY2(ymin));
+                },
+                momentY: (xmin, xmax, ymin, ymax) => {
+                    const intX = (x) => x;
+                    const intX2 = (x) => x*x*x/3;
+                    const intY1 = (y) => y*y/2;
+                    const intY3 = (y) => y*y*y*y/4;
+                    return (intX2(xmax)-intX2(xmin))*(intY1(ymax)-intY1(ymin)) + (intX(xmax)-intX(xmin))*(intY3(ymax)-intY3(ymin));
+                }
+            },
+            triangle: {
+                name: 'Triangle: f(x,y)=1, 0≤y≤x≤1',
+                expr: 'f(x,y)=1,\\ y \\le x,\\ 0 \\le x \\le 1',
+                fn: (x, y) => (y >= 0 && y <= x && x >= 0 && x <= 1) ? 1 : 0,
+                exactIntegral: () => 0.5,
+                momentX: () => 2/3 * 0.5,
+                momentY: () => 1/3 * 0.5
+            }
+        },
+        moment: {
+            square: {
+                name: 'Square [0,1]², ρ=1',
+                expr: '\\rho = 1 \\text{ on } [0,1]^2',
+                fn: (x, y) => 1,
+                exactIntegral: () => 1,
+                Ix: () => 1/3,
+                Iy: () => 1/3
+            },
+            variable: {
+                name: 'Square [0,1]², ρ=x²+y²',
+                expr: '\\rho = x^2+y^2 \\text{ on } [0,1]^2',
+                fn: (x, y) => x*x + y*y,
+                exactIntegral: () => 2/3,
+                Ix: () => 1/3 * 1/3 + 1/5,  // ∫∫ y²(x²+y²) dx dy = ∫y²dy·∫x²dx + ∫y⁴dy·∫dx = 1/3·1/3 + 1/5·1
+                Iy: () => 1/3 * 1/3 + 1/5
+            }
+        }
+    };
+
+    // ==================== THREE.JS SETUP ====================
+    let scene, camera, renderer, controls;
+    let surfaceMesh, baseMesh, riemannGroup, slicingPlane, voxelGroup;
+    let centroidMarker, axesLines = [];
+
+    function initThreeJS() {
+        const canvas = document.getElementById('three-canvas');
+        const container = document.getElementById('three-container');
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.Fog(0x0f172a, 10, 30);
+
+        camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(3, 3, 3);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 2;
+        controls.maxDistance = 20;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+        const pointLight = new THREE.PointLight(0x06b6d4, 0.5, 20);
+        pointLight.position.set(-3, 5, -3);
+        scene.add(pointLight);
+
+        const gridHelper = new THREE.GridHelper(10, 20, 0x475569, 0x1e293b);
+        scene.add(gridHelper);
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        buildGeometry();
+        animate();
+        window.addEventListener('resize', onResize);
+    }
+
+    function onResize() {
+        const container = document.getElementById('three-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        if (STATE.animating) {
+            STATE.animProgress += 0.005;
+            if (STATE.animProgress >= 1) STATE.animProgress = 0;
+            updateSlicingPlane();
+        }
+        if (centroidMarker) centroidMarker.rotation.y += 0.01;
+        renderer.render(scene, camera);
+    }
+
+    function clearGeometry() {
+        if (surfaceMesh) { scene.remove(surfaceMesh); surfaceMesh.geometry?.dispose(); }
+        if (baseMesh) { scene.remove(baseMesh); baseMesh.geometry?.dispose(); }
+        if (riemannGroup) scene.remove(riemannGroup);
+        if (slicingPlane) { scene.remove(slicingPlane); slicingPlane.geometry?.dispose(); }
+        if (voxelGroup) scene.remove(voxelGroup);
+        if (centroidMarker) { scene.remove(centroidMarker); centroidMarker.geometry?.dispose(); }
+        surfaceMesh = null; baseMesh = null; riemannGroup = null; slicingPlane = null; voxelGroup = null; centroidMarker = null;
+    }
+
+    function buildGeometry() {
+        clearGeometry();
+        if (STATE.mode === 'triple') buildTripleIntegralGeometry();
+        else buildDoubleIntegralGeometry();
+        updateSlicingPlane();
+        if (STATE.mode === 'centroid' || STATE.mode === 'moment') addCentroidMarker();
+    }
+
+    function addCentroidMarker() {
+        const geom = new THREE.SphereGeometry(0.08, 16, 16);
+        const mat = new THREE.MeshPhongMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.5 });
+        centroidMarker = new THREE.Mesh(geom, mat);
+        const cx = (STATE.bounds.xmin + STATE.bounds.xmax) / 2;
+        const cy = (STATE.bounds.ymin + STATE.bounds.ymax) / 2;
+        const cz = STATE.mode === 'double' || STATE.mode === 'centroid' || STATE.mode === 'moment' 
+            ? 0.1 
+            : (STATE.bounds.zmin + STATE.bounds.zmax) / 2;
+        centroidMarker.position.set(cx, cz, cy);
+        scene.add(centroidMarker);
+    }
+
+    function buildDoubleIntegralGeometry() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const fn = getCurrentFunction();
+
+        // Base domain
+        const baseGeom = new THREE.PlaneGeometry(xmax - xmin, ymax - ymin);
+        const baseMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+        baseMesh = new THREE.Mesh(baseGeom, baseMat);
+        baseMesh.rotation.x = -Math.PI / 2;
+        baseMesh.position.set((xmin + xmax) / 2, 0, (ymin + ymax) / 2);
+        scene.add(baseMesh);
+
+        // Surface
+        const N = Math.min(STATE.resolution * 2, 80);
+        const surfaceGeom = new THREE.BufferGeometry();
+        const vertices = [];
+        const indices = [];
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+
+        for (let i = 0; i <= N; i++) {
+            for (let j = 0; j <= N; j++) {
+                const x = xmin + i * dx;
+                const y = ymin + j * dy;
+                const z = fn(x, y);
+                vertices.push(x, z, y);
+            }
+        }
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const a = i * (N + 1) + j;
+                const b = a + 1;
+                const c = a + (N + 1);
+                const d = c + 1;
+                indices.push(a, b, c);
+                indices.push(b, d, c);
+            }
+        }
+        surfaceGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        surfaceGeom.setIndex(indices);
+        surfaceGeom.computeVertexNormals();
+
+        const surfaceMat = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: STATE.opacity,
+            wireframe: STATE.wireframe,
+            side: THREE.DoubleSide,
+            shininess: 80
+        });
+        surfaceMesh = new THREE.Mesh(surfaceGeom, surfaceMat);
+        scene.add(surfaceMesh);
+
+        buildRiemannColumns();
+        buildSlicingPlane();
+    }
+
+    function buildRiemannColumns() {
+        if (riemannGroup) scene.remove(riemannGroup);
+        riemannGroup = new THREE.Group();
+
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const fn = getCurrentFunction();
+        const N = STATE.resolution;
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+
+        const count = N * N;
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.4,
+            wireframe: STATE.wireframe
+        });
+        const mesh = new THREE.InstancedMesh(geometry, material, count);
+
+        const dummy = new THREE.Object3D();
+        const color = new THREE.Color();
+        let idx = 0;
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const x = xmin + (i + 0.5) * dx;
+                const y = ymin + (j + 0.5) * dy;
+                const z = fn(x, y);
+                const height = Math.abs(z);
+
+                dummy.position.set(x, height / 2, y);
+                dummy.scale.set(dx * 0.95, Math.max(height, 0.001), dy * 0.95);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(idx, dummy.matrix);
+                
+                // Heatmap by z-value for visual emphasis
+                const t = Math.min(Math.max(z / 2, 0), 1);
+                color.setHSL(0.1 - t * 0.1, 0.8, 0.5);
+                mesh.setColorAt(idx, color);
+                idx++;
+            }
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        riemannGroup.add(mesh);
+        scene.add(riemannGroup);
+    }
+
+    function buildTripleIntegralGeometry() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const preset = FUNCTIONS.triple[STATE.preset] || FUNCTIONS.triple.sphere;
+
+        const baseGeom = new THREE.PlaneGeometry(xmax - xmin, ymax - ymin);
+        const baseMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+        baseMesh = new THREE.Mesh(baseGeom, baseMat);
+        baseMesh.rotation.x = -Math.PI / 2;
+        baseMesh.position.set((xmin + xmax) / 2, 0, (ymin + ymax) / 2);
+        scene.add(baseMesh);
+
+        // Upper surface
+        const N = Math.min(STATE.resolution, 40);
+        const upperGeom = new THREE.BufferGeometry();
+        const vertices = [];
+        const indices = [];
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+
+        for (let i = 0; i <= N; i++) {
+            for (let j = 0; j <= N; j++) {
+                const x = xmin + i * dx;
+                const y = ymin + j * dy;
+                const z = preset.zUpper(x, y);
+                vertices.push(x, z, y);
+            }
+        }
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const a = i * (N + 1) + j;
+                const b = a + 1;
+                const c = a + (N + 1);
+                const d = c + 1;
+                indices.push(a, b, c);
+                indices.push(b, d, c);
+            }
+        }
+        upperGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        upperGeom.setIndex(indices);
+        upperGeom.computeVertexNormals();
+
+        const upperMat = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4, transparent: true, opacity: STATE.opacity * 0.6,
+            wireframe: STATE.wireframe, side: THREE.DoubleSide
+        });
+        surfaceMesh = new THREE.Mesh(upperGeom, upperMat);
+        scene.add(surfaceMesh);
+
+        buildVoxels();
+        buildSlicingPlane();
+    }
+
+    function buildVoxels() {
+        if (voxelGroup) scene.remove(voxelGroup);
+        voxelGroup = new THREE.Group();
+
+        const { xmin, xmax, ymin, ymax, zmin, zmax } = STATE.bounds;
+        const preset = FUNCTIONS.triple[STATE.preset] || FUNCTIONS.triple.sphere;
+        const N = Math.min(STATE.resolution, 22);
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+        const dz = (zmax - zmin) / N;
+
+        let validVoxels = [];
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                for (let k = 0; k < N; k++) {
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    const z = zmin + (k + 0.5) * dz;
+                    const zL = preset.zLower(x, y);
+                    const zU = preset.zUpper(x, y);
+                    if (z >= zL && z <= zU) {
+                        validVoxels.push({ x, y, z, density: preset.density(x, y, z) });
+                    }
+                }
+            }
+        }
+        if (validVoxels.length === 0) return;
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xf59e0b, transparent: true, opacity: 0.35, wireframe: STATE.wireframe
+        });
+        const mesh = new THREE.InstancedMesh(geometry, material, validVoxels.length);
+
+        const dummy = new THREE.Object3D();
+        const color = new THREE.Color();
+
+        validVoxels.forEach((v, idx) => {
+            dummy.position.set(v.x, v.y, v.z);
+            dummy.scale.set(dx * 0.9, dz * 0.9, dy * 0.9);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(idx, dummy.matrix);
+            const t = Math.min(v.density / 2, 1);
+            color.setHSL(0.1 - t * 0.1, 0.8, 0.5);
+            mesh.setColorAt(idx, color);
+        });
+
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        voxelGroup.add(mesh);
+        scene.add(voxelGroup);
+    }
+
+    function buildSlicingPlane() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const width = xmax - xmin;
+        const height = 2;
+        const planeGeom = new THREE.PlaneGeometry(width, height);
+        const planeMat = new THREE.MeshBasicMaterial({
+            color: 0xf43f5e, transparent: true, opacity: 0.35, side: THREE.DoubleSide
+        });
+        slicingPlane = new THREE.Mesh(planeGeom, planeMat);
+        slicingPlane.position.set(0, 0.5, ymin);
+        scene.add(slicingPlane);
+    }
+
+    function updateSlicingPlane() {
+        if (!slicingPlane) return;
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        if (STATE.sweepAxis === 'y') {
+            slicingPlane.rotation.y = Math.PI / 2;
+            slicingPlane.position.x = xmin + STATE.animProgress * (xmax - xmin);
+            slicingPlane.position.z = (ymin + ymax) / 2;
+        } else {
+            slicingPlane.rotation.y = 0;
+            slicingPlane.position.z = ymin + STATE.animProgress * (ymax - ymin);
+            slicingPlane.position.x = (xmin + xmax) / 2;
+        }
+    }
+
+    // ==================== HELPERS ====================
+    function getCurrentFunction() {
+        const mode = STATE.mode === 'centroid' || STATE.mode === 'moment' ? STATE.mode : STATE.mode;
+        if (mode === 'triple') return FUNCTIONS.triple[STATE.preset]?.zUpper || ((x,y)=>1);
+        if (mode === 'centroid') return FUNCTIONS.centroid[STATE.preset]?.fn || ((x,y)=>1);
+        if (mode === 'moment') return FUNCTIONS.moment[STATE.preset]?.fn || ((x,y)=>1);
+        return FUNCTIONS.double[STATE.preset]?.fn || ((x,y)=>0);
+    }
+
+    function computeRiemannSum() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const N = STATE.resolution;
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+        const area = dx * dy;
+
+        if (STATE.mode === 'triple') {
+            const preset = FUNCTIONS.triple[STATE.preset] || FUNCTIONS.triple.sphere;
+            const { zmin, zmax } = STATE.bounds;
+            const dz = (zmax - zmin) / N;
+            const vol = dx * dy * dz;
+            let sum = 0;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    const zL = preset.zLower(x, y);
+                    const zU = preset.zUpper(x, y);
+                    for (let k = 0; k < N; k++) {
+                        const z = zmin + (k + 0.5) * dz;
+                        if (z >= zL && z <= zU) sum += preset.density(x, y, z) * vol;
+                    }
+                }
+            }
+            return sum;
+        } else {
+            const fn = getCurrentFunction();
+            let sum = 0;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    sum += fn(x, y) * area;
+                }
+            }
+            return sum;
+        }
+    }
+
+    function computeExactValue() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        if (STATE.mode === 'triple') {
+            const preset = FUNCTIONS.triple[STATE.preset] || FUNCTIONS.triple.sphere;
+            if (preset.exactVolume) {
+                // Try numeric if function signature needs bounds
+                try { return preset.exactVolume(xmin, xmax, ymin, ymax); }
+                catch(e) { return preset.exactVolume(); }
+            }
+            return 0;
+        } else if (STATE.mode === 'centroid') {
+            const preset = FUNCTIONS.centroid[STATE.preset] || FUNCTIONS.centroid.paraboloid;
+            return preset.exactIntegral(xmin, xmax, ymin, ymax);
+        } else if (STATE.mode === 'moment') {
+            const preset = FUNCTIONS.moment[STATE.preset] || FUNCTIONS.moment.square;
+            return preset.exactIntegral(xmin, xmax, ymin, ymax);
+        } else {
+            const preset = FUNCTIONS.double[STATE.preset] || FUNCTIONS.double.paraboloid;
+            return preset.exactIntegral(xmin, xmax, ymin, ymax);
+        }
+    }
+
+    // ==================== UI UPDATE ====================
+    function updateUI() {
+        document.getElementById('xmin-val').textContent = STATE.bounds.xmin.toFixed(1);
+        document.getElementById('xmax-val').textContent = STATE.bounds.xmax.toFixed(1);
+        document.getElementById('ymin-val').textContent = STATE.bounds.ymin.toFixed(1);
+        document.getElementById('ymax-val').textContent = STATE.bounds.ymax.toFixed(1);
+        document.getElementById('zmin-val').textContent = STATE.bounds.zmin.toFixed(1);
+        document.getElementById('zmax-val').textContent = STATE.bounds.zmax.toFixed(1);
+        document.getElementById('res-val').textContent = STATE.resolution;
+        document.getElementById('opacity-val').textContent = STATE.opacity.toFixed(2);
+
+        const modeLabels = {
+            double: 'Double Integral',
+            triple: 'Triple Integral',
+            centroid: 'Centroid / C.G.',
+            moment: 'Moment of Inertia'
+        };
+        document.getElementById('live-mode').textContent = modeLabels[STATE.mode];
+        document.getElementById('live-function').textContent = getCurrentExpr();
+        document.getElementById('live-domain').textContent = `[${STATE.bounds.xmin.toFixed(1)}, ${STATE.bounds.xmax.toFixed(1)}] × [${STATE.bounds.ymin.toFixed(1)}, ${STATE.bounds.ymax.toFixed(1)}]`;
+
+        const riemann = computeRiemannSum();
+        const exact = computeExactValue();
+        const error = exact !== 0 ? Math.abs(riemann - exact) / Math.abs(exact) * 100 : 0;
+
+        document.getElementById('live-riemann').textContent = riemann.toFixed(4);
+        document.getElementById('live-exact').textContent = exact.toFixed(4);
+        document.getElementById('live-error').textContent = error.toFixed(2) + '%';
+
+        // Area/Volume
+        const area = (STATE.bounds.xmax - STATE.bounds.xmin) * (STATE.bounds.ymax - STATE.bounds.ymin);
+        document.getElementById('live-av').textContent = STATE.mode === 'triple' ? `V ≈ ${riemann.toFixed(3)}` : `A = ${area.toFixed(2)}, ∫ ≈ ${riemann.toFixed(3)}`;
+
+        // Centroid & Moments
+        const centroidRow = document.getElementById('centroid-row');
+        const momentRow = document.getElementById('moment-row');
+        if (STATE.mode === 'centroid') {
+            const preset = FUNCTIONS.centroid[STATE.preset] || FUNCTIONS.centroid.paraboloid;
+            const V = preset.exactIntegral(STATE.bounds.xmin, STATE.bounds.xmax, STATE.bounds.ymin, STATE.bounds.ymax);
+            const Mx = preset.momentX ? preset.momentX(STATE.bounds.xmin, STATE.bounds.xmax, STATE.bounds.ymin, STATE.bounds.ymax) : 0;
+            const My = preset.momentY ? preset.momentY(STATE.bounds.xmin, STATE.bounds.xmax, STATE.bounds.ymin, STATE.bounds.ymax) : 0;
+            const xbar = V !== 0 ? My / V : 0;
+            const ybar = V !== 0 ? Mx / V : 0;
+            document.getElementById('live-centroid').textContent = `(${xbar.toFixed(3)}, ${ybar.toFixed(3)})`;
+            centroidRow.style.display = 'flex';
+            momentRow.style.display = 'none';
+        } else if (STATE.mode === 'moment') {
+            const preset = FUNCTIONS.moment[STATE.preset] || FUNCTIONS.moment.square;
+            const ix = preset.Ix ? preset.Ix() : 0;
+            const iy = preset.Iy ? preset.Iy() : 0;
+            document.getElementById('live-moments').textContent = `${ix.toFixed(4)}, ${iy.toFixed(4)}`;
+            momentRow.style.display = 'flex';
+            centroidRow.style.display = 'none';
+        } else {
+            centroidRow.style.display = 'none';
+            momentRow.style.display = 'none';
+        }
+
+        document.getElementById('triple-controls').style.display = STATE.mode === 'triple' ? 'grid' : 'none';
+
+        // Chapter reference update
+        const chapterRefs = {
+            double: '§ Double Integrals over Rectangles',
+            triple: '§ Triple Integrals & Volume',
+            centroid: '§ Centre of Gravity',
+            moment: '§ Moments of Inertia'
+        };
+        document.getElementById('chapter-ref').textContent = chapterRefs[STATE.mode];
+    }
+
+    function getCurrentExpr() {
+        if (STATE.mode === 'triple') return (FUNCTIONS.triple[STATE.preset]?.expr || '').replace(/\\text\{([^}]*)\}/g, '$1');
+        if (STATE.mode === 'centroid') return (FUNCTIONS.centroid[STATE.preset]?.expr || '');
+        if (STATE.mode === 'moment') return (FUNCTIONS.moment[STATE.preset]?.expr || '');
+        return (FUNCTIONS.double[STATE.preset]?.expr || '').replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+    }
+
+    function rebuildScene() {
+        buildGeometry();
+        updateUI();
+    }
+
+    function updatePresetSelect() {
+        const select = document.getElementById('preset-select');
+        select.innerHTML = '';
+        const funcs = FUNCTIONS[STATE.mode];
+        Object.entries(funcs).forEach(([key, val]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = val.name;
+            select.appendChild(opt);
+        });
+        const firstKey = Object.keys(funcs)[0];
+        STATE.preset = firstKey;
+        select.value = firstKey;
+    }
+
+    // ==================== EVENT HANDLERS ====================
+    function initEventHandlers() {
+        document.getElementById('mode-select').addEventListener('change', (e) => {
+            STATE.mode = e.target.value;
+            updatePresetSelect();
+            rebuildScene();
+        });
+
+        document.getElementById('preset-select').addEventListener('change', (e) => {
+            STATE.preset = e.target.value;
+            rebuildScene();
+        });
+
+        const sliders = {
+            'xmin-slider': (v) => { STATE.bounds.xmin = v; if (STATE.bounds.xmin >= STATE.bounds.xmax) STATE.bounds.xmax = STATE.bounds.xmin + 0.1; },
+            'xmax-slider': (v) => { STATE.bounds.xmax = v; if (STATE.bounds.xmax <= STATE.bounds.xmin) STATE.bounds.xmin = STATE.bounds.xmax - 0.1; },
+            'ymin-slider': (v) => { STATE.bounds.ymin = v; if (STATE.bounds.ymin >= STATE.bounds.ymax) STATE.bounds.ymax = STATE.bounds.ymin + 0.1; },
+            'ymax-slider': (v) => { STATE.bounds.ymax = v; if (STATE.bounds.ymax <= STATE.bounds.ymin) STATE.bounds.ymin = STATE.bounds.ymax - 0.1; },
+            'zmin-slider': (v) => { STATE.bounds.zmin = v; if (STATE.bounds.zmin >= STATE.bounds.zmax) STATE.bounds.zmax = STATE.bounds.zmin + 0.1; },
+            'zmax-slider': (v) => { STATE.bounds.zmax = v; if (STATE.bounds.zmax <= STATE.bounds.zmin) STATE.bounds.zmin = STATE.bounds.zmax - 0.1; }
+        };
+
+        Object.entries(sliders).forEach(([id, handler]) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', (e) => { handler(parseFloat(e.target.value)); rebuildScene(); });
+        });
+
+        document.getElementById('resolution-slider').addEventListener('input', (e) => {
+            STATE.resolution = parseInt(e.target.value);
+            rebuildScene();
+        });
+
+        document.getElementById('wireframe-toggle').addEventListener('change', (e) => {
+            STATE.wireframe = e.target.checked;
+            rebuildScene();
+        });
+
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            STATE.opacity = parseFloat(e.target.value);
+            rebuildScene();
+        });
+
+        document.getElementById('play-btn').addEventListener('click', (e) => {
+            STATE.animating = !STATE.animating;
+            const btn = e.currentTarget;
+            btn.innerHTML = STATE.animating 
+                ? '<i data-lucide="pause" class="w-3 h-3"></i><span>Pause</span>' 
+                : '<i data-lucide="play" class="w-3 h-3"></i><span>Sweep</span>';
+            lucide.createIcons();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            STATE.bounds = { xmin: -1, xmax: 1, ymin: -1, ymax: 1, zmin: -1, zmax: 1 };
+            STATE.resolution = 10;
+            STATE.opacity = 0.7;
+            STATE.wireframe = false;
+            STATE.animating = false;
+            document.getElementById('xmin-slider').value = -1;
+            document.getElementById('xmax-slider').value = 1;
+            document.getElementById('ymin-slider').value = -1;
+            document.getElementById('ymax-slider').value = 1;
+            document.getElementById('zmin-slider').value = -1;
+            document.getElementById('zmax-slider').value = 1;
+            document.getElementById('resolution-slider').value = 10;
+            document.getElementById('opacity-slider').value = 0.7;
+            document.getElementById('wireframe-toggle').checked = false;
+            document.getElementById('play-btn').innerHTML = '<i data-lucide="play" class="w-3 h-3"></i><span>Sweep</span>';
+            camera.position.set(3, 3, 3);
+            rebuildScene();
+            lucide.createIcons();
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                e.currentTarget.classList.add('active');
+                document.getElementById('tab-' + e.currentTarget.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        document.getElementById('property-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.property-card').forEach(card => {
+                const keywords = card.dataset.keywords.toLowerCase();
+                const text = card.textContent.toLowerCase();
+                card.style.display = (keywords.includes(query) || text.includes(query)) ? 'block' : 'none';
+            });
+        });
+    }
+
+    // ==================== MATH CONTENT ====================
+    function renderKatex(elementId, tex) {
+        const el = document.getElementById(elementId);
+        if (el && typeof katex !== 'undefined') {
+            katex.render(tex, el, { displayMode: true, throwOnError: false });
+        }
+    }
+
+    function renderMathContent() {
+        // Theory tab
+        renderKatex('eq-1d', '\\int_a^b f(x)\\,dx = \\lim_{n\\to\\infty}\\sum_{i=1}^n f(x_i)\\Delta x');
+        renderKatex('eq-2d-vol', '\\iint_R f(x,y)\\,dA = \\lim_{\\|P\\|\\to 0}\\sum_{i,j} f(x_i,y_j)\\,\\Delta x\\,\\Delta y');
+        renderKatex('eq-3d-mass', 'M = \\iiint_E \\rho(x,y,z)\\,dV = \\iiint_E \\rho(x,y,z)\\,dx\\,dy\\,dz');
+        renderKatex('eq-centroid', '\\bar x = \\frac{1}{M}\\iint_R x\\,\\rho(x,y)\\,dA,\\quad \\bar y = \\frac{1}{M}\\iint_R y\\,\\rho(x,y)\\,dA');
+        renderKatex('eq-moments', 'I_x = \\iint_R y^2\\,\\rho(x,y)\\,dA,\\quad I_y = \\iint_R x^2\\,\\rho(x,y)\\,dA');
+
+        // Theorems tab
+        renderKatex('prop-fubini', '\\iint_R f(x,y)\\,dA = \\int_a^b\\!\\int_c^d f(x,y)\\,dy\\,dx = \\int_c^d\\!\\int_a^b f(x,y)\\,dx\\,dy');
+        renderKatex('prop-linearity', '\\iint_R (\\alpha f + \\beta g)\\,dA = \\alpha\\iint_R f\\,dA + \\beta\\iint_R g\\,dA');
+        renderKatex('prop-additivity', '\\iint_{R_1\\cup R_2} f\\,dA = \\iint_{R_1} f\\,dA + \\iint_{R_2} f\\,dA');
+        renderKatex('prop-bound', 'm\\cdot A(R) \\le \\iint_R f\\,dA \\le M\\cdot A(R)');
+        renderKatex('prop-jacobian', '\\iint_R f(x,y)\\,dx\\,dy = \\iint_{R^*} f(x(u,v),y(u,v))\\left|\\frac{\\partial(x,y)}{\\partial(u,v)}\\right|du\\,dv');
+        renderKatex('jacob-polar', 'dx\\,dy = r\\,dr\\,d\\theta');
+        renderKatex('jacob-cylind', 'dx\\,dy\\,dz = r\\,dr\\,d\\theta\\,dz');
+        renderKatex('jacob-sphere', 'dx\\,dy\\,dz = \\rho^2\\sin\\phi\\,d\\rho\\,d\\phi\\,d\\theta');
+        renderKatex('prop-dirichlet', '\\iiint_{x+y+z\\le 1} x^{l-1}y^{m-1}z^{n-1}\\,dV = \\frac{\\Gamma(l)\\Gamma(m)\\Gamma(n)}{\\Gamma(l+m+n+1)}');
+        renderKatex('prop-gamma', '\\Gamma(n) = \\int_0^\\infty t^{n-1}e^{-t}\\,dt,\\quad \\Gamma(n+1) = n\\,\\Gamma(n)');
+        renderKatex('prop-beta', 'B(m,n) = \\int_0^1 t^{m-1}(1-t)^{n-1}\\,dt');
+        renderKatex('prop-beta-gamma', 'B(m,n) = \\frac{\\Gamma(m)\\Gamma(n)}{\\Gamma(m+n)}');
+
+        // Examples tab
+        renderKatex('ex1-step1', 'V = \\int_{-1}^1\\!\\int_{-1}^1 (x^2+y^2)\\,dx\\,dy');
+        renderKatex('ex1-step2', '\\int_{-1}^1 \\left[\\frac{x^3}{3} + xy^2\\right]_{x=-1}^{x=1}dy = \\int_{-1}^1 \\left(\\frac{2}{3} + 2y^2\\right)dy');
+        renderKatex('ex1-step3', 'V = \\left[\\frac{2}{3}y + \\frac{2}{3}y^3\\right]_{-1}^{1} = \\frac{4}{3} + \\frac{4}{3} = \\frac{8}{3}');
+
+        renderKatex('ex2-setup', 'A = \\int_0^{2\\pi}\\!\\int_0^a r\\,dr\\,d\\theta');
+        renderKatex('ex2-result', 'A = \\int_0^{2\\pi}\\frac{a^2}{2}\\,d\\theta = \\frac{a^2}{2}\\cdot 2\\pi = \\pi a^2');
+
+        renderKatex('ex3-setup', 'V = \\int_0^{2\\pi}\\!\\int_0^a \\sqrt{a^2-r^2}\\;r\\,dr\\,d\\theta');
+        renderKatex('ex3-result', 'V = 2\\pi\\cdot\\left[-\\frac{1}{3}(a^2-r^2)^{3/2}\\right]_0^a = \\frac{2}{3}\\pi a^3');
+
+        renderKatex('ex4-vol', 'V = \\iiint_E dV = \\int_0^{2\\pi}\\!\\int_0^1\\!\\int_{r^2}^1 r\\,dz\\,dr\\,d\\theta = \\frac{\\pi}{2}');
+        renderKatex('ex4-zbar', '\\bar z = \\frac{1}{V}\\iiint_E z\\,dV = \\frac{\\pi/3}{\\pi/2} = \\frac{2}{3}');
+
+        renderKatex('ex5-result', '\\iiint x^2y^2z^2\\,dV = \\frac{\\Gamma(3)\\Gamma(3)\\Gamma(3)}{\\Gamma(10)} = \\frac{2!\\cdot 2!\\cdot 2!}{9!} = \\frac{8}{362880} = \\frac{1}{45360}');
+
+        renderKatex('ex6-setup', 'I_x = \\int_0^1\\!\\int_0^1 y^2(x^2+y^2)\\,dx\\,dy');
+        renderKatex('ex6-result', 'I_x = \\int_0^1\\left(\\frac{y^2}{3} + y^4\\right)dy = \\frac{1}{9} + \\frac{1}{5} = \\frac{14}{45}');
+
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '$$', right: '$$', display: true}
+                ]
+            });
+        }
+    }
+
+    // ==================== QUIZ (Yousuf-style exercises) ====================
+    const QUIZ_QUESTIONS = [
+        {
+            question: 'The double integral \\(\\iint_R (x^2+y^2)\\,dA\\) over the square \\([-1,1]\\times[-1,1]\\) equals:',
+            options: ['\\(\\frac{4}{3}\\)', '\\(\\frac{8}{3}\\)', '\\(4\\)', '\\(\\frac{2}{3}\\)'],
+            correct: 1,
+            explanation: 'By Fubini: \\(V = \\int_{-1}^1 \\int_{-1}^1 (x^2+y^2)\\,dx\\,dy = \\frac{8}{3}\\). See Example 1 above.'
+        },
+        {
+            question: 'When evaluating \\(\\iint_R f(x,y)\\,dA\\) over a circular region \\(x^2+y^2\\le a^2\\), the appropriate substitution introduces which area element?',
+            options: ['\\(dx\\,dy\\) unchanged', '\\(r^2\\,dr\\,d\\theta\\)', '\\(r\\,dr\\,d\\theta\\)', '\\(\\sin\\phi\\,d\\phi\\,d\\theta\\)'],
+            correct: 2,
+            explanation: 'Polar coordinates give Jacobian \\(|\\partial(x,y)/\\partial(r,\\theta)| = r\\), hence \\(dA = r\\,dr\\,d\\theta\\).'
+        },
+        {
+            question: 'Switching the order of \\(\\int_0^1\\!\\int_0^x f(x,y)\\,dy\\,dx\\) gives:',
+            options: [
+                '\\(\\int_0^1\\!\\int_0^y f\\,dx\\,dy\\)',
+                '\\(\\int_0^1\\!\\int_y^1 f\\,dx\\,dy\\)',
+                '\\(\\int_0^1\\!\\int_0^1 f\\,dx\\,dy\\)',
+                '\\(\\int_0^x\\!\\int_0^1 f\\,dx\\,dy\\)'
+            ],
+            correct: 1,
+            explanation: 'The region is \\(0\\le y\\le x\\le 1\\). For fixed \\(y\\), \\(x\\) ranges from \\(y\\) to 1.'
+        },
+        {
+            question: 'By Dirichlet\'s Theorem, \\(\\iiint_{x+y+z\\le 1} x^{p-1}y^{q-1}z^{r-1}\\,dV\\) equals:',
+            options: [
+                '\\(\\frac{\\Gamma(p)\\Gamma(q)\\Gamma(r)}{\\Gamma(p+q+r+1)}\\)',
+                '\\(\\frac{p!\\,q!\\,r!}{(p+q+r+1)!}\\)',
+                'Both A and B (for integer \\(p,q,r\\))',
+                'Neither'
+            ],
+            correct: 2,
+            explanation: 'Dirichlet\'s formula is stated in terms of Gamma functions; for positive integers \\(n\\), \\(\\Gamma(n) = (n-1)!\\).'
+        },
+        {
+            question: 'The moment of inertia \\(I_x\\) of a uniform square \\([0,1]^2\\) of unit density about the x-axis is:',
+            options: ['\\(\\frac{1}{2}\\)', '\\(\\frac{1}{3}\\)', '\\(\\frac{1}{6}\\)', '\\(1\\)'],
+            correct: 1,
+            explanation: '\\(I_x = \\int_0^1\\int_0^1 y^2\\,dx\\,dy = \\int_0^1 y^2\\,dy = \\frac{1}{3}\\).'
+        },
+        {
+            question: 'The volume of the hemisphere \\(z = \\sqrt{a^2-x^2-y^2}\\) over the disk \\(x^2+y^2\\le a^2\\) is:',
+            options: ['\\(\\frac{\\pi a^3}{3}\\)', '\\(\\frac{2\\pi a^3}{3}\\)', '\\(\\frac{4\\pi a^3}{3}\\)', '\\(\\pi a^3\\)'],
+            correct: 1,
+            explanation: 'By Example 3: \\(V = \\frac{2}{3}\\pi a^3\\), half the volume of a full sphere \\(\\frac{4}{3}\\pi a^3\\).'
+        }
+    ];
+
+    function initQuiz() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+        let correct = 0;
+        let answered = 0;
+
+        QUIZ_QUESTIONS.forEach((q, qIdx) => {
+            const div = document.createElement('div');
+            div.className = 'card exercise-card';
+            div.innerHTML = `
+                <h3 class="font-bold text-rose-400 mb-2 text-xs flex items-center gap-2">
+                    <i data-lucide="pencil-ruler" class="w-3.5 h-3.5"></i>
+                    Exercise ${qIdx + 1}
+                </h3>
+                <p class="text-xs mb-3 text-slate-300">${q.question}</p>
+                <div class="space-y-1.5" id="q${qIdx}-options">
+                    ${q.options.map((opt, oIdx) => `
+                        <div class="quiz-option" data-q="${qIdx}" data-o="${oIdx}">
+                            <span class="text-[10px] font-bold text-slate-400">${String.fromCharCode(65 + oIdx)}.</span>
+                            <span class="ml-2 text-xs">${opt}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="mt-2 text-[11px] text-slate-400 hidden p-2 bg-emerald-900/20 border border-emerald-500/30 rounded" id="q${qIdx}-explanation">
+                    <strong class="text-emerald-400">Solution:</strong> ${q.explanation}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(container, {
+                delimiters: [{left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}]
+            });
+        }
+
+        container.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                const qIdx = parseInt(e.currentTarget.dataset.q);
+                const oIdx = parseInt(e.currentTarget.dataset.o);
+                const optionsDiv = document.getElementById(`q${qIdx}-options`);
+                if (optionsDiv.dataset.answered) return;
+                optionsDiv.dataset.answered = 'true';
+
+                const q = QUIZ_QUESTIONS[qIdx];
+                optionsDiv.querySelectorAll('.quiz-option').forEach((o, i) => {
+                    if (i === q.correct) o.classList.add('correct');
+                    else if (i === oIdx) o.classList.add('incorrect');
+                    o.style.pointerEvents = 'none';
+                });
+                document.getElementById(`q${qIdx}-explanation`).classList.remove('hidden');
+                answered++;
+                if (oIdx === q.correct) correct++;
+                document.getElementById('quiz-progress').textContent = `${answered} / ${QUIZ_QUESTIONS.length}`;
+                document.getElementById('quiz-score').textContent = `${correct} correct`;
+            });
+        });
+
+        document.getElementById('quiz-reset').addEventListener('click', () => initQuiz());
+    }
+
+    // ==================== INIT ====================
+    function init() {
+        initThreeJS();
+        initEventHandlers();
+        updatePresetSelect();
+        
+        const waitForKatex = setInterval(() => {
+            if (typeof katex !== 'undefined') {
+                clearInterval(waitForKatex);
+                renderMathContent();
+                initQuiz();
+            }
+        }, 100);
+
+        setTimeout(() => { renderMathContent(); initQuiz(); }, 2500);
+        setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 500);
+        setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 1500);
+        
+        updateUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    </script>
+</body>
+</html>

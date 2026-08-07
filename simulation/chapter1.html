@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH·01 — Curvilinear Coordinates & Tensor Analysis · Interactive 3D Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unica+One&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1a2b; --panel:#10233a; --panel2:#0b1a2c; --line:#33587c; --line2:#1d3a58;
+  --txt:#e6eef8; --mut:#9db4cc; --dim:#6d87a3;
+  --amber:#ffb340; --cyan:#4fd6e8; --rose:#ff7d92; --green:#7ce3a5; --gold:#ffd23f;
+  --f-d:"Unica One",system-ui,sans-serif; --f-b:"IBM Plex Sans",system-ui,sans-serif;
+  --f-m:"IBM Plex Mono",ui-monospace,monospace; --f-q:"STIX Two Text","Times New Roman",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{
+  font-family:var(--f-b);color:var(--txt);font-size:16px;line-height:1.6;
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(rgba(126,166,217,.10) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(126,166,217,.10) 1px,transparent 1px),
+    linear-gradient(rgba(126,166,217,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(126,166,217,.045) 1px,transparent 1px);
+  background-size:130px 130px,130px 130px,26px 26px,26px 26px;
+}
+::selection{background:var(--amber);color:#0c1a2b}
+.wrap{max-width:1200px;margin:0 auto;padding:0 26px}
+section{scroll-margin-top:84px}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--amber);z-index:90}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:80;background:rgba(12,26,43,.94);backdrop-filter:blur(6px);border-bottom:1.5px solid var(--line)}
+.tb-in{display:flex;align-items:center;gap:22px;height:60px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--txt)}
+.mark{width:34px;height:34px;border:1.5px solid var(--amber);display:grid;place-items:center;font-family:var(--f-q);font-style:italic;color:var(--amber);font-size:19px;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.bt{font-family:var(--f-d);font-size:16px;letter-spacing:.06em;line-height:1}
+.bt b{display:block;font-family:var(--f-m);font-weight:500;font-size:9.5px;color:var(--cyan);letter-spacing:.24em;margin-top:3px}
+.tb-nav{display:flex;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.tb-nav::-webkit-scrollbar{display:none}
+.tb-nav a{font-family:var(--f-m);font-size:10.5px;letter-spacing:.06em;color:var(--mut);text-decoration:none;padding:7px 9px;border-radius:5px;white-space:nowrap;transition:all .18s}
+.tb-nav a:hover{color:var(--txt);background:rgba(79,214,232,.1)}
+.tb-nav a.active{color:#0c1a2b;background:var(--amber);font-weight:600}
+
+/* masthead + title block */
+.masthead{position:relative;padding:52px 26px 26px}
+.tblock{display:grid;grid-template-columns:2.2fr repeat(5,auto);border:1.5px solid var(--line);background:var(--panel2);box-shadow:7px 7px 0 rgba(0,0,0,.35);margin-bottom:44px}
+.tcell{padding:10px 18px;border-left:1.5px solid var(--line2)}
+.tcell:first-child{border-left:none}
+.tcell small{display:block;font-family:var(--f-m);font-size:8.5px;letter-spacing:.22em;color:var(--dim)}
+.tcell span{font-family:var(--f-m);font-size:12px;color:var(--txt);letter-spacing:.04em}
+.tcell.main span{font-family:var(--f-d);font-size:17px;letter-spacing:.08em;color:var(--amber)}
+.mast-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:46px;align-items:start;position:relative}
+.ghost{position:absolute;right:-30px;top:-70px;font-family:var(--f-d);font-size:clamp(160px,24vw,300px);color:rgba(79,214,232,.05);letter-spacing:-.04em;pointer-events:none;user-select:none;line-height:1}
+.deco{position:absolute;font-family:var(--f-q);font-style:italic;pointer-events:none;user-select:none}
+.d1{left:44%;top:8px;font-size:26px;color:rgba(255,179,64,.16);transform:rotate(-6deg)}
+.d2{left:50%;top:330px;font-size:24px;color:rgba(255,125,146,.14);transform:rotate(4deg)}
+.kicker{font-family:var(--f-m);font-size:11.5px;font-weight:600;letter-spacing:.26em;color:var(--cyan);display:flex;align-items:center;gap:12px}
+.kicker::before{content:"";width:36px;height:1.5px;background:var(--cyan)}
+h1{font-family:var(--f-d);font-weight:400;font-size:clamp(2.5rem,5vw,4.1rem);line-height:1.02;letter-spacing:.015em;margin:18px 0 20px;text-transform:uppercase}
+h1 .hl{color:var(--amber)}
+.lead{color:var(--mut);font-size:1.08rem;max-width:56ch}
+.lead b{color:var(--txt)}
+.checks{list-style:none;margin:26px 0 24px;display:grid;gap:9px;max-width:58ch}
+.checks li{padding-left:28px;position:relative;font-size:.96rem;color:var(--mut)}
+.checks li::before{content:"▸";position:absolute;left:4px;color:var(--amber)}
+.checks li b{color:var(--txt)}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{font-family:var(--f-m);font-size:10.5px;letter-spacing:.06em;border:1px solid var(--line);background:var(--panel2);padding:6px 12px;display:flex;align-items:center;gap:8px;border-radius:999px;color:var(--mut)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.fig-card{border:1.5px solid var(--line);background:var(--panel2);box-shadow:8px 8px 0 rgba(0,0,0,.4);transform:rotate(.4deg);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.fig-card:hover{transform:rotate(0)}
+.fig-head{font-family:var(--f-m);font-size:10.5px;letter-spacing:.2em;color:var(--cyan);border-bottom:1.5px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,179,64,.5)}55%{box-shadow:0 0 0 7px rgba(255,179,64,0)}}
+canvas.stage3d{width:100%;display:block;cursor:grab;touch-action:none;
+  background:radial-gradient(circle at 50% 42%,#12294a 0%,#0b1a2c 78%)}
+canvas.stage3d:active{cursor:grabbing}
+#figc{height:280px}
+.fig-card figcaption{font-size:.85rem;color:var(--mut);padding:12px 16px;border-top:1.5px dashed var(--line2)}
+.fig-card figcaption i{font-family:var(--f-q)}
+.hint{position:absolute;right:12px;bottom:12px;font-family:var(--f-m);font-size:9.5px;letter-spacing:.14em;color:var(--dim);border:1px solid var(--line2);padding:4px 9px;background:rgba(11,26,44,.75);pointer-events:none}
+.map{display:flex;flex-wrap:wrap;gap:9px;margin-top:40px;border-top:1.5px solid var(--line);padding-top:20px}
+.mchip{font-family:var(--f-m);font-size:10.5px;letter-spacing:.05em;border:1px solid var(--line);background:var(--panel2);padding:8px 13px;border-radius:999px;text-decoration:none;color:var(--mut);transition:all .18s}
+.mchip b{color:var(--cyan);margin-right:6px;font-weight:600}
+.mchip:hover{background:var(--amber);color:#0c1a2b;transform:translateY(-2px)}
+.mchip:hover b{color:#0c1a2b}
+
+/* sections */
+.sec{padding:80px 0 0}
+.sec-head{display:flex;align-items:baseline;gap:20px;border-bottom:1.5px solid var(--line);padding-bottom:16px;margin-bottom:30px}
+.sec-no{font-family:var(--f-d);font-size:clamp(1.9rem,3.6vw,2.8rem);color:var(--amber);line-height:1}
+.sec-head h2{font-family:var(--f-d);font-weight:400;font-size:clamp(1.4rem,2.8vw,2rem);letter-spacing:.03em;text-transform:uppercase}
+.sec-head p{color:var(--dim);font-size:.92rem;margin-top:2px}
+.sec-head .right{margin-left:auto;font-family:var(--f-m);font-size:11px;color:var(--dim);white-space:nowrap}
+
+/* theory panels */
+.th-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
+.panel{background:var(--panel);border:1.5px solid var(--line);border-radius:8px;box-shadow:7px 7px 0 rgba(0,0,0,.35)}
+.p-body{padding:22px 24px}
+.p-body h3{font-family:var(--f-d);font-size:1.15rem;letter-spacing:.05em;color:var(--txt);text-transform:uppercase;margin-bottom:10px}
+.p-body p{color:var(--mut);font-size:.95rem;margin-bottom:12px}
+.p-body p b{color:var(--txt)}
+.eq{font-family:var(--f-q);font-size:1.22rem;color:var(--txt);background:var(--panel2);border:1px solid var(--line2);border-left:3px solid var(--amber);padding:12px 18px;margin:12px 0;border-radius:4px;overflow-x:auto}
+.eq i{font-style:italic}
+.eq sup.u,.u{color:var(--cyan)} .eq sub.l,.l{color:var(--rose)}
+.eq .tag{float:right;font-family:var(--f-m);font-size:10px;color:var(--dim);letter-spacing:.1em}
+.fr{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.15;margin:0 3px}
+.fr .up{padding:0 .35em .12em}.fr .dn{border-top:1.5px solid var(--mut);padding:.12em .35em 0}
+.idx-legend{display:flex;gap:16px;font-family:var(--f-m);font-size:10.5px;letter-spacing:.06em;color:var(--dim);margin:6px 0 14px}
+.idx-legend .u,.idx-legend .l{font-weight:600}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{font-family:var(--f-m);font-size:10px;letter-spacing:.14em;color:var(--cyan);text-align:left;padding:9px 12px;border-bottom:1.5px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line2);color:var(--mut);vertical-align:top}
+td .q{font-family:var(--f-q);font-size:1.05rem;color:var(--txt)}
+tr:hover td{background:rgba(79,214,232,.05)}
+
+/* labs */
+.lab{margin-top:34px}
+.lab-head{display:flex;align-items:baseline;gap:18px;margin-bottom:18px}
+.lab-tag{font-family:var(--f-m);font-size:11px;font-weight:600;letter-spacing:.2em;background:var(--amber);color:#0c1a2b;padding:6px 12px;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.lab-head h3{font-family:var(--f-d);font-size:clamp(1.2rem,2.4vw,1.7rem);letter-spacing:.04em;text-transform:uppercase}
+.lab-head p{color:var(--dim);font-size:.9rem}
+.lab-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.9fr);gap:22px;align-items:start}
+.stage-wrap{position:relative}
+.stage-wrap canvas{height:470px;border-radius:8px 8px 0 0}
+.status{font-family:var(--f-m);font-size:11px;letter-spacing:.05em;color:var(--cyan);border-top:1.5px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;background:var(--panel)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.side{display:grid;gap:16px}
+.ctrl .p-body{padding:18px 20px}
+.ctl-row{margin-bottom:14px}
+.ctl-row label{display:flex;justify-content:space-between;font-family:var(--f-m);font-size:10.5px;letter-spacing:.12em;color:var(--dim);margin-bottom:6px}
+.ctl-row label output{color:var(--amber);font-weight:600}
+input[type=range]{width:100%;appearance:none;height:22px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:var(--amber);border:2px solid #0c1a2b;margin-top:-6px;box-shadow:0 0 0 1.5px var(--amber);transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range]::-moz-range-track{height:4px;background:var(--line);border-radius:2px}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--amber);border:2px solid #0c1a2b;box-shadow:0 0 0 1.5px var(--amber)}
+select,.segbtn{font-family:var(--f-m);font-size:11.5px;background:var(--panel2);color:var(--txt);border:1.5px solid var(--line);padding:9px 12px;border-radius:5px;cursor:pointer;letter-spacing:.05em}
+select:hover,.segbtn:hover{border-color:var(--amber)}
+.seg{display:flex;gap:6px}
+.segbtn.on{background:var(--cyan);color:#0c1a2b;border-color:var(--cyan);font-weight:600}
+.ro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ro{background:var(--panel2);border:1px solid var(--line2);border-top:3px solid var(--c,var(--amber));padding:10px 12px;border-radius:5px}
+.ro small{font-family:var(--f-m);font-size:9px;letter-spacing:.16em;color:var(--dim);display:block}
+.ro b{font-family:var(--f-m);font-size:15px;color:var(--txt)}
+.live-eq{font-family:var(--f-q);font-size:1.02rem;color:var(--mut);background:var(--panel2);border:1px dashed var(--line2);padding:10px 14px;border-radius:5px}
+.live-eq b{color:var(--cyan);font-family:var(--f-m);font-size:.92rem}
+.try{border-left:3px solid var(--green);background:rgba(124,227,165,.06);padding:12px 16px;font-size:.9rem;color:var(--mut);border-radius:0 6px 6px 0}
+.try b{font-family:var(--f-m);font-size:10px;letter-spacing:.2em;color:var(--green)}
+
+/* matrices */
+.mat{display:inline-grid;gap:3px 16px;font-family:var(--f-m);font-size:12.5px;color:var(--txt);position:relative;padding:8px 16px;margin:4px 6px 4px 0;background:var(--panel2);border-radius:4px}
+.mat::before,.mat::after{position:absolute;top:50%;transform:translateY(-50%);font-size:2.4rem;font-weight:200;color:var(--dim)}
+.mat::before{content:"[";left:2px}.mat::after{content:"]";right:2px}
+.mat span{text-align:right}
+.mat .hl1{color:var(--gold);font-weight:600}
+.matlab{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:8px 0}
+.matlab small{font-family:var(--f-m);font-size:10px;letter-spacing:.1em;color:var(--dim);width:100%;margin-top:6px}
+
+/* tensor ledger */
+.trow{display:grid;grid-template-columns:110px 1.1fr 1.2fr 1.4fr;gap:16px;padding:18px 14px;border-bottom:1px solid var(--line2);transition:all .2s;align-items:center}
+.trow:hover{background:var(--panel);transform:translateX(6px);box-shadow:-6px 0 0 var(--amber)}
+.trow .ty{font-family:var(--f-q);font-size:1.3rem;text-align:center;color:var(--gold)}
+.trow h4{font-family:var(--f-d);letter-spacing:.05em;font-weight:400;font-size:1.05rem}
+.trow .ex,.trow .law{color:var(--mut);font-size:.9rem}
+.trow .law{font-family:var(--f-q);font-size:1.05rem}
+
+/* delta pad */
+.delta-wrap{display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center}
+.dpad{display:grid;grid-template-columns:auto repeat(3,58px);gap:6px}
+.dpad .hd{font-family:var(--f-m);font-size:11px;color:var(--dim);display:grid;place-items:center}
+.dcell{font-family:var(--f-m);font-size:16px;font-weight:600;background:var(--panel2);border:1.5px solid var(--line);color:var(--mut);height:58px;cursor:pointer;transition:all .15s;border-radius:5px}
+.dcell:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.dcell.on{background:var(--gold);color:#0c1a2b;border-color:var(--gold);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.dout{font-family:var(--f-q);font-size:1.5rem}
+.dout .big{font-family:var(--f-d);font-size:4rem;color:var(--gold);line-height:1;display:block;margin:8px 0}
+.dout p{color:var(--mut);font-size:.95rem}
+
+/* quiz */
+.q-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.q{padding:20px 22px}
+.q .qn{font-family:var(--f-m);font-size:10px;letter-spacing:.2em;color:var(--cyan)}
+.q p.qt{font-size:.98rem;margin:8px 0 14px;color:var(--txt)}
+.q p.qt .q{font-family:var(--f-q)}
+.opt{display:block;width:100%;text-align:left;font-family:var(--f-q);font-size:1.05rem;color:var(--mut);background:var(--panel2);border:1.5px solid var(--line2);border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.opt:hover{border-color:var(--cyan);color:var(--txt);transform:translateX(4px)}
+.opt.ok{border-color:var(--green);color:var(--green);background:rgba(124,227,165,.08)}
+.opt.bad{border-color:var(--rose);color:var(--rose);background:rgba(255,125,146,.07)}
+.expl{display:none;border-left:3px solid var(--gold);background:rgba(255,210,63,.06);padding:10px 14px;font-size:.88rem;color:var(--mut);border-radius:0 6px 6px 0}
+.expl.show{display:block;animation:fin .4s}
+@keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+
+/* footer */
+footer{margin-top:90px;background:#081221;border-top:1.5px solid var(--line)}
+.ft{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;padding:26px;font-family:var(--f-m);font-size:11px;letter-spacing:.12em;color:var(--dim)}
+.ft b{color:var(--amber)}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2.5px solid var(--cyan);outline-offset:2px}
+@media(max-width:960px){
+  .mast-grid,.th-grid,.lab-grid,.q-grid,.delta-wrap{grid-template-columns:1fr}
+  .tblock{grid-template-columns:1fr 1fr}
+  .tcell{border-left:none;border-top:1px solid var(--line2)}
+  .trow{grid-template-columns:80px 1fr;gap:8px}
+  .ghost{display:none}
+  .stage-wrap canvas{height:400px}
+}
+@media(prefers-reduced-motion:reduce){.reveal{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="wrap tb-in">
+    <a class="brand" href="#top"><span class="mark">∇</span><span class="bt">TENSOR ANALYSIS<b>CHAPTER · 01</b></span></a>
+    <nav class="tb-nav">
+      <a href="#s11">1.1 Coordinates</a><a href="#s12">1.2 Unit vectors</a><a href="#s13">1.3 Arc·Volume</a>
+      <a href="#s14">1.4 Contra/Covariant</a><a href="#s15">1.5 Transform</a><a href="#s16">1.6 Tensors</a>
+      <a href="#s17">1.7 Delta</a><a href="#quiz">Quiz</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<!-- ============ MASTHEAD ============ -->
+<section class="masthead wrap">
+  <div class="ghost" aria-hidden="true">δⁱⱼ</div>
+  <span class="deco d1" aria-hidden="true">∂r/∂uⁱ</span>
+  <span class="deco d2" aria-hidden="true">h₁h₂h₃</span>
+
+  <div class="tblock reveal">
+    <div class="tcell main"><small>DOCUMENT</small><span>CURVILINEAR COORDINATES &amp; TENSORS</span></div>
+    <div class="tcell"><small>DWG No.</small><span>CH·01</span></div>
+    <div class="tcell"><small>SHEET</small><span>01 / 01</span></div>
+    <div class="tcell"><small>PROJECTION</small><span>ORTHO · 3D</span></div>
+    <div class="tcell"><small>METRIC</small><span>gᵢ = eᵢ·eⱼ</span></div>
+    <div class="tcell"><small>CHECKED</small><span>eⁱ·eⱼ = δⁱⱼ ✓</span></div>
+  </div>
+
+  <div class="mast-grid">
+    <div>
+      <p class="kicker reveal">VECTOR &amp; TENSOR ANALYSIS — CHAPTER 01</p>
+      <h1 class="reveal">Curvilinear Coordinates <span class="hl">&amp;</span> Tensor Analysis</h1>
+      <p class="lead reveal">Cartesian axes are a comfort, not a law. This chapter rebuilds vectors and tensors in <b>arbitrary curvilinear coordinates</b> — where basis vectors bend with position, components split into <b>contravariant</b> and <b>covariant</b> flavours, and the Kronecker delta keeps the books balanced. Three interactive 3D figures carry the mathematics.</p>
+      <ul class="checks reveal">
+        <li><b>Curvilinear coordinates</b> — coordinate surfaces, curves &amp; the Jacobian condition</li>
+        <li><b>Unit vectors</b> — natural basis <i style="font-family:var(--f-q)">eᵢ = ∂r/∂uⁱ</i>, scale factors hᵢ</li>
+        <li><b>Arc length &amp; volume</b> — ds², dV and special coordinate systems</li>
+        <li><b>Contravariant vs covariant</b> vectors and the dual basis</li>
+        <li><b>Coordinate transforms</b>, mixed tensors and the <b>Kronecker delta</b></li>
+      </ul>
+      <div class="chips reveal">
+        <span class="chip"><span class="dot" style="background:var(--amber)"></span>3 · 3D SIMULATIONS</span>
+        <span class="chip"><span class="dot" style="background:var(--cyan)"></span>UPPER INDEX = CONTRAVARIANT</span>
+        <span class="chip"><span class="dot" style="background:var(--rose)"></span>LOWER INDEX = COVARIANT</span>
+        <span class="chip"><span class="dot" style="background:var(--green)"></span>~30 MIN</span>
+      </div>
+    </div>
+    <div class="reveal">
+      <figure class="fig-card">
+        <div class="fig-head"><span class="live-dot"></span> FIG. 1.0 — LIVE · SPHERICAL FRAME {r, θ, φ}</div>
+        <div class="stage-wrap"><canvas id="figc" class="stage3d"></canvas><span class="hint">DRAG · ROTATE &nbsp; WHEEL · ZOOM</span></div>
+        <figcaption>A point on its own coordinate sphere with the local unit triad <i>ê<sub>r</sub>, ê<sub>θ</sub>, ê<sub>φ</sub></i>. Unlike Cartesian axes, this triad <i>rotates as the point moves</i> — that single fact drives the whole chapter.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="map reveal">
+    <a class="mchip" href="#s11"><b>1.1</b>COORDINATES</a><a class="mchip" href="#s12"><b>1.2</b>UNIT VECTORS</a>
+    <a class="mchip" href="#sim1"><b>SIM 01</b>EXPLORER</a><a class="mchip" href="#s13"><b>1.3</b>ARC · VOLUME</a>
+    <a class="mchip" href="#sim2"><b>SIM 02</b>VOLUME CELL</a><a class="mchip" href="#s14"><b>1.4</b>CONTRA/CO</a>
+    <a class="mchip" href="#sim3"><b>SIM 03</b>TRANSFORM LAB</a><a class="mchip" href="#s16"><b>1.6</b>TENSORS</a>
+    <a class="mchip" href="#s17"><b>1.7</b>DELTA</a><a class="mchip" href="#quiz"><b>1.8</b>CHECK</a>
+  </div>
+</section>
+
+<!-- ============ 1.1 ============ -->
+<section class="sec wrap" id="s11">
+  <div class="sec-head reveal"><span class="sec-no">1.1</span><div><h2>Curvilinear Coordinates</h2><p>Surfaces, curves and the Jacobian condition.</p></div><span class="right">r = r(u¹,u²,u³)</span></div>
+  <div class="th-grid">
+    <div class="panel reveal"><div class="p-body">
+      <h3>From straight grids to bent ones</h3>
+      <p>Choose three numbers <b>(u¹, u², u³)</b> and demand that they fix exactly one point of space through a position vector. Holding one coordinate fixed while the others vary sweeps a <b>coordinate surface</b>; holding two fixed traces a <b>coordinate curve</b>.</p>
+      <p>The map must be invertible — every point gets one label and every label one point. The guard for that is a non-vanishing <b>Jacobian</b>:</p>
+    </div></div>
+    <div class="panel reveal"><div class="p-body">
+      <div class="eq"><span class="tag">DEF 1.1</span><i style="font-weight:600">r</i>(<i class="u">u¹,u²,u³</i>) = <i>x</i>(<i>u</i>)<i> x̂</i> + <i>y</i>(<i>u</i>)<i> ŷ</i> + <i>z</i>(<i>u</i>)<i> ẑ</i></div>
+      <div class="eq"><span class="tag">INVERSE</span><i class="u">uⁱ</i> = <i class="u">uⁱ</i>(<i>x,y,z</i>), &nbsp; <i>i</i> = 1,2,3</div>
+      <div class="eq"><span class="tag">REGULAR</span><i>J</i> = <span class="fr"><span class="up">∂(<i>x,y,z</i>)</span><span class="dn">∂(<i class="u">u¹,u²,u³</i>)</span></span> ≠ 0</div>
+      <p style="font-size:.88rem;color:var(--dim)">For orthogonal systems the Jacobian equals the product of scale factors, <i style="font-family:var(--f-q)">J</i> = h₁h₂h₃ — the same factor that appears in the volume element.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ 1.2 ============ -->
+<section class="sec wrap" id="s12">
+  <div class="sec-head reveal"><span class="sec-no">1.2</span><div><h2>Unit Vectors in a Curvilinear System</h2><p>The natural basis bends; normalising it gives the unit triad.</p></div><span class="right">êᵢ = (1/hᵢ) ∂r/∂uⁱ</span></div>
+  <div class="th-grid">
+    <div class="panel reveal"><div class="p-body">
+      <h3>Tangent (natural) basis</h3>
+      <p>Differentiate the position vector along each coordinate curve. The three tangents form the <b>natural basis</b>; their lengths are the <b>scale factors</b> hᵢ, and dividing them out yields unit vectors.</p>
+      <div class="eq"><i>e</i><sub class="l">i</sub> = <span class="fr"><span class="up">∂<i style="font-weight:600">r</i></span><span class="dn">∂<i class="u">uⁱ</i></span></span>, &nbsp; <i>h</i><sub class="l">i</sub> = |<i>e</i><sub class="l">i</sub>|, &nbsp; <i>ê</i><sub class="l">i</sub> = <span class="fr"><span class="up">1</span><span class="dn"><i>h</i><sub class="l">i</sub></span></span><i>e</i><sub class="l">i</sub></div>
+      <p>In cylindrical and spherical systems the triad <b>changes direction from point to point</b> — ê<sub>ρ</sub> at φ = 0 points along <i>x̂</i>, at φ = π/2 along <i>ŷ</i>. Never drag such a vector between points without re-expressing it.</p>
+    </div></div>
+    <div class="panel reveal"><div class="p-body">
+      <h3>Unit triads in Cartesian components</h3>
+      <div class="eq" style="font-size:1.05rem"><i>ê</i><sub class="l">ρ</sub> = (cos<i>φ</i>, sin<i>φ</i>, 0), &nbsp; <i>ê</i><sub class="l">φ</sub> = (−sin<i>φ</i>, cos<i>φ</i>, 0), &nbsp; <i>ê</i><sub class="l">z</sub> = <i>ẑ</i></div>
+      <div class="eq" style="font-size:1.02rem"><i>ê</i><sub class="l">r</sub> = (sin<i>θ</i>cos<i>φ</i>, sin<i>θ</i>sin<i>φ</i>, cos<i>θ</i>)<br><i>ê</i><sub class="l">θ</sub> = (cos<i>θ</i>cos<i>φ</i>, cos<i>θ</i>sin<i>φ</i>, −sin<i>θ</i>)<br><i>ê</i><sub class="l">φ</sub> = (−sin<i>φ</i>, cos<i>φ</i>, 0)</div>
+      <p style="font-size:.88rem;color:var(--dim)">Watch these numbers update live in <b>SIM 01</b> as you move the point.</p>
+    </div></div>
+  </div>
+
+  <!-- SIM 01 -->
+  <div class="lab" id="sim1">
+    <div class="lab-head reveal"><span class="lab-tag">SIM 01</span><div><h3>Curvilinear Explorer</h3><p>Coordinate curves + local unit triad at a movable point P. Drag to rotate, scroll to zoom.</p></div></div>
+    <div class="lab-grid">
+      <div class="panel stage-wrap reveal">
+        <canvas id="s1c" class="stage3d"></canvas><span class="hint">DRAG · ROTATE &nbsp; WHEEL · ZOOM</span>
+        <div class="status"><span class="sdot"></span><span id="s1status">Amber / cyan / green = coordinate curves &amp; unit vectors ê₁, ê₂, ê₃.</span></div>
+      </div>
+      <aside class="side">
+        <div class="panel ctrl reveal"><div class="p-body">
+          <div class="ctl-row"><label>SYSTEM</label>
+            <select id="s1sys" style="width:100%"><option value="cart">CARTESIAN (x, y, z)</option><option value="cyl" selected>CYLINDRICAL (ρ, φ, z)</option><option value="sph">SPHERICAL (r, θ, φ)</option></select>
+          </div>
+          <div id="s1sliders"></div>
+        </div></div>
+        <div class="ro-grid reveal">
+          <div class="ro" style="--c:var(--amber)"><small>P · CARTESIAN</small><b id="s1pos">—</b></div>
+          <div class="ro" style="--c:var(--cyan)"><small>SCALE (h₁,h₂,h₃)</small><b id="s1h">—</b></div>
+          <div class="ro" style="--c:var(--green)"><small>JACOBIAN h₁h₂h₃</small><b id="s1j">—</b></div>
+        </div>
+        <div class="live-eq reveal" id="s1basis">—</div>
+        <div class="try reveal"><b>TRY —</b> Switch cylindrical → spherical and slide φ (or θ). The triad swings around while the point stays put: basis vectors are <i>functions of position</i>.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1.3 ============ -->
+<section class="sec wrap" id="s13">
+  <div class="sec-head reveal"><span class="sec-no">1.3</span><div><h2>Arc Length, Volume &amp; Special Coordinates</h2><p>The scale factors build the metric and the volume element.</p></div><span class="right">dV = h₁h₂h₃ du¹du²du³</span></div>
+  <div class="th-grid">
+    <div class="panel reveal"><div class="p-body">
+      <h3>Line and volume elements</h3>
+      <p>For <b>orthogonal</b> systems the squared arc length is a weighted sum — the weights hᵢ² are the diagonal metric components — and the infinitesimal cell is a rectangular box with edges hᵢ du:</p>
+      <div class="eq"><span class="tag">METRIC</span>d<i>s</i>² = <i>h</i>₁²(d<i class="u">u¹</i>)² + <i>h</i>₂²(d<i class="u">u²</i>)² + <i>h</i>₃²(d<i class="u">u³</i>)²</div>
+      <div class="eq"><span class="tag">VOLUME</span>d<i>V</i> = <i>h</i>₁<i>h</i>₂<i>h</i>₃ &nbsp;d<i class="u">u¹</i> d<i class="u">u²</i> d<i class="u">u³</i></div>
+      <p>That is why cylindrical integrals carry an extra ρ and spherical ones an r² sin θ — they are not memorised tricks, they <b>are</b> the h-products.</p>
+    </div></div>
+    <div class="panel reveal"><div class="p-body">
+      <h3>Special curvilinear systems</h3>
+      <table>
+        <tr><th>SYSTEM</th><th>(u¹,u²,u³)</th><th>(h₁,h₂,h₃)</th><th>dV</th></tr>
+        <tr><td>Cartesian</td><td class="q">(x,y,z)</td><td class="q">(1,1,1)</td><td class="q">dx dy dz</td></tr>
+        <tr><td>Cylindrical</td><td class="q">(ρ,φ,z)</td><td class="q">(1,ρ,1)</td><td class="q">ρ dρ dφ dz</td></tr>
+        <tr><td>Spherical</td><td class="q">(r,θ,φ)</td><td class="q">(1,r,r sinθ)</td><td class="q">r² sinθ dr dθ dφ</td></tr>
+        <tr><td>Parabolic</td><td class="q">(σ,τ,z)</td><td class="q">(√(σ²+τ²), √(σ²+τ²), 1)</td><td class="q">(σ²+τ²) dσ dτ dz</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- SIM 02 -->
+  <div class="lab" id="sim2">
+    <div class="lab-head reveal"><span class="lab-tag">SIM 02</span><div><h3>Arc-Length &amp; Volume Cell</h3><p>The infinitesimal coordinate box at P — its edges are hᵢΔuⁱ, its volume h₁h₂h₃Δu¹Δu²Δu³.</p></div></div>
+    <div class="lab-grid">
+      <div class="panel stage-wrap reveal">
+        <canvas id="s2c" class="stage3d"></canvas><span class="hint">DRAG · ROTATE &nbsp; WHEEL · ZOOM</span>
+        <div class="status"><span class="sdot"></span><span id="s2status">Move P: on a sphere the cell swells with r and pinches toward the poles (sin θ → 0).</span></div>
+      </div>
+      <aside class="side">
+        <div class="panel ctrl reveal"><div class="p-body">
+          <div class="ctl-row"><label>SYSTEM</label>
+            <select id="s2sys" style="width:100%"><option value="cart">CARTESIAN</option><option value="cyl">CYLINDRICAL</option><option value="sph" selected>SPHERICAL</option></select>
+          </div>
+          <div id="s2sliders"></div>
+        </div></div>
+        <div class="ro-grid reveal">
+          <div class="ro" style="--c:var(--amber)"><small>EDGE h₁Δu¹</small><b id="s2e1">—</b></div>
+          <div class="ro" style="--c:var(--cyan)"><small>EDGE h₂Δu²</small><b id="s2e2">—</b></div>
+          <div class="ro" style="--c:var(--green)"><small>EDGE h₃Δu³</small><b id="s2e3">—</b></div>
+        </div>
+        <div class="live-eq reveal" id="s2ds">—</div>
+        <div class="live-eq reveal" id="s2dv">—</div>
+        <div class="try reveal"><b>TRY —</b> In spherical coordinates push θ toward 0: the green φ-edge collapses to zero because h₃ = r sin θ. The Jacobian vanishes on the axis — coordinates become singular there.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1.4 / 1.5 ============ -->
+<section class="sec wrap" id="s14">
+  <div class="sec-head reveal"><span class="sec-no">1.4</span><div><h2>Contravariant &amp; Covariant Vectors</h2><p>One geometric arrow, two bookkeeping systems.</p></div><span class="right">V = Vⁱeᵢ = Vᵢeⁱ</span></div>
+  <div class="th-grid">
+    <div class="panel reveal"><div class="p-body">
+      <h3>Two bases, two component sets</h3>
+      <p>Expand the arrow on the natural basis and the components are <b>contravariant</b> (upper index); expand it on the <b>dual basis</b> — defined by eⁱ·eⱼ = δⁱⱼ — and they are <b>covariant</b> (lower index). The metric raises and lowers:</p>
+      <div class="eq"><i style="font-weight:600">V</i> = <i class="u">Vⁱ</i><i>e</i><sub class="l">i</sub> = <i class="l">Vᵢ</i><i>e</i><sup class="u">i</sup></div>
+      <div class="eq"><i class="l">Vᵢ</i> = <i>g</i><sub class="l">ij</sub><i class="u">Vʲ</i>, &nbsp; <i class="u">Vⁱ</i> = <i>g</i><sup class="u">ij</sup><i class="l">Vⱼ</i>, &nbsp; <i>g</i><sub class="l">ij</sub> = <i>e</i><sub class="l">i</sub>·<i>e</i><sub class="l">j</sub></div>
+      <p>Contravariant components are the <b>parallelogram coordinates</b> along the axes; covariant components are <b>orthogonal projections</b> onto them. They coincide only for orthonormal bases.</p>
+    </div></div>
+    <div class="panel reveal" id="s15"><div class="p-body">
+      <h3>1.5 · Coordinate transformations</h3>
+      <p>Under x → x′ the chain rule splits the world cleanly: components with <b>upper</b> indices transform with ∂x′/∂x (like displacements), components with <b>lower</b> indices with ∂x/∂x′ (like gradients):</p>
+      <div class="eq"><i class="u">V′ⁱ</i> = <span class="fr"><span class="up">∂<i class="u">x′ⁱ</i></span><span class="dn">∂<i>xʲ</i></span></span><i class="u">Vʲ</i> &nbsp;&nbsp; <i class="l">V′ᵢ</i> = <span class="fr"><span class="up">∂<i>xʲ</i></span><span class="dn">∂<i class="u">x′ⁱ</i></span></span><i class="l">Vⱼ</i></div>
+      <div class="eq"><i>e</i>′<sub class="l">i</sub> = <span class="fr"><span class="up">∂<i>xʲ</i></span><span class="dn">∂<i class="u">x′ⁱ</i></span></span><i>e</i><sub class="l">j</sub> &nbsp; <span style="color:var(--dim);font-size:.95rem">(basis transforms oppositely — hence “contra”)</span></div>
+    </div></div>
+  </div>
+
+  <!-- SIM 03 -->
+  <div class="lab" id="sim3">
+    <div class="lab-head reveal"><span class="lab-tag">SIM 03</span><div><h3>Transformation Lab — Contra vs Covariant</h3><p>A fixed vector V seen through a transformed (rotated · scaled · sheared) basis. All matrices update live.</p></div></div>
+    <div class="lab-grid">
+      <div class="panel stage-wrap reveal">
+        <canvas id="s3c" class="stage3d"></canvas><span class="hint">DRAG · ROTATE &nbsp; WHEEL · ZOOM</span>
+        <div class="status"><span class="sdot"></span><span id="s3status">Cyan dashed = contravariant parallelogram · rose dashed = covariant projections.</span></div>
+      </div>
+      <aside class="side">
+        <div class="panel ctrl reveal"><div class="p-body">
+          <div class="ctl-row"><label>ROTATION θ <output id="s3thv">35°</output></label><input type="range" id="s3th" min="-90" max="90" step="1" value="35"></div>
+          <div class="ctl-row"><label>SCALE a <output id="s3av">1.25</output></label><input type="range" id="s3a" min="0.6" max="1.8" step="0.05" value="1.25"></div>
+          <div class="ctl-row"><label>SHEAR k <output id="s3kv">0.35</output></label><input type="range" id="s3k" min="-1" max="1" step="0.05" value="0.35"></div>
+          <div class="ctl-row"><label>VECTOR V = (Vˣ, Vʸ) <output id="s3vv">2.2, 1.4</output></label>
+            <input type="range" id="s3vx" min="-3" max="3" step="0.1" value="2.2"><input type="range" id="s3vy" min="-3" max="3" step="0.1" value="1.4"></div>
+          <div class="ctl-row"><label>SHOW</label><div class="seg">
+            <button class="segbtn on" data-m="both">BOTH</button><button class="segbtn" data-m="contra">CONTRA</button><button class="segbtn" data-m="cov">CO</button>
+          </div></div>
+        </div></div>
+        <div class="panel reveal"><div class="p-body" style="padding:14px 16px">
+          <div class="matlab" id="s3mats"></div>
+        </div></div>
+        <div class="try reveal"><b>TRY —</b> Set k = 0, θ = 0, a = 1: basis is orthonormal and contra = co components. Now add shear and watch them diverge — while V·V stays identical in both descriptions.</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1.6 ============ -->
+<section class="sec wrap" id="s16">
+  <div class="sec-head reveal"><span class="sec-no">1.6</span><div><h2>Contravariant, Covariant &amp; Mixed Tensors</h2><p>A tensor is defined by how it transforms — type (p, q) means p upper, q lower indices.</p></div></div>
+  <div class="panel reveal"><div class="p-body" style="padding:8px 18px">
+    <div class="eq" style="margin:14px 0"><span class="tag">TYPE (1,1)</span><i class="u">T′ⁱ</i><sub class="l">j</sub> = <span class="fr"><span class="up">∂<i class="u">x′ⁱ</i></span><span class="dn">∂<i>xᵃ</i></span></span><span class="fr"><span class="up">∂<i>x</i></span><span class="dn">∂<i class="u">x′ʲ</i></span></span><i class="u">Tᵃ</i><sub class="l">b</sub></div>
+    <div class="trow"><span class="ty">(0,0)</span><h4>Scalar</h4><span class="ex">temperature, mass, V·W</span><span class="law">T′ = T (invariant)</span></div>
+    <div class="trow"><span class="ty">(1,0)</span><h4>Contravariant vector</h4><span class="ex">displacement dxⁱ, velocity</span><span class="law">V′ⁱ = (∂x′ⁱ/∂xʲ)Vʲ</span></div>
+    <div class="trow"><span class="ty">(0,1)</span><h4>Covariant vector</h4><span class="ex">gradient ∂f/∂xⁱ</span><span class="law">V′ᵢ = (∂xʲ/∂x′ⁱ)Vⱼ</span></div>
+    <div class="trow"><span class="ty">(1,1)</span><h4>Mixed tensor</h4><span class="ex">Kronecker delta δⁱⱼ, identity map</span><span class="law">δ′ⁱⱼ = δⁱⱼ (same in every frame)</span></div>
+    <div class="trow"><span class="ty">(0,2)</span><h4>Covariant tensor</h4><span class="ex">metric gᵢⱼ</span><span class="law">g′ⱼ = (∂xᵃ/∂x′ⁱ)(∂xᵇ/∂x′ʲ)gₐᵦ</span></div>
+  </div></div>
+</section>
+
+<!-- ============ 1.7 ============ -->
+<section class="sec wrap" id="s17">
+  <div class="sec-head reveal"><span class="sec-no">1.7</span><div><h2>The Kronecker Delta</h2><p>The identity tensor: it substitutes indices and checks the books.</p></div><span class="right">δⁱⱼ = eⁱ·eⱼ</span></div>
+  <div class="th-grid">
+    <div class="panel reveal"><div class="p-body">
+      <h3>Definition &amp; duties</h3>
+      <div class="eq">δ<sup class="u">i</sup><sub class="l">j</sub> = { 1 if <i>i</i> = <i>j</i> ; &nbsp;0 otherwise }</div>
+      <div class="eq" style="font-size:1.05rem">δ<sup class="u">i</sup><sub class="l">j</sub><i class="u">Vʲ</i> = <i class="u">Vⁱ</i> &nbsp;·&nbsp; <i>g</i><sub class="l">ik</sub><i>g</i><sup class="u">kj</sup> = δ<sub class="l">i</sub><sup class="u">j</sup> &nbsp;·&nbsp; <i>e</i><sup class="u">i</sup>·<i>e</i><sub class="l">j</sub> = δ<sup class="u">i</sup><sub class="l">j</sub></div>
+      <p>It is the <b>duality handshake</b>: the dual basis is precisely the set of vectors whose dot products with the natural basis give δ. It also certifies inverse transformations: (∂x′ⁱ/∂x)(∂xᵏ/∂x′ʲ) = δⁱⱼ — verified live with your matrices in <b>SIM 03</b>.</p>
+      <div class="delta-wrap" style="margin-top:18px">
+        <div class="dpad" id="dpad"></div>
+        <div class="dout" id="dout"></div>
+      </div>
+    </div></div>
+    <div class="panel reveal"><div class="p-body">
+      <h3>Why it is a (1,1) tensor</h3>
+      <p>Transform δ with the mixed-tensor rule and the two Jacobians collapse by the chain rule, leaving δ unchanged — its components are <b>identical in every coordinate system</b>, which is exactly what the SIM 03 δ-matrix displays (1.00 on the diagonal, 0.00 elsewhere).</p>
+      <div class="eq" style="font-size:1.05rem">δ′<sup class="u">i</sup><sub class="l">j</sub> = <span class="fr"><span class="up">∂<i class="u">x′ⁱ</i></span><span class="dn">∂<i>xᵃ</i></span></span><span class="fr"><span class="up">∂<i>xᵇ</i></span><span class="dn">∂<i class="u">x′ʲ</i></span></span>δ<sup class="u">a</sup><sub class="l">b</sub> = <span class="fr"><span class="up">∂<i class="u">x′ⁱ</i></span><span class="dn">∂<i class="u">x′ʲ</i></span></span> = δ<sup class="u">i</sup><sub class="l">j</sub></div>
+      <p style="font-size:.88rem;color:var(--dim)">Practical habits: δ contracts (substitutes) indices, raises/lowers nothing, and turns “same index twice” sums into single terms — δⁱⱼAⁱBʲ = A·B in orthonormal frames.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="sec wrap" id="quiz">
+  <div class="sec-head reveal"><span class="sec-no">1.8</span><div><h2>Concept Check</h2><p>Six quick verifications.</p></div><span class="right">SCORE <b id="score" style="color:var(--amber)">0 / 6</b></span></div>
+  <div class="q-grid">
+    <div class="q panel reveal" data-ans="1"><span class="qn">Q1</span><p class="qt">The scale factors (h<sub>ρ</sub>, h<sub>φ</sub>, h<sub>z</sub>) of cylindrical coordinates are:</p>
+      <button class="opt">(1, 1, 1)</button><button class="opt">(1, ρ, 1)</button><button class="opt">(ρ, ρ, 1)</button><button class="opt">(1, ρ², 1)</button>
+      <div class="expl">|∂r/ρ| = 1, |∂r/∂φ| = ρ, |∂r/∂z| = 1 — the φ arc grows linearly with radius.</div></div>
+    <div class="q panel reveal" data-ans="1"><span class="qn">Q2</span><p class="qt">The volume element dV in spherical coordinates is:</p>
+      <button class="opt">r sinθ dr dθ dφ</button><button class="opt">r² sinθ dr dθ dφ</button><button class="opt">r² dr dθ dφ</button><button class="opt">ρ dρ dφ dz</button>
+      <div class="expl">h₁h₂h₃ = 1 · r · r sinθ = r² sinθ.</div></div>
+    <div class="q panel reveal" data-ans="0"><span class="qn">Q3</span><p class="qt">Contravariant components transform with:</p>
+      <button class="opt">∂x′ⁱ/∂xʲ</button><button class="opt">∂xʲ/∂x′ⁱ</button><button class="opt">gᵢⱼ</button><button class="opt">δⁱⱼ</button>
+      <div class="expl">Upper indices follow the forward Jacobian — like coordinate differentials dxⁱ.</div></div>
+    <div class="q panel reveal" data-ans="1"><span class="qn">Q4</span><p class="qt">The dual basis is defined by eⁱ·e =</p>
+      <button class="opt">gᵢⱼ</button><button class="opt">δⁱⱼ</button><button class="opt">0</button><button class="opt">eⱼ</button>
+      <div class="expl">Duality is exactly the Kronecker delta: eⁱ picks out the i-th contravariant component.</div></div>
+    <div class="q panel reveal" data-ans="2"><span class="qn">Q5</span><p class="qt">The Kronecker delta δⁱⱼ is a tensor of type:</p>
+      <button class="opt">(0,2)</button><button class="opt">(2,0)</button><button class="opt">(1,1)</button><button class="opt">(0,0)</button>
+      <div class="expl">One upper, one lower index — which is precisely why it is invariant under all transformations.</div></div>
+    <div class="q panel reveal" data-ans="0"><span class="qn">Q6</span><p class="qt">Covariant components are obtained from contravariant ones by:</p>
+      <button class="opt">lowering with the metric: Vᵢ = gᵢⱼVʲ</button><button class="opt">Vᵢ = Vⁱ in every basis</button><button class="opt">multiplying with δⁱ only, in any basis</button><button class="opt">Vᵢ = VVʲ</button>
+      <div class="expl">Raising/lowering is the metric’s job; δ only substitutes indices. In orthonormal frames g = δ, which hides the distinction.</div></div>
+  </div>
+</section>
+
+<section class="sec wrap" style="padding-bottom:10px">
+  <div class="panel reveal"><div class="p-body">
+    <h3>Chapter wrap-up</h3>
+    <p>• Coordinates are labels; the <b>Jacobian ≠ 0</b> keeps them honest. &nbsp;• Bases come from tangents: <b>eᵢ = ∂r/∂uⁱ</b>, units from <b>hᵢ</b>. &nbsp;• <b>ds²</b> and <b>dV</b> are built from the hᵢ — never memorise ρ and r² sinθ, derive them. &nbsp;• <b>Upper = contravariant</b> (parallelogram), <b>lower = covariant</b> (projection); the metric translates. &nbsp;• Tensors are transformation behaviours; <b>δⁱⱼ</b> is the invariant (1,1) identity.</p>
+    <p style="color:var(--dim);font-size:.9rem;margin:0">NEXT → CHAPTER 02 · CHRISTOFFEL SYMBOLS &amp; COVARIANT DIFFERENTIATION</p>
+  </div></div>
+</section>
+</main>
+
+<footer><div class="ft"><span><b>CH·01</b> · CURVILINEAR COORDINATES &amp; TENSOR ANALYSIS</span><span>eⁱ·eⱼ = <b>δⁱⱼ</b> · ds² = gᵢⱼ duⁱduʲ · INTERACTIVE 3D LAB</span></div></footer>
+
+<script>
+/* ================= tiny 3D engine ================= */
+const COL={a:'#ffb340',c:'#4fd6e8',g:'#7ce3a5',r:'#ff7d92',w:'#f2f7ff',dim:'rgba(150,190,240,.28)',dim2:'rgba(150,190,240,.5)',txt:'#9db4cc'};
+const CC=[COL.a,COL.c,COL.g];
+function viewer(id,opt){
+  const cv=document.getElementById(id);
+  const st={cv:cv,ctx:cv.getContext('2d'),
+    yaw:(opt.yaw!==undefined)?opt.yaw:0.7,
+    pitch:(opt.pitch!==undefined)?opt.pitch:-0.52,
+    s:(opt.s!==undefined)?opt.s:62,
+    auto:(opt.auto!==false),drag:false,on:true,w:0,h:0,px:0,py:0};
+  st.fit=function(){const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;
+    cv.width=Math.max(2,Math.round(r.width*d));cv.height=Math.max(2,Math.round(r.height*d));
+    st.w=r.width;st.h=r.height;st.ctx.setTransform(d,0,0,d,0,0);};
+  st.P=function(p){const cy=Math.cos(st.yaw),sy=Math.sin(st.yaw),cp=Math.cos(st.pitch),sp=Math.sin(st.pitch);
+    const x1=p[0]*cy-p[1]*sy,y1=p[0]*sy+p[1]*cy,y2=y1*cp-p[2]*sp;
+    return [st.w/2+x1*st.s,st.h/2-y2*st.s];};
+  st.line=function(p,q,col,w,dash,al){const a=st.P(p),b=st.P(q),c=st.ctx;
+    c.save();c.globalAlpha=(al===undefined?1:al);c.strokeStyle=col;c.lineWidth=w||1.2;
+    if(dash)c.setLineDash(dash);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();c.restore();};
+  st.poly=function(pts,col,w,dash,al){const c=st.ctx;c.save();c.globalAlpha=(al===undefined?0.9:al);
+    c.strokeStyle=col;c.lineWidth=w||1.4;if(dash)c.setLineDash(dash);c.beginPath();
+    for(let i=0;i<pts.length;i++){const q=st.P(pts[i]);if(i===0)c.moveTo(q[0],q[1]);else c.lineTo(q[0],q[1]);}
+    c.stroke();c.restore();};
+  st.arrow=function(p,q,col,w,hs){const a=st.P(p),b=st.P(q),c=st.ctx;hs=hs||9;
+    c.strokeStyle=col;c.fillStyle=col;c.lineWidth=w||2.2;
+    c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();
+    const an=Math.atan2(b[1]-a[1],b[0]-a[0]);
+    c.beginPath();c.moveTo(b[0],b[1]);
+    c.lineTo(b[0]-hs*Math.cos(an-0.42),b[1]-hs*Math.sin(an-0.42));
+    c.lineTo(b[0]-hs*Math.cos(an+0.42),b[1]-hs*Math.sin(an+0.42));
+    c.closePath();c.fill();};
+  st.dot=function(p,r,col){const a=st.P(p),c=st.ctx;c.fillStyle=col;c.beginPath();c.arc(a[0],a[1],r,0,7);c.fill();};
+  st.label=function(p,t,col,f,dx,dy){const a=st.P(p),c=st.ctx;c.fillStyle=col||COL.txt;
+    c.font=f||'11px "IBM Plex Mono",monospace';c.fillText(t,a[0]+(dx===undefined?8:dx),a[1]+(dy===undefined?-6:dy));};
+  st.label2=function(p,m,sub,col){const a=st.P(p),c=st.ctx;c.fillStyle=col;
+    c.font='italic 13px "STIX Two Text",serif';c.fillText(m,a[0]+7,a[1]-6);
+    c.font='italic 9px "STIX Two Text",serif';c.fillText(sub,a[0]+8+c.measureText(m).width,a[1]-2);};
+  cv.addEventListener('pointerdown',function(e){st.drag=true;st.px=e.clientX;st.py=e.clientY;cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',function(e){if(!st.drag)return;
+    st.yaw+=(e.clientX-st.px)*0.006;
+    st.pitch=Math.min(-0.08,Math.max(-1.5,st.pitch+(e.clientY-st.py)*0.006));
+    st.px=e.clientX;st.py=e.clientY;});
+  cv.addEventListener('pointerup',function(){st.drag=false;});
+  cv.addEventListener('pointercancel',function(){st.drag=false;});
+  cv.addEventListener('wheel',function(e){e.preventDefault();st.s=Math.min(150,Math.max(24,st.s*(e.deltaY<0?1.08:0.92)));},{passive:false});
+  return st;
+}
+function add(p,v,t){return [p[0]+v[0]*t,p[1]+v[1]*t,p[2]+v[2]*t];}
+function f2(x){const y=Math.abs(x)<0.005?0:x;return y.toFixed(2);}
+/* ============ coordinate systems ============ */
+const SYS={
+ cart:{lab:['x','y','z'],rng:[[-3,3],[-3,3],[-3,3]],def:[1.6,1.4,1.1],
+  pos:function(u){return [u[0],u[1],u[2]];},
+  h:function(){return [1,1,1];},
+  basis:function(){return [[1,0,0],[0,1,0],[0,0,1]];}},
+ cyl:{lab:['ρ','φ','z'],rng:[[0.05,3.5],[0,6.283],[-2,2]],def:[1.9,0.9,1.1],
+  pos:function(u){return [u[0]*Math.cos(u[1]),u[0]*Math.sin(u[1]),u[2]];},
+  h:function(u){return [1,u[0],1];},
+  basis:function(u){const c=Math.cos(u[1]),s=Math.sin(u[1]);return [[c,s,0],[-s,c,0],[0,0,1]];}},
+ sph:{lab:['r','θ','φ'],rng:[[0.05,3.5],[0.06,3.08],[0,6.283]],def:[2.3,1.05,0.85],
+  pos:function(u){return [u[0]*Math.sin(u[1])*Math.cos(u[2]),u[0]*Math.sin(u[1])*Math.sin(u[2]),u[0]*Math.cos(u[1])];},
+  h:function(u){return [1,u[0],u[0]*Math.sin(u[1])];},
+  basis:function(u){const t=u[1],f=u[2],st=Math.sin(t),ct=Math.cos(t),cf=Math.cos(f),sf=Math.sin(f);
+   return [[st*cf,st*sf,ct],[ct*cf,ct*sf,-st],[-sf,cf,0]];}}
+};
+function contextGrid(v,sys,u){
+  const R=3.4;let k,pts,a;
+  v.line([-R,0,0],[R,0,0],COL.dim,1);v.line([0,-R,0],[0,R,0],COL.dim,1);v.line([0,0,-R*0.7],[0,0,R*0.7],COL.dim,1);
+  v.label([R,0,0],'x',COL.dim2,'italic 12px "STIX Two Text",serif');
+  v.label([0,R,0],'y',COL.dim2,'italic 12px "STIX Two Text",serif');
+  v.label([0,0,R*0.7],'z',COL.dim2,'italic 12px "STIX Two Text",serif');
+  if(sys==='cart'){for(k=-3;k<=3;k++){v.line([k,-3,0],[k,3,0],COL.dim,0.8);v.line([-3,k,0],[3,k,0],COL.dim,0.8);}}
+  if(sys==='cyl'){
+    for(let r=1;r<=3;r++){pts=[];for(k=0;k<=48;k++){a=k/48*6.283;pts.push([r*Math.cos(a),r*Math.sin(a),0]);}v.poly(pts,COL.dim,0.8);}
+    for(k=0;k<8;k++){a=k/8*6.283;v.line([0,0,0],[3.3*Math.cos(a),3.3*Math.sin(a),0],COL.dim,0.7);}
+  }
+  if(sys==='sph'){
+    const r=u[0];
+    for(let m=0;m<6;m++){const f=m/6*Math.PI;pts=[];for(k=0;k<=40;k++){const t=k/40*Math.PI;pts.push([r*Math.sin(t)*Math.cos(f),r*Math.sin(t)*Math.sin(f),r*Math.cos(t)]);}v.poly(pts,COL.dim,0.8);}
+    for(let q=1;q<5;q++){const t=q/5*Math.PI;pts=[];for(k=0;k<=40;k++){const f=k/40*6.283;pts.push([r*Math.sin(t)*Math.cos(f),r*Math.sin(t)*Math.sin(f),r*Math.cos(t)]);}v.poly(pts,COL.dim,0.8);}
+  }
+}
+/* ================= SIM 01 ================= */
+const S1={v:viewer('s1c',{}),sys:'cyl',u:SYS.cyl.def.slice()};
+function buildSliders(box,sys,u,on){
+  const S=SYS[sys];box.innerHTML='';
+  for(let i=0;i<3;i++){(function(i){
+    const r=S.rng[i],row=document.createElement('div');row.className='ctl-row';
+    row.innerHTML='<label>'+S.lab[i]+' <output>'+u[i].toFixed(2)+'</output></label>';
+    const inp=document.createElement('input');inp.type='range';
+    inp.min=r[0];inp.max=r[1];inp.step=(r[1]-r[0])/140;inp.value=u[i];
+    inp.addEventListener('input',function(){u[i]=parseFloat(inp.value);
+      row.querySelector('output').textContent=parseFloat(inp.value).toFixed(2);on();});
+    row.appendChild(inp);box.appendChild(row);
+  })(i);}
+}
+function updS1(){
+  const S=SYS[S1.sys],P=S.pos(S1.u),h=S.h(S1.u),B=S.basis(S1.u);
+  document.getElementById('s1pos').textContent='('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')';
+  document.getElementById('s1h').textContent='('+f2(h[0])+', '+f2(h[1])+', '+f2(h[2])+')';
+  document.getElementById('s1j').textContent=f2(h[0]*h[1]*h[2])+' (≠0 ✓)';
+  document.getElementById('s1basis').innerHTML=
+    'ê₁ = ('+f2(B[0][0])+', '+f2(B[0][1])+', '+f2(B[0][2])+')<br>'+
+    'ê₂ = ('+f2(B[1][0])+', '+f2(B[1][1])+', '+f2(B[1][2])+')<br>'+
+    'ê₃ = ('+f2(B[2][0])+', '+f2(B[2][1])+', '+f2(B[2][2])+')';
+  document.getElementById('s1status').textContent='P = ('+S.lab[0]+'='+f2(S1.u[0])+', '+S.lab[1]+'='+f2(S1.u[1])+', '+S.lab[2]+'='+f2(S1.u[2])+') — the triad rotates with position.';
+}
+function drawS1(){
+  const v=S1.v;if(!v.on)return;v.ctx.clearRect(0,0,v.w,v.h);
+  const S=SYS[S1.sys],u=S1.u,P=S.pos(u);
+  contextGrid(v,S1.sys,u);
+  for(let i=0;i<3;i++){
+    const pts=[],r=S.rng[i];
+    for(let k=0;k<=64;k++){const uu=u.slice();uu[i]=r[0]+(r[1]-r[0])*k/64;pts.push(S.pos(uu));}
+    v.poly(pts,CC[i],1.5,null,0.75);
+  }
+  const B=S.basis(u);
+  for(let i=0;i<3;i++)v.arrow(P,add(P,B[i],1.05),CC[i],2.4);
+  v.label2(add(P,B[0],1.12),'e','1',CC[0]);
+  v.label2(add(P,B[1],1.12),'e','2',CC[1]);
+  v.label2(add(P,B[2],1.12),'e','3',CC[2]);
+  v.dot(P,4.5,COL.w);v.label(P,'P',COL.w);
+}
+document.getElementById('s1sys').addEventListener('change',function(e){
+  S1.sys=e.target.value;S1.u=SYS[S1.sys].def.slice();
+  buildSliders(document.getElementById('s1sliders'),S1.sys,S1.u,updS1);updS1();});
+buildSliders(document.getElementById('s1sliders'),S1.sys,S1.u,updS1);updS1();
+/* ================= SIM 02 ================= */
+const S2={v:viewer('s2c',{yaw:0.9}),sys:'sph',u:SYS.sph.def.slice(),
+  d:{cart:0.6,cyl:[0.5,0.5,0.6],sph:[0.5,0.4,0.55]}};
+function updS2(){
+  const S=SYS[S2.sys],h=S.h(S2.u);
+  const d=(S2.sys==='cart')?S2.d.cart:S2.d[S2.sys];
+  const D=Array.isArray(d)?d:[d,d,d];
+  const e=[h[0]*D[0],h[1]*D[1],h[2]*D[2]];
+  document.getElementById('s2e1').textContent=f2(e[0]);
+  document.getElementById('s2e2').textContent=f2(e[1]);
+  document.getElementById('s2e3').textContent=f2(e[2]);
+  const ds={cart:'ds² = dx²+dy²+dz²',cyl:'ds² = dρ²+ρ²dφ²+dz²',sph:'ds² = dr²+r²dθ²+r²sin²θ dφ²'}[S2.sys];
+  document.getElementById('s2ds').innerHTML=ds+' &nbsp;→&nbsp; edges <b>'+f2(e[0])+', '+f2(e[1])+', '+f2(e[2])+'</b>';
+  document.getElementById('s2dv').innerHTML='dV = h₁h₂h₃ Δu¹Δu²Δu³ = <b>'+f2(e[0]*e[1]*e[2])+'</b> (cell volume)';
+}
+function drawS2(){
+  const v=S2.v;if(!v.on)return;v.ctx.clearRect(0,0,v.w,v.h);
+  const S=SYS[S2.sys],u=S2.u,P=S.pos(u);
+  contextGrid(v,S2.sys,u);
+  const d=(S2.sys==='cart')?S2.d.cart:S2.d[S2.sys];
+  const D=Array.isArray(d)?d:[d,d,d];
+  for(let i=0;i<3;i++){
+    const j1=(i+1)%3,j2=(i+2)%3;
+    for(let m=0;m<2;m++)for(let n=0;n<2;n++){
+      const pts=[];
+      for(let k=0;k<=6;k++){const uu=u.slice();uu[i]+=k/6*D[i];uu[j1]+=m*D[j1];uu[j2]+=n*D[j2];pts.push(S.pos(uu));}
+      v.poly(pts,CC[i],2,null,0.95);
+    }
+  }
+  for(let m=0;m<8;m++){
+    const uu=u.slice();
+    if(m&1)uu[0]+=D[0];if(m&2)uu[1]+=D[1];if(m&4)uu[2]+=D[2];
+    v.dot(S.pos(uu),2,COL.w);
+  }
+  const h=S.h(u),B=S.basis(u);
+  v.label(add(P,B[0],h[0]*D[0]*0.6),'h₁Δ¹≈'+f2(h[0]*D[0]),CC[0],'10px "IBM Plex Mono",monospace');
+  v.label(add(P,B[1],h[1]*D[1]*0.6),'h₂Δ²≈'+f2(h[1]*D[1]),CC[1],'10px "IBM Plex Mono",monospace');
+  v.label(add(P,B[2],h[2]*D[2]*0.6),'h₃Δ³≈'+f2(h[2]*D[2]),CC[2],'10px "IBM Plex Mono",monospace');
+  v.dot(P,4.5,COL.w);v.label(P,'P',COL.w);
+}
+document.getElementById('s2sys').addEventListener('change',function(e){
+  S2.sys=e.target.value;S2.u=SYS[S2.sys].def.slice();
+  buildSliders(document.getElementById('s2sliders'),S2.sys,S2.u,updS2);updS2();});
+buildSliders(document.getElementById('s2sliders'),S2.sys,S2.u,updS2);updS2();
+/* ================= SIM 03 ================= */
+const S3={v:viewer('s3c',{yaw:0.55,pitch:-0.9,s:74,auto:false}),th:35,a:1.25,k:0.35,vx:2.2,vy:1.4,mode:'both'};
+function inv2(M){const d=M[0][0]*M[1][1]-M[0][1]*M[1][0];
+  return [[M[1][1]/d,-M[0][1]/d],[-M[1][0]/d,M[0][0]/d]];}
+function mv2(M,v){return [M[0][0]*v[0]+M[0][1]*v[1],M[1][0]*v[0]+M[1][1]*v[1]];}
+function s3calc(){
+  const t=S3.th*Math.PI/180,c=Math.cos(t),s=Math.sin(t);
+  const M=[[c*S3.a,c*S3.k-s],[s*S3.a,s*S3.k+c]];
+  const Mi=inv2(M),V=[S3.vx,S3.vy];
+  const vc=mv2(Mi,V);
+  const g=[[M[0][0]*M[0][0]+M[1][0]*M[1][0],M[0][0]*M[0][1]+M[1][0]*M[1][1]],
+           [M[0][0]*M[0][1]+M[1][0]*M[1][1],M[0][1]*M[0][1]+M[1][1]*M[1][1]]];
+  const vo=[V[0]*M[0][0]+V[1]*M[1][0],V[0]*M[0][1]+V[1]*M[1][1]];
+  const dual=[Mi[0],Mi[1]];
+  const dlt=[[dual[0][0]*M[0][0]+dual[0][1]*M[1][0],dual[0][0]*M[0][1]+dual[0][1]*M[1][1]],
+             [dual[1][0]*M[0][0]+dual[1][1]*M[1][0],dual[1][0]*M[0][1]+dual[1][1]*M[1][1]]];
+  return {M:M,Mi:Mi,vc:vc,vo:vo,g:g,dual:dual,dlt:dlt,V:V};
+}
+function mm(M){return '<span>'+f2(M[0][0])+'</span><span>'+f2(M[0][1])+'</span><span>'+f2(M[1][0])+'</span><span>'+f2(M[1][1])+'</span>';}
+function updS3(){
+  document.getElementById('s3thv').textContent=S3.th+'°';
+  document.getElementById('s3av').textContent=f2(S3.a);
+  document.getElementById('s3kv').textContent=f2(S3.k);
+  document.getElementById('s3vv').textContent=f2(S3.vx)+', '+f2(S3.vy);
+  const r=s3calc();let dhtml='';
+  for(let i=0;i<2;i++)for(let j=0;j<2;j++){
+    const want=(i===j)?1:0;
+    dhtml+='<span class="'+(Math.abs(r.dlt[i][j]-want)<1e-9?'hl1':'')+'">'+f2(r.dlt[i][j])+'</span>';
+  }
+  document.getElementById('s3mats').innerHTML=
+    '<small>BASIS M=[e′₁ e′₂] · J=∂x′/∂x=M⁻¹ · gᵢ=e′·e′ · eⁱ·e′ⱼ=δⱼ</small>'+
+    '<div class="mat">'+mm(r.M)+'</div><div class="mat">'+mm(r.Mi)+'</div><div class="mat">'+mm(r.g)+'</div><div class="mat">'+dhtml+'</div>'+
+    '<small style="width:100%">contra V′ = (<b style="color:var(--cyan)">'+f2(r.vc[0])+', '+f2(r.vc[1])+'</b>) · co V′ = (<b style="color:var(--rose)">'+f2(r.vo[0])+', '+f2(r.vo[1])+'</b>) · V·V = <b style="color:var(--gold)">'+f2(S3.vx*S3.vx+S3.vy*S3.vy)+'</b> (identical both ways ✓)</small>';
+}
+const SUP=['¹','²'],SUB=['₁','₂'];
+function drawS3(){
+  const v=S3.v;if(!v.on)return;v.ctx.clearRect(0,0,v.w,v.h);
+  const r=s3calc();
+  function Z(p){return [p[0],p[1],0];}
+  for(let i=-3;i<=3;i++){v.line(Z([i,-3.4]),Z([i,3.4]),COL.dim,0.8);v.line(Z([-3.4,i]),Z([3.4,i]),COL.dim,0.8);}
+  v.line(Z([-3.4,0]),Z([3.4,0]),COL.dim2,1.2);v.line(Z([0,-3.4]),Z([0,3.4]),COL.dim2,1.2);
+  v.label(Z([3.4,0]),'x',COL.dim2,'italic 12px "STIX Two Text",serif');
+  v.label(Z([0,3.4]),'y',COL.dim2,'italic 12px "STIX Two Text",serif');
+  const e1=[r.M[0][0],r.M[1][0]],e2=[r.M[0][1],r.M[1][1]];
+  v.line(Z([-e1[0]*4,-e1[1]*4]),Z([e1[0]*4,e1[1]*4]),CC[0],1,[5,5],0.5);
+  v.line(Z([-e2[0]*4,-e2[1]*4]),Z([e2[0]*4,e2[1]*4]),CC[0],1,[5,5],0.5);
+  v.arrow(Z([0,0]),Z(e1),CC[0],2.4);v.arrow(Z([0,0]),Z(e2),CC[0],2.4);
+  v.label2(Z(e1),"e′",'1',CC[0]);v.label2(Z(e2),"e′",'2',CC[0]);
+  if(S3.mode!=='cov'){
+    const p1=[e1[0]*r.vc[0],e1[1]*r.vc[0]],p2=[e2[0]*r.vc[1],e2[1]*r.vc[1]];
+    v.line(Z(p1),Z(r.V),COL.c,1.6,[4,4]);v.line(Z(p2),Z(r.V),COL.c,1.6,[4,4]);
+    v.dot(Z(p1),3,COL.c);v.dot(Z(p2),3,COL.c);
+    v.label(Z(p1),'v'+SUP[0]+'='+f2(r.vc[0]),COL.c);v.label(Z(p2),'v'+SUP[1]+'='+f2(r.vc[1]),COL.c);
+  }
+  if(S3.mode!=='contra'){
+    const pairs=[[e1,r.vo[0],0],[e2,r.vo[1],1]];
+    for(let q=0;q<2;q++){
+      const e=pairs[q][0],val=pairs[q][1],si=pairs[q][2];
+      const tt=val/(e[0]*e[0]+e[1]*e[1]),f=[e[0]*tt,e[1]*tt];
+      v.line(Z(r.V),Z(f),COL.r,1.6,[4,4]);v.dot(Z(f),3,COL.r);
+      v.label(Z(f),'v'+SUB[si]+'='+f2(val),COL.r);
+    }
+    v.arrow(Z([0,0]),Z(r.dual[0]),COL.r,1.6);v.arrow(Z([0,0]),Z(r.dual[1]),COL.r,1.6);
+    v.label2(Z(r.dual[0]),'e','1',COL.r);v.label2(Z(r.dual[1]),'e','2',COL.r);
+  }
+  v.arrow(Z([0,0]),Z(r.V),COL.w,2.8);v.label(Z(r.V),'V',COL.w,'13px "IBM Plex Mono",monospace');
+  v.dot(Z([0,0]),3,COL.w);
+}
+[['s3th','th'],['s3a','a'],['s3k','k'],['s3vx','vx'],['s3vy','vy']].forEach(function(pr){
+  document.getElementById(pr[0]).addEventListener('input',function(e){S3[pr[1]]=parseFloat(e.target.value);updS3();});
+});
+document.querySelectorAll('.segbtn').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.segbtn').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');S3.mode=b.dataset.m;});
+});
+updS3();
+/* ================= masthead figure ================= */
+const FG={v:viewer('figc',{yaw:0.8,s:52}),u:[2.4,1.05,0.85]};
+function drawFig(){
+  const v=FG.v;if(!v.on)return;v.ctx.clearRect(0,0,v.w,v.h);
+  contextGrid(v,'sph',FG.u);
+  const P=SYS.sph.pos(FG.u),B=SYS.sph.basis(FG.u);
+  for(let i=0;i<3;i++)v.arrow(P,add(P,B[i],1.0),CC[i],2.2);
+  v.label2(add(P,B[0],1.1),'e','r',CC[0]);
+  v.label2(add(P,B[1],1.1),'e','θ',CC[1]);
+  v.label2(add(P,B[2],1.1),'e','φ',CC[2]);
+  v.dot(P,4.5,COL.w);v.label(P,'P',COL.w);
+}
+/* ================= loop / visibility / resize ================= */
+const sims=[{v:FG.v,f:drawFig},{v:S1.v,f:drawS1},{v:S2.v,f:drawS2},{v:S3.v,f:drawS3}];
+const vio=new IntersectionObserver(function(es){es.forEach(function(e){
+  for(let i=0;i<sims.length;i++){if(sims[i].v.cv===e.target)sims[i].v.on=e.isIntersecting;}});},{threshold:0});
+sims.forEach(function(s){vio.observe(s.v.cv);});
+function fitAll(){sims.forEach(function(s){s.v.fit();});}
+window.addEventListener('resize',fitAll);
+fitAll();
+let last=0;
+function loop(ts){const dt=ts-last;last=ts;
+  for(let i=0;i<sims.length;i++){const s=sims[i];
+    if(s.v.auto&&!s.v.drag)s.v.yaw+=0.00035*dt;
+    s.f();}
+  requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+/* ================= delta pad ================= */
+const dpad=document.getElementById('dpad'),dout=document.getElementById('dout');
+(function(){
+  let html='<span class="hd"></span>';
+  for(let j=1;j<=3;j++)html+='<span class="hd">j='+j+'</span>';
+  for(let i=1;i<=3;i++){
+    html+='<span class="hd">i='+i+'</span>';
+    for(let j=1;j<=3;j++)html+='<button class="dcell" data-i="'+i+'" data-j="'+j+'">'+(i===j?1:0)+'</button>';
+  }
+  dpad.innerHTML=html;
+})();
+function dshow(i,j){
+  const val=(i===j)?1:0;
+  dout.innerHTML='δ<sup class="u">'+i+'</sup><sub class="l">'+j+'</sub> = <span class="big">'+val+'</span><p>'+
+    (val?'i = j → the delta <b>passes</b>: it substitutes the index (δⁱVʲ = Vⁱ).':'i ≠ j → the delta <b>kills</b> the term: different directions never mix.')+'</p>';
+  dpad.querySelectorAll('.dcell').forEach(function(b){
+    b.classList.toggle('on',parseInt(b.dataset.i,10)===i&&parseInt(b.dataset.j,10)===j);});
+}
+dpad.addEventListener('click',function(e){
+  if(e.target.classList.contains('dcell'))dshow(parseInt(e.target.dataset.i,10),parseInt(e.target.dataset.j,10));});
+dshow(1,1);
+/* ================= quiz / reveal / nav ================= */
+let score=0;
+document.querySelectorAll('.q.panel').forEach(function(q){
+  const ans=parseInt(q.dataset.ans,10);
+  q.querySelectorAll('.opt').forEach(function(b,i){
+    b.addEventListener('click',function(){
+      if(q.classList.contains('done'))return;
+      q.classList.add('done');
+      if(i===ans){b.classList.add('ok');score++;}
+      else{b.classList.add('bad');q.querySelectorAll('.opt')[ans].classList.add('ok');}
+      q.querySelector('.expl').classList.add('show');
+      document.getElementById('score').textContent=score+' / 6';
+    });
+  });
+});
+const rio=new IntersectionObserver(function(es){es.forEach(function(e){
+  if(e.isIntersecting){e.target.classList.add('in');rio.unobserve(e.target);}});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(function(el){rio.observe(el);});
+window.addEventListener('scroll',function(){
+  const h=document.documentElement;
+  document.getElementById('progress').style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';});
+const spy=new IntersectionObserver(function(es){es.forEach(function(e){
+  if(e.isIntersecting){
+    document.querySelectorAll('.tb-nav a').forEach(function(a){
+      a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id);});
+  }});},{rootMargin:'-40% 0px -55% 0px'});
+['s11','s12','s13','s14','s16','s17','quiz'].forEach(function(id){
+  const el=document.getElementById(id);if(el)spy.observe(el);});
+</script>
+</body>
+</html>

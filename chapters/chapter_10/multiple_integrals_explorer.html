@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiple Integrals 3D Explorer & Study Hub</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+body{font-family:'Inter',sans-serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+.glow-cyan{box-shadow:0 0 20px rgba(6,182,212,0.3);}
+.glow-emerald{box-shadow:0 0 20px rgba(16,185,129,0.3);}
+.glow-amber{box-shadow:0 0 20px rgba(245,158,11,0.3);}
+.glow-rose{box-shadow:0 0 20px rgba(244,63,94,0.3);}
+.tab-active{border-bottom:2px solid #06b6d4;color:#06b6d4;}
+.tab-inactive{border-bottom:2px solid transparent;color:#94a3b8;}
+.tab-inactive:hover{color:#e2e8f0;}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:#334155;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#06b6d4;cursor:pointer;box-shadow:0 0 10px rgba(6,182,212,0.5);}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#06b6d4;cursor:pointer;border:none;box-shadow:0 0 10px rgba(6,182,212,0.5);}
+.math-display{overflow-x:auto;}
+.quiz-option{transition:all 0.2s;cursor:pointer;}
+.quiz-option:hover{background:rgba(6,182,212,0.1);border-color:#06b6d4;}
+.quiz-correct{background:rgba(16,185,129,0.2)!important;border-color:#10b981!important;}
+.quiz-wrong{background:rgba(244,63,94,0.2)!important;border-color:#f43f5e!important;}
+#canvas-container{position:relative;}
+#canvas-container canvas{display:block;}
+.property-card{transition:transform 0.2s,box-shadow 0.2s;}
+.property-card:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+.loading-overlay{position:absolute;inset:0;background:rgba(2,6,23,0.9);display:flex;align-items:center;justify-content:center;z-index:50;}
+.spinner{width:40px;height:40px;border:3px solid #334155;border-top-color:#06b6d4;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.fade-in{animation:fadeIn 0.5s ease-in;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+<header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+<div class="max-w-[1920px] mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center glow-cyan">
+<i data-lucide="box" class="w-5 h-5 text-cyan-400"></i>
+</div>
+<div>
+<h1 class="text-lg font-bold tracking-tight text-white">Multiple Integrals 3D Explorer</h1>
+<p class="text-xs text-slate-400">Interactive Study Hub & Visualization Engine</p>
+</div>
+</div>
+<div class="flex items-center gap-3 flex-wrap">
+<div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+<button id="mode-double" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Double Integrals</button>
+<button id="mode-triple" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-slate-200">Triple Integrals</button>
+</div>
+<select id="preset-select" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500">
+<option value="paraboloid">Paraboloid: z = x&sup2; + y&sup2;</option>
+<option value="hemisphere">Hemisphere: z = &radic;(R&sup2; - x&sup2; - y&sup2;)</option>
+<option value="saddle">Saddle: z = x&sup2; - y&sup2;</option>
+<option value="plane">Inclined Plane: z = ax + by + c</option>
+<option value="exponential">Gaussian: z = e^{-(x&sup2;+y&sup2;)}</option>
+<option value="sin">Sine Wave: z = sin(x)cos(y)</option>
+</select>
+<button id="theme-toggle" class="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center hover:border-cyan-500/50 transition-colors">
+<i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+</button>
+</div>
+</div>
+</header>
+
+<main class="flex-1 flex flex-col lg:flex-row max-w-[1920px] mx-auto w-full">
+
+<section class="lg:w-[60%] w-full h-[50vh] lg:h-[calc(100vh-65px)] relative border-r border-slate-800 bg-slate-950">
+<div id="canvas-container" class="w-full h-full"></div>
+<div id="loading" class="loading-overlay">
+<div class="flex flex-col items-center gap-3">
+<div class="spinner"></div>
+<span class="text-sm text-slate-400">Initializing WebGL Engine...</span>
+</div>
+</div>
+
+<div class="absolute top-4 left-4 flex flex-col gap-2 z-10">
+<div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-lg p-3 shadow-xl">
+<div class="flex items-center gap-2 mb-2">
+<i data-lucide="eye" class="w-4 h-4 text-cyan-400"></i>
+<span class="text-xs font-semibold text-slate-300">Visual Options</span>
+</div>
+<div class="space-y-2">
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="checkbox" id="show-riemann" checked class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500">
+<span class="text-xs text-slate-300">Riemann Boxes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="checkbox" id="show-surface" checked class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500">
+<span class="text-xs text-slate-300">Surface Mesh</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="checkbox" id="show-wireframe" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500">
+<span class="text-xs text-slate-300">Wireframe</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer" id="slice-control-label">
+<input type="checkbox" id="show-slices" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500">
+<span class="text-xs text-slate-300">Slice Planes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer" id="density-control-label" style="display:none;">
+<input type="checkbox" id="show-density" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500">
+<span class="text-xs text-slate-300">Density Heatmap</span>
+</label>
+</div>
+</div>
+<div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-lg p-3 shadow-xl">
+<div class="flex items-center gap-2 mb-2">
+<i data-lucide="play-circle" class="w-4 h-4 text-emerald-400"></i>
+<span class="text-xs font-semibold text-slate-300">Animation</span>
+</div>
+<button id="anim-toggle" class="w-full py-1.5 px-3 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-2">
+<i data-lucide="play" class="w-3 h-3"></i>
+<span>Play Sweep</span>
+</button>
+</div>
+</div>
+
+<div class="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-4 z-10">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div>
+<div class="flex justify-between mb-1">
+<label class="text-xs text-slate-400">Subdivisions (N)</label>
+<span id="n-value" class="text-xs font-mono text-cyan-400">10</span>
+</div>
+<input type="range" id="n-slider" min="4" max="50" value="10" class="w-full">
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<label class="text-xs text-slate-400">Surface Opacity</label>
+<span id="opacity-value" class="text-xs font-mono text-cyan-400">0.7</span>
+</div>
+<input type="range" id="opacity-slider" min="0.1" max="1" step="0.1" value="0.7" class="w-full">
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<label class="text-xs text-slate-400">X Range</label>
+<span id="xrange-value" class="text-xs font-mono text-cyan-400">[-2, 2]</span>
+</div>
+<div class="flex gap-2">
+<input type="number" id="xmin" value="-2" step="0.5" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+<input type="number" id="xmax" value="2" step="0.5" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<label class="text-xs text-slate-400">Y Range</label>
+<span id="yrange-value" class="text-xs font-mono text-cyan-400">[-2, 2]</span>
+</div>
+<div class="flex gap-2">
+<input type="number" id="ymin" value="-2" step="0.5" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+<input type="number" id="ymax" value="2" step="0.5" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+</div>
+</div>
+</div>
+<div id="z-controls" class="grid grid-cols-2 gap-4 mt-3 hidden">
+<div>
+<div class="flex justify-between mb-1">
+<label class="text-xs text-slate-400">Z Lower Bound</label>
+<span id="zmin-value" class="text-xs font-mono text-emerald-400">0</span>
+</div>
+<input type="range" id="zmin-slider" min="-5" max="5" step="0.1" value="0" class="w-full">
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<label class="text-xs text-slate-400">Z Upper Bound</label>
+<span id="zmax-value" class="text-xs font-mono text-emerald-400">4</span>
+</div>
+<input type="range" id="zmax-slider" min="-5" max="10" step="0.1" value="4" class="w-full">
+</div>
+</div>
+</div>
+
+<div class="absolute top-4 right-4 bg-slate-900/90 backdrop-blur border border-slate-700 rounded-lg p-3 shadow-xl z-10 min-w-[180px]">
+<div class="flex items-center gap-2 mb-2">
+<i data-lucide="calculator" class="w-4 h-4 text-amber-400"></i>
+<span class="text-xs font-semibold text-slate-300">Live Computation</span>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between">
+<span class="text-xs text-slate-400">Riemann Sum:</span>
+<span id="riemann-result" class="text-xs font-mono text-amber-400">0.000</span>
+</div>
+<div class="flex justify-between">
+<span class="text-xs text-slate-400">Exact Integral:</span>
+<span id="exact-result" class="text-xs font-mono text-emerald-400">0.000</span>
+</div>
+<div class="flex justify-between">
+<span class="text-xs text-slate-400">Error:</span>
+<span id="error-result" class="text-xs font-mono text-rose-400">0.000</span>
+</div>
+<div class="flex justify-between border-t border-slate-700 pt-1 mt-1">
+<span class="text-xs text-slate-400">dA / dV:</span>
+<span id="differential-result" class="text-xs font-mono text-cyan-400">0.000</span>
+</div>
+</div>
+</div>
+</section>
+
+<section class="lg:w-[40%] w-full h-auto lg:h-[calc(100vh-65px)] bg-slate-900 flex flex-col border-l border-slate-800">
+<div class="flex border-b border-slate-800 bg-slate-900/50">
+<button class="tab-btn flex-1 py-3 px-4 text-sm font-medium tab-active transition-colors" data-tab="intuition">
+<div class="flex items-center justify-center gap-2">
+<i data-lucide="lightbulb" class="w-4 h-4"></i>
+<span class="hidden sm:inline">Geometric Intuition</span>
+<span class="sm:hidden">Intuition</span>
+</div>
+</button>
+<button class="tab-btn flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors" data-tab="properties">
+<div class="flex items-center justify-center gap-2">
+<i data-lucide="book-open" class="w-4 h-4"></i>
+<span class="hidden sm:inline">Properties & Transforms</span>
+<span class="sm:hidden">Properties</span>
+</div>
+</button>
+<button class="tab-btn flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors" data-tab="quiz">
+<div class="flex items-center justify-center gap-2">
+<i data-lucide="help-circle" class="w-4 h-4"></i>
+<span class="hidden sm:inline">Self-Assessment</span>
+<span class="sm:hidden">Quiz</span>
+</div>
+</button>
+</div>
+
+<div class="flex-1 overflow-y-auto p-5">
+
+<div id="tab-intuition" class="tab-content space-y-6">
+<div class="fade-in">
+<h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+<i data-lucide="layers" class="w-5 h-5 text-cyan-400"></i>
+Dimensional Progression
+</h2>
+<div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 space-y-4">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-300 shrink-0">1D</div>
+<div>
+<p class="text-sm text-slate-300 font-medium">Length via Single Integral</p>
+<div class="math-display mt-1" id="math-1d"></div>
+<p class="text-xs text-slate-400 mt-1">Sum infinitesimal line segments dx along an interval.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-sm font-bold text-cyan-400 shrink-0">2D</div>
+<div>
+<p class="text-sm text-slate-300 font-medium">Area via Double Integral</p>
+<div class="math-display mt-1" id="math-2d"></div>
+<p class="text-xs text-slate-400 mt-1">Sum infinitesimal area elements dA = dx dy over a region R.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-sm font-bold text-emerald-400 shrink-0">3D</div>
+<div>
+<p class="text-sm text-slate-300 font-medium">Volume under Surface</p>
+<div class="math-display mt-1" id="math-3d-vol"></div>
+<p class="text-xs text-slate-400 mt-1">Sum columns of height f(x,y) over base area dA.</p>
+</div>
+</div>
+<div class="flex items-start gap-3" id="triple-math-section">
+<div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400 shrink-0">4D</div>
+<div>
+<p class="text-sm text-slate-300 font-medium">Mass via Triple Integral</p>
+<div class="math-display mt-1" id="math-4d"></div>
+<p class="text-xs text-slate-400 mt-1">Sum density-weighted volume elements dV through a solid E.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="fade-in">
+<h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+<i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i>
+Live Integration Analysis
+</h2>
+<div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+<div class="mb-3">
+<p class="text-xs text-slate-400 mb-1">Current Setup</p>
+<div class="math-display" id="math-current-setup"></div>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-4">
+<div class="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+<p class="text-xs text-slate-400 mb-1">Riemann Approximation</p>
+<div class="math-display" id="math-riemann"></div>
+<p class="text-xs text-amber-400 mt-1 mono" id="riemann-numeric">&Sigma; f(x&#x1D62;, y&#x2C7;) &Delta;A = 0.000</p>
+</div>
+<div class="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+<p class="text-xs text-slate-400 mb-1">Exact Value</p>
+<div class="math-display" id="math-exact"></div>
+<p class="text-xs text-emerald-400 mt-1 mono" id="exact-numeric">&int;&int; f dA = 0.000</p>
+</div>
+</div>
+<div class="mt-3 p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg">
+<p class="text-xs text-rose-300 flex items-center gap-2">
+<i data-lucide="alert-triangle" class="w-3 h-3"></i>
+Approximation Error: <span class="mono font-bold" id="error-numeric">0.0000</span>
+(<span id="error-percent">0.00</span>%)
+</p>
+</div>
+</div>
+</div>
+
+<div class="fade-in">
+<h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+<i data-lucide="move" class="w-5 h-5 text-amber-400"></i>
+Fubini's Theorem Visualization
+</h2>
+<div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+<p class="text-sm text-slate-300 mb-3">The order of integration can be swapped when f is continuous over a rectangular region:</p>
+<div class="math-display mb-3" id="math-fubini"></div>
+<div class="flex gap-3">
+<button id="slice-x-btn" class="flex-1 py-2 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors">
+Slice along X first
+</button>
+<button id="slice-y-btn" class="flex-1 py-2 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/20 transition-colors">
+Slice along Y first
+</button>
+</div>
+<p class="text-xs text-slate-400 mt-2">Use the <strong>Slice Planes</strong> toggle in the 3D view to visualize cross-sections.</p>
+</div>
+</div>
+</div>
+
+<div id="tab-properties" class="tab-content hidden space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+<input type="text" id="property-search" placeholder="Search properties..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 w-full focus:outline-none focus:border-cyan-500">
+</div>
+<div id="properties-list" class="space-y-3">
+<div class="property-card bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-keywords="linearity linear combination sum scalar">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+<i data-lucide="plus" class="w-4 h-4 text-cyan-400"></i>
+</div>
+<h3 class="text-sm font-bold text-white">1. Linearity</h3>
+</div>
+<div class="math-display mb-2" id="prop-linearity"></div>
+<p class="text-xs text-slate-400">Integrals preserve vector space operations. The integral of a linear combination equals the linear combination of integrals.</p>
+</div>
+<div class="property-card bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-keywords="domain additivity partition disjoint union region">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+<i data-lucide="git-merge" class="w-4 h-4 text-emerald-400"></i>
+</div>
+<h3 class="text-sm font-bold text-white">2. Domain Additivity</h3>
+</div>
+<div class="math-display mb-2" id="prop-additivity"></div>
+<p class="text-xs text-slate-400">If R&#x2081; and R&#x2082; overlap only on boundaries, the integral over their union equals the sum of integrals.</p>
+</div>
+<div class="property-card bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-keywords="inequality bound bounding min max estimate">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+<i data-lucide="arrow-up-down" class="w-4 h-4 text-amber-400"></i>
+</div>
+<h3 class="text-sm font-bold text-white">3. Bounding / Estimation</h3>
+</div>
+<div class="math-display mb-2" id="prop-bounding"></div>
+<p class="text-xs text-slate-400">The integral is bounded between the minimum and maximum values of f scaled by the region's area.</p>
+</div>
+<div class="property-card bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-keywords="fubini order swap dx dy iteration">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center">
+<i data-lucide="repeat" class="w-4 h-4 text-rose-400"></i>
+</div>
+<h3 class="text-sm font-bold text-white">4. Fubini's Theorem</h3>
+</div>
+<div class="math-display mb-2" id="prop-fubini"></div>
+<p class="text-xs text-slate-400">For continuous f on a rectangle, iterated integrals in either order yield the same result.</p>
+</div>
+<div class="property-card bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-keywords="change variables jacobian polar cylindrical spherical transform">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+<i data-lucide="shuffle" class="w-4 h-4 text-purple-400"></i>
+</div>
+<h3 class="text-sm font-bold text-white">5. Change of Variables & Jacobian</h3>
+</div>
+<div class="math-display mb-2" id="prop-jacobian"></div>
+<div class="space-y-2 mt-3">
+<div class="bg-slate-900/50 rounded-lg p-2 border border-slate-700/50">
+<p class="text-xs text-cyan-400 font-medium mb-1">Polar Coordinates</p>
+<div class="math-display" id="prop-polar"></div>
+</div>
+<div class="bg-slate-900/50 rounded-lg p-2 border border-slate-700/50">
+<p class="text-xs text-emerald-400 font-medium mb-1">Cylindrical Coordinates</p>
+<div class="math-display" id="prop-cylindrical"></div>
+</div>
+<div class="bg-slate-900/50 rounded-lg p-2 border border-slate-700/50">
+<p class="text-xs text-amber-400 font-medium mb-1">Spherical Coordinates</p>
+<div class="math-display" id="prop-spherical"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="tab-quiz" class="tab-content hidden space-y-5">
+<div class="flex items-center justify-between">
+<h2 class="text-lg font-bold text-white flex items-center gap-2">
+<i data-lucide="brain" class="w-5 h-5 text-purple-400"></i>
+Conceptual Mastery Quiz
+</h2>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-400">Score:</span>
+<span id="quiz-score" class="text-sm font-bold text-cyan-400 mono">0/5</span>
+</div>
+</div>
+<div id="quiz-container" class="space-y-4">
+<div class="quiz-question bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-q="1">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0 mt-0.5">1</span>
+<div class="flex-1">
+<p class="text-sm text-slate-200 mb-3">When computing &iint;_R (x&sup2; + y&sup2;) dA over a circular region, which coordinate system minimizes complexity?</p>
+<div class="space-y-2">
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300" data-correct="true">Polar coordinates, because x&sup2; + y&sup2; = r&sup2; and dA = r dr d&theta;</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">Cartesian coordinates, because circles are simpler in xy-plane</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">Spherical coordinates, because we need three dimensions</button>
+</div>
+<div class="quiz-feedback mt-2 hidden text-xs"></div>
+</div>
+</div>
+</div>
+<div class="quiz-question bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-q="2">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0 mt-0.5">2</span>
+<div class="flex-1">
+<p class="text-sm text-slate-200 mb-3">What does the Jacobian determinant represent geometrically in a change of variables?</p>
+<div class="space-y-2">
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">The curvature of the coordinate grid lines</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300" data-correct="true">The local scaling factor of area (or volume) elements under transformation</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">The angle between the new coordinate axes</button>
+</div>
+<div class="quiz-feedback mt-2 hidden text-xs"></div>
+</div>
+</div>
+</div>
+<div class="quiz-question bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-q="3">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0 mt-0.5">3</span>
+<div class="flex-1">
+<p class="text-sm text-slate-200 mb-3">In the Riemann sum approximation &Sigma; f(x&#x1D62;, y&#x2C7;) &Delta;A, what happens as N &rarr; &infin;?</p>
+<div class="space-y-2">
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">The sum diverges because we add infinitely many terms</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300" data-correct="true">The sum converges to the exact double integral (for continuous f)</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">The approximation error grows without bound</button>
+</div>
+<div class="quiz-feedback mt-2 hidden text-xs"></div>
+</div>
+</div>
+</div>
+<div class="quiz-question bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-q="4">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0 mt-0.5">4</span>
+<div class="flex-1">
+<p class="text-sm text-slate-200 mb-3">For a triple integral &iiint;_E &rho;(x,y,z) dV, if &rho; represents density, what does the integral compute?</p>
+<div class="space-y-2">
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">The volume of region E</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300" data-correct="true">The total mass of the solid region E</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">The surface area of the boundary of E</button>
+</div>
+<div class="quiz-feedback mt-2 hidden text-xs"></div>
+</div>
+</div>
+</div>
+<div class="quiz-question bg-slate-800/50 border border-slate-700 rounded-xl p-4" data-q="5">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0 mt-0.5">5</span>
+<div class="flex-1">
+<p class="text-sm text-slate-200 mb-3">When switching integration order in &int;&#x2080;&sup1; &int;_{x&sup2;}&sup1; f(x,y) dy dx, the new limits become:</p>
+<div class="space-y-2">
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">&int;&#x2080;&sup1; &int;&#x2080;^{y&sup2;} f(x,y) dx dy</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300" data-correct="true">&int;&#x2080;&sup1; &int;&#x2080;^{&radic;y} f(x,y) dx dy</button>
+<button class="quiz-option w-full text-left px-3 py-2 rounded-lg border border-slate-600 bg-slate-800/50 text-xs text-slate-300">&int;&#x2080;&sup1; &int;_{&radic;y}&sup1; f(x,y) dx dy</button>
+</div>
+<div class="quiz-feedback mt-2 hidden text-xs"></div>
+</div>
+</div>
+</div>
+</div>
+<button id="quiz-reset" class="w-full py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+<i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+Reset Quiz
+</button>
+</div>
+</div>
+</section>
+</main>
+
+<script>
+
+const State = {
+    mode: 'double',
+    preset: 'paraboloid',
+    n: 10,
+    opacity: 0.7,
+    bounds: { xmin: -2, xmax: 2, ymin: -2, ymax: 2, zmin: 0, zmax: 4 },
+    showRiemann: true,
+    showSurface: true,
+    showWireframe: false,
+    showSlices: false,
+    showDensity: false,
+    animating: false,
+    animTime: 0,
+    sliceAxis: 'x',
+    theme: 'dark',
+    lastRiemannSum: 0
+};
+
+const Presets = {
+    paraboloid: {
+        name: 'Paraboloid',
+        latex: 'z = x^2 + y^2',
+        f: (x, y) => x*x + y*y,
+        exact: (a,b,c,d) => {
+            const fx = (x) => x*x*x/3;
+            return (fx(b)-fx(a))*(d-c) + (b-a)*(fx(d)-fx(c));
+        },
+        defaultBounds: { xmin: -2, xmax: 2, ymin: -2, ymax: 2, zmin: 0, zmax: 8 }
+    },
+    hemisphere: {
+        name: 'Hemisphere',
+        latex: 'z = \\sqrt{R^2 - x^2 - y^2}',
+        f: (x, y) => {
+            const r2 = 4 - x*x - y*y;
+            return r2 > 0 ? Math.sqrt(r2) : 0;
+        },
+        exact: (a,b,c,d) => numericalIntegrate((x,y) => {
+            const r2 = 4 - x*x - y*y;
+            return r2 > 0 ? Math.sqrt(r2) : 0;
+        }, a, b, c, d, 200),
+        defaultBounds: { xmin: -2, xmax: 2, ymin: -2, ymax: 2, zmin: 0, zmax: 2 }
+    },
+    saddle: {
+        name: 'Saddle',
+        latex: 'z = x^2 - y^2',
+        f: (x, y) => x*x - y*y,
+        exact: (a,b,c,d) => {
+            const fx = (x) => x*x*x/3;
+            return (fx(b)-fx(a))*(d-c) - (b-a)*(fx(d)-fx(c));
+        },
+        defaultBounds: { xmin: -2, xmax: 2, ymin: -2, ymax: 2, zmin: -4, zmax: 4 }
+    },
+    plane: {
+        name: 'Inclined Plane',
+        latex: 'z = 0.5x + 0.3y + 1',
+        f: (x, y) => 0.5*x + 0.3*y + 1,
+        exact: (a,b,c,d) => {
+            return 0.5*(b*b-a*a)/2*(d-c) + 0.3*(d*d-c*c)/2*(b-a) + (b-a)*(d-c);
+        },
+        defaultBounds: { xmin: -2, xmax: 2, ymin: -2, ymax: 2, zmin: 0, zmax: 3 }
+    },
+    exponential: {
+        name: 'Gaussian',
+        latex: 'z = e^{-(x^2+y^2)}',
+        f: (x, y) => Math.exp(-(x*x + y*y)),
+        exact: (a,b,c,d) => numericalIntegrate((x,y) => Math.exp(-(x*x+y*y)), a, b, c, d, 200),
+        defaultBounds: { xmin: -2, xmax: 2, ymin: -2, ymax: 2, zmin: 0, zmax: 1 }
+    },
+    sin: {
+        name: 'Sine Wave',
+        latex: 'z = \\sin(x)\\cos(y)',
+        f: (x, y) => Math.sin(x) * Math.cos(y),
+        exact: (a,b,c,d) => (-Math.cos(b)+Math.cos(a))*(Math.sin(d)-Math.sin(c)),
+        defaultBounds: { xmin: -3.14, xmax: 3.14, ymin: -3.14, ymax: 3.14, zmin: -1, zmax: 1 }
+    }
+};
+
+function numericalIntegrate(f, a, b, c, d, N) {
+    let sum = 0;
+    const dx = (b-a)/N, dy = (d-c)/N;
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            sum += f(a + (i+0.5)*dx, c + (j+0.5)*dy) * dx * dy;
+        }
+    }
+    return sum;
+}
+
+let scene, camera, renderer, controls;
+let surfaceMesh, riemannMesh, slicePlane, densityMesh;
+let gridHelper, axesHelper;
+const meshes = [];
+
+function initThree() {
+    const container = document.getElementById('canvas-container');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+    scene.fog = new THREE.Fog(0x020617, 10, 50);
+
+    camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
+    camera.position.set(8, 8, 8);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    const pointLight = new THREE.PointLight(0x06b6d4, 0.8, 20);
+    pointLight.position.set(-5, 5, -5);
+    scene.add(pointLight);
+
+    gridHelper = new THREE.GridHelper(20, 20, 0x1e293b, 0x0f172a);
+    scene.add(gridHelper);
+
+    axesHelper = new THREE.AxesHelper(3);
+    scene.add(axesHelper);
+
+    document.getElementById('loading').style.display = 'none';
+
+    window.addEventListener('resize', onWindowResize);
+    animate();
+}
+
+function onWindowResize() {
+    const container = document.getElementById('canvas-container');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (State.animating) {
+        State.animTime += 0.01;
+        updateSliceAnimation();
+    }
+    renderer.render(scene, camera);
+}
+
+function clearMeshes() {
+    meshes.forEach(m => {
+        scene.remove(m);
+        if (m.geometry) m.geometry.dispose();
+        if (m.material) {
+            if (Array.isArray(m.material)) m.material.forEach(mat => mat.dispose());
+            else m.material.dispose();
+        }
+    });
+    meshes.length = 0;
+}
+
+function updateScene() {
+    clearMeshes();
+    const preset = Presets[State.preset];
+    const { xmin, xmax, ymin, ymax, zmin, zmax } = State.bounds;
+    if (State.mode === 'double') {
+        renderDoubleIntegralMode(preset, xmin, xmax, ymin, ymax);
+    } else {
+        renderTripleIntegralMode(preset, xmin, xmax, ymin, ymax, zmin, zmax);
+    }
+    updateMathDisplay();
+    updateStats();
+}
+
+function renderDoubleIntegralMode(preset, xmin, xmax, ymin, ymax) {
+    const f = preset.f;
+    const N = State.n;
+    const dx = (xmax - xmin) / N;
+    const dy = (ymax - ymin) / N;
+
+    if (State.showSurface) {
+        const seg = Math.min(N * 3, 80);
+        const geometry = new THREE.ParametricBufferGeometry((u, v, target) => {
+            const x = xmin + u * (xmax - xmin);
+            const y = ymin + v * (ymax - ymin);
+            const z = f(x, y);
+            target.set(x, z, y);
+        }, seg, seg);
+
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: State.opacity,
+            side: THREE.DoubleSide,
+            wireframe: State.showWireframe,
+            shininess: 80
+        });
+
+        surfaceMesh = new THREE.Mesh(geometry, material);
+        surfaceMesh.castShadow = true;
+        surfaceMesh.receiveShadow = true;
+        scene.add(surfaceMesh);
+        meshes.push(surfaceMesh);
+    }
+
+    if (State.showRiemann) {
+        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        boxGeo.translate(0, 0.5, 0);
+        const boxMat = new THREE.MeshPhongMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        const count = N * N;
+        riemannMesh = new THREE.InstancedMesh(boxGeo, boxMat, count);
+
+        const dummy = new THREE.Object3D();
+        let idx = 0;
+        let riemannSum = 0;
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const x = xmin + (i + 0.5) * dx;
+                const y = ymin + (j + 0.5) * dy;
+                const h = f(x, y);
+
+                dummy.position.set(x, 0, y);
+                dummy.scale.set(dx * 0.9, Math.max(h, 0.01), dy * 0.9);
+                dummy.updateMatrix();
+                riemannMesh.setMatrixAt(idx++, dummy.matrix);
+
+                riemannSum += h * dx * dy;
+            }
+        }
+
+        riemannMesh.instanceMatrix.needsUpdate = true;
+        scene.add(riemannMesh);
+        meshes.push(riemannMesh);
+        State.lastRiemannSum = riemannSum;
+    }
+
+    const baseGeo = new THREE.PlaneGeometry(xmax - xmin, ymax - ymin);
+    const baseMat = new THREE.MeshBasicMaterial({
+        color: 0x10b981,
+        transparent: true,
+        opacity: 0.15,
+        side: THREE.DoubleSide
+    });
+    const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+    baseMesh.rotation.x = -Math.PI / 2;
+    baseMesh.position.set((xmin+xmax)/2, 0.01, (ymin+ymax)/2);
+    scene.add(baseMesh);
+    meshes.push(baseMesh);
+
+    if (State.showSlices) {
+        const sliceGeo = new THREE.PlaneGeometry(
+            State.sliceAxis === 'x' ? ymax - ymin : xmax - xmin,
+            10
+        );
+        const sliceMat = new THREE.MeshBasicMaterial({
+            color: 0xf43f5e,
+            transparent: true,
+            opacity: 0.25,
+            side: THREE.DoubleSide
+        });
+        slicePlane = new THREE.Mesh(sliceGeo, sliceMat);
+
+        if (State.sliceAxis === 'x') {
+            slicePlane.rotation.y = Math.PI / 2;
+        }
+        scene.add(slicePlane);
+        meshes.push(slicePlane);
+        updateSliceAnimation();
+    }
+}
+
+function renderTripleIntegralMode(preset, xmin, xmax, ymin, ymax, zmin, zmax) {
+    const f = preset.f;
+    const N = Math.min(State.n, 20);
+    const dx = (xmax - xmin) / N;
+    const dy = (ymax - ymin) / N;
+    const dz = (zmax - zmin) / N;
+
+    if (State.showSurface) {
+        const seg = Math.min(N * 2, 60);
+        const geometry = new THREE.ParametricBufferGeometry((u, v, target) => {
+            const x = xmin + u * (xmax - xmin);
+            const y = ymin + v * (ymax - ymin);
+            const z = Math.min(Math.max(f(x, y), zmin), zmax);
+            target.set(x, z, y);
+        }, seg, seg);
+
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: State.opacity,
+            side: THREE.DoubleSide,
+            wireframe: State.showWireframe
+        });
+
+        surfaceMesh = new THREE.Mesh(geometry, material);
+        scene.add(surfaceMesh);
+        meshes.push(surfaceMesh);
+    }
+
+    if (State.showRiemann) {
+        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        const boxMat = new THREE.MeshPhongMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.35
+        });
+
+        const maxVoxels = 8000;
+        const total = N * N * N;
+        const skip = Math.ceil(total / maxVoxels);
+        const count = Math.floor(total / skip);
+
+        densityMesh = new THREE.InstancedMesh(boxGeo, boxMat, count);
+        const dummy = new THREE.Object3D();
+        let idx = 0;
+        let riemannSum = 0;
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                for (let k = 0; k < N; k++) {
+                    if ((i*N*N + j*N + k) % skip !== 0) continue;
+
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    const z = zmin + (k + 0.5) * dz;
+                    const surfZ = f(x, y);
+
+                    if (z <= surfZ && z >= zmin) {
+                        dummy.position.set(x, z, y);
+                        dummy.scale.set(dx * 0.85, dz * 0.85, dy * 0.85);
+                        dummy.updateMatrix();
+                        densityMesh.setMatrixAt(idx++, dummy.matrix);
+
+                        const density = 1 + 0.1 * z;
+                        riemannSum += density * dx * dy * dz;
+                    }
+                }
+            }
+        }
+
+        densityMesh.count = idx;
+        densityMesh.instanceMatrix.needsUpdate = true;
+        scene.add(densityMesh);
+        meshes.push(densityMesh);
+        State.lastRiemannSum = riemannSum;
+    }
+
+    const projOpacity = 0.1;
+
+    const xyGeo = new THREE.PlaneGeometry(xmax - xmin, ymax - ymin);
+    const xyMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: projOpacity, side: THREE.DoubleSide });
+    const xyMesh = new THREE.Mesh(xyGeo, xyMat);
+    xyMesh.rotation.x = -Math.PI / 2;
+    xyMesh.position.set((xmin+xmax)/2, zmin + 0.01, (ymin+ymax)/2);
+    scene.add(xyMesh);
+    meshes.push(xyMesh);
+
+    const xzGeo = new THREE.PlaneGeometry(xmax - xmin, zmax - zmin);
+    const xzMat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: projOpacity, side: THREE.DoubleSide });
+    const xzMesh = new THREE.Mesh(xzGeo, xzMat);
+    xzMesh.position.set((xmin+xmax)/2, (zmin+zmax)/2, ymin);
+    scene.add(xzMesh);
+    meshes.push(xzMesh);
+
+    const yzGeo = new THREE.PlaneGeometry(ymax - ymin, zmax - zmin);
+    const yzMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: projOpacity, side: THREE.DoubleSide });
+    const yzMesh = new THREE.Mesh(yzGeo, yzMat);
+    yzMesh.rotation.y = Math.PI / 2;
+    yzMesh.position.set(xmin, (zmin+zmax)/2, (ymin+ymax)/2);
+    scene.add(yzMesh);
+    meshes.push(yzMesh);
+}
+
+function updateSliceAnimation() {
+    if (!slicePlane || !State.showSlices) return;
+    const { xmin, xmax, ymin, ymax } = State.bounds;
+    const t = (Math.sin(State.animTime) + 1) / 2;
+    if (State.sliceAxis === 'x') {
+        slicePlane.position.x = xmin + t * (xmax - xmin);
+    } else {
+        slicePlane.position.z = ymin + t * (ymax - ymin);
+    }
+}
+
+function renderMath() {
+    const render = (id, tex) => {
+        const el = document.getElementById(id);
+        if (el) katex.render(tex, el, { throwOnError: false, displayMode: true });
+    };
+
+    render('math-1d', '\\int_a^b dx = b - a');
+    render('math-2d', '\\iint_R dA = \\iint_R dx\\,dy = \\text{Area}(R)');
+    render('math-3d-vol', '\\iint_R f(x,y)\\, dA = \\text{Volume under surface}');
+    render('math-4d', '\\iiint_E \\rho(x,y,z)\\, dV = \\text{Total Mass}');
+    render('math-fubini', '\\int_a^b\\int_c^d f(x,y)\\,dy\\,dx = \\int_c^d\\int_a^b f(x,y)\\,dx\\,dy');
+
+    render('prop-linearity', '\\iint_R (\\alpha f + \\beta g)\\, dA = \\alpha \\iint_R f\\, dA + \\beta \\iint_R g\\, dA');
+    render('prop-additivity', '\\iint_{R_1 \\cup R_2} f\\, dA = \\iint_{R_1} f\\, dA + \\iint_{R_2} f\\, dA');
+    render('prop-bounding', 'm \\cdot \\text{Area}(R) \\leq \\iint_R f\\, dA \\leq M \\cdot \\text{Area}(R)');
+    render('prop-fubini', '\\iint_R f(x,y)\\, dA = \\int_a^b\\left[\\int_{g_1(x)}^{g_2(x)} f(x,y)\\, dy\\right] dx');
+    render('prop-jacobian', '\\iint_R f(x,y)\\, dx\\,dy = \\iint_{R\'} f(x(u,v), y(u,v)) \\left| \\frac{\\partial(x,y)}{\\partial(u,v)} \\right| du\\,dv');
+    render('prop-polar', 'dA = r\\, dr\\, d\\theta, \\quad \\left| J \\right| = r');
+    render('prop-cylindrical', 'dV = r\\, dz\\, dr\\, d\\theta, \\quad \\left| J \\right| = r');
+    render('prop-spherical', 'dV = \\rho^2 \\sin\\phi \\ d\\rho\\, d\\phi\\, d\\theta, \\quad \\left| J \\right| = \\rho^2 \\sin\\phi');
+}
+
+function updateMathDisplay() {
+    const preset = Presets[State.preset];
+    const { xmin, xmax, ymin, ymax } = State.bounds;
+    const N = State.n;
+
+    const setupTex = State.mode === 'double'
+        ? `\\\\iint_{[${xmin},${xmax}]\\\\times[${ymin},${ymax}]} ${preset.latex} \\, dx\\,dy`
+        : `\\\\iiint_E ${preset.latex} \\, dx\\,dy\\,dz`;
+
+    const riemannTex = `\\\\sum_{i=1}^{${N}}\\\\sum_{j=1}^{${N}} f(x_i, y_j) \\Delta A`;
+    const exactTex = State.mode === 'double'
+        ? `\\\\iint_R ${preset.latex} \\, dA`
+        : `\\\\iiint_E ${preset.latex} \\, dV`;
+
+    const render = (id, tex) => {
+        const el = document.getElementById(id);
+        if (el) katex.render(tex, el, { throwOnError: false, displayMode: true });
+    };
+
+    render('math-current-setup', setupTex);
+    render('math-riemann', riemannTex);
+    render('math-exact', exactTex);
+}
+
+function updateStats() {
+    const preset = Presets[State.preset];
+    const { xmin, xmax, ymin, ymax } = State.bounds;
+    const N = State.n;
+
+    let riemannSum = State.lastRiemannSum;
+    let exactVal = 0;
+
+    try {
+        exactVal = preset.exact(xmin, xmax, ymin, ymax);
+    } catch(e) {
+        exactVal = numericalIntegrate(preset.f, xmin, xmax, ymin, ymax, 200);
+    }
+
+    const error = Math.abs(exactVal - riemannSum);
+    const errorPct = exactVal !== 0 ? (error / Math.abs(exactVal) * 100) : 0;
+    const dx = (xmax - xmin) / N;
+    const dy = (ymax - ymin) / N;
+    const dA = dx * dy;
+
+    document.getElementById('riemann-result').textContent = riemannSum.toFixed(4);
+    document.getElementById('exact-result').textContent = exactVal.toFixed(4);
+    document.getElementById('error-result').textContent = error.toFixed(4);
+    document.getElementById('differential-result').textContent = dA.toFixed(4);
+
+    document.getElementById('riemann-numeric').textContent = `Σ f(xᵢ, yⱼ) ΔA = ${riemannSum.toFixed(4)}`;
+    document.getElementById('exact-numeric').textContent = State.mode === 'double' ? `∬ f dA = ${exactVal.toFixed(4)}` : `∭ f dV = ${exactVal.toFixed(4)}`;
+    document.getElementById('error-numeric').textContent = error.toFixed(4);
+    document.getElementById('error-percent').textContent = errorPct.toFixed(2);
+}
+
+function setMode(mode) {
+    State.mode = mode;
+    const btnDouble = document.getElementById('mode-double');
+    const btnTriple = document.getElementById('mode-triple');
+    const zControls = document.getElementById('z-controls');
+    const sliceLabel = document.getElementById('slice-control-label');
+    const densityLabel = document.getElementById('density-control-label');
+
+    if (mode === 'double') {
+        btnDouble.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
+        btnTriple.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-slate-200';
+        zControls.classList.add('hidden');
+        sliceLabel.style.display = 'flex';
+        densityLabel.style.display = 'none';
+    } else {
+        btnTriple.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        btnDouble.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-slate-200';
+        zControls.classList.remove('hidden');
+        sliceLabel.style.display = 'none';
+        densityLabel.style.display = 'flex';
+    }
+    updateScene();
+}
+
+function updateBoundInputs() {
+    const b = State.bounds;
+    document.getElementById('xmin').value = b.xmin;
+    document.getElementById('xmax').value = b.xmax;
+    document.getElementById('ymin').value = b.ymin;
+    document.getElementById('ymax').value = b.ymax;
+    document.getElementById('zmin-slider').value = b.zmin;
+    document.getElementById('zmax-slider').value = b.zmax;
+    document.getElementById('zmin-value').textContent = b.zmin;
+    document.getElementById('zmax-value').textContent = b.zmax;
+    document.getElementById('xrange-value').textContent = `[${b.xmin}, ${b.xmax}]`;
+    document.getElementById('yrange-value').textContent = `[${b.ymin}, ${b.ymax}]`;
+}
+
+function setupEventListeners() {
+    document.getElementById('mode-double').addEventListener('click', () => setMode('double'));
+    document.getElementById('mode-triple').addEventListener('click', () => setMode('triple'));
+
+    document.getElementById('preset-select').addEventListener('change', (e) => {
+        State.preset = e.target.value;
+        const preset = Presets[State.preset];
+        State.bounds = { ...preset.defaultBounds };
+        updateBoundInputs();
+        updateScene();
+    });
+
+    document.getElementById('n-slider').addEventListener('input', (e) => {
+        State.n = parseInt(e.target.value);
+        document.getElementById('n-value').textContent = State.n;
+        updateScene();
+    });
+
+    document.getElementById('opacity-slider').addEventListener('input', (e) => {
+        State.opacity = parseFloat(e.target.value);
+        document.getElementById('opacity-value').textContent = State.opacity;
+        updateScene();
+    });
+
+    ['xmin', 'xmax', 'ymin', 'ymax'].forEach(id => {
+        document.getElementById(id).addEventListener('change', (e) => {
+            State.bounds[id] = parseFloat(e.target.value);
+            updateBoundInputs();
+            updateScene();
+        });
+    });
+
+    document.getElementById('zmin-slider').addEventListener('input', (e) => {
+        State.bounds.zmin = parseFloat(e.target.value);
+        document.getElementById('zmin-value').textContent = State.bounds.zmin;
+        updateScene();
+    });
+
+    document.getElementById('zmax-slider').addEventListener('input', (e) => {
+        State.bounds.zmax = parseFloat(e.target.value);
+        document.getElementById('zmax-value').textContent = State.bounds.zmax;
+        updateScene();
+    });
+
+    document.getElementById('show-riemann').addEventListener('change', (e) => {
+        State.showRiemann = e.target.checked;
+        updateScene();
+    });
+
+    document.getElementById('show-surface').addEventListener('change', (e) => {
+        State.showSurface = e.target.checked;
+        updateScene();
+    });
+
+    document.getElementById('show-wireframe').addEventListener('change', (e) => {
+        State.showWireframe = e.target.checked;
+        updateScene();
+    });
+
+    document.getElementById('show-slices').addEventListener('change', (e) => {
+        State.showSlices = e.target.checked;
+        updateScene();
+    });
+
+    document.getElementById('show-density').addEventListener('change', (e) => {
+        State.showDensity = e.target.checked;
+        updateScene();
+    });
+
+    document.getElementById('anim-toggle').addEventListener('click', () => {
+        State.animating = !State.animating;
+        const btn = document.getElementById('anim-toggle');
+        if (State.animating) {
+            btn.innerHTML = '<i data-lucide="pause" class="w-3 h-3"></i><span>Pause Sweep</span>';
+            btn.classList.add('bg-emerald-500/30');
+        } else {
+            btn.innerHTML = '<i data-lucide="play" class="w-3 h-3"></i><span>Play Sweep</span>';
+            btn.classList.remove('bg-emerald-500/30');
+        }
+        lucide.createIcons();
+    });
+
+    document.getElementById('slice-x-btn').addEventListener('click', () => {
+        State.sliceAxis = 'x';
+        State.showSlices = true;
+        document.getElementById('show-slices').checked = true;
+        updateScene();
+    });
+
+    document.getElementById('slice-y-btn').addEventListener('click', () => {
+        State.sliceAxis = 'y';
+        State.showSlices = true;
+        document.getElementById('show-slices').checked = true;
+        updateScene();
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('tab-active');
+                b.classList.add('tab-inactive');
+            });
+            btn.classList.remove('tab-inactive');
+            btn.classList.add('tab-active');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+        });
+    });
+
+    // Property search
+    document.getElementById('property-search').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.property-card').forEach(card => {
+            const keywords = card.dataset.keywords || '';
+            const text = card.textContent.toLowerCase();
+            if (keywords.includes(query) || text.includes(query) || query === '') {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Quiz
+    let quizScore = 0;
+    let answered = new Set();
+
+    document.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.addEventListener('click', function() {
+            const question = this.closest('.quiz-question');
+            const qNum = question.dataset.q;
+
+            if (answered.has(qNum)) return;
+            answered.add(qNum);
+
+            const isCorrect = this.dataset.correct === 'true';
+            const feedback = question.querySelector('.quiz-feedback');
+
+            question.querySelectorAll('.quiz-option').forEach(o => {
+                o.classList.remove('quiz-correct', 'quiz-wrong');
+                if (o.dataset.correct === 'true') {
+                    o.classList.add('quiz-correct');
+                } else if (o === this && !isCorrect) {
+                    o.classList.add('quiz-wrong');
+                }
+            });
+
+            feedback.classList.remove('hidden');
+            if (isCorrect) {
+                quizScore++;
+                feedback.innerHTML = '<span class="text-emerald-400 font-medium">Correct!</span> Well done.';
+            } else {
+                feedback.innerHTML = '<span class="text-rose-400 font-medium">Incorrect.</span> The correct answer is highlighted in green.';
+            }
+
+            document.getElementById('quiz-score').textContent = `${quizScore}/5`;
+        });
+    });
+
+    document.getElementById('quiz-reset').addEventListener('click', () => {
+        quizScore = 0;
+        answered.clear();
+        document.getElementById('quiz-score').textContent = '0/5';
+        document.querySelectorAll('.quiz-option').forEach(o => {
+            o.classList.remove('quiz-correct', 'quiz-wrong');
+        });
+        document.querySelectorAll('.quiz-feedback').forEach(f => {
+            f.classList.add('hidden');
+            f.innerHTML = '';
+        });
+    });
+
+    // Theme toggle (placeholder)
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        alert('Theme toggle: Dark mode is optimized for mathematical visualization. Light mode coming soon!');
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    initThree();
+    renderMath();
+    setupEventListeners();
+    updateBoundInputs();
+
+    // Delay first scene update to ensure renderer is ready
+    setTimeout(() => {
+        updateScene();
+    }, 100);
+});
+</script>
+</body>
+</html>

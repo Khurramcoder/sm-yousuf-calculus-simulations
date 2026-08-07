@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domain & Range 2D Interactive Visualizer & S.M. Yusuf Calculus Solver</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'domain-cyan': '#22d3ee',
+        'domain-emerald': '#10b981',
+        'range-amber': '#f59e0b',
+        'range-rose': '#f43f5e',
+      }
+    }
+  }
+}
+</script>
+<style>
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    overflow: hidden;
+  }
+  body.light { background: #f8fafc; color: #0f172a; }
+  .glass {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+  }
+  body.light .glass {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+  }
+  .panel-scroll { overflow-y: auto; height: calc(100vh - 64px); }
+  .panel-scroll::-webkit-scrollbar { width: 8px; }
+  .panel-scroll::-webkit-scrollbar-track { background: transparent; }
+  .panel-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  .tab-btn.active {
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.2), rgba(16, 185, 129, 0.2));
+    color: #22d3ee;
+    border-bottom: 2px solid #22d3ee;
+  }
+  body.light .tab-btn.active {
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), rgba(16, 185, 129, 0.1));
+    color: #0891b2;
+    border-bottom: 2px solid #0891b2;
+  }
+  .katex { font-size: 1.05em !important; }
+  .solution-block { border-left: 3px solid #22d3ee; padding-left: 0.75rem; margin-bottom: 0.75rem; }
+  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+  .pill-domain { background: rgba(34, 211, 238, 0.15); color: #22d3ee; }
+  .pill-range { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+  .js-plotly-plot .plotly .modebar { top: 4px !important; right: 4px !important; }
+  .problem-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .problem-card:hover { transform: translateY(-1px); border-color: #22d3ee !important; }
+  .gradient-text {
+    background: linear-gradient(90deg, #22d3ee, #10b981);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .asymptote-label {
+    position: absolute;
+    font-size: 10px;
+    color: #ef4444;
+    pointer-events: none;
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(34, 211, 238, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
+  }
+  .pulse-dot { animation: pulse-ring 2s infinite; }
+</style>
+</head>
+<body class="dark">
+
+<!-- HEADER -->
+<header class="glass border-b border-slate-700/50 px-4 py-3 flex items-center gap-4 h-16 relative z-20">
+  <div class="flex items-center gap-2">
+    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-500 flex items-center justify-center">
+      <i data-lucide="function-square" class="w-5 h-5 text-slate-900"></i>
+    </div>
+    <div class="hidden sm:block">
+      <h1 class="text-sm md:text-base font-bold gradient-text leading-tight">Domain & Range 2D Visualizer</h1>
+      <p class="text-[10px] text-slate-400 leading-tight">S.M. Yusuf · Calculus & Analytic Geometry</p>
+    </div>
+  </div>
+
+  <select id="categorySelect" class="glass text-xs rounded-md px-3 py-1.5 outline-none focus:ring-2 focus:ring-cyan-400 flex-shrink-0">
+    <option value="all">📚 All Categories</option>
+    <option value="polynomial">Polynomials</option>
+    <option value="rational">Rational Functions</option>
+    <option value="radical">Radical Functions</option>
+    <option value="piecewise">Piecewise Functions</option>
+    <option value="abs_floor">Absolute Value & Floor</option>
+    <option value="trig">Trigonometric</option>
+    <option value="log">Logarithmic</option>
+  </select>
+
+  <div class="flex-1 max-w-md relative">
+    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+    <input id="searchInput" type="text" placeholder="Search problems (e.g. 'sqrt', '16-x²', 'rational')..." class="glass w-full text-sm rounded-md pl-9 pr-3 py-1.5 outline-none focus:ring-2 focus:ring-cyan-400">
+  </div>
+
+  <button id="themeToggle" class="glass w-9 h-9 rounded-md flex items-center justify-center hover:bg-slate-700/50">
+    <i data-lucide="moon" class="w-4 h-4" id="themeIcon"></i>
+  </button>
+</header>
+
+<!-- MAIN LAYOUT -->
+<main class="flex flex-col md:flex-row h-[calc(100vh-64px)]">
+
+  <!-- LEFT: GRAPH PANEL -->
+  <section class="w-full md:w-[55%] p-4 flex flex-col gap-3">
+
+    <!-- Graph Controls -->
+    <div class="glass rounded-lg p-3 flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1 flex-1 min-w-[280px]">
+        <span class="text-xs text-slate-400 whitespace-nowrap">f(x) =</span>
+        <input id="functionInput" type="text" value="1/(x-2)" class="flex-1 bg-slate-800/80 border border-slate-600 rounded px-2 py-1 text-sm font-mono outline-none focus:border-cyan-400">
+        <button id="plotBtn" class="bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-900 text-xs font-bold px-3 py-1.5 rounded hover:opacity-90 flex items-center gap-1">
+          <i data-lucide="play" class="w-3.5 h-3.5"></i>Plot
+        </button>
+      </div>
+      <div class="flex items-center gap-1">
+        <button id="presetBtn" class="glass text-xs px-2 py-1 rounded hover:bg-slate-700/50 flex items-center gap-1">
+          <i data-lucide="book-open" class="w-3.5 h-3.5"></i>Presets
+        </button>
+        <button id="gridToggle" class="glass text-xs px-2 py-1 rounded hover:bg-slate-700/50 flex items-center gap-1" title="Toggle grid">
+          <i data-lucide="grid-3x3" class="w-3.5 h-3.5"></i>
+        </button>
+        <button id="resetView" class="glass text-xs px-2 py-1 rounded hover:bg-slate-700/50 flex items-center gap-1" title="Reset view">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Preset Dropdown -->
+    <div id="presetDropdown" class="glass rounded-lg p-2 hidden">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs max-h-48 overflow-y-auto">
+        <button data-expr="x" data-name="Linear y=x" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">y = x</button>
+        <button data-expr="x**2-4*x+3" data-name="Quadratic" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">y = x²−4x+3</button>
+        <button data-expr="1/(x-2)" data-name="Rational 1" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">y = 1/(x−2)</button>
+        <button data-expr="(x+1)/(x-2)" data-name="Rational 2" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">(x+1)/(x−2)</button>
+        <button data-expr="1/(x**2+1)" data-name="Rational 3" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">1/(x²+1)</button>
+        <button data-expr="sqrt(16-x**2)" data-name="Semicircle" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">√(16−x²)</button>
+        <button data-expr="sqrt(x**2-9)" data-name="Hyperbola Root" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">√(x²−9)</button>
+        <button data-expr="abs(x-3)" data-name="Absolute" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">|x−3|</button>
+        <button data-expr="floor(x)" data-name="Greatest Int" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">⌊x⌋</button>
+        <button data-expr="log(x)" data-name="Natural Log" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">ln(x)</button>
+        <button data-expr="sin(x)" data-name="Sine" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">sin(x)</button>
+        <button data-expr="asin(x)" data-name="Arcsine" class="preset-item text-left p-2 rounded hover:bg-slate-700/50">arcsin(x)</button>
+      </div>
+    </div>
+
+    <!-- Plotly Container -->
+    <div class="glass rounded-lg flex-1 relative overflow-hidden min-h-[380px]">
+      <div id="plotDiv" class="w-full h-full"></div>
+
+      <!-- Scanners Controls Overlay -->
+      <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-900/90 to-transparent">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="flex items-center gap-1 text-cyan-300 font-semibold mb-1">
+              <i data-lucide="move-horizontal" class="w-3 h-3"></i>Vertical Scanner x =
+              <span id="xScannerVal" class="font-mono">0.00</span>
+            </label>
+            <input type="range" id="xScanner" min="-10" max="10" step="0.05" value="0" class="w-full accent-cyan-400">
+          </div>
+          <div>
+            <label class="flex items-center gap-1 text-amber-300 font-semibold mb-1">
+              <i data-lucide="move-vertical" class="w-3 h-3"></i>Horizontal Scanner y =
+              <span id="yScannerVal" class="font-mono">0.00</span>
+            </label>
+            <input type="range" id="yScanner" min="-10" max="10" step="0.05" value="0" class="w-full accent-amber-400">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Result -->
+    <div class="glass rounded-lg p-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      <div class="bg-cyan-500/10 border border-cyan-500/30 rounded p-2">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="pill pill-domain"><i data-lucide="sigma" class="w-3 h-3"></i>DOMAIN (x-axis)</span>
+        </div>
+        <div id="domainResult" class="font-mono text-cyan-300 text-sm">ℝ \ {2}</div>
+        <div id="domainSetBuilder" class="text-[11px] text-slate-400 mt-1"></div>
+      </div>
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded p-2">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="pill pill-range"><i data-lucide="infinity" class="w-3 h-3"></i>RANGE (y-axis)</span>
+        </div>
+        <div id="rangeResult" class="font-mono text-amber-300 text-sm">ℝ \ {0}</div>
+        <div id="rangeSetBuilder" class="text-[11px] text-slate-400 mt-1"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: EDUCATIONAL PANEL -->
+  <aside class="w-full md:w-[45%] glass border-l border-slate-700/50 panel-scroll">
+
+    <!-- Tabs -->
+    <div class="flex border-b border-slate-700/50 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
+      <button class="tab-btn active flex-1 py-3 text-xs md:text-sm font-semibold transition-colors" data-tab="rules">
+        <i data-lucide="book-marked" class="w-4 h-4 inline mr-1"></i>Rules & Core
+      </button>
+      <button class="tab-btn flex-1 py-3 text-xs md:text-sm font-semibold transition-colors" data-tab="yusuf">
+        <i data-lucide="graduation-cap" class="w-4 h-4 inline mr-1"></i>S.M. Yusuf
+      </button>
+      <button class="tab-btn flex-1 py-3 text-xs md:text-sm font-semibold transition-colors" data-tab="quiz">
+        <i data-lucide="brain" class="w-4 h-4 inline mr-1"></i>Practice Quiz
+      </button>
+    </div>
+
+    <!-- TAB 1: RULES -->
+    <div id="tab-rules" class="tab-content p-4 space-y-4">
+      <div>
+        <h2 class="text-lg font-bold gradient-text mb-2">Domain & Range: Core Algebraic Rules</h2>
+        <p class="text-xs text-slate-400 mb-3">Systematic determination of the domain and range of real-valued functions.</p>
+      </div>
+
+      <div class="space-y-3">
+        <details class="glass rounded p-3" open>
+          <summary class="cursor-pointer font-semibold text-sm flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">1</span>
+            Rational Functions
+          </summary>
+          <div class="mt-3 text-sm space-y-2 solution-block">
+            <p>For $f(x) = \dfrac{P(x)}{Q(x)}$, exclude values where the denominator is zero:</p>
+            <div class="bg-slate-800/60 p-2 rounded">
+              $$Q(x) \neq 0 \quad \Longrightarrow \quad \text{Domain} = \mathbb{R} \setminus \{x \mid Q(x)=0\}$$
+            </div>
+            <p class="text-xs text-slate-400">Example: $f(x)=\frac{x+1}{x-2}$ → Domain: $\mathbb{R}\setminus\{2\}$, i.e. $(-\infty,2)\cup(2,\infty)$</p>
+          </div>
+        </details>
+
+        <details class="glass rounded p-3" open>
+          <summary class="cursor-pointer font-semibold text-sm flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">2</span>
+            Even Radical Functions
+          </summary>
+          <div class="mt-3 text-sm space-y-2 solution-block">
+            <p>For $\sqrt[2n]{g(x)}$, the radicand must be non-negative:</p>
+            <div class="bg-slate-800/60 p-2 rounded">
+              $$g(x) \geq 0 \quad \Longrightarrow \quad \text{Domain} = \{x \in \mathbb{R} \mid g(x) \geq 0\}$$
+            </div>
+            <p class="text-xs text-slate-400">Example: $f(x)=\sqrt{16-x^2}$ → $16-x^2 \geq 0$ → $x \in [-4, 4]$</p>
+          </div>
+        </details>
+
+        <details class="glass rounded p-3">
+          <summary class="cursor-pointer font-semibold text-sm flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">3</span>
+            Logarithmic Functions
+          </summary>
+          <div class="mt-3 text-sm space-y-2 solution-block">
+            <p>For $\log_a(g(x))$, the argument must be strictly positive:</p>
+            <div class="bg-slate-800/60 p-2 rounded">
+              $$g(x) > 0 \quad \Longrightarrow \quad \text{Domain} = \{x \in \mathbb{R} \mid g(x) > 0\}$$
+            </div>
+            <p class="text-xs text-slate-400">Example: $f(x)=\ln(x-3)$ → $x-3 > 0$ → $x \in (3, \infty)$</p>
+          </div>
+        </details>
+
+        <details class="glass rounded p-3">
+          <summary class="cursor-pointer font-semibold text-sm flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">4</span>
+            Inverse Trigonometric Functions
+          </summary>
+          <div class="mt-3 text-sm space-y-2 solution-block">
+            <p>For $\arcsin(g(x))$ and $\arccos(g(x))$, restrict argument to $[-1, 1]$:</p>
+            <div class="bg-slate-800/60 p-2 rounded">
+              $$-1 \leq g(x) \leq 1$$
+            </div>
+            <p class="text-xs text-slate-400">$\arcsin(x)$: domain $[-1, 1]$, range $[-\pi/2, \pi/2]$. $\arccos(x)$: domain $[-1, 1]$, range $[0, \pi]$.</p>
+          </div>
+        </details>
+
+        <details class="glass rounded p-3">
+          <summary class="cursor-pointer font-semibold text-sm flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs">5</span>
+            Piecewise & Absolute Value
+          </summary>
+          <div class="mt-3 text-sm space-y-2 solution-block">
+            <p>For piecewise definitions, the domain is the union of sub-domains:</p>
+            <div class="bg-slate-800/60 p-2 rounded">
+              $$\text{Domain}(f) = D_1 \cup D_2 \cup \dots \cup D_n$$
+            </div>
+            <p class="text-xs text-slate-400">For $|g(x)|$, domain equals domain of $g$; range is always $\subseteq [0, \infty)$.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- Interval Notation Guide -->
+      <div class="glass rounded p-3">
+        <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
+          <i data-lucide="equal" class="w-4 h-4 text-cyan-400"></i>Notation Equivalences
+        </h3>
+        <div class="text-xs space-y-2">
+          <div class="grid grid-cols-3 gap-1 border-b border-slate-700 pb-1">
+            <span class="font-semibold">Interval</span>
+            <span class="font-semibold">Set Builder</span>
+            <span class="font-semibold">Inequality</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 font-mono">
+            <span>$[a, b]$</span><span>$\{x \mid a \leq x \leq b\}$</span><span>$a \leq x \leq b$</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 font-mono">
+            <span>$(a, b)$</span><span>$\{x \mid a < x < b\}$</span><span>$a < x < b$</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 font-mono">
+            <span>$[a, b)$</span><span>$\{x \mid a \leq x < b\}$</span><span>$a \leq x < b$</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 font-mono">
+            <span>$(-\infty, \infty)$</span><span>$\mathbb{R}$</span><span>$-\infty < x < \infty$</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 font-mono">
+            <span>$\mathbb{R} \setminus \{c\}$</span><span>$\{x \mid x \neq c\}$</span><span>$x < c \lor x > c$</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Endpoint Conventions -->
+      <div class="glass rounded p-3 text-xs">
+        <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
+          <i data-lucide="circle" class="w-4 h-4 text-emerald-400"></i>Graphical Endpoint Conventions
+        </h3>
+        <ul class="space-y-1 list-disc list-inside">
+          <li><span class="text-emerald-300">● Filled circle</span> → endpoint is included (closed bracket [ ])</li>
+          <li><span class="text-rose-300">○ Open circle</span> → endpoint excluded (parenthesis) / removable hole</li>
+          <li><span class="text-red-400">╌ Dashed red line</span> → vertical or horizontal asymptote</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TAB 2: S.M. YUSUF -->
+    <div id="tab-yusuf" class="tab-content hidden p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold gradient-text">S.M. Yusuf · Exercise Library</h2>
+        <span id="problemCount" class="text-xs text-slate-400"></span>
+      </div>
+      <p class="text-xs text-slate-400">Complete solutions from "Calculus with Analytic Geometry" · Chapter 1: Functions & Limits.</p>
+      <div id="problemList" class="space-y-2"></div>
+    </div>
+
+    <!-- TAB 3: QUIZ -->
+    <div id="tab-quiz" class="tab-content hidden p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold gradient-text">Interactive Practice Quiz</h2>
+        <button id="newQuizBtn" class="bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-900 text-xs font-bold px-3 py-1.5 rounded hover:opacity-90 flex items-center gap-1">
+          <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>New Problem
+        </button>
+      </div>
+      <div class="glass rounded p-3">
+        <div class="text-xs text-slate-400 mb-1">Find the domain and range:</div>
+        <div id="quizFunction" class="text-lg font-mono bg-slate-800/60 p-3 rounded text-center"></div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-cyan-300 mb-1 block">Your Domain (interval notation)</label>
+          <input id="quizDomainAnswer" type="text" placeholder="e.g. (-inf, 2) U (2, inf)" class="w-full glass text-sm rounded px-3 py-2 font-mono outline-none focus:ring-2 focus:ring-cyan-400">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-amber-300 mb-1 block">Your Range (interval notation)</label>
+          <input id="quizRangeAnswer" type="text" placeholder="e.g. (-inf, 1) U (1, inf)" class="w-full glass text-sm rounded px-3 py-2 font-mono outline-none focus:ring-2 focus:ring-amber-400">
+        </div>
+        <div class="flex gap-2">
+          <button id="checkQuizBtn" class="flex-1 bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-900 text-sm font-bold py-2 rounded hover:opacity-90 flex items-center justify-center gap-1">
+            <i data-lucide="check" class="w-4 h-4"></i>Check Answer
+          </button>
+          <button id="hintBtn" class="glass px-4 py-2 rounded text-xs hover:bg-slate-700/50 flex items-center gap-1">
+            <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Hint
+          </button>
+        </div>
+        <div id="quizFeedback" class="text-xs rounded p-2 hidden"></div>
+        <div id="quizHint" class="text-xs bg-yellow-500/10 border border-yellow-500/30 rounded p-2 hidden"></div>
+      </div>
+      <div class="glass rounded p-3">
+        <h3 class="font-bold text-xs mb-2">📊 Statistics</h3>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div><div class="text-lg font-bold text-emerald-400" id="statCorrect">0</div><div class="text-[10px] text-slate-400">Correct</div></div>
+          <div><div class="text-lg font-bold text-rose-400" id="statWrong">0</div><div class="text-[10px] text-slate-400">Wrong</div></div>
+          <div><div class="text-lg font-bold text-cyan-400" id="statStreak">0</div><div class="text-[10px] text-slate-400">Streak</div></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- NOTIFICATION -->
+<div id="notification" class="fixed bottom-4 right-4 glass rounded-lg p-3 text-sm hidden z-50 max-w-xs"></div>
+
+<script>
+// =====================================================
+// STATE
+// =====================================================
+const state = {
+  currentExpr: '1/(x-2)',
+  currentFn: null,
+  showGrid: true,
+  domain: { type: 'all' },
+  range: { type: 'all' },
+  asymptotes: { vertical: [], horizontal: [] },
+  stats: { correct: 0, wrong: 0, streak: 0 },
+  currentQuiz: null,
+  domainAnalysis: null,
+  rangeAnalysis: null,
+};
+
+// =====================================================
+// S.M. YUSUF PROBLEM LIBRARY
+// =====================================================
+const PROBLEMS = [
+  {
+    id: 'p1', title: 'Linear Polynomial', category: 'polynomial',
+    expr: '2*x+3',
+    latex: 'f(x) = 2x + 3',
+    domain: '(-\\infty, \\infty)', range: '(-\\infty, \\infty)',
+    domainDisplay: 'ℝ', rangeDisplay: 'ℝ',
+    domainSet: '{x | x ∈ ℝ}', rangeSet: '{y | y ∈ ℝ}',
+    domainType: { type: 'all' }, rangeType: { type: 'all' },
+    solution: 'This is a polynomial of degree 1. Polynomials are defined for all real numbers. Since the slope is non-zero (m=2), the range covers all real values as well.'
+  },
+  {
+    id: 'p2', title: 'Quadratic: x² − 4x + 3', category: 'polynomial',
+    expr: 'x**2-4*x+3',
+    latex: 'f(x) = x^2 - 4x + 3',
+    domain: '(-\\infty, \\infty)', range: '[-1, \\infty)',
+    domainDisplay: 'ℝ', rangeDisplay: '[-1, ∞)',
+    domainSet: '{x | x ∈ ℝ}', rangeSet: '{y | y ≥ -1}',
+    domainType: { type: 'all' },
+    rangeType: { type: 'ray', min: -1, minIncl: true, max: Infinity, maxIncl: false },
+    solution: 'Polynomial: domain is all real numbers. Complete the square: $x^2 - 4x + 3 = (x-2)^2 - 1$. The vertex is at $(2, -1)$ with minimum value $-1$, so range is $[-1, \\infty)$.'
+  },
+  {
+    id: 'p3', title: 'Rational: (x+1)/(x−2)', category: 'rational',
+    expr: '(x+1)/(x-2)',
+    latex: 'f(x) = \\dfrac{x+1}{x-2}',
+    domain: '(-\\infty, 2) \\cup (2, \\infty)', range: '(-\\infty, 1) \\cup (1, \\infty)',
+    domainDisplay: 'ℝ \\ {2}', rangeDisplay: 'ℝ \\ {1}',
+    domainSet: '{x | x ≠ 2}', rangeSet: '{y | y ≠ 1}',
+    domainType: { type: 'exclude', points: [2] },
+    rangeType: { type: 'exclude', points: [1] },
+    solution: 'Denominator $x - 2 = 0$ when $x = 2$, so the domain excludes $2$. For the range, let $y = \\frac{x+1}{x-2}$ and solve for $x$: $y(x-2) = x+1 \\implies yx - x = 2y + 1 \\implies x(y-1) = 2y+1$. So $y \\neq 1$. The horizontal asymptote is $y = 1$.'
+  },
+  {
+    id: 'p4', title: 'Rational: (x²−9)/(x−3)', category: 'rational',
+    expr: '(x**2-9)/(x-3)',
+    latex: 'f(x) = \\dfrac{x^2 - 9}{x - 3}',
+    domain: '(-\\infty, 3) \\cup (3, \\infty)', range: '(-\\infty, 6) \\cup (6, \\infty)',
+    domainDisplay: 'ℝ \\ {3} (hole at x=3)', rangeDisplay: 'ℝ \\ {6}',
+    domainSet: '{x | x ≠ 3}', rangeSet: '{y | y ≠ 6}',
+    domainType: { type: 'exclude', points: [3] },
+    rangeType: { type: 'exclude', points: [6] },
+    solution: 'Factor numerator: $x^2 - 9 = (x-3)(x+3)$. The $(x-3)$ cancels, giving $f(x) = x+3$ for $x \\neq 3$. There is a removable hole at $(3, 6)$, so $x=3$ is excluded from the domain and $y=6$ is excluded from the range.'
+  },
+  {
+    id: 'p5', title: 'Rational: 1/(x²+1)', category: 'rational',
+    expr: '1/(x**2+1)',
+    latex: 'f(x) = \\dfrac{1}{x^2 + 1}',
+    domain: '(-\\infty, \\infty)', range: '(0, 1]',
+    domainDisplay: 'ℝ', rangeDisplay: '(0, 1]',
+    domainSet: '{x | x ∈ ℝ}', rangeSet: '{y | 0 < y ≤ 1}',
+    domainType: { type: 'all' },
+    rangeType: { type: 'interval', min: 0, minIncl: false, max: 1, maxIncl: true },
+    solution: 'Since $x^2 + 1 \\geq 1 > 0$ for all real $x$, the denominator is never zero — domain is $\\mathbb{R}$. For range: max value is $1$ (at $x = 0$) and as $|x| \\to \\infty$, $f(x) \\to 0^+$. So $y \\in (0, 1]$.'
+  },
+  {
+    id: 'p6', title: 'Radical: √(16 − x²)', category: 'radical',
+    expr: 'sqrt(16-x**2)',
+    latex: 'f(x) = \\sqrt{16 - x^2}',
+    domain: '[-4, 4]', range: '[0, 4]',
+    domainDisplay: '[-4, 4]', rangeDisplay: '[0, 4]',
+    domainSet: '{x | -4 ≤ x ≤ 4}', rangeSet: '{y | 0 ≤ y ≤ 4}',
+    domainType: { type: 'interval', min: -4, minIncl: true, max: 4, maxIncl: true },
+    rangeType: { type: 'interval', min: 0, minIncl: true, max: 4, maxIncl: true },
+    solution: 'Require $16 - x^2 \\geq 0 \\implies x^2 \\leq 16 \\implies -4 \\leq x \\leq 4$. So domain is $[-4, 4]$. This is the upper semicircle of radius $4$ centered at origin. Max value at $x=0$ is $4$, min at $x=\\pm 4$ is $0$. Range: $[0, 4]$.'
+  },
+  {
+    id: 'p7', title: 'Radical: √(x² − 9)', category: 'radical',
+    expr: 'sqrt(x**2-9)',
+    latex: 'f(x) = \\sqrt{x^2 - 9}',
+    domain: '(-\\infty, -3] \\cup [3, \\infty)', range: '[0, \\infty)',
+    domainDisplay: '(-∞,-3]∪[3,∞)', rangeDisplay: '[0, ∞)',
+    domainSet: '{x | x ≤ -3 or x ≥ 3}', rangeSet: '{y | y ≥ 0}',
+    domainType: { type: 'union', intervals: [
+      { min: -Infinity, minIncl: false, max: -3, maxIncl: true },
+      { min: 3, minIncl: true, max: Infinity, maxIncl: false }
+    ]},
+    rangeType: { type: 'ray', min: 0, minIncl: true, max: Infinity, maxIncl: false },
+    solution: 'Require $x^2 - 9 \\geq 0 \\implies (x-3)(x+3) \\geq 0$. Sign analysis gives $x \\in (-\\infty, -3] \\cup [3, \\infty)$. The minimum value is $0$ (at $x = \\pm 3$) and it grows without bound. Range: $[0, \\infty)$.'
+  },
+  {
+    id: 'p8', title: 'Radical: √((x−1)/(x+2))', category: 'radical',
+    expr: 'sqrt((x-1)/(x+2))',
+    latex: 'f(x) = \\sqrt{\\dfrac{x-1}{x+2}}',
+    domain: '(-\\infty, -2) \\cup [1, \\infty)', range: '[0, \\infty)',
+    domainDisplay: '(-∞,-2)∪[1,∞)', rangeDisplay: '[0, ∞)',
+    domainSet: '{x | x < -2 or x ≥ 1}', rangeSet: '{y | y ≥ 0}',
+    domainType: { type: 'union', intervals: [
+      { min: -Infinity, minIncl: false, max: -2, maxIncl: false },
+      { min: 1, minIncl: true, max: Infinity, maxIncl: false }
+    ]},
+    rangeType: { type: 'ray', min: 0, minIncl: true, max: Infinity, maxIncl: false },
+    solution: 'Require $\\frac{x-1}{x+2} \\geq 0$ and $x \\neq -2$. Critical points: $x=1$ and $x=-2$. Sign analysis: positive on $(-\\infty, -2)$ and $[1, \\infty)$. (Note $x = -2$ excluded.) As $x \\to \\pm\\infty$, $f(x) \\to 1$, but range covers all $y \\geq 0$ since for any $y \\geq 0$, there exists $x$ giving that value.'
+  },
+  {
+    id: 'p9', title: 'Absolute Value: |x − 3|', category: 'abs_floor',
+    expr: 'abs(x-3)',
+    latex: 'f(x) = |x - 3|',
+    domain: '(-\\infty, \\infty)', range: '[0, \\infty)',
+    domainDisplay: 'ℝ', rangeDisplay: '[0, ∞)',
+    domainSet: '{x | x ∈ ℝ}', rangeSet: '{y | y ≥ 0}',
+    domainType: { type: 'all' },
+    rangeType: { type: 'ray', min: 0, minIncl: true, max: Infinity, maxIncl: false },
+    solution: 'Absolute value is defined for all real inputs — domain $\\mathbb{R}$. By definition $|x-3| \\geq 0$, and $|x-3| = 0$ at $x=3$. Range: $[0, \\infty)$.'
+  },
+  {
+    id: 'p10', title: 'Greatest Integer: ⌊x⌋', category: 'abs_floor',
+    expr: 'floor(x)',
+    latex: 'f(x) = \\lfloor x \\rfloor',
+    domain: '(-\\infty, \\infty)', range: '\\mathbb{Z}',
+    domainDisplay: 'ℝ', rangeDisplay: 'ℤ (all integers)',
+    domainSet: '{x | x ∈ ℝ}', rangeSet: '{y | y ∈ ℤ}',
+    domainType: { type: 'all' },
+    rangeType: { type: 'all' },
+    solution: 'The greatest integer (floor) function is defined for every real $x$. Its output is always an integer, and every integer is attained: $\\lfloor n \\rfloor = n$ for $n \\in \\mathbb{Z}$. So range is $\\mathbb{Z}$.'
+  },
+  {
+    id: 'p11', title: 'Piecewise Function', category: 'piecewise',
+    expr: 'piecewise1',
+    latex: 'f(x) = \\begin{cases} x+2 & x < 1 \\\\ x^2 & x \\geq 1 \\end{cases}',
+    domain: '(-\\infty, \\infty)', range: '(-\\infty, \\infty)',
+    domainDisplay: 'ℝ', rangeDisplay: 'ℝ',
+    domainSet: '{x | x ∈ ℝ}', rangeSet: '{y | y ∈ ℝ}',
+    domainType: { type: 'all' },
+    rangeType: { type: 'all' },
+    solution: 'Both pieces are defined for all real $x$ (linear for $x<1$, quadratic for $x \\geq 1$), so the domain is $\\mathbb{R}$. For range: the first piece $x+2$ gives $(-\\infty, 3)$ as $x<1$. The second piece $x^2$ for $x \\geq 1$ gives $[1, \\infty)$. The union covers all of $\\mathbb{R}$.'
+  },
+  {
+    id: 'p12', title: 'Logarithm: ln(x)', category: 'log',
+    expr: 'log(x)',
+    latex: 'f(x) = \\ln(x)',
+    domain: '(0, \\infty)', range: '(-\\infty, \\infty)',
+    domainDisplay: '(0, ∞)', rangeDisplay: 'ℝ',
+    domainSet: '{x | x > 0}', rangeSet: '{y | y ∈ ℝ}',
+    domainType: { type: 'ray', min: 0, minIncl: false, max: Infinity, maxIncl: false },
+    rangeType: { type: 'all' },
+    solution: 'The natural logarithm requires a strictly positive argument: $x > 0$, giving domain $(0, \\infty)$. As $x \\to 0^+$, $\\ln(x) \\to -\\infty$; as $x \\to \\infty$, $\\ln(x) \\to \\infty$. So range is $\\mathbb{R}$.'
+  },
+  {
+    id: 'p13', title: 'arcsin(x)', category: 'trig',
+    expr: 'asin(x)',
+    latex: 'f(x) = \\arcsin(x)',
+    domain: '[-1, 1]', range: '[-\\pi/2, \\pi/2]',
+    domainDisplay: '[-1, 1]', rangeDisplay: '[-π/2, π/2]',
+    domainSet: '{x | -1 ≤ x ≤ 1}', rangeSet: '{y | -π/2 ≤ y ≤ π/2}',
+    domainType: { type: 'interval', min: -1, minIncl: true, max: 1, maxIncl: true },
+    rangeType: { type: 'interval', min: -Math.PI/2, minIncl: true, max: Math.PI/2, maxIncl: true },
+    solution: 'By definition, $\\arcsin$ is the inverse of $\\sin$ restricted to $[-\\pi/2, \\pi/2]$. Its domain is $[-1, 1]$ and its range is $[-\\pi/2, \\pi/2]$.'
+  },
+  {
+    id: 'p14', title: 'arccos(x)', category: 'trig',
+    expr: 'acos(x)',
+    latex: 'f(x) = \\arccos(x)',
+    domain: '[-1, 1]', range: '[0, \\pi]',
+    domainDisplay: '[-1, 1]', rangeDisplay: '[0, π]',
+    domainSet: '{x | -1 ≤ x ≤ 1}', rangeSet: '{y | 0 ≤ y ≤ π}',
+    domainType: { type: 'interval', min: -1, minIncl: true, max: 1, maxIncl: true },
+    rangeType: { type: 'interval', min: 0, minIncl: true, max: Math.PI, maxIncl: true },
+    solution: '$\\arccos$ is the inverse of $\\cos$ restricted to $[0, \\pi]$. Domain $[-1, 1]$, range $[0, \\pi]$.'
+  },
+];
+
+// =====================================================
+// SAFE MATH EVALUATOR
+// =====================================================
+function buildFunction(expr) {
+  if (expr === 'piecewise1') {
+    return {
+      fn: (x) => x < 1 ? (x + 2) : (x * x),
+      discontinuities: [1],
+      name: 'piecewise'
+    };
+  }
+  // Whitelist tokens
+  const sanitized = expr
+    .replace(/\s+/g, '')
+    .replace(/\*\*/g, '**')
+    .replace(/\^/g, '**')
+    .replace(/sqrt/g, 'Math.sqrt')
+    .replace(/abs/g, 'Math.abs')
+    .replace(/sin\(/g, 'Math.sin(')
+    .replace(/cos\(/g, 'Math.cos(')
+    .replace(/tan\(/g, 'Math.tan(')
+    .replace(/asin\(/g, 'Math.asin(')
+    .replace(/acos\(/g, 'Math.acos(')
+    .replace(/atan\(/g, 'Math.atan(')
+    .replace(/log\(/g, 'Math.log(')
+    .replace(/ln\(/g, 'Math.log(')
+    .replace(/exp\(/g, 'Math.exp(')
+    .replace(/floor\(/g, 'Math.floor(')
+    .replace(/ceil\(/g, 'Math.ceil(')
+    .replace(/\bpi\b/g, 'Math.PI')
+    .replace(/\be\b/g, 'Math.E')
+    .replace(/(\d)(x)/g, '$1*$2')
+    .replace(/(x)(\d)/g, '$1*$2')
+    .replace(/(\d)\(/g, '$1*(')
+    .replace(/\)(x)/g, ')*$1')
+    .replace(/(x)\(/g, '$1*(');
+
+  try {
+    const fn = new Function('x', `"use strict"; try { const r = ${sanitized}; return (typeof r === 'number' && isFinite(r)) ? r : NaN; } catch(e) { return NaN; }`);
+    return { fn, name: 'expression' };
+  } catch (e) {
+    return null;
+  }
+}
+
+// =====================================================
+// DOMAIN / RANGE ANALYZER (analytical + numerical)
+// =====================================================
+function analyzeFunction(exprObj) {
+  const { fn } = exprObj;
+  // Numerical sampling
+  const sampleRange = 100;
+  const step = 0.05;
+  const xs = [];
+  const ys = [];
+  for (let x = -sampleRange; x <= sampleRange; x += step) {
+    const y = fn(x);
+    xs.push(x);
+    ys.push(y);
+  }
+  const validYs = ys.filter(y => !isNaN(y) && isFinite(y));
+  const minY = Math.min(...validYs);
+  const maxY = Math.max(...validYs);
+  return { xs, ys, minY, maxY };
+}
+
+function detectDiscontinuities(fn, xMin, xMax, step = 0.01) {
+  const discs = [];
+  let prevY = null;
+  let prevX = null;
+  for (let x = xMin; x <= xMax; x += step) {
+    const y = fn(x);
+    if (isNaN(y) || !isFinite(y)) {
+      // Find exact boundary
+      discs.push({ x: Math.round(x * 1000) / 1000, type: 'asymptote' });
+    } else if (prevY !== null && Math.abs(y - prevY) > 10) {
+      // Possible jump discontinuity or asymptote
+      if (Math.abs(y) > 100 || Math.abs(prevY) > 100) {
+        discs.push({ x: (x + prevX) / 2, type: 'asymptote' });
+      }
+    }
+    prevY = y;
+    prevX = x;
+  }
+  // Dedupe nearby
+  const unique = [];
+  discs.sort((a, b) => a.x - b.x);
+  for (const d of discs) {
+    if (unique.length === 0 || Math.abs(d.x - unique[unique.length - 1].x) > 0.05) {
+      unique.push(d);
+    }
+  }
+  return unique;
+}
+
+// =====================================================
+// PLOTLY RENDERING
+// =====================================================
+function renderGraph() {
+  const fnObj = buildFunction(state.currentExpr);
+  if (!fnObj) {
+    notify('Invalid expression', 'error');
+    return;
+  }
+  state.currentFn = fnObj;
+
+  const xMin = -10, xMax = 10;
+  const step = 0.02;
+  const xs = [], ys = [];
+  for (let x = xMin; x <= xMax; x += step) {
+    const y = fnObj.fn(x);
+    xs.push(x);
+    ys.push(isNaN(y) || !isFinite(y) ? null : y);
+  }
+
+  // Split into segments at nulls (asymptotes) for clean rendering
+  const traces = [{
+    x: xs, y: ys,
+    mode: 'lines',
+    line: { color: '#a78bfa', width: 3 },
+    connectgaps: false,
+    name: 'f(x)',
+    hovertemplate: 'x = %{x:.2f}<br>f(x) = %{y:.3f}<extra></extra>',
+  }];
+
+  // Compute domain/range analysis
+  computeDomainRange(fnObj);
+
+  const shapes = [];
+
+  // X-axis projection (Domain) — strip along x-axis
+  const domainShapes = buildDomainShapes(state.domainAnalysis);
+  shapes.push(...domainShapes);
+
+  // Y-axis projection (Range) — strip along y-axis
+  const rangeShapes = buildRangeShapes(state.rangeAnalysis);
+  shapes.push(...rangeShapes);
+
+  // Asymptotes (vertical)
+  for (const v of state.asymptotes.vertical) {
+    shapes.push({
+      type: 'line', x0: v, y0: -100, x1: v, y1: 100,
+      line: { color: '#ef4444', width: 2, dash: 'dash' }
+    });
+  }
+  // Asymptotes (horizontal)
+  for (const h of state.asymptotes.horizontal) {
+    shapes.push({
+      type: 'line', x0: -100, y0: h, x1: 100, y1: h,
+      line: { color: '#f43f5e', width: 2, dash: 'dash' }
+    });
+  }
+
+  // Scanners (vertical + horizontal lines)
+  const xVal = parseFloat(document.getElementById('xScanner').value);
+  const yVal = parseFloat(document.getElementById('yScanner').value);
+  shapes.push({
+    type: 'line', x0: xVal, y0: -100, x1: xVal, y1: 100,
+    line: { color: '#22d3ee', width: 1.5, dash: 'dot' }, opacity: 0.7,
+  });
+  shapes.push({
+    type: 'line', x0: -100, y0: yVal, x1: 100, y1: yVal,
+    line: { color: '#f59e0b', width: 1.5, dash: 'dot' }, opacity: 0.7,
+  });
+
+  // Scanner intersection points on the curve
+  const yAtX = fnObj.fn(xVal);
+  if (!isNaN(yAtX) && isFinite(yAtX) && Math.abs(yAtX) < 100) {
+    traces.push({
+      x: [xVal], y: [yAtX], mode: 'markers',
+      marker: { color: '#22d3ee', size: 12, line: { color: 'white', width: 2 } },
+      name: 'Vertical scan', showlegend: false,
+      hovertemplate: `x = ${xVal.toFixed(2)}<br>f(x) = ${yAtX.toFixed(3)}<extra></extra>`
+    });
+  }
+
+  // Horizontal scan: find all x where f(x) ≈ yVal
+  const xHits = [];
+  for (let x = xMin; x <= xMax; x += step) {
+    const y = fnObj.fn(x);
+    if (!isNaN(y) && Math.abs(y - yVal) < 0.1) {
+      if (xHits.length === 0 || Math.abs(x - xHits[xHits.length - 1]) > 0.2) {
+        xHits.push(x);
+      }
+    }
+  }
+  if (xHits.length > 0) {
+    traces.push({
+      x: xHits, y: xHits.map(() => yVal), mode: 'markers',
+      marker: { color: '#f59e0b', size: 10, line: { color: 'white', width: 2 } },
+      name: 'Horizontal scan', showlegend: false,
+      hovertemplate: `y = ${yVal.toFixed(2)}<br>pre-image x ≈ %{x:.2f}<extra></extra>`
+    });
+  }
+
+  const layout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(15, 23, 42, 0.3)',
+    font: { color: '#e2e8f0', family: '-apple-system, Roboto, sans-serif' },
+    margin: { l: 60, r: 30, t: 30, b: 50 },
+    xaxis: {
+      gridcolor: state.showGrid ? 'rgba(148, 163, 184, 0.15)' : 'transparent',
+      zerolinecolor: '#64748b',
+      zerolinewidth: 1.5,
+      range: [xMin, xMax],
+      title: { text: 'x', font: { size: 14 } },
+    },
+    yaxis: {
+      gridcolor: state.showGrid ? 'rgba(148, 163, 184, 0.15)' : 'transparent',
+      zerolinecolor: '#64748b',
+      zerolinewidth: 1.5,
+      range: [-10, 10],
+      title: { text: 'y', font: { size: 14 } },
+    },
+    shapes: shapes,
+    showlegend: false,
+    dragmode: 'pan',
+  };
+
+  Plotly.react('plotDiv', traces, layout, { responsive: true, displayModeBar: true, displaylogo: false });
+  updateScannerDisplay();
+  updateAnalysisDisplay();
+}
+
+function buildDomainShapes(analysis) {
+  const shapes = [];
+  const stripY = -9.5, stripH = 0.4;
+  if (analysis.type === 'all') {
+    shapes.push({
+      type: 'rect', x0: -10, y0: stripY, x1: 10, y1: stripY + stripH,
+      fillcolor: 'rgba(34, 211, 238, 0.25)', line: { color: '#22d3ee', width: 1 },
+    });
+  } else if (analysis.type === 'interval') {
+    const { min, max, minIncl, maxIncl } = analysis;
+    const x0 = Math.max(min, -10), x1 = Math.min(max, 10);
+    shapes.push({
+      type: 'rect', x0: x0, y0: stripY, x1: x1, y1: stripY + stripH,
+      fillcolor: 'rgba(34, 211, 238, 0.3)', line: { color: '#22d3ee', width: 1 },
+    });
+    // Endpoints
+    if (min >= -10) addEndpoint(shapes, min, stripY + stripH / 2, minIncl, 'domain');
+    if (max <= 10) addEndpoint(shapes, max, stripY + stripH / 2, maxIncl, 'domain');
+  } else if (analysis.type === 'ray') {
+    const { min, max, minIncl, maxIncl } = analysis;
+    const x0 = Math.max(min ?? -10, -10), x1 = Math.min(max ?? 10, 10);
+    shapes.push({
+      type: 'rect', x0: x0, y0: stripY, x1: x1, y1: stripY + stripH,
+      fillcolor: 'rgba(34, 211, 238, 0.3)', line: { color: '#22d3ee', width: 1 },
+    });
+    if (min !== -Infinity && min >= -10) addEndpoint(shapes, min, stripY + stripH / 2, minIncl, 'domain');
+    if (max !== Infinity && max <= 10) addEndpoint(shapes, max, stripY + stripH / 2, maxIncl, 'domain');
+  } else if (analysis.type === 'exclude') {
+    shapes.push({
+      type: 'rect', x0: -10, y0: stripY, x1: 10, y1: stripY + stripH,
+      fillcolor: 'rgba(34, 211, 238, 0.25)', line: { color: '#22d3ee', width: 1 },
+    });
+    for (const p of analysis.points) {
+      if (p >= -10 && p <= 10) addEndpoint(shapes, p, stripY + stripH / 2, false, 'domain');
+    }
+  } else if (analysis.type === 'union') {
+    for (const iv of analysis.intervals) {
+      const x0 = Math.max(iv.min ?? -10, -10), x1 = Math.min(iv.max ?? 10, 10);
+      shapes.push({
+        type: 'rect', x0: x0, y0: stripY, x1: x1, y1: stripY + stripH,
+        fillcolor: 'rgba(34, 211, 238, 0.3)', line: { color: '#22d3ee', width: 1 },
+      });
+      if (iv.min !== -Infinity && iv.min >= -10) addEndpoint(shapes, iv.min, stripY + stripH / 2, iv.minIncl, 'domain');
+      if (iv.max !== Infinity && iv.max <= 10) addEndpoint(shapes, iv.max, stripY + stripH / 2, iv.maxIncl, 'domain');
+    }
+  }
+  return shapes;
+}
+
+function buildRangeShapes(analysis) {
+  const shapes = [];
+  const stripX = -9.5, stripW = 0.4;
+  const addRect = (y0, y1) => shapes.push({
+    type: 'rect', x0: stripX, y0: y0, x1: stripX + stripW, y1: y1,
+    fillcolor: 'rgba(245, 158, 11, 0.3)', line: { color: '#f59e0b', width: 1 },
+  });
+  const addEnd = (y, incl) => addEndpointY(shapes, stripX + stripW / 2, y, incl, 'range');
+
+  if (analysis.type === 'all') {
+    addRect(-10, 10);
+  } else if (analysis.type === 'interval') {
+    const y0 = Math.max(analysis.min, -10), y1 = Math.min(analysis.max, 10);
+    addRect(y0, y1);
+    if (analysis.min >= -10) addEnd(analysis.min, analysis.minIncl);
+    if (analysis.max <= 10) addEnd(analysis.max, analysis.maxIncl);
+  } else if (analysis.type === 'ray') {
+    const y0 = Math.max(analysis.min ?? -10, -10), y1 = Math.min(analysis.max ?? 10, 10);
+    addRect(y0, y1);
+    if (analysis.min !== -Infinity && analysis.min >= -10) addEnd(analysis.min, analysis.minIncl);
+    if (analysis.max !== Infinity && analysis.max <= 10) addEnd(analysis.max, analysis.maxIncl);
+  } else if (analysis.type === 'exclude') {
+    addRect(-10, 10);
+    for (const p of analysis.points) {
+      if (p >= -10 && p <= 10) addEnd(p, false);
+    }
+  } else if (analysis.type === 'union') {
+    for (const iv of analysis.intervals) {
+      const y0 = Math.max(iv.min ?? -10, -10), y1 = Math.min(iv.max ?? 10, 10);
+      addRect(y0, y1);
+      if (iv.min !== -Infinity && iv.min >= -10) addEnd(iv.min, iv.minIncl);
+      if (iv.max !== Infinity && iv.max <= 10) addEnd(iv.max, iv.maxIncl);
+    }
+  }
+  return shapes;
+}
+
+function addEndpoint(shapes, x, y, included, kind) {
+  const color = kind === 'domain' ? '#22d3ee' : '#f59e0b';
+  shapes.push({
+    type: 'circle', x0: x - 0.15, y0: y - 0.15, x1: x + 0.15, y1: y + 0.15,
+    fillcolor: included ? color : 'rgba(0,0,0,0)',
+    line: { color: included ? color : '#f43f5e', width: included ? 1 : 2 },
+  });
+}
+
+function addEndpointY(shapes, x, y, included, kind) {
+  const color = kind === 'domain' ? '#22d3ee' : '#f59e0b';
+  shapes.push({
+    type: 'circle', x0: x - 0.15, y0: y - 0.15, x1: x + 0.15, y1: y + 0.15,
+    fillcolor: included ? color : 'rgba(0,0,0,0)',
+    line: { color: included ? color : '#f43f5e', width: included ? 1 : 2 },
+  });
+}
+
+function computeDomainRange(fnObj) {
+  // Check if we have a known problem
+  const known = PROBLEMS.find(p => p.expr === state.currentExpr);
+  if (known) {
+    state.domainAnalysis = known.domainType;
+    state.rangeAnalysis = known.rangeType;
+    state.asymptotes = { vertical: [], horizontal: [] };
+    // Detect asymptotes from domain/range excludes
+    if (known.domainType.type === 'exclude') {
+      state.asymptotes.vertical = known.domainType.points.slice();
+    }
+    if (known.rangeType.type === 'exclude') {
+      state.asymptotes.horizontal = known.rangeType.points.slice();
+    }
+    return;
+  }
+  // Numerical fallback
+  const discs = detectDiscontinuities(fnObj.fn, -20, 20, 0.005);
+  const validYs = [];
+  for (let x = -50; x <= 50; x += 0.05) {
+    const y = fnObj.fn(x);
+    if (!isNaN(y) && isFinite(y) && Math.abs(y) < 1000) validYs.push(y);
+  }
+  if (discs.length > 0 && discs.every(d => d.type === 'asymptote')) {
+    // Build union of valid intervals
+    const points = discs.map(d => d.x).sort((a, b) => a - b);
+    const intervals = [];
+    let start = -Infinity;
+    for (const p of points) {
+      intervals.push({ min: start, minIncl: false, max: p, maxIncl: false });
+      start = p;
+    }
+    intervals.push({ min: start, minIncl: false, max: Infinity, maxIncl: false });
+    state.domainAnalysis = { type: 'union', intervals };
+    state.asymptotes.vertical = points;
+  } else {
+    state.domainAnalysis = { type: 'all' };
+    state.asymptotes.vertical = [];
+  }
+  // Range: check for horizontal asymptote via numerical analysis at extremes
+  const leftFar = fnObj.fn(-1000);
+  const rightFar = fnObj.fn(1000);
+  if (!isNaN(leftFar) && !isNaN(rightFar) && Math.abs(leftFar - rightFar) < 0.1 && validYs.length > 0) {
+    const asym = (leftFar + rightFar) / 2;
+    const min = Math.min(...validYs);
+    const max = Math.max(...validYs);
+    // Heuristic: if asym is outside [min, max], use it as horizontal asymptote
+    if (asym < min - 0.01 || asym > max + 0.01) {
+      state.asymptotes.horizontal = [asym];
+    } else {
+      state.asymptotes.horizontal = [];
+    }
+  } else {
+    state.asymptotes.horizontal = [];
+  }
+  const min = Math.min(...validYs);
+  const max = Math.max(...validYs);
+  state.rangeAnalysis = {
+    type: 'interval',
+    min: Math.max(min, -50),
+    minIncl: true,
+    max: Math.min(max, 50),
+    maxIncl: true,
+  };
+}
+
+function formatAnalysis(a, kind) {
+  if (!a) return '—';
+  const fmt = (v) => {
+    if (v === -Infinity) return '-∞';
+    if (v === Infinity) return '∞';
+    if (Math.abs(v - Math.PI / 2) < 1e-6) return 'π/2';
+    if (Math.abs(v + Math.PI / 2) < 1e-6) return '-π/2';
+    if (Math.abs(v - Math.PI) < 1e-6) return 'π';
+    return Number.isInteger(v) ? v.toString() : v.toFixed(2);
+  };
+  const br = (incl) => incl ? '[' : '(';
+  const brR = (incl) => incl ? ']' : ')';
+  if (a.type === 'all') return kind === 'domain' ? 'ℝ' : 'ℝ';
+  if (a.type === 'interval') return `${br(a.minIncl)}${fmt(a.min)}, ${fmt(a.max)}${brR(a.maxIncl)}`;
+  if (a.type === 'ray') {
+    if (a.min === -Infinity) return `(-∞, ${fmt(a.max)}${brR(a.maxIncl)}`;
+    return `${br(a.minIncl)}${fmt(a.min)}, ∞)`;
+  }
+  if (a.type === 'exclude') {
+    return `ℝ \\ {${a.points.map(fmt).join(', ')}}`;
+  }
+  if (a.type === 'union') {
+    return a.intervals.map(iv => {
+      if (iv.min === -Infinity) return `(-∞, ${fmt(iv.max)}${brR(iv.maxIncl)}`;
+      if (iv.max === Infinity) return `${br(iv.minIncl)}${fmt(iv.min)}, ∞)`;
+      return `${br(iv.minIncl)}${fmt(iv.min)}, ${fmt(iv.max)}${brR(iv.maxIncl)}`;
+    }).join(' ∪ ');
+  }
+  return '—';
+}
+
+function formatSetBuilder(a, kind) {
+  if (!a) return '';
+  const variable = kind === 'domain' ? 'x' : 'y';
+  if (a.type === 'all') return `{${variable} | ${variable} ∈ ℝ}`;
+  if (a.type === 'interval') return `{${variable} | ${a.min} ≤ ${variable} ≤ ${a.max}}`;
+  if (a.type === 'ray') {
+    if (a.min === -Infinity) return `{${variable} | ${variable} ${a.maxIncl ? '≤' : '<'} ${a.max}}`;
+    return `{${variable} | ${variable} ${a.minIncl ? '≥' : '>'} ${a.min}}`;
+  }
+  if (a.type === 'exclude') return `{${variable} | ${variable} ≠ ${a.points.join(', ')}}`;
+  return '';
+}
+
+function updateAnalysisDisplay() {
+  const domainEl = document.getElementById('domainResult');
+  const rangeEl = document.getElementById('rangeResult');
+  const domainSetEl = document.getElementById('domainSetBuilder');
+  const rangeSetEl = document.getElementById('rangeSetBuilder');
+
+  // Check if current expr matches a known problem for LaTeX rendering
+  const known = PROBLEMS.find(p => p.expr === state.currentExpr);
+  if (known) {
+    domainEl.innerHTML = '';
+    rangeEl.innerHTML = '';
+    katex.render(known.domain, domainEl, { throwOnError: false });
+    katex.render(known.range, rangeEl, { throwOnError: false });
+    domainSetEl.textContent = known.domainSet;
+    rangeSetEl.textContent = known.rangeSet;
+    return;
+  }
+
+  domainEl.textContent = formatAnalysis(state.domainAnalysis, 'domain');
+  rangeEl.textContent = formatAnalysis(state.rangeAnalysis, 'range');
+  domainSetEl.textContent = formatSetBuilder(state.domainAnalysis, 'domain');
+  rangeSetEl.textContent = formatSetBuilder(state.rangeAnalysis, 'range');
+}
+
+function updateScannerDisplay() {
+  document.getElementById('xScannerVal').textContent = parseFloat(document.getElementById('xScanner').value).toFixed(2);
+  document.getElementById('yScannerVal').textContent = parseFloat(document.getElementById('yScanner').value).toFixed(2);
+}
+
+// =====================================================
+// PROBLEM LIBRARY RENDERING
+// =====================================================
+function renderProblems() {
+  const container = document.getElementById('problemList');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const category = document.getElementById('categorySelect').value;
+
+  const filtered = PROBLEMS.filter(p => {
+    const matchCat = category === 'all' || p.category === category;
+    const matchSearch = !search || p.title.toLowerCase().includes(search) || p.expr.toLowerCase().includes(search) || p.latex.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+
+  document.getElementById('problemCount').textContent = `${filtered.length} problem${filtered.length !== 1 ? 's' : ''}`;
+
+  container.innerHTML = filtered.map(p => `
+    <div class="problem-card glass rounded-lg p-3 border border-slate-700/50" data-id="${p.id}">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="pill pill-domain text-[10px]">${p.category}</span>
+            <h4 class="font-semibold text-sm">${p.title}</h4>
+          </div>
+          <div class="font-mono text-xs bg-slate-800/60 p-2 rounded inline-block"></div>
+        </div>
+        <button class="plot-problem bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-900 text-xs font-bold px-2 py-1 rounded hover:opacity-90 flex items-center gap-1 flex-shrink-0">
+          <i data-lucide="play" class="w-3 h-3"></i>Plot
+        </button>
+      </div>
+      <div class="text-xs space-y-1 pt-2 border-t border-slate-700/30">
+        <div class="flex items-center gap-2"><span class="pill pill-domain text-[10px]">Domain</span><span class="domain-display font-mono"></span></div>
+        <div class="flex items-center gap-2"><span class="pill pill-range text-[10px]">Range</span><span class="range-display font-mono"></span></div>
+        <button class="show-solution text-cyan-300 hover:text-cyan-200 text-xs mt-1 flex items-center gap-1">
+          <i data-lucide="chevron-down" class="w-3 h-3"></i>Show Solution
+        </button>
+        <div class="solution-text hidden text-xs text-slate-300 bg-slate-800/60 p-2 rounded mt-1"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Render KaTeX for each card
+  filtered.forEach((p, idx) => {
+    const card = container.children[idx];
+    const latexEl = card.querySelector('.font-mono.text-xs.bg-slate-800\\/60');
+    const domainEl = card.querySelector('.domain-display');
+    const rangeEl = card.querySelector('.range-display');
+    const solutionEl = card.querySelector('.solution-text');
+    katex.render(p.latex, latexEl, { throwOnError: false });
+    katex.render(p.domain, domainEl, { throwOnError: false });
+    katex.render(p.range, rangeEl, { throwOnError: false });
+    katex.render(p.solution, solutionEl, { throwOnError: false, displayMode: false });
+
+    card.querySelector('.plot-problem').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('functionInput').value = p.expr;
+      state.currentExpr = p.expr;
+      renderGraph();
+      notify(`Loaded: ${p.title}`, 'success');
+    });
+
+    card.querySelector('.show-solution').addEventListener('click', () => {
+      solutionEl.classList.toggle('hidden');
+    });
+  });
+
+  lucide.createIcons();
+}
+
+// =====================================================
+// QUIZ
+// =====================================================
+const QUIZ_TEMPLATES = [
+  { name: 'rational1', gen: () => {
+    const a = Math.floor(Math.random() * 5) + 1;
+    const b = Math.floor(Math.random() * 5) + 1;
+    const c = Math.floor(Math.random() * 7) - 3;
+    return {
+      expr: `(${a}x+${b})/(x+${c})`,
+      latex: `f(x) = \\dfrac{${a}x + ${b}}{x ${c >= 0 ? '+' + c : '- ' + Math.abs(c)}}`,
+      domainType: { type: 'exclude', points: [-c] },
+      domainAns: `(-inf, ${-c}) U (${c === -c ? -c : -c}, inf)`.replace(/NaN/g, ''),
+      hint: `Denominator zero when x = ${-c}. Solve for y to find horizontal asymptote.`
+    };
+  }},
+  { name: 'radical1', gen: () => {
+    const a = Math.floor(Math.random() * 5) + 2;
+    return {
+      expr: `sqrt(${a*a}-x**2)`,
+      latex: `f(x) = \\sqrt{${a*a} - x^2}`,
+      domainType: { type: 'interval', min: -a, minIncl: true, max: a, maxIncl: true },
+      domainAns: `[-${a}, ${a}]`,
+      hint: `Require ${a*a} - x² ≥ 0, so x² ≤ ${a*a}.`
+    };
+  }},
+  { name: 'log1', gen: () => {
+    const c = Math.floor(Math.random() * 5) + 1;
+    return {
+      expr: `log(x-${c})`,
+      latex: `f(x) = \\ln(x - ${c})`,
+      domainType: { type: 'ray', min: c, minIncl: false, max: Infinity, maxIncl: false },
+      domainAns: `(${c}, inf)`,
+      hint: `Logarithm requires positive argument: x - ${c} > 0.`
+    };
+  }},
+];
+
+function generateQuiz() {
+  const template = QUIZ_TEMPLATES[Math.floor(Math.random() * QUIZ_TEMPLATES.length)];
+  const quiz = template.gen();
+  state.currentQuiz = quiz;
+  const quizFnEl = document.getElementById('quizFunction');
+  katex.render(quiz.latex, quizFnEl, { throwOnError: false });
+  document.getElementById('quizDomainAnswer').value = '';
+  document.getElementById('quizRangeAnswer').value = '';
+  document.getElementById('quizFeedback').classList.add('hidden');
+  document.getElementById('quizHint').classList.add('hidden');
+}
+
+function normalizeAnswer(ans) {
+  return ans.toLowerCase().replace(/\s+/g, '').replace(/∞/g, 'inf').replace(/infinity/gi, 'inf').replace(/\bu\b/gi, 'U').replace(/−/g, '-');
+}
+
+function checkQuiz() {
+  if (!state.currentQuiz) return;
+  const domainAns = normalizeAnswer(document.getElementById('quizDomainAnswer').value);
+  const expectedDomain = normalizeAnswer(state.currentQuiz.domainAns || '');
+  const feedbackEl = document.getElementById('quizFeedback');
+
+  let correct = domainAns === expectedDomain;
+
+  feedbackEl.classList.remove('hidden');
+  if (correct) {
+    feedbackEl.className = 'text-xs rounded p-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300';
+    feedbackEl.innerHTML = '✅ Correct! Great job.';
+    state.stats.correct++;
+    state.stats.streak++;
+  } else {
+    feedbackEl.className = 'text-xs rounded p-2 bg-rose-500/20 border border-rose-500/40 text-rose-300';
+    feedbackEl.innerHTML = `❌ Not quite. The domain is <span class="font-mono">${state.currentQuiz.domainAns}</span>. Try again!`;
+    state.stats.wrong++;
+    state.stats.streak = 0;
+  }
+  document.getElementById('statCorrect').textContent = state.stats.correct;
+  document.getElementById('statWrong').textContent = state.stats.wrong;
+  document.getElementById('statStreak').textContent = state.stats.streak;
+}
+
+function showHint() {
+  if (!state.currentQuiz) return;
+  const hintEl = document.getElementById('quizHint');
+  hintEl.classList.remove('hidden');
+  hintEl.innerHTML = `<strong>💡 Hint:</strong> ${state.currentQuiz.hint}`;
+}
+
+// =====================================================
+// UI HANDLERS
+// =====================================================
+function notify(msg, type = 'info') {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.className = `fixed bottom-4 right-4 glass rounded-lg p-3 text-sm z-50 max-w-xs border ${type === 'error' ? 'border-rose-500' : type === 'success' ? 'border-emerald-500' : 'border-cyan-500'}`;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 2500);
+}
+
+document.getElementById('plotBtn').addEventListener('click', () => {
+  const expr = document.getElementById('functionInput').value.trim();
+  if (!expr) return;
+  state.currentExpr = expr;
+  renderGraph();
+});
+
+document.getElementById('functionInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    state.currentExpr = e.target.value.trim();
+    renderGraph();
+  }
+});
+
+document.getElementById('presetBtn').addEventListener('click', () => {
+  document.getElementById('presetDropdown').classList.toggle('hidden');
+});
+
+document.querySelectorAll('.preset-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const expr = item.dataset.expr;
+    document.getElementById('functionInput').value = expr;
+    state.currentExpr = expr;
+    document.getElementById('presetDropdown').classList.add('hidden');
+    renderGraph();
+  });
+});
+
+document.getElementById('gridToggle').addEventListener('click', () => {
+  state.showGrid = !state.showGrid;
+  renderGraph();
+  notify(`Grid ${state.showGrid ? 'on' : 'off'}`, 'info');
+});
+
+document.getElementById('resetView').addEventListener('click', () => {
+  Plotly.relayout('plotDiv', { 'xaxis.range': [-10, 10], 'yaxis.range': [-10, 10] });
+});
+
+document.getElementById('xScanner').addEventListener('input', renderGraph);
+document.getElementById('yScanner').addEventListener('input', renderGraph);
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', renderProblems);
+document.getElementById('categorySelect').addEventListener('change', renderProblems);
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  document.body.classList.toggle('dark');
+  const icon = document.getElementById('themeIcon');
+  if (document.body.classList.contains('light')) {
+    icon.setAttribute('data-lucide', 'sun');
+  } else {
+    icon.setAttribute('data-lucide', 'moon');
+  }
+  lucide.createIcons();
+  renderGraph();
+});
+
+document.getElementById('newQuizBtn').addEventListener('click', generateQuiz);
+document.getElementById('checkQuizBtn').addEventListener('click', checkQuiz);
+document.getElementById('hintBtn').addEventListener('click', showHint);
+
+// =====================================================
+// INIT
+// =====================================================
+window.addEventListener('load', () => {
+  lucide.createIcons();
+  renderGraph();
+  renderProblems();
+  generateQuiz();
+  // Re-render KaTeX for rules tab
+  renderMathInElement(document.getElementById('tab-rules'), {
+    delimiters: [
+      {left: "$$", right: "$$", display: true},
+      {left: "$", right: "$", display: false},
+    ]
+  });
+});
+
+window.addEventListener('resize', () => {
+  Plotly.Plots.resize('plotDiv');
+});
+</script>
+
+</body>
+</html>

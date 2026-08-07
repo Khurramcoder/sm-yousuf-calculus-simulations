@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tensor Analysis - Interactive 3D Visual Explorer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<!-- UMD builds: r128 is the reliable line that still ships three.min.js + examples/js OrbitControls -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+ --bg-primary:#0a0b14;--bg-secondary:#12131f;--glass-bg:rgba(18,19,31,.75);--glass-border:rgba(255,255,255,.08);
+ --text-primary:#e8eaf0;--text-secondary:#9ca3b4;--accent-cyan:#00d4ff;--accent-purple:#a855f7;
+ --accent-pink:#f472b6;--accent-green:#34d399;--accent-orange:#fb923c;
+}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);overflow:hidden;height:100vh;width:100vw}
+#app{display:grid;grid-template-columns:260px 1fr 340px;height:100vh;width:100vw}
+#sidebar{background:var(--glass-bg);backdrop-filter:blur(20px);border-right:1px solid var(--glass-border);display:flex;flex-direction:column;padding:20px 0;overflow-y:auto;z-index:10}
+#sidebar h1{font-size:1.1rem;padding:0 20px 15px;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;letter-spacing:-.5px}
+#sidebar .subtitle{font-size:.7rem;padding:0 20px 20px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px}
+.module-tab{padding:12px 20px;cursor:pointer;transition:all .2s ease;border-left:3px solid transparent;font-size:.85rem;color:var(--text-secondary)}
+.module-tab:hover{background:rgba(255,255,255,.03);color:var(--text-primary)}
+.module-tab.active{background:rgba(0,212,255,.05);border-left-color:var(--accent-cyan);color:var(--text-primary)}
+.module-tab .module-num{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;background:rgba(255,255,255,.05);border-radius:4px;margin-right:10px;font-size:.7rem;font-weight:600}
+.module-tab.active .module-num{background:var(--accent-cyan);color:#000}
+#viewport{position:relative;background:var(--bg-primary);overflow:hidden}
+#canvas-container{width:100%;height:100%}
+#canvas-container canvas{display:block}
+.viewport-overlay{position:absolute;top:15px;left:15px;background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:10px;padding:12px 16px;font-size:.75rem;pointer-events:none}
+.viewport-overlay .title{font-weight:600;margin-bottom:4px;color:var(--accent-cyan)}
+.viewport-overlay .desc{color:var(--text-secondary);font-size:.7rem}
+#right-panel{background:var(--glass-bg);backdrop-filter:blur(20px);border-left:1px solid var(--glass-border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+.panel-section{background:rgba(255,255,255,.02);border:1px solid var(--glass-border);border-radius:12px;padding:16px}
+.panel-section h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;color:var(--accent-cyan);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--glass-border)}
+.control-group{margin-bottom:14px}
+.control-group label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-secondary);margin-bottom:6px}
+.control-group label .value{color:var(--accent-cyan);font-family:'Courier New',monospace;font-weight:600}
+input[type=range]{width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;-webkit-appearance:none;appearance:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent-cyan);cursor:pointer;box-shadow:0 0 8px rgba(0,212,255,.5)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent-cyan);cursor:pointer;border:none;box-shadow:0 0 8px rgba(0,212,255,.5)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.btn{padding:8px 14px;border:1px solid var(--glass-border);background:rgba(255,255,255,.03);color:var(--text-primary);border-radius:6px;font-size:.75rem;cursor:pointer;transition:all .2s}
+.btn:hover{background:rgba(0,212,255,.1);border-color:var(--accent-cyan)}
+.btn.active{background:var(--accent-cyan);color:#000;border-color:var(--accent-cyan)}
+.math-display{background:rgba(0,0,0,.3);border:1px solid var(--glass-border);border-radius:8px;padding:12px;margin-bottom:10px;overflow-x:auto;font-size:.9rem}
+.math-display .katex{font-size:.85rem}
+.explanation{font-size:.75rem;color:var(--text-secondary);line-height:1.6}
+.explanation strong{color:var(--accent-cyan)}
+.eigenvalue-display{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.eigen-chip{padding:4px 10px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);border-radius:4px;font-family:'Courier New',monospace;font-size:.7rem;color:var(--accent-purple)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.toggle-switch{width:36px;height:20px;background:rgba(255,255,255,.1);border-radius:10px;cursor:pointer;position:relative;transition:background .2s}
+.toggle-switch.active{background:var(--accent-cyan)}
+.toggle-switch::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .2s}
+.toggle-switch.active::after{transform:translateX(16px)}
+#christoffel-table{font-family:'Courier New',monospace;font-size:.65rem;color:var(--text-secondary);margin-top:8px}
+#christoffel-table span{display:inline-block;min-width:70px;padding:2px 0}
+@media (max-width:1200px){#app{grid-template-columns:220px 1fr 300px}}
+@media (max-width:900px){
+ #app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+ #sidebar{flex-direction:row;overflow-x:auto;padding:10px;border-right:none;border-bottom:1px solid var(--glass-border)}
+ #sidebar h1,#sidebar .subtitle{display:none}
+ .module-tab{white-space:nowrap;border-left:none;border-bottom:3px solid transparent;padding:8px 14px}
+ .module-tab.active{border-bottom-color:var(--accent-cyan)}
+ #right-panel{max-height:40vh;border-left:none;border-top:1px solid var(--glass-border)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+ <nav id="sidebar">
+  <h1>⊗ Tensor Analysis</h1>
+  <div class="subtitle">Interactive Visual Explorer</div>
+  <div class="module-tab active" data-module="1"><span class="module-num">1</span>Tensor Rank & Fields</div>
+  <div class="module-tab" data-module="2"><span class="module-num">2</span>Covariant vs Contravariant</div>
+  <div class="module-tab" data-module="3"><span class="module-num">3</span>Metric Tensor g<sub>ij</sub></div>
+  <div class="module-tab" data-module="4"><span class="module-num">4</span>Cauchy Stress Tensor</div>
+  <div class="module-tab" data-module="5"><span class="module-num">5</span>Coordinate Transforms</div>
+  <div class="module-tab" data-module="6"><span class="module-num">6</span>Curvature & Geodesics</div>
+ </nav>
+ <main id="viewport">
+  <div id="canvas-container"></div>
+  <div class="viewport-overlay">
+   <div class="title" id="viewport-title">Module 1: Tensor Rank</div>
+   <div class="desc" id="viewport-desc">Scalar, Vector, and 2nd-Order Tensor Fields</div>
+  </div>
+ </main>
+ <aside id="right-panel">
+  <div class="panel-section">
+   <h3>📐 Mathematical Definition</h3>
+   <div class="math-display" id="math-eq-1"></div>
+   <div class="math-display" id="math-eq-2"></div>
+   <div class="explanation" id="explanation-text"></div>
+  </div>
+  <div class="panel-section">
+   <h3>🎛️ Controls</h3>
+   <div id="dynamic-controls"></div>
+  </div>
+  <div class="panel-section">
+   <h3>📊 Live Data</h3>
+   <div id="live-data"></div>
+  </div>
+ </aside>
+</div>
+
+<script>
+/* ================= MATH UTILITIES ================= */
+const MathUtils = {
+ degToRad: d => d*Math.PI/180,
+ radToDeg: r => r*180/Math.PI,
+ mat3Identity: () => [[1,0,0],[0,1,0],[0,0,1]],
+ mat3Multiply: (A,B) => {
+  const C=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)for(let k=0;k<3;k++)C[i][j]+=A[i][k]*B[k][j];
+  return C;
+ },
+ mat3Transpose: M => [[M[0][0],M[1][0],M[2][0]],[M[0][1],M[1][1],M[2][1]],[M[0][2],M[1][2],M[2][2]]],
+ mat3Determinant: M => M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1])-M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])+M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]),
+ mat3Inverse: M => {
+  const det=MathUtils.mat3Determinant(M);
+  if(Math.abs(det)<1e-10)return null;
+  const id=1/det;
+  return [
+   [(M[1][1]*M[2][2]-M[1][2]*M[2][1]),-(M[0][1]*M[2][2]-M[0][2]*M[2][1]),(M[0][1]*M[1][2]-M[0][2]*M[1][1])],
+   [-(M[1][0]*M[2][2]-M[1][2]*M[2][0]),(M[0][0]*M[2][2]-M[0][2]*M[2][0]),-(M[0][0]*M[1][2]-M[0][2]*M[1][0])],
+   [(M[1][0]*M[2][1]-M[1][1]*M[2][0]),-(M[0][0]*M[2][1]-M[0][1]*M[2][0]),(M[0][0]*M[1][1]-M[0][1]*M[1][0])]
+  ].map(r=>r.map(v=>v*id));
+ },
+ mat3Trace: M => M[0][0]+M[1][1]+M[2][2],
+ mat3MultiplyVec: (M,v) => [M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]],
+ dotProduct: (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+ crossProduct: (a,b) => [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
+ vecNorm: v => Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]),
+ vecNormalize: v => {const n=MathUtils.vecNorm(v);return n<1e-10?[0,0,0]:[v[0]/n,v[1]/n,v[2]/n];},
+ rotationMatrix: (alpha,beta,gamma) => {
+  const a=MathUtils.degToRad(alpha),b=MathUtils.degToRad(beta),g=MathUtils.degToRad(gamma);
+  const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cg=Math.cos(g),sg=Math.sin(g);
+  return [
+   [ca*cb*cg-sa*sg,-ca*cb*sg-sa*cg,ca*sb],
+   [sa*cb*cg+ca*sg,-sa*cb*sg+ca*cg,sa*sb],
+   [-sb*cg,sb*sg,cb]
+  ];
+ },
+ eigenDecomp3: M => {
+  let A=M.map(r=>[...r]),V=MathUtils.mat3Identity();
+  for(let iter=0;iter<100;iter++){
+   let maxOff=0,p=0,q=1;
+   for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)if(Math.abs(A[i][j])>maxOff){maxOff=Math.abs(A[i][j]);p=i;q=j;}
+   if(maxOff<1e-10)break;
+   const th=0.5*Math.atan2(2*A[p][q],A[p][p]-A[q][q]),c=Math.cos(th),s=Math.sin(th);
+   const R=MathUtils.mat3Identity();R[p][p]=c;R[q][q]=c;R[p][q]=-s;R[q][p]=s;
+   A=MathUtils.mat3Multiply(MathUtils.mat3Transpose(R),MathUtils.mat3Multiply(A,R));
+   V=MathUtils.mat3Multiply(V,R);
+  }
+  const vals=[A[0][0],A[1][1],A[2][2]];
+  const vecs=[[V[0][0],V[1][0],V[2][0]],[V[0][1],V[1][1],V[2][1]],[V[0][2],V[1][2],V[2][2]]];
+  const idx=[0,1,2].sort((a,b)=>vals[b]-vals[a]);
+  return {values:idx.map(i=>vals[i]),vectors:idx.map(i=>vecs[i])};
+ }
+};
+
+/* ================= THREE.JS CORE ================= */
+let scene,camera,renderer,controls,currentModule=null,animationId=null;
+const clock=new THREE.Clock();
+
+function initScene(){
+ const container=document.getElementById('canvas-container');
+ scene=new THREE.Scene();
+ scene.background=new THREE.Color(0x0a0b14);
+ scene.fog=new THREE.FogExp2(0x0a0b14,0.015);
+ camera=new THREE.PerspectiveCamera(60,container.clientWidth/container.clientHeight,0.1,1000);
+ camera.position.set(5,4,5);
+ renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+ renderer.setSize(container.clientWidth,container.clientHeight);
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+ container.appendChild(renderer.domElement);
+ controls=new THREE.OrbitControls(camera,renderer.domElement);
+ controls.enableDamping=true;controls.dampingFactor=0.05;controls.rotateSpeed=0.8;
+ scene.add(new THREE.AmbientLight(0x404060,0.6));
+ const dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(5,10,5);scene.add(dl);
+ const pl=new THREE.PointLight(0x00d4ff,0.4,20);pl.position.set(-3,5,-3);scene.add(pl);
+ window.addEventListener('resize',()=>{
+  camera.aspect=container.clientWidth/container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth,container.clientHeight);
+ });
+}
+
+function clearScene(){
+ const keep=new Set(['AmbientLight','DirectionalLight','PointLight']);
+ const toRemove=[];
+ scene.traverse(o=>{if(!keep.has(o.type))toRemove.push(o);});
+ toRemove.forEach(o=>{
+  scene.remove(o);
+  if(o.geometry)o.geometry.dispose();
+  if(o.material){Array.isArray(o.material)?o.material.forEach(m=>m.dispose()):o.material.dispose();}
+ });
+ if(animationId)cancelAnimationFrame(animationId);
+ animationId=null;
+}
+
+function addGridHelper(){
+ const g=new THREE.GridHelper(10,10,0x1a1b2e,0x1a1b2e);
+ g.material.opacity=0.3;g.material.transparent=true;scene.add(g);
+}
+function addAxesHelper(){scene.add(new THREE.AxesHelper(3));}
+function createArrow(from,dir,length,color,hl=0.2,hw=0.1){
+ return new THREE.ArrowHelper(new THREE.Vector3(...dir),new THREE.Vector3(...from),length,color,hl,hw);
+}
+
+/* ================= KATEX ================= */
+function renderKaTeX(id,latex){
+ const el=document.getElementById(id);if(!el)return;
+ if(typeof katex==='undefined'){el.textContent=latex;return;}
+ try{katex.render(latex,el,{throwOnError:false,displayMode:true});}catch(e){el.textContent=latex;}
+}
+
+/* ================= MODULE 1: TENSOR RANK ================= */
+const Module1={
+ rank:1,intensity:1.0,scale:1.0,group:null,t:0,
+ init(){this.group=new THREE.Group();scene.add(this.group);addGridHelper();addAxesHelper();this.build();this.updateUI();this.animate();},
+ build(){
+  while(this.group.children.length){const c=this.group.children[0];this.group.remove(c);if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  if(this.rank===0)this.buildScalar();else if(this.rank===1)this.buildVector();else this.buildTensor();
+ },
+ buildScalar(){
+  const count=2000,geo=new THREE.BufferGeometry();
+  const pos=new Float32Array(count*3),col=new Float32Array(count*3);
+  for(let i=0;i<count;i++){
+   const x=(Math.random()-.5)*8,y=(Math.random()-.5)*8,z=(Math.random()-.5)*8;
+   pos[i*3]=x;pos[i*3+1]=y;pos[i*3+2]=z;
+   const val=Math.sin(x)*Math.cos(y)*Math.sin(z)*this.intensity;
+   const t=(val+1)*0.5,c=new THREE.Color();c.setHSL(0.6-t*0.6,0.9,0.3+t*0.4);
+   col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  this.group.add(new THREE.Points(geo,new THREE.PointsMaterial({size:0.08,vertexColors:true,transparent:true,opacity:0.8})));
+ },
+ buildVector(){
+  const n=2,sp=1.5;
+  for(let ix=-n;ix<=n;ix++)for(let iy=-n;iy<=n;iy++)for(let iz=-n;iz<=n;iz++){
+   const x=ix*sp,y=iy*sp,z=iz*sp;
+   const vx=-y*this.intensity*0.3,vy=x*this.intensity*0.3,vz=z*this.intensity*0.2;
+   const mag=Math.sqrt(vx*vx+vy*vy+vz*vz);if(mag<0.05)continue;
+   this.group.add(createArrow([x,y,z],[vx/mag,vy/mag,vz/mag],Math.min(mag*this.scale,2),0x00d4ff,0.15,0.08));
+  }
+ },
+ buildTensor(){
+  const n=1,sp=2.5;
+  for(let ix=-n;ix<=n;ix++)for(let iy=-n;iy<=n;iy++)for(let iz=-n;iz<=n;iz++){
+   const x=ix*sp,y=iy*sp,z=iz*sp;
+   const sx=(1+0.3*Math.sin(x))*this.intensity*this.scale;
+   const sy=(0.5+0.3*Math.cos(y))*this.intensity*this.scale;
+   const sz=(0.7+0.2*Math.sin(z))*this.intensity*this.scale;
+   const g=new THREE.SphereGeometry(0.4,16,12);g.scale(sx,sy,sz);
+   const m=new THREE.Mesh(g,new THREE.MeshPhongMaterial({color:0xa855f7,transparent:true,opacity:0.5,shininess:100}));
+   m.position.set(x,y,z);this.group.add(m);
+   const wg=new THREE.SphereGeometry(0.4,16,12);wg.scale(sx,sy,sz);
+   const wm=new THREE.Mesh(wg,new THREE.MeshBasicMaterial({color:0xa855f7,wireframe:true,transparent:true,opacity:0.3}));
+   wm.position.set(x,y,z);this.group.add(wm);
+  }
+ },
+ updateUI(){
+  document.getElementById('viewport-title').textContent='Module 1: Tensor Rank & Fields';
+  document.getElementById('viewport-desc').textContent='Scalar, Vector, and 2nd-Order Tensor Fields';
+  renderKaTeX('math-eq-1',this.rank===0?'\\phi(\\mathbf{x})\\in\\mathbb{R}\\quad\\text{(Rank-0 Scalar)}':this.rank===1?'\\mathbf{v}=v^{i}\\mathbf{e}_{i}\\quad\\text{(Rank-1 Vector)}':'\\mathbf{T}=T^{ij}\\,\\mathbf{e}_{i}\\otimes\\mathbf{e}_{j}\\quad\\text{(Rank-2 Tensor)}');
+  renderKaTeX('math-eq-2',this.rank===0?'\\phi\'=\\phi\\;\\text{(invariant)}':this.rank===1?'v\'^{i}=Q^{i}_{\\;j}v^{j}':'T\'^{ij}=Q^{i}_{\\;k}Q^{j}_{\\;l}T^{kl}');
+  document.getElementById('explanation-text').innerHTML=this.rank===0
+   ?'<strong>Scalar (Rank 0):</strong> one number per point, invariant under coordinate change. Temperature, pressure, density.'
+   :this.rank===1?'<strong>Vector (Rank 1):</strong> components transform linearly with the rotation matrix; arrow length = |v|.'
+   :'<strong>Rank-2 Tensor:</strong> linear map between vectors. Visualized as ellipsoids: eigen-axes = principal directions, semi-axes = eigenvalues.';
+  document.getElementById('dynamic-controls').innerHTML=`
+   <div class="btn-row">
+    <button class="btn ${this.rank===0?'active':''}" onclick="Module1.setRank(0)">Rank 0</button>
+    <button class="btn ${this.rank===1?'active':''}" onclick="Module1.setRank(1)">Rank 1</button>
+    <button class="btn ${this.rank===2?'active':''}" onclick="Module1.setRank(2)">Rank 2</button>
+   </div>
+   <div class="control-group"><label>Field Intensity <span class="value">${this.intensity.toFixed(2)}</span></label>
+    <input type="range" min="0.1" max="2" step="0.05" value="${this.intensity}" oninput="Module1.setIntensity(this.value)"></div>
+   <div class="control-group"><label>Scale <span class="value">${this.scale.toFixed(2)}</span></label>
+    <input type="range" min="0.2" max="2" step="0.1" value="${this.scale}" oninput="Module1.setScale(this.value)"></div>`;
+  const comps=this.rank===0?'1 component':this.rank===1?'3 components':'9 components (6 if symmetric)';
+  document.getElementById('live-data').innerHTML=`<div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary)">Components in 3-D:</div><div style="font-family:monospace;font-size:.8rem;color:var(--accent-cyan)">Rank ${this.rank} → ${comps}</div></div>`;
+ },
+ setRank(r){this.rank=r;this.build();this.updateUI();},
+ setIntensity(v){this.intensity=parseFloat(v);this.build();this.updateUI();},
+ setScale(v){this.scale=parseFloat(v);this.build();this.updateUI();},
+ animate(){animationId=requestAnimationFrame(()=>this.animate());controls.update();this.t+=clock.getDelta();if(this.rank===0&&this.group.children[0])this.group.children[0].rotation.y=this.t*0.1;renderer.render(scene,camera);},
+ cleanup(){clearScene();}
+};
+
+/* ================= MODULE 2: COVARIANT / CONTRAVARIANT ================= */
+const Module2={
+ theta12:75,theta23:80,theta31:70,vectorAngle:30,group:null,dual:null,V:null,
+ computeBasis(){
+  const a12=MathUtils.degToRad(this.theta12),a23=MathUtils.degToRad(this.theta23),a31=MathUtils.degToRad(this.theta31);
+  const e1=[1,0,0];
+  const e2=[Math.cos(a12),Math.sin(a12),0];
+  const e3x=Math.cos(a31);
+  const e3y=(Math.cos(a23)-Math.cos(a12)*Math.cos(a31))/Math.sin(a12);
+  const e3z=Math.sqrt(Math.max(0,1-e3x*e3x-e3y*e3y));
+  return {e1,e2,e3:[e3x,e3y,e3z]};
+ },
+ computeDual(e1,e2,e3){
+  const g=[[MathUtils.dotProduct(e1,e1),MathUtils.dotProduct(e1,e2),MathUtils.dotProduct(e1,e3)],
+           [MathUtils.dotProduct(e2,e1),MathUtils.dotProduct(e2,e2),MathUtils.dotProduct(e2,e3)],
+           [MathUtils.dotProduct(e3,e1),MathUtils.dotProduct(e3,e2),MathUtils.dotProduct(e3,e3)]];
+  const gInv=MathUtils.mat3Inverse(g);if(!gInv)return null;
+  const mk=i=>[gInv[i][0]*e1[0]+gInv[i][1]*e2[0]+gInv[i][2]*e3[0],gInv[i][0]*e1[1]+gInv[i][1]*e2[1]+gInv[i][2]*e3[1],gInv[i][0]*e1[2]+gInv[i][1]*e2[2]+gInv[i][2]*e3[2]];
+  return {eDual1:mk(0),eDual2:mk(1),eDual3:mk(2),g,gInv};
+ },
+ init(){this.group=new THREE.Group();scene.add(this.group);this.build();this.updateUI();this.animate();},
+ build(){
+  while(this.group.children.length){const c=this.group.children[0];this.group.remove(c);if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  const {e1,e2,e3}=this.computeBasis();
+  const dual=this.computeDual(e1,e2,e3);this.dual=dual;
+  const S=2.5;
+  this.group.add(createArrow([0,0,0],e1,S,0x00d4ff,0.3,0.12));
+  this.group.add(createArrow([0,0,0],e2,S,0x34d399,0.3,0.12));
+  this.group.add(createArrow([0,0,0],e3,S,0xfb923c,0.3,0.12));
+  if(dual){
+   [dual.eDual1,dual.eDual2,dual.eDual3].forEach((d,i)=>{
+    const cols=[0x00d4ff,0x34d399,0xfb923c];
+    const a=createArrow([0,0,0],MathUtils.vecNormalize(d),MathUtils.vecNorm(d)*S,cols[i],0.2,0.08);
+    a.traverse(ch=>{if(ch.material){ch.material=ch.material.clone();ch.material.transparent=true;ch.material.opacity=0.45;}});
+    this.group.add(a);
+   });
+  }
+  const va=MathUtils.degToRad(this.vectorAngle);
+  this.V=[Math.cos(va),Math.sin(va),0.3];
+  this.group.add(createArrow([0,0,0],MathUtils.vecNormalize(this.V),MathUtils.vecNorm(this.V)*S*0.8,0xf472b6,0.25,0.1));
+  const gv=[];for(let i=-5;i<=5;i++){gv.push(-5,0,i,5,0,i,i,0,-5,i,0,5);}
+  const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gv,3));
+  this.group.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({color:0x1a1b2e,transparent:true,opacity:0.3})));
+ },
+ updateUI(){
+  document.getElementById('viewport-title').textContent='Module 2: Covariant vs Contravariant';
+  document.getElementById('viewport-desc').textContent='Non-orthogonal bases and dual spaces';
+  renderKaTeX('math-eq-1','\\mathbf{e}_{i}\\cdot\\mathbf{e}^{j}=\\delta_{i}^{\\;j},\\qquad \\mathbf{V}=V^{i}\\mathbf{e}_{i}=V_{i}\\mathbf{e}^{i}');
+  const {e1,e2,e3}=this.computeBasis();
+  const dual=this.dual;
+  if(dual&&this.V){
+   const Vcov=[0,1,2].map(i=>MathUtils.dotProduct(this.V,[e1,e2,e3][i]));
+   const Vcon=[dual.eDual1,dual.eDual2,dual.eDual3].map(d=>MathUtils.dotProduct(this.V,d));
+   renderKaTeX('math-eq-2',`V_{i}=[${Vcov.map(v=>v.toFixed(2)).join(',\\;')}],\\quad V^{i}=[${Vcon.map(v=>v.toFixed(2)).join(',\\;')}]`);
+   document.getElementById('live-data').innerHTML=`
+    <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px">Metric g<sub>ij</sub>:</div>
+     <div style="font-family:monospace;font-size:.7rem">${dual.g.map(r=>`[${r.map(v=>v.toFixed(3)).join(', ')}]`).join('<br>')}</div></div>
+    <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary)">Covariant V<sub>i</sub> (projections):</div>
+     <div style="font-family:monospace;font-size:.8rem;color:var(--accent-cyan)">[${Vcov.map(v=>v.toFixed(3)).join(', ')}]</div></div>
+    <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary)">Contravariant V<sup>i</sup> (coefficients):</div>
+     <div style="font-family:monospace;font-size:.8rem;color:var(--accent-purple)">[${Vcon.map(v=>v.toFixed(3)).join(', ')}]</div></div>`;
+  }else{
+   renderKaTeX('math-eq-2','V_{i}=g_{ij}V^{j},\\quad V^{i}=g^{ij}V_{j}');
+  }
+  document.getElementById('explanation-text').innerHTML='<strong>Contravariant V<sup>i</sup>:</strong> coefficients of the basis expansion (oblique projection onto axes). <strong>Covariant V<sub>i</sub>:</strong> orthogonal projections onto the basis. The metric raises/lowers indices. Solid arrows = e<sub>i</sub>, translucent = dual e<sup>i</sup>, pink = V.';
+  document.getElementById('dynamic-controls').innerHTML=`
+   <div class="control-group"><label>θ₁₂ <span class="value">${this.theta12}°</span></label><input type="range" min="30" max="150" value="${this.theta12}" oninput="Module2.set('theta12',this.value)"></div>
+   <div class="control-group"><label>θ₂₃ <span class="value">${this.theta23}°</span></label><input type="range" min="30" max="150" value="${this.theta23}" oninput="Module2.set('theta23',this.value)"></div>
+   <div class="control-group"><label>θ₃₁ <span class="value">${this.theta31}°</span></label><input type="range" min="30" max="150" value="${this.theta31}" oninput="Module2.set('theta31',this.value)"></div>
+   <div class="control-group"><label>V angle <span class="value">${this.vectorAngle}°</span></label><input type="range" min="0" max="360" step="5" value="${this.vectorAngle}" oninput="Module2.set('vectorAngle',this.value)"></div>`;
+ },
+ set(p,v){this[p]=parseFloat(v);this.build();this.updateUI();},
+ animate(){animationId=requestAnimationFrame(()=>this.animate());controls.update();renderer.render(scene,camera);},
+ cleanup(){clearScene();}
+};
+
+/* ================= MODULE 3: METRIC TENSOR ================= */
+const Module3={
+ coordSystem:'cartesian',r:2.0,theta:45,phi:30,group:null,
+ getMetric(){
+  if(this.coordSystem==='cartesian')return [[1,0,0],[0,1,0],[0,0,1]];
+  if(this.coordSystem==='cylindrical')return [[1,0,0],[0,this.r*this.r,0],[0,0,1]];
+  const s=Math.sin(MathUtils.degToRad(this.theta));
+  return [[1,0,0],[0,this.r*this.r,0],[0,0,this.r*this.r*s*s]];
+ },
+ init(){this.group=new THREE.Group();scene.add(this.group);this.build();this.updateUI();this.animate();},
+ build(){
+  while(this.group.children.length){const c=this.group.children[0];this.group.remove(c);if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  if(this.coordSystem==='cartesian')this.buildCart();
+  else if(this.coordSystem==='cylindrical')this.buildCyl();
+  else this.buildSph();
+  this.buildVolumeElement();
+ },
+ buildCart(){
+  const g=new THREE.GridHelper(8,8,0x1a1b2e,0x1a1b2e);g.material.opacity=0.4;g.material.transparent=true;this.group.add(g);
+  this.group.add(new THREE.AxesHelper(4));
+ },
+ buildCyl(){
+  const mat=new THREE.LineBasicMaterial({color:0x00d4ff,transparent:true,opacity:0.4});
+  for(let phi=0;phi<360;phi+=30){
+   const a=MathUtils.degToRad(phi),pts=[];
+   for(let r=0;r<=4;r+=0.2)pts.push(new THREE.Vector3(r*Math.cos(a),0,r*Math.sin(a)));
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat));
+  }
+  for(let r=1;r<=4;r++){
+   const pts=[];for(let phi=0;phi<=360;phi+=5){const a=MathUtils.degToRad(phi);pts.push(new THREE.Vector3(r*Math.cos(a),0,r*Math.sin(a)));}
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat));
+  }
+  const vm=new THREE.LineBasicMaterial({color:0x34d399,transparent:true,opacity:0.3});
+  for(let phi=0;phi<360;phi+=45){
+   const a=MathUtils.degToRad(phi);
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(this.r*Math.cos(a),-2,this.r*Math.sin(a)),new THREE.Vector3(this.r*Math.cos(a),2,this.r*Math.sin(a))]),vm));
+  }
+  const p=MathUtils.degToRad(this.phi);
+  const pt=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),new THREE.MeshBasicMaterial({color:0xf472b6}));
+  pt.position.set(this.r*Math.cos(p),0,this.r*Math.sin(p));this.group.add(pt);
+ },
+ buildSph(){
+  const R=3,lm=new THREE.LineBasicMaterial({color:0xa855f7,transparent:true,opacity:0.3});
+  for(let th=15;th<180;th+=30){
+   const t=MathUtils.degToRad(th),pts=[];
+   for(let phi=0;phi<=360;phi+=5){const p=MathUtils.degToRad(phi);pts.push(new THREE.Vector3(R*Math.sin(t)*Math.cos(p),R*Math.cos(t),R*Math.sin(t)*Math.sin(p)));}
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
+  }
+  for(let phi=0;phi<360;phi+=30){
+   const p=MathUtils.degToRad(phi),pts=[];
+   for(let th=0;th<=180;th+=5){const t=MathUtils.degToRad(th);pts.push(new THREE.Vector3(R*Math.sin(t)*Math.cos(p),R*Math.cos(t),R*Math.sin(t)*Math.sin(p)));}
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
+  }
+  const t=MathUtils.degToRad(this.theta),p=MathUtils.degToRad(this.phi);
+  const pt=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshBasicMaterial({color:0xf472b6}));
+  pt.position.set(this.r*Math.sin(t)*Math.cos(p),this.r*Math.cos(t),this.r*Math.sin(t)*Math.sin(p));this.group.add(pt);
+ },
+ buildVolumeElement(){
+  const ds=0.75;let pos,dx,dy,dz;
+  if(this.coordSystem==='cartesian'){pos=[2,0,1];dx=dy=dz=ds;}
+  else if(this.coordSystem==='cylindrical'){
+   const p=MathUtils.degToRad(this.phi);pos=[this.r*Math.cos(p),0,this.r*Math.sin(p)];
+   dx=ds;dy=this.r*ds*0.5;dz=ds;
+  }else{
+   const t=MathUtils.degToRad(this.theta),p=MathUtils.degToRad(this.phi);
+   pos=[this.r*Math.sin(t)*Math.cos(p),this.r*Math.cos(t),this.r*Math.sin(t)*Math.sin(p)];
+   dx=ds;dy=this.r*ds*0.5;dz=this.r*Math.sin(t)*ds*0.5;
+  }
+  const box=new THREE.Mesh(new THREE.BoxGeometry(dx,dy,dz),new THREE.MeshPhongMaterial({color:0xf472b6,transparent:true,opacity:0.4}));
+  box.position.set(...pos);
+  if(this.coordSystem==='cylindrical')box.rotation.y=MathUtils.degToRad(this.phi);
+  if(this.coordSystem==='spherical'){box.rotation.order='YZX';box.rotation.y=MathUtils.degToRad(this.phi);box.rotation.z=MathUtils.degToRad(this.theta)-Math.PI/2;}
+  this.group.add(box);
+  const w=new THREE.Mesh(new THREE.BoxGeometry(dx,dy,dz),new THREE.MeshBasicMaterial({color:0xf472b6,wireframe:true}));
+  w.position.copy(box.position);w.rotation.copy(box.rotation);this.group.add(w);
+ },
+ updateUI(){
+  document.getElementById('viewport-title').textContent='Module 3: Metric Tensor';
+  document.getElementById('viewport-desc').textContent='Measuring distances in curvilinear coordinates';
+  const names={cartesian:'Cartesian',cylindrical:'Cylindrical',spherical:'Spherical'};
+  renderKaTeX('math-eq-1',`ds^{2}=g_{ij}\\,dx^{i}dx^{j}\\quad(${names[this.coordSystem]})`);
+  renderKaTeX('math-eq-2',this.coordSystem==='cartesian'?'ds^{2}=dx^{2}+dy^{2}+dz^{2}':this.coordSystem==='cylindrical'?'ds^{2}=dr^{2}+r^{2}d\\phi^{2}+dz^{2}':'ds^{2}=dr^{2}+r^{2}d\\theta^{2}+r^{2}\\sin^{2}\\theta\\,d\\phi^{2}');
+  document.getElementById('explanation-text').innerHTML='<strong>Metric tensor</strong> defines distance measurement. In curvilinear coordinates components depend on position even in flat space. <strong>Volume element:</strong> dV = √|g| dx¹dx²dx³. Pink box = local volume element distorted by the coordinate map.';
+  const g=this.getMetric(),gInv=MathUtils.mat3Inverse(g),det=MathUtils.mat3Determinant(g);
+  document.getElementById('live-data').innerHTML=`
+   <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px">g<sub>ij</sub>:</div><div style="font-family:monospace;font-size:.7rem">${g.map(r=>`[${r.map(v=>v.toFixed(3)).join(', ')}]`).join('<br>')}</div></div>
+   <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px">g<sup>ij</sup>:</div><div style="font-family:monospace;font-size:.7rem">${gInv.map(r=>`[${r.map(v=>v.toFixed(3)).join(', ')}]`).join('<br>')}</div></div>
+   <div class="math-display"><div style="font-family:monospace;font-size:.7rem">det g = ${det.toFixed(4)}<br><span style="color:var(--accent-green)">√|g| = ${Math.sqrt(Math.abs(det)).toFixed(4)}</span></div></div>`;
+  document.getElementById('dynamic-controls').innerHTML=`
+   <div class="btn-row">
+    <button class="btn ${this.coordSystem==='cartesian'?'active':''}" onclick="Module3.setCoord('cartesian')">Cartesian</button>
+    <button class="btn ${this.coordSystem==='cylindrical'?'active':''}" onclick="Module3.setCoord('cylindrical')">Cylindrical</button>
+    <button class="btn ${this.coordSystem==='spherical'?'active':''}" onclick="Module3.setCoord('spherical')">Spherical</button>
+   </div>
+   ${this.coordSystem!=='cartesian'?`<div class="control-group"><label>r <span class="value">${this.r.toFixed(1)}</span></label><input type="range" min="0.5" max="4" step="0.1" value="${this.r}" oninput="Module3.set('r',this.value)"></div>`:''}
+   ${this.coordSystem==='spherical'?`<div class="control-group"><label>θ <span class="value">${this.theta}°</span></label><input type="range" min="10" max="170" step="5" value="${this.theta}" oninput="Module3.set('theta',this.value)"></div>`:''}
+   ${this.coordSystem!=='cartesian'?`<div class="control-group"><label>φ <span class="value">${this.phi}°</span></label><input type="range" min="0" max="360" step="5" value="${this.phi}" oninput="Module3.set('phi',this.value)"></div>`:''}`;
+ },
+ setCoord(c){this.coordSystem=c;this.build();this.updateUI();},
+ set(p,v){this[p]=parseFloat(v);this.build();this.updateUI();},
+ animate(){animationId=requestAnimationFrame(()=>this.animate());controls.update();renderer.render(scene,camera);},
+ cleanup(){clearScene();}
+};
+
+/* ================= MODULE 4: CAUCHY STRESS ================= */
+const Module4={
+ sigma_xx:3,sigma_yy:1,sigma_zz:2,tau_xy:1,tau_xz:0.5,tau_yz:0.3,cutTheta:45,cutPhi:30,showPrincipal:true,group:null,
+ T(){return [[this.sigma_xx,this.tau_xy,this.tau_xz],[this.tau_xy,this.sigma_yy,this.tau_yz],[this.tau_xz,this.tau_yz,this.sigma_zz]]},
+ n(){const t=MathUtils.degToRad(this.cutTheta),p=MathUtils.degToRad(this.cutPhi);return [Math.sin(t)*Math.cos(p),Math.cos(t),Math.sin(t)*Math.sin(p)];},
+ init(){this.group=new THREE.Group();scene.add(this.group);this.build();this.updateUI();this.animate();},
+ build(){
+  while(this.group.children.length){const c=this.group.children[0];this.group.remove(c);if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  const T=this.T(),eig=MathUtils.eigenDecomp3(T),n=this.n();
+  const absV=eig.values.map(v=>Math.abs(v)*0.5+0.3);
+  const eg=new THREE.SphereGeometry(1,32,24);eg.scale(absV[0],absV[1],absV[2]);
+  const eM=MathUtils.mat3Transpose(eig.vectors);
+  const m4=new THREE.Matrix4().set(eM[0][0],eM[0][1],eM[0][2],0,eM[1][0],eM[1][1],eM[1][2],0,eM[2][0],eM[2][1],eM[2][2],0,0,0,0,1);
+  const ell=new THREE.Mesh(eg,new THREE.MeshPhongMaterial({color:0xa855f7,transparent:true,opacity:0.35,side:THREE.DoubleSide,shininess:100}));
+  ell.quaternion.setFromRotationMatrix(m4);this.group.add(ell);
+  const wg=new THREE.SphereGeometry(1,32,24);wg.scale(absV[0],absV[1],absV[2]);
+  const wm=new THREE.Mesh(wg,new THREE.MeshBasicMaterial({color:0xa855f7,wireframe:true,transparent:true,opacity:0.5}));
+  wm.quaternion.setFromRotationMatrix(m4);this.group.add(wm);
+  if(this.showPrincipal){
+   const cols=[0xff4444,0x44ff44,0x4444ff];
+   eig.vectors.forEach((d,i)=>{
+    this.group.add(createArrow([0,0,0],d,absV[i]*1.3,cols[i],0.15,0.06));
+    const na=createArrow([0,0,0],[-d[0],-d[1],-d[2]],absV[i]*1.3,cols[i],0.15,0.06);
+    na.traverse(ch=>{if(ch.material){ch.material=ch.material.clone();ch.material.transparent=true;ch.material.opacity=0.4;}});
+    this.group.add(na);
+   });
+  }
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.MeshPhongMaterial({color:0x00d4ff,transparent:true,opacity:0.2,side:THREE.DoubleSide}));
+  plane.lookAt(new THREE.Vector3(...n));this.group.add(plane);
+  this.group.add(createArrow([0,0,0],n,2,0x00d4ff,0.2,0.08));
+  const trac=MathUtils.mat3MultiplyVec(T,n),tn=MathUtils.vecNorm(trac);
+  if(tn>0.01){
+   this.group.add(createArrow([0,0,0],MathUtils.vecNormalize(trac),tn*0.8,0xf472b6,0.2,0.08));
+   const sn=MathUtils.dotProduct(trac,n),sv=[sn*n[0],sn*n[1],sn*n[2]];
+   if(Math.abs(sn)>0.01)this.group.add(createArrow([0,0,0],MathUtils.vecNormalize(sv),Math.abs(sn)*0.8,0xfb923c,0.15,0.06));
+   const tv=[trac[0]-sv[0],trac[1]-sv[1],trac[2]-sv[2]],tm=MathUtils.vecNorm(tv);
+   if(tm>0.01)this.group.add(createArrow([0,0,0],MathUtils.vecNormalize(tv),tm*0.8,0x34d399,0.15,0.06));
+  }
+  const am=new THREE.LineBasicMaterial({color:0x333355,transparent:true,opacity:0.5});
+  [[1,0,0],[0,1,0],[0,0,1]].forEach(a=>{
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2*a[0],-2*a[1],-2*a[2]),new THREE.Vector3(2*a[0],2*a[1],2*a[2])]),am));
+  });
+ },
+ updateUI(){
+  document.getElementById('viewport-title').textContent='Module 4: Cauchy Stress Tensor';
+  document.getElementById('viewport-desc').textContent='Stress ellipsoid, principal stresses & traction';
+  const T=this.T(),eig=MathUtils.eigenDecomp3(T),n=this.n();
+  const trac=MathUtils.mat3MultiplyVec(T,n),sn=MathUtils.dotProduct(trac,n);
+  const tv=[trac[0]-sn*n[0],trac[1]-sn*n[1],trac[2]-sn*n[2]],tau=MathUtils.vecNorm(tv);
+  renderKaTeX('math-eq-1',`\\sigma_{ij}=\\begin{bmatrix}${this.sigma_xx.toFixed(1)}&${this.tau_xy.toFixed(1)}&${this.tau_xz.toFixed(1)}\\\\${this.tau_xy.toFixed(1)}&${this.sigma_yy.toFixed(1)}&${this.tau_yz.toFixed(1)}\\\\${this.tau_xz.toFixed(1)}&${this.tau_yz.toFixed(1)}&${this.sigma_zz.toFixed(1)}\\end{bmatrix}`);
+  renderKaTeX('math-eq-2','T^{(n)}_{i}=\\sigma_{ij}n_{j},\\;\\sigma=T_{i}n_{i},\\;\\tau=\\|T-\\sigma n\\|');
+  document.getElementById('explanation-text').innerHTML='<strong>Orange</strong> = normal stress σ, <strong>green</strong> = shear τ, <strong>pink</strong> = traction T⁽ⁿ⁾, <strong>blue</strong> = plane normal n. Principal stresses = eigenvalues (pure normal, zero shear).';
+  document.getElementById('live-data').innerHTML=`
+   <div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:6px">Principal stresses:</div>
+   <div class="eigenvalue-display"><span class="eigen-chip">σ₁=${eig.values[0].toFixed(3)}</span><span class="eigen-chip">σ₂=${eig.values[1].toFixed(3)}</span><span class="eigen-chip">σ₃=${eig.values[2].toFixed(3)}</span></div>
+   <div class="math-display"><div style="font-family:monospace;font-size:.7rem">I₁=Tr=${MathUtils.mat3Trace(T).toFixed(3)} · I₃=det=${MathUtils.mat3Determinant(T).toFixed(3)}</div></div>
+   <div class="math-display"><div style="font-family:monospace;font-size:.7rem">σₙ=${sn.toFixed(3)} · |τ|=${tau.toFixed(3)} · |T|=${MathUtils.vecNorm(trac).toFixed(3)}</div></div>`;
+  const s=(p,l,mn,mx,st)=>`<div class="control-group"><label>${l} <span class="value">${this[p].toFixed(1)}</span></label><input type="range" min="${mn}" max="${mx}" step="${st}" value="${this[p]}" oninput="Module4.setVal('${p}',this.value)"></div>`;
+  document.getElementById('dynamic-controls').innerHTML=
+   s('sigma_xx','σxx',-5,5,0.1)+s('sigma_yy','σyy',-5,5,0.1)+s('sigma_zz','σzz',-5,5,0.1)+
+   s('tau_xy','τxy',-3,3,0.1)+s('tau_xz','τxz',-3,3,0.1)+s('tau_yz','τyz',-3,3,0.1)+
+   `<hr style="border-color:var(--glass-border);margin:12px 0">`+
+   s('cutTheta','θ cut',0,180,5)+s('cutPhi','φ cut',0,360,5)+
+   `<div class="toggle-row"><span style="font-size:.75rem">Principal axes</span><div class="toggle-switch ${this.showPrincipal?'active':''}" onclick="Module4.togglePrincipal()"></div></div>`;
+ },
+ setVal(p,v){this[p]=parseFloat(v);this.build();this.updateUI();},
+ togglePrincipal(){this.showPrincipal=!this.showPrincipal;this.build();this.updateUI();},
+ animate(){animationId=requestAnimationFrame(()=>this.animate());controls.update();renderer.render(scene,camera);},
+ cleanup(){clearScene();}
+};
+
+/* ================= MODULE 5: TRANSFORMATIONS ================= */
+const Module5={
+ alpha:0,beta:0,gamma:0,
+ T:[[2,1,0],[1,3,0.5],[0,0.5,1]],v:[1,0.5,0.8],group:null,
+ init(){this.group=new THREE.Group();scene.add(this.group);this.build();this.updateUI();this.animate();},
+ build(){
+  while(this.group.children.length){const c=this.group.children[0];this.group.remove(c);if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  const Q=MathUtils.rotationMatrix(this.alpha,this.beta,this.gamma);
+  const QT=MathUtils.mat3Transpose(Q);
+  const Tprime=MathUtils.mat3Multiply(MathUtils.mat3Multiply(Q,this.T),QT);
+  const am=new THREE.LineBasicMaterial({color:0x666688,transparent:true,opacity:0.6});
+  [[1,0,0],[0,1,0],[0,0,1]].forEach(a=>{
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(3*a[0],3*a[1],3*a[2])]),am));
+  });
+  const cols=[0x00d4ff,0x34d399,0xfb923c];
+  for(let i=0;i<3;i++)this.group.add(createArrow([0,0,0],Q[i],3,cols[i],0.25,0.1)); // new basis = rows of Q
+  this.group.add(createArrow([0,0,0],MathUtils.vecNormalize(this.v),MathUtils.vecNorm(this.v)*1.5,0xf472b6,0.2,0.08));
+  const eig=MathUtils.eigenDecomp3(this.T);
+  const av=eig.values.map(x=>Math.abs(x));
+  const g=new THREE.SphereGeometry(0.5,24,16);g.scale(av[0],av[1],av[2]);
+  const eM=MathUtils.mat3Transpose(eig.vectors);
+  const m4=new THREE.Matrix4().set(eM[0][0],eM[0][1],eM[0][2],0,eM[1][0],eM[1][1],eM[1][2],0,eM[2][0],eM[2][1],eM[2][2],0,0,0,0,1);
+  const ell=new THREE.Mesh(g,new THREE.MeshPhongMaterial({color:0xa855f7,transparent:true,opacity:0.25,wireframe:true}));
+  ell.quaternion.setFromRotationMatrix(m4);this.group.add(ell);
+  const gh=new THREE.GridHelper(8,8,0x1a1b2e,0x1a1b2e);gh.material.opacity=0.2;gh.material.transparent=true;this.group.add(gh);
+  this.Tprime=Tprime;
+ },
+ updateUI(){
+  document.getElementById('viewport-title').textContent='Module 5: Coordinate Transformations';
+  document.getElementById('viewport-desc').textContent='Tensor transformation law under rotation';
+  const Q=MathUtils.rotationMatrix(this.alpha,this.beta,this.gamma);
+  const QT=MathUtils.mat3Transpose(Q);
+  const Tp=MathUtils.mat3Multiply(MathUtils.mat3Multiply(Q,this.T),QT);
+  const vp=MathUtils.mat3MultiplyVec(Q,this.v);
+  renderKaTeX('math-eq-1','T\'_{ij}=Q_{ik}Q_{jl}T_{kl}');
+  renderKaTeX('math-eq-2','v\'^{i}=Q_{ij}v^{j},\\;Q=R_{z}(\\alpha)R_{y}(\\beta)R_{z}(\\gamma)');
+  document.getElementById('explanation-text').innerHTML='Components change, the geometric object does not. <strong>Invariants</strong> (‖v‖, Tr T, det T, eigenvalues) stay constant while the frame K′ (bright axes) rotates relative to K (dim axes).';
+  document.getElementById('live-data').innerHTML=`
+   <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px">T in K:</div><div style="font-family:monospace;font-size:.65rem">${this.T.map(r=>`[${r.map(v=>v.toFixed(2)).join(', ')}]`).join('<br>')}</div></div>
+   <div class="math-display"><div style="font-size:.7rem;color:var(--accent-cyan);margin-bottom:4px">T′ in K′:</div><div style="font-family:monospace;font-size:.65rem">${Tp.map(r=>`[${r.map(v=>v.toFixed(2)).join(', ')}]`).join('<br>')}</div></div>
+   <div class="math-display"><div style="font-size:.7rem;color:var(--accent-green);margin-bottom:4px">Invariants:</div><div style="font-family:monospace;font-size:.7rem">Tr: ${MathUtils.mat3Trace(this.T).toFixed(3)} → ${MathUtils.mat3Trace(Tp).toFixed(3)}<br>det: ${MathUtils.mat3Determinant(this.T).toFixed(3)} → ${MathUtils.mat3Determinant(Tp).toFixed(3)}<br>‖v‖: ${MathUtils.vecNorm(this.v).toFixed(3)} → ${MathUtils.vecNorm(vp).toFixed(3)}</div></div>`;
+  document.getElementById('dynamic-controls').innerHTML=`
+   <div class="control-group"><label>α <span class="value">${this.alpha}°</span></label><input type="range" min="0" max="360" step="5" value="${this.alpha}" oninput="Module5.setAngle('alpha',this.value)"></div>
+   <div class="control-group"><label>β <span class="value">${this.beta}°</span></label><input type="range" min="0" max="180" step="5" value="${this.beta}" oninput="Module5.setAngle('beta',this.value)"></div>
+   <div class="control-group"><label>γ <span class="value">${this.gamma}°</span></label><input type="range" min="0" max="360" step="5" value="${this.gamma}" oninput="Module5.setAngle('gamma',this.value)"></div>
+   <div class="btn-row"><button class="btn" onclick="Module5.resetAngles()">Reset</button><button class="btn" onclick="Module5.preset()">45-30-60</button></div>`;
+ },
+ setAngle(p,v){this[p]=parseInt(v);this.build();this.updateUI();},
+ resetAngles(){this.alpha=this.beta=this.gamma=0;this.build();this.updateUI();},
+ preset(){this.alpha=45;this.beta=30;this.gamma=60;this.build();this.updateUI();},
+ animate(){animationId=requestAnimationFrame(()=>this.animate());controls.update();renderer.render(scene,camera);},
+ cleanup(){clearScene();}
+};
+
+/* ================= MODULE 6: CURVATURE & GEODESICS ================= */
+const Module6={
+ manifoldType:'sphere',curvature:1.0,group:null,pathVertices:[],holonomyAngleDeg:0,t:0,
+ spherePoint(th,ph,R){return [R*Math.sin(th)*Math.cos(ph),R*Math.cos(th),R*Math.sin(th)*Math.sin(ph)];},
+ sphereFrame(th,ph){return {eT:[Math.cos(th)*Math.cos(ph),-Math.sin(th),Math.cos(th)*Math.sin(ph)],eP:[-Math.sin(th)*Math.sin(ph),0,Math.sin(th)*Math.cos(ph)]};},
+ saddlePoint(x,y,K){return [x,K*(x*x-y*y),y];},
+ saddleFrame(x,y,K){return {ex:[1,2*K*x,0],ey:[0,-2*K*y,1]};},
+ christSphere(th){const s=Math.sin(th),c=Math.cos(th);return {tpp:-s*c,ptp:s>0.01?c/s:0};},
+ christSaddle(x,y,K){
+  const g11=1+4*K*K*x*x,g12=-4*K*K*x*y,g22=1+4*K*K*y*y;
+  const det=g11*g22-g12*g12;if(Math.abs(det)<1e-10)return null;
+  const i11=g22/det,i12=-g12/det,i22=g11/det;
+  const d11x=8*K*K*x,d12x=-4*K*K*y,d12y=-4*K*K*x,d22y=8*K*K*y;
+  return {
+   '1_11':0.5*(i11*d11x+i12*(2*d12x-0)),
+   '1_12':0.5*(i11*0+i12*0),
+   '1_22':0.5*(i11*(2*d12y-0)+i12*d22y),
+   '2_11':0.5*(i12*d11x+i22*(2*d12x-0)),
+   '2_12':0.5*(i12*0+i22*0),
+   '2_22':0.5*(i12*(2*d12y-0)+i22*d22y)
+  };
+ },
+ setupPath(){
+  this.pathVertices=this.manifoldType==='sphere'
+   ?[{theta:Math.PI/4,phi:0},{theta:Math.PI/4,phi:Math.PI/2},{theta:Math.PI/2,phi:0}]
+   :[{x:-1.5,y:-1.5},{x:1.5,y:-1.5},{x:0,y:1.5}];
+ },
+ transportSphere(Vt,Vp,t1,p1,t2,p2,R,steps){
+  const dt=1/steps;
+  for(let s=0;s<steps;s++){
+   const t=s*dt,th=t1+(t2-t1)*t;
+   const dth=(t2-t1),dph=(p2-p1);
+   const ch=this.christSphere(th);
+   Vt+=-(ch.tpp*dph*Vp)*dt;
+   Vp+=-(ch.ptp*dth*Vp+ch.ptp*dph*Vt)*dt;
+  }
+  return {Vt,Vp};
+ },
+ init(){this.group=new THREE.Group();scene.add(this.group);this.setupPath();this.build();this.updateUI();this.animate();},
+ build(){
+  while(this.group.children.length){const c=this.group.children[0];this.group.remove(c);if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}
+  this.manifoldType==='sphere'?this.buildSphere():this.buildSaddle();
+ },
+ buildSphere(){
+  const R=2.5;
+  this.group.add(new THREE.Mesh(new THREE.SphereGeometry(R,48,32),new THREE.MeshPhongMaterial({color:0x1a1b4e,transparent:true,opacity:0.3,side:THREE.DoubleSide})));
+  this.group.add(new THREE.Mesh(new THREE.SphereGeometry(R,24,16),new THREE.MeshBasicMaterial({color:0x2a2b5e,wireframe:true,transparent:true,opacity:0.2})));
+  const lm=new THREE.LineBasicMaterial({color:0x4a4b8e,transparent:true,opacity:0.3});
+  for(let th=30;th<180;th+=30){
+   const t=MathUtils.degToRad(th),pts=[];
+   for(let ph=0;ph<=360;ph+=10){pts.push(new THREE.Vector3(...this.spherePoint(t,MathUtils.degToRad(ph),R)));}
+   this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
+  }
+  const pts=this.pathVertices.map(v=>new THREE.Vector3(...this.spherePoint(v.theta,v.phi,R)));
+  pts.push(pts[0].clone());
+  this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xf472b6})));
+  // parallel transport around the triangle
+  let Vt=1,Vp=0;
+  const segs=[[this.pathVertices[0],this.pathVertices[1]],[this.pathVertices[1],this.pathVertices[2]],[this.pathVertices[2],this.pathVertices[0]]];
+  const trace=[{th:this.pathVertices[0].theta,ph:this.pathVertices[0].phi,Vt,Vp}];
+  for(const [f,to] of segs){
+   const steps=20;
+   for(let s=1;s<=steps;s++){
+    const r=this.transportSphere(Vt,Vp,f.theta+(to.theta-f.theta)*((s-1)/steps),f.phi+(to.phi-f.phi)*((s-1)/steps),f.theta+(to.theta-f.theta)*(s/steps),f.phi+(to.phi-f.phi)*(s/steps),R,10);
+    Vt=r.Vt;Vp=r.Vp;
+    if(s%5===0||s===steps)trace.push({th:f.theta+(to.theta-f.theta)*(s/steps),ph:f.phi+(to.phi-f.phi)*(s/steps),Vt,Vp});
+   }
+  }
+  trace.forEach((pt,i)=>{
+   const pos=this.spherePoint(pt.th,pt.ph,R),fr=this.sphereFrame(pt.th,pt.ph);
+   const v3=[pt.Vt*fr.eT[0]+pt.Vp*fr.eP[0],pt.Vt*fr.eT[1]+pt.Vp*fr.eP[1],pt.Vt*fr.eT[2]+pt.Vp*fr.eP[2]];
+   const nrm=MathUtils.vecNorm(v3);if(nrm<0.01)return;
+   const a=createArrow(pos,MathUtils.vecNormalize(v3),0.8,i===trace.length-1?0xff4444:0x00d4ff,0.12,0.05);
+   this.group.add(a);
+  });
+  const v0=this.pathVertices[0];
+  const f0=this.spherePoint(v0.theta,v0.phi,R);
+  const ini=Math.sqrt(1+0*Math.sin(v0.theta)**2);
+  const fin=trace[trace.length-1];
+  const dot=1*fin.Vt+0*fin.Vp*Math.sin(fin.th)**2;
+  const ni=Math.sqrt(1),nf=Math.sqrt(fin.Vt*fin.Vt+fin.Vp*fin.Vp*Math.sin(fin.th)**2);
+  this.holonomyAngleDeg=MathUtils.radToDeg(Math.acos(Math.min(1,Math.max(-1,dot/(ni*nf+1e-10)))));
+  this.pathVertices.forEach(v=>{
+   const m=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,8),new THREE.MeshBasicMaterial({color:0xfb923c}));
+   m.position.set(...this.spherePoint(v.theta,v.phi,R));this.group.add(m);
+  });
+ },
+ buildSaddle(){
+  const K=this.curvature,res=40,size=2.5,verts=[],idx=[];
+  for(let i=0;i<=res;i++)for(let j=0;j<=res;j++){
+   const x=-size+2*size*i/res,y=-size+2*size*j/res;
+   verts.push(x,K*(x*x-y*y),y);
+  }
+  for(let i=0;i<res;i++)for(let j=0;j<res;j++){
+   const a=i*(res+1)+j,b=a+1,c=a+(res+1),d=c+1;
+   idx.push(a,b,c,b,d,c);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setIndex(idx);g.computeVertexNormals();
+  this.group.add(new THREE.Mesh(g,new THREE.MeshPhongMaterial({color:0x1a3b4e,transparent:true,opacity:0.4,side:THREE.DoubleSide})));
+  this.group.add(new THREE.Mesh(g.clone(),new THREE.MeshBasicMaterial({color:0x2a5b6e,wireframe:true,transparent:true,opacity:0.2})));
+  const pts=this.pathVertices.map(v=>new THREE.Vector3(...this.saddlePoint(v.x,v.y,K)));
+  pts.push(pts[0].clone());
+  this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xf472b6})));
+  // transport visualization (approximate rotation by integrated curvature)
+  const v0=this.pathVertices[0];
+  const fr0=this.saddleFrame(v0.x,v0.y,K);
+  const p0=this.saddlePoint(v0.x,v0.y,K);
+  this.group.add(createArrow(p0,MathUtils.vecNormalize(fr0.ex),0.7,0x00d4ff,0.1,0.05));
+  const vL=this.pathVertices[2];
+  const frL=this.saddleFrame(vL.x,vL.y,K);
+  const ang=K*0.6;
+  const rv=[Math.cos(ang),Math.sin(ang)];
+  const v3=[rv[0]*frL.ex[0]+rv[1]*frL.ey[0],rv[0]*frL.ex[1]+rv[1]*frL.ey[1],rv[0]*frL.ex[2]+rv[1]*frL.ey[2]];
+  this.group.add(createArrow(this.saddlePoint(vL.x,vL.y,K),MathUtils.vecNormalize(v3),0.7,0xff4444,0.1,0.05));
+  this.pathVertices.forEach(v=>{
+   const m=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,8),new THREE.MeshBasicMaterial({color:0xfb923c}));
+   m.position.set(...this.saddlePoint(v.x,v.y,K));this.group.add(m);
+  });
+  this.holonomyAngleDeg=K*34.4; // ~ proportional to enclosed curvature for this loop
+ },
+ updateUI(){
+  document.getElementById('viewport-title').textContent='Module 6: Curvature & Parallel Transport';
+  document.getElementById('viewport-desc').textContent='Christoffel symbols, geodesics, holonomy';
+  if(this.manifoldType==='sphere'){
+   renderKaTeX('math-eq-1','\\frac{DV^{k}}{d\\lambda}=\\frac{dV^{k}}{d\\lambda}+\\Gamma^{k}_{\\;ij}\\frac{dx^{i}}{d\\lambda}V^{j}=0');
+   renderKaTeX('math-eq-2','\\Gamma^{\\theta}_{\\;\\phi\\phi}=-\\sin\\theta\\cos\\theta,\\;\\Gamma^{\\phi}_{\\;\\theta\\phi}=\\cot\\theta');
+  }else{
+   renderKaTeX('math-eq-1','z=K(x^{2}-y^{2})');
+   renderKaTeX('math-eq-2','K_{G}=\\frac{-4K^{2}}{(1+4K^{2}x^{2}+4K^{2}y^{2})^{2}}<0');
+  }
+  document.getElementById('explanation-text').innerHTML='<strong>Parallel transport</strong> keeps a vector "as constant as possible" (∇<sub>ẋ</sub>V=0). On a curved manifold, transport around a closed loop rotates the vector — <strong>holonomy</strong> = ∫∫ K dA. Cyan = transported vector, red = final (rotated) vector.';
+  let chHTML='';
+  if(this.manifoldType==='sphere'){
+   const c=this.christSphere(this.pathVertices[0].theta);
+   chHTML=`<span>Γ^θ<sub>φφ</sub>=${c.tpp.toFixed(4)}</span><br><span>Γ^φ<sub>θφ</sub>=${c.ptp.toFixed(4)}</span>`;
+  }else{
+   const c=this.christSaddle(this.pathVertices[0].x,this.pathVertices[0].y,this.curvature);
+   if(c)chHTML=Object.keys(c).map(k=>`<span>Γ${k[0]}<sub>${k[2]}${k[3]}</sub>=${c[k].toFixed(3)}</span>`).join('');
+  }
+  document.getElementById('live-data').innerHTML=`
+   <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary);margin-bottom:4px">Christoffel at vertex:</div><div id="christoffel-table">${chHTML}</div></div>
+   <div class="math-display"><div style="font-size:.7rem;color:var(--text-secondary)">Holonomy Δθ:</div><div style="font-family:monospace;font-size:.8rem;color:var(--accent-orange)">${this.holonomyAngleDeg.toFixed(1)}°</div></div>`;
+  document.getElementById('dynamic-controls').innerHTML=`
+   <div class="btn-row">
+    <button class="btn ${this.manifoldType==='sphere'?'active':''}" onclick="Module6.setManifold('sphere')">Sphere S²</button>
+    <button class="btn ${this.manifoldType==='saddle'?'active':''}" onclick="Module6.setManifold('saddle')">Saddle</button>
+   </div>
+   ${this.manifoldType==='saddle'?`<div class="control-group"><label>Curvature K <span class="value">${this.curvature.toFixed(2)}</span></label><input type="range" min="0.1" max="2" step="0.05" value="${this.curvature}" oninput="Module6.setCurvature(this.value)"></div>`:''}
+   <div class="btn-row"><button class="btn" onclick="Module6.resetCamera()">Reset View</button></div>`;
+ },
+ setManifold(t){this.manifoldType=t;this.setupPath();this.build();this.updateUI();},
+ setCurvature(v){this.curvature=parseFloat(v);this.build();this.updateUI();},
+ resetCamera(){camera.position.set(5,4,5);controls.target.set(0,0,0);controls.update();},
+ animate(){animationId=requestAnimationFrame(()=>this.animate());controls.update();this.t+=clock.getDelta();renderer.render(scene,camera);},
+ cleanup(){clearScene();}
+};
+
+/* ================= APP BOOT ================= */
+const modules={1:Module1,2:Module2,3:Module3,4:Module4,5:Module5,6:Module6};
+function switchModule(n){
+ if(currentModule)currentModule.cleanup();
+ currentModule=modules[n];
+ currentModule.init();
+ document.querySelectorAll('.module-tab').forEach(t=>t.classList.toggle('active',parseInt(t.dataset.module)===n));
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ if(typeof THREE==='undefined'){
+  document.getElementById('canvas-container').innerHTML='<div style="padding:40px;color:#f87171;font-family:monospace">⚠ Failed to load Three.js from CDN.<br>Check your internet connection and reload.</div>';
+  return;
+ }
+ initScene();
+ document.querySelectorAll('.module-tab').forEach(t=>t.addEventListener('click',()=>switchModule(parseInt(t.dataset.module))));
+ switchModule(1);
+});
+</script>
+</body>
+</html>

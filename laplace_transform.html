@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laplace Transform 3D Explorer & Study Hub</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --cyan:#06b6d4; --rose:#f43f5e; --emerald:#10b981; --amber:#f59e0b;
+  }
+  html,body{height:100%;}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:radial-gradient(ellipse at top,#0f172a 0%,#020617 100%);}
+  body.light-mode{background:radial-gradient(ellipse at top,#f1f5f9 0%,#cbd5e1 100%);color:#0f172a;}
+  .glass{background:rgba(15,23,42,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(148,163,184,.12);}
+  .light-mode .glass{background:rgba(255,255,255,.85);border:1px solid rgba(15,23,42,.12);}
+  .glow-cyan{box-shadow:0 0 24px rgba(6,182,212,.35),inset 0 0 1px rgba(6,182,212,.5);}
+  .glow-rose{box-shadow:0 0 20px rgba(244,63,94,.4);}
+  .glow-emerald{box-shadow:0 0 20px rgba(16,185,129,.4);}
+  .glow-amber{box-shadow:0 0 20px rgba(245,158,11,.4);}
+  .neon-text{text-shadow:0 0 12px currentColor;}
+  .scroll-smooth::-webkit-scrollbar{width:8px;height:8px;}
+  .scroll-smooth::-webkit-scrollbar-track{background:transparent;}
+  .scroll-smooth::-webkit-scrollbar-thumb{background:rgba(148,163,184,.3);border-radius:4px;}
+  .scroll-smooth::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,.5);}
+  .slider-cyan::-webkit-slider-thumb{background:var(--cyan);box-shadow:0 0 12px var(--cyan);}
+  .slider-rose::-webkit-slider-thumb{background:var(--rose);box-shadow:0 0 12px var(--rose);}
+  .slider-emerald::-webkit-slider-thumb{background:var(--emerald);box-shadow:0 0 12px var(--emerald);}
+  .slider-amber::-webkit-slider-thumb{background:var(--amber);box-shadow:0 0 12px var(--amber);}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(148,163,184,.25);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid white;}
+  .tab-active{background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(139,92,246,.15));border-color:rgba(6,182,212,.6);}
+  .property-card{transition:all .25s ease;}
+  .property-card:hover{transform:translateY(-2px);border-color:rgba(6,182,212,.4);}
+  .quiz-option{transition:all .15s ease;}
+  .quiz-option.correct{background:rgba(16,185,129,.2);border-color:var(--emerald);}
+  .quiz-option.incorrect{background:rgba(244,63,94,.2);border-color:var(--rose);}
+  .katex{font-size:1em!important;}
+  .katex-display{margin:.5em 0!important;}
+  .light-mode{color-scheme:light;}
+  .light-mode .katex{color:#0f172a;}
+  .fade-in{animation:fadeIn .4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .pulse-dot{animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn-ghost{transition:all .15s ease;}
+  .btn-ghost:hover{background:rgba(148,163,184,.15);}
+  #canvas3d{display:block;width:100%;height:100%;}
+</style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+<!-- Header -->
+<header class="glass border-b border-slate-700/50 px-4 py-3 flex items-center justify-between flex-wrap gap-3 z-20 relative">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center glow-cyan">
+      <i data-lucide="infinity" class="w-5 h-5 text-white"></i>
+    </div>
+    <div>
+      <h1 class="text-lg font-bold tracking-tight">Laplace Transform <span class="text-cyan-400 neon-text">3D Explorer</span></h1>
+      <p class="text-xs text-slate-400 -mt-0.5">Interactive Complex Analysis Study Hub</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 flex-wrap">
+    <div class="flex items-center gap-2">
+      <label class="text-xs text-slate-400">Preset:</label>
+      <select id="presetSelector" class="bg-slate-800/80 border border-slate-700 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-500">
+        <option value="second-order">Second-Order System</option>
+        <option value="single-pole">Single Pole</option>
+        <option value="integrator">Integrator</option>
+        <option value="double-pole">Double Pole</option>
+        <option value="oscillatory">Oscillatory Pair</option>
+      </select>
+    </div>
+    <button id="fourierToggle" class="btn-ghost flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-sm" title="Toggle Fourier Slice">
+      <i data-lucide="scissors" class="w-4 h-4 text-amber-400"></i>
+      <span class="hidden sm:inline">Fourier</span>
+    </button>
+    <button id="rotateToggle" class="btn-ghost flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-sm" title="Toggle Auto-Rotation">
+      <i data-lucide="rotate-3d" class="w-4 h-4 text-cyan-400"></i>
+      <span class="hidden sm:inline">Rotate</span>
+    </button>
+    <button id="themeToggle" class="btn-ghost p-2 rounded-lg border border-slate-700" title="Toggle Theme">
+      <i data-lucide="moon" class="w-4 h-4"></i>
+    </button>
+  </div>
+</header>
+
+<!-- Main Split Layout -->
+<main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+
+  <!-- Left: 3D Engine -->
+  <section id="viewport" class="w-full lg:w-3/5 relative bg-slate-950/50 min-h-[400px] lg:min-h-0">
+    <canvas id="canvas3d"></canvas>
+    
+    <!-- Floating Control Bar -->
+    <div class="absolute bottom-4 left-4 right-4 lg:right-auto lg:w-80 glass rounded-2xl p-4 glow-cyan z-10">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold flex items-center gap-2">
+          <i data-lucide="settings-2" class="w-4 h-4 text-cyan-400"></i>
+          Parameters
+        </h3>
+        <span id="presetLabel" class="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded-full"></span>
+      </div>
+      
+      <!-- Formula Display -->
+      <div id="formulaDisplay" class="mb-3 p-2 bg-slate-900/60 rounded-lg text-center overflow-x-auto"></div>
+      
+      <!-- Sliders -->
+      <div class="space-y-3" id="slidersContainer">
+        <!-- Populated by JS -->
+      </div>
+      
+      <!-- View Toggles -->
+      <div class="mt-3 pt-3 border-t border-slate-700/50 grid grid-cols-2 gap-2">
+        <button data-toggle="showPoles" class="toggle-btn btn-ghost flex items-center gap-2 px-2 py-1.5 rounded-lg border border-rose-500/50 text-xs">
+          <span class="w-2 h-2 rounded-full bg-rose-500 pulse-dot"></span>Poles (×)
+        </button>
+        <button data-toggle="showZeros" class="toggle-btn btn-ghost flex items-center gap-2 px-2 py-1.5 rounded-lg border border-emerald-500/50 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>Zeros (○)
+        </button>
+        <button data-toggle="showROC" class="toggle-btn btn-ghost flex items-center gap-2 px-2 py-1.5 rounded-lg border border-purple-500/50 text-xs">
+          <span class="w-2 h-2 rounded-full bg-purple-500 pulse-dot"></span>ROC Boundary
+        </button>
+        <button data-toggle="showFourier" class="toggle-btn btn-ghost flex items-center gap-2 px-2 py-1.5 rounded-lg border border-amber-500/50 text-xs">
+          <span class="w-2 h-2 rounded-full bg-amber-500 pulse-dot"></span>Fourier Slice
+        </button>
+      </div>
+    </div>
+    
+    <!-- Info Overlay -->
+    <div class="absolute top-4 left-4 glass rounded-xl p-3 text-xs z-10 max-w-[200px]">
+      <div class="flex items-center gap-2 mb-2 text-slate-300">
+        <i data-lucide="mouse-pointer" class="w-3 h-3"></i>
+        <span>Drag to rotate • Scroll to zoom</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-400">
+        <i data-lucide="info" class="w-3 h-3"></i>
+        <span>X: σ (real), Z: jω (imag), Y: |F(s)|</span>
+      </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="absolute top-4 right-4 glass rounded-xl p-3 text-xs z-10">
+      <div class="font-semibold mb-2 text-slate-300">Magnitude</div>
+      <div class="flex items-center gap-1">
+        <div class="w-4 h-4 rounded" style="background:rgb(0,25,76)"></div>
+        <div class="w-4 h-4 rounded" style="background:rgb(127,0,127)"></div>
+        <div class="w-4 h-4 rounded" style="background:rgb(204,0,102)"></div>
+        <div class="w-4 h-4 rounded" style="background:rgb(255,255,0)"></div>
+      </div>
+      <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+        <span>0</span><span>Cap</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right: Educational Panel -->
+  <aside class="w-full lg:w-2/5 flex flex-col bg-slate-900/30 border-l border-slate-700/50 overflow-hidden">
+    <!-- Tabs -->
+    <div class="flex border-b border-slate-700/50 bg-slate-900/50">
+      <button data-tab="intuition" class="tab-btn flex-1 px-4 py-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center justify-center gap-2">
+        <i data-lucide="lightbulb" class="w-4 h-4"></i>
+        <span>Intuition</span>
+      </button>
+      <button data-tab="properties" class="tab-btn flex-1 px-4 py-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center justify-center gap-2">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span>Properties</span>
+      </button>
+      <button data-tab="quiz" class="tab-btn flex-1 px-4 py-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center justify-center gap-2">
+        <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+        <span>Quiz</span>
+      </button>
+    </div>
+    
+    <!-- Tab Contents -->
+    <div class="flex-1 overflow-y-auto scroll-smooth p-5">
+      
+      <!-- Tab: Intuition -->
+      <div id="tab-intuition" class="tab-content fade-in space-y-5">
+        <div class="space-y-2">
+          <h2 class="text-xl font-bold flex items-center gap-2">
+            <i data-lucide="brain" class="w-5 h-5 text-cyan-400"></i>
+            Complex s-Plane Intuition
+          </h2>
+          <p class="text-sm text-slate-400">The Laplace transform extends Fourier analysis into the complex plane.</p>
+        </div>
+        
+        <!-- Sigma vs Omega -->
+        <div class="glass rounded-xl p-4 space-y-3">
+          <h3 class="font-semibold text-cyan-300 flex items-center gap-2">
+            <i data-lucide="sigma" class="w-4 h-4"></i>
+            σ vs ω: Damping & Oscillation
+          </h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-slate-800/50 rounded-lg">
+              <div class="font-mono text-rose-400 mb-1">σ (Real Part)</div>
+              <div class="text-slate-300">Controls exponential envelope</div>
+              <div id="eq-sigma" class="mt-2"></div>
+              <p class="text-slate-400 mt-1">σ &lt; 0: decay (stable) • σ &gt; 0: growth (unstable)</p>
+            </div>
+            <div class="p-3 bg-slate-800/50 rounded-lg">
+              <div class="font-mono text-emerald-400 mb-1">ω (Imaginary Part)</div>
+              <div class="text-slate-300">Controls rotational frequency</div>
+              <div id="eq-omega" class="mt-2"></div>
+              <p class="text-slate-400 mt-1">ω = 0: DC • ω ≠ 0: oscillation</p>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 italic">Together: <span id="eq-complex-exp"></span></p>
+        </div>
+        
+        <!-- Why Poles/Zeros -->
+        <div class="glass rounded-xl p-4 space-y-3">
+          <h3 class="font-semibold flex items-center gap-2">
+            <i data-lucide="target" class="w-4 h-4 text-rose-400"></i>
+            Why Poles & Zeros Matter
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex gap-3">
+              <div class="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center flex-shrink-0 glow-rose">
+                <span class="text-rose-400 font-bold">×</span>
+              </div>
+              <div>
+                <div class="font-semibold text-rose-300">Poles pull surface → ∞</div>
+                <p class="text-xs text-slate-400 mt-1">At a pole, the denominator of F(s) vanishes, creating a resonance "spike". Each pole contributes an exponential mode <span id="eq-pole-mode" class="inline"></span> to the time-domain response.</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 glow-emerald">
+                <span class="text-emerald-400 font-bold">○</span>
+              </div>
+              <div>
+                <div class="font-semibold text-emerald-300">Zeros flatten surface → 0</div>
+                <p class="text-xs text-slate-400 mt-1">At a zero, the numerator vanishes, canceling response. Zeros attenuate specific frequencies and shape transient behavior.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Current Poles/Zeros -->
+        <div class="glass rounded-xl p-4 space-y-3">
+          <h3 class="font-semibold flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-4 h-4 text-purple-400"></i>
+            Current Singularities
+          </h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <div class="text-slate-400 mb-1">Poles:</div>
+              <div id="currentPoles" class="space-y-1"></div>
+            </div>
+            <div>
+              <div class="text-slate-400 mb-1">Zeros:</div>
+              <div id="currentZeros" class="space-y-1"></div>
+            </div>
+          </div>
+          <div id="stabilityInfo" class="mt-2 p-2 rounded-lg text-xs"></div>
+        </div>
+        
+        <!-- Fourier Connection -->
+        <div class="glass rounded-xl p-4 border border-amber-500/30">
+          <h3 class="font-semibold flex items-center gap-2 text-amber-300">
+            <i data-lucide="scissors" class="w-4 h-4"></i>
+            The Fourier Slice (σ = 0)
+          </h3>
+          <p class="text-xs text-slate-400 mt-2">The amber plane marks the imaginary axis. Evaluating F(s) along this plane recovers the Fourier transform:</p>
+          <div id="eq-fourier" class="mt-2"></div>
+          <p class="text-xs text-slate-400 mt-2">Cross-section of the 3D surface at σ=0 is the system's frequency response.</p>
+        </div>
+      </div>
+      
+      <!-- Tab: Properties -->
+      <div id="tab-properties" class="tab-content hidden fade-in space-y-4">
+        <div class="space-y-2">
+          <h2 class="text-xl font-bold flex items-center gap-2">
+            <i data-lucide="layers" class="w-5 h-5 text-purple-400"></i>
+            Core Operational Properties
+          </h2>
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input id="propertySearch" type="text" placeholder="Search properties..." class="w-full pl-9 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500">
+          </div>
+        </div>
+        <div id="propertyCards" class="space-y-3"></div>
+      </div>
+      
+      <!-- Tab: Quiz -->
+      <div id="tab-quiz" class="tab-content hidden fade-in space-y-4">
+        <div class="space-y-2">
+          <h2 class="text-xl font-bold flex items-center gap-2">
+            <i data-lucide="graduation-cap" class="w-5 h-5 text-amber-400"></i>
+            Self-Assessment Quiz
+          </h2>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400">Question <span id="quizCurrent">1</span> of <span id="quizTotal">3</span></span>
+            <span id="quizScore" class="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded-full">Score: 0</span>
+          </div>
+        </div>
+        <div id="quizContainer" class="space-y-4"></div>
+        <div id="quizComplete" class="hidden text-center p-6 glass rounded-xl">
+          <i data-lucide="award" class="w-12 h-12 text-amber-400 mx-auto mb-3"></i>
+          <h3 class="text-lg font-bold">Quiz Complete!</h3>
+          <p class="text-sm text-slate-400 mt-1">Final score: <span id="finalScore">0</span> / 3</p>
+          <button id="restartQuiz" class="mt-4 px-4 py-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 rounded-lg text-sm hover:bg-cyan-500/30">Restart Quiz</button>
+        </div>
+      </div>
+      
+    </div>
+  </aside>
+</main>
+
+<script>
+/* =========================================================
+   LAPLACE TRANSFORM 3D EXPLORER
+   ========================================================= */
+
+// ============ STATE ============
+const state = {
+  currentPreset: 'second-order',
+  params: {
+    zeta: 0.3,
+    wn: 2.0,
+    sigma0: 1.5,
+    omega0: 2.0,
+    poleHeightCap: 6.0
+  },
+  view: {
+    showPoles: true,
+    showZeros: true,
+    showROC: true,
+    showFourier: true,
+    autoRotate: true
+  },
+  activeTab: 'intuition',
+  quiz: {
+    currentQuestion: 0,
+    score: 0,
+    answered: [false, false, false],
+    selectedAnswers: [null, null, null]
+  },
+  theme: 'dark'
+};
+
+// ============ TRANSFER FUNCTION PRESETS ============
+const presets = {
+  'second-order': {
+    name: 'Second-Order System',
+    formula: '\\frac{1}{s^2 + 2\\zeta\\omega_n s + \\omega_n^2}',
+    sliders: ['zeta', 'wn', 'cap'],
+    evaluate: (sigma, omega, p) => {
+      const { zeta, wn } = p;
+      const s2_re = sigma*sigma - omega*omega;
+      const s2_im = 2*sigma*omega;
+      const t2_re = 2*zeta*wn*sigma;
+      const t2_im = 2*zeta*wn*omega;
+      const denom_re = s2_re + t2_re + wn*wn;
+      const denom_im = s2_im + t2_im;
+      const denom_sq = denom_re*denom_re + denom_im*denom_im;
+      if (denom_sq < 1e-4) return { re: 1e6, im: 0 };
+      return { re: denom_re/denom_sq, im: -denom_im/denom_sq };
+    },
+    poles: (p) => {
+      const { zeta, wn } = p;
+      if (zeta >= 1) {
+        const d = wn * Math.sqrt(zeta*zeta - 1);
+        return [{ re: -zeta*wn + d, im: 0 }, { re: -zeta*wn - d, im: 0 }];
+      } else {
+        const d = wn * Math.sqrt(1 - zeta*zeta);
+        return [{ re: -zeta*wn, im: d }, { re: -zeta*wn, im: -d }];
+      }
+    },
+    zeros: () => []
+  },
+  'single-pole': {
+    name: 'Single Pole',
+    formula: '\\frac{1}{s + a}',
+    sliders: ['sigma0', 'cap'],
+    evaluate: (sigma, omega, p) => {
+      const a = p.sigma0;
+      const dr = sigma + a, di = omega;
+      const d2 = dr*dr + di*di;
+      if (d2 < 1e-4) return { re: 1e6, im: 0 };
+      return { re: dr/d2, im: -di/d2 };
+    },
+    poles: (p) => [{ re: -p.sigma0, im: 0 }],
+    zeros: () => []
+  },
+  'integrator': {
+    name: 'Integrator',
+    formula: '\\frac{1}{s}',
+    sliders: ['cap'],
+    evaluate: (sigma, omega) => {
+      const d2 = sigma*sigma + omega*omega;
+      if (d2 < 1e-4) return { re: 1e6, im: 0 };
+      return { re: sigma/d2, im: -omega/d2 };
+    },
+    poles: () => [{ re: 0, im: 0 }],
+    zeros: () => []
+  },
+  'double-pole': {
+    name: 'Double Pole',
+    formula: '\\frac{1}{(s + a)^2}',
+    sliders: ['sigma0', 'cap'],
+    evaluate: (sigma, omega, p) => {
+      const a = p.sigma0;
+      const dr = sigma + a, di = omega;
+      const d2 = dr*dr + di*di;
+      if (d2 < 1e-4) return { re: 1e6, im: 0 };
+      const ir = dr/d2, ii = -di/d2;
+      return { re: ir*ir - ii*ii, im: 2*ir*ii };
+    },
+    poles: (p) => [{ re: -p.sigma0, im: 0 }],
+    zeros: () => []
+  },
+  'oscillatory': {
+    name: 'Oscillatory Pair',
+    formula: '\\frac{\\omega_0}{s^2 + \\omega_0^2}',
+    sliders: ['omega0', 'cap'],
+    evaluate: (sigma, omega, p) => {
+      const w0 = p.omega0;
+      const s2_re = sigma*sigma - omega*omega;
+      const s2_im = 2*sigma*omega;
+      const dr = s2_re + w0*w0, di = s2_im;
+      const d2 = dr*dr + di*di;
+      if (d2 < 1e-4) return { re: 1e6, im: 0 };
+      return { re: w0*dr/d2, im: -w0*di/d2 };
+    },
+    poles: (p) => [{ re: 0, im: p.omega0 }, { re: 0, im: -p.omega0 }],
+    zeros: () => [{ re: 0, im: 0 }]
+  }
+};
+
+// ============ SLIDER DEFINITIONS ============
+const sliderDefs = {
+  zeta:    { label: 'Damping ζ',        min: 0.05, max: 2.0,  step: 0.01, color: 'cyan' },
+  wn:      { label: 'Natural Freq ωₙ',  min: 0.5,  max: 4.0,  step: 0.1,  color: 'cyan' },
+  sigma0:  { label: 'Real Shift σ₀',    min: -2.5, max: 2.5,  step: 0.1,  color: 'rose' },
+  omega0:  { label: 'Oscillation ω₀',   min: 0.5,  max: 4.0,  step: 0.1,  color: 'emerald' },
+  cap:     { label: 'Pole Height Cap',  min: 1.0,  max: 12.0, step: 0.5,  color: 'amber', key: 'poleHeightCap' }
+};
+
+// ============ THREE.JS SETUP ============
+let scene, camera, renderer, controls;
+let surfaceMesh, poleMarkers = [], zeroMarkers = [];
+let fourierPlane, rocBoundary, axisGroup;
+const GRID = 90;
+const SIGMA_RANGE = [-3, 3];
+const OMEGA_RANGE = [-4, 4];
+
+function initThree() {
+  const canvas = document.getElementById('canvas3d');
+  const container = document.getElementById('viewport');
+  const w = container.clientWidth, h = container.clientHeight;
+  
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x020617, 15, 30);
+  
+  camera = new THREE.PerspectiveCamera(55, w/h, 0.1, 200);
+  camera.position.set(7, 5, 9);
+  
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(w, h);
+  renderer.setClearColor(0x020617, 1);
+  
+  controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.autoRotate = state.view.autoRotate;
+  controls.autoRotateSpeed = 0.6;
+  controls.target.set(0, 1.5, 0);
+  controls.minDistance = 4;
+  controls.maxDistance = 25;
+  
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(6, 12, 8);
+  scene.add(dir);
+  const dir2 = new THREE.DirectionalLight(0x06b6d4, 0.3);
+  dir2.position.set(-8, 4, -6);
+  scene.add(dir2);
+  
+  // Axes & Grid
+  buildAxesAndGrid();
+  
+  // Surface
+  buildSurface();
+  
+  // Poles & Zeros
+  buildPoleZeroMarkers();
+  
+  // Fourier slice
+  buildFourierPlane();
+  
+  // ROC boundary
+  buildROCBoundary();
+  
+  window.addEventListener('resize', onResize);
+}
+
+function buildAxesAndGrid() {
+  // Ground grid at y=0
+  const gridSize = 10;
+  const gridDiv = 20;
+  const grid = new THREE.GridHelper(gridSize, gridDiv, 0x334155, 0x1e293b);
+  grid.position.y = 0;
+  scene.add(grid);
+  
+  // Custom axis lines
+  axisGroup = new THREE.Group();
+  
+  // X axis (sigma, red)
+  const xMat = new THREE.LineBasicMaterial({ color: 0xef4444 });
+  const xGeom = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-3.5, 0.02, 0),
+    new THREE.Vector3(3.5, 0.02, 0)
+  ]);
+  axisGroup.add(new THREE.Line(xGeom, xMat));
+  
+  // Z axis (jω, green)
+  const zMat = new THREE.LineBasicMaterial({ color: 0x22c55e });
+  const zGeom = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0.02, -4.5),
+    new THREE.Vector3(0, 0.02, 4.5)
+  ]);
+  axisGroup.add(new THREE.Line(zGeom, zMat));
+  
+  // Y axis (magnitude, blue)
+  const yMat = new THREE.LineBasicMaterial({ color: 0x3b82f6 });
+  const yGeom = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 6, 0)
+  ]);
+  axisGroup.add(new THREE.Line(yGeom, yMat));
+  
+  // Tick marks along X axis
+  for (let x = -3; x <= 3; x++) {
+    const tg = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x, 0, -0.1),
+      new THREE.Vector3(x, 0, 0.1)
+    ]);
+    axisGroup.add(new THREE.Line(tg, xMat));
+  }
+  // Tick marks along Z axis
+  for (let z = -4; z <= 4; z++) {
+    const tg = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.1, 0, z),
+      new THREE.Vector3(0.1, 0, z)
+    ]);
+    axisGroup.add(new THREE.Line(tg, zMat));
+  }
+  
+  scene.add(axisGroup);
+}
+
+function heightToColor(t) {
+  t = Math.max(0, Math.min(1, t));
+  // Dark Blue (0) -> Purple (0.33) -> Magenta (0.66) -> Yellow (1)
+  let r, g, b;
+  if (t < 0.33) {
+    const u = t / 0.33;
+    r = 0.02 + 0.48 * u;
+    g = 0.04 * (1-u);
+    b = 0.30 + 0.20 * u;
+  } else if (t < 0.66) {
+    const u = (t - 0.33) / 0.33;
+    r = 0.50 + 0.30 * u;
+    g = 0;
+    b = 0.50 - 0.10 * u;
+  } else {
+    const u = (t - 0.66) / 0.34;
+    r = 0.80 + 0.20 * u;
+    g = u;
+    b = 0.40 * (1-u);
+  }
+  return new THREE.Color(r, g, b);
+}
+
+function buildSurface() {
+  const geom = new THREE.BufferGeometry();
+  const positions = new Float32Array(GRID * GRID * 3);
+  const colors = new Float32Array(GRID * GRID * 3);
+  const indices = [];
+  
+  // Fill initial positions
+  for (let i = 0; i < GRID; i++) {
+    for (let j = 0; j < GRID; j++) {
+      const idx = i * GRID + j;
+      const sigma = SIGMA_RANGE[0] + (SIGMA_RANGE[1] - SIGMA_RANGE[0]) * i / (GRID - 1);
+      const omega = OMEGA_RANGE[0] + (OMEGA_RANGE[1] - OMEGA_RANGE[0]) * j / (GRID - 1);
+      positions[idx*3] = sigma;
+      positions[idx*3+1] = 0;
+      positions[idx*3+2] = omega;
+      colors[idx*3] = 0; colors[idx*3+1] = 0; colors[idx*3+2] = 0;
+    }
+  }
+  for (let i = 0; i < GRID - 1; i++) {
+    for (let j = 0; j < GRID - 1; j++) {
+      const a = i * GRID + j;
+      const b = a + 1;
+      const c = a + GRID;
+      const d = c + 1;
+      indices.push(a, b, c);
+      indices.push(b, d, c);
+    }
+  }
+  
+  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geom.setIndex(indices);
+  
+  const mat = new THREE.MeshPhongMaterial({
+    vertexColors: true,
+    side: THREE.DoubleSide,
+    shininess: 40,
+    specular: 0x444444,
+    flatShading: false
+  });
+  
+  surfaceMesh = new THREE.Mesh(geom, mat);
+  scene.add(surfaceMesh);
+  
+  updateSurface();
+}
+
+function updateSurface() {
+  const preset = presets[state.currentPreset];
+  const cap = state.params.poleHeightCap;
+  const pos = surfaceMesh.geometry.attributes.position.array;
+  const col = surfaceMesh.geometry.attributes.color.array;
+  
+  let idx = 0;
+  for (let i = 0; i < GRID; i++) {
+    for (let j = 0; j < GRID; j++) {
+      const sigma = SIGMA_RANGE[0] + (SIGMA_RANGE[1] - SIGMA_RANGE[0]) * i / (GRID - 1);
+      const omega = OMEGA_RANGE[0] + (OMEGA_RANGE[1] - OMEGA_RANGE[0]) * j / (GRID - 1);
+      
+      const F = preset.evaluate(sigma, omega, state.params);
+      let mag = Math.sqrt(F.re*F.re + F.im*F.im);
+      // Apply soft clamp / cap
+      mag = Math.min(mag, cap);
+      // Slight log compression for smoother look near peaks
+      const normalized = mag / cap;
+      
+      pos[idx*3] = sigma;
+      pos[idx*3+1] = mag;
+      pos[idx*3+2] = omega;
+      
+      const c = heightToColor(normalized);
+      col[idx*3] = c.r;
+      col[idx*3+1] = c.g;
+      col[idx*3+2] = c.b;
+      
+      idx++;
+    }
+  }
+  surfaceMesh.geometry.attributes.position.needsUpdate = true;
+  surfaceMesh.geometry.attributes.color.needsUpdate = true;
+  surfaceMesh.geometry.computeVertexNormals();
+}
+
+function buildPoleZeroMarkers() {
+  updatePoleMarkers();
+}
+
+function createPoleMarker() {
+  const group = new THREE.Group();
+  const mat = new THREE.LineBasicMaterial({ color: 0xf43f5e, linewidth: 2 });
+  
+  const d1 = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-0.25, 0.02, -0.25),
+    new THREE.Vector3(0.25, 0.02, 0.25)
+  ]);
+  group.add(new THREE.Line(d1, mat));
+  
+  const d2 = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-0.25, 0.02, 0.25),
+    new THREE.Vector3(0.25, 0.02, -0.25)
+  ]);
+  group.add(new THREE.Line(d2, mat));
+  
+  // Vertical stem to show height
+  const stem = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0.5, 0)
+  ]);
+  group.add(new THREE.Line(stem, mat));
+  
+  // Glowing dot at top
+  const dotGeom = new THREE.SphereGeometry(0.12, 12, 12);
+  const dotMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+  const dot = new THREE.Mesh(dotGeom, dotMat);
+  dot.position.y = 0.5;
+  group.add(dot);
+  
+  return group;
+}
+
+function createZeroMarker() {
+  const group = new THREE.Group();
+  const geom = new THREE.TorusGeometry(0.22, 0.05, 8, 24);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.rotation.x = Math.PI / 2;
+  mesh.position.y = 0.02;
+  group.add(mesh);
+  return group;
+}
+
+function updatePoleMarkers() {
+  // Remove old
+  poleMarkers.forEach(m => scene.remove(m));
+  zeroMarkers.forEach(m => scene.remove(m));
+  poleMarkers = [];
+  zeroMarkers = [];
+  
+  const preset = presets[state.currentPreset];
+  const poles = preset.poles(state.params);
+  const zeros = preset.zeros(state.params);
+  
+  if (state.view.showPoles) {
+    poles.forEach(p => {
+      const marker = createPoleMarker();
+      marker.position.set(p.re, 0, p.im);
+      scene.add(marker);
+      poleMarkers.push(marker);
+    });
+  }
+  
+  if (state.view.showZeros) {
+    zeros.forEach(z => {
+      const marker = createZeroMarker();
+      marker.position.set(z.re, 0, z.im);
+      scene.add(marker);
+      zeroMarkers.push(marker);
+    });
+  }
+}
+
+function buildFourierPlane() {
+  const geom = new THREE.PlaneGeometry(8, 8, 1, 1);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xf59e0b,
+    transparent: true,
+    opacity: 0.12,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  fourierPlane = new THREE.Mesh(geom, mat);
+  fourierPlane.rotation.y = Math.PI / 2;
+  fourierPlane.position.set(0, 4, 0);
+  fourierPlane.visible = state.view.showFourier;
+  scene.add(fourierPlane);
+  
+  // Edge outline
+  const edges = new THREE.EdgesGeometry(geom);
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.6 });
+  const outline = new THREE.LineSegments(edges, edgeMat);
+  fourierPlane.add(outline);
+}
+
+function buildROCBoundary() {
+  // Vertical plane at the rightmost pole's real part
+  updateROCBoundary();
+}
+
+function updateROCBoundary() {
+  if (rocBoundary) scene.remove(rocBoundary);
+  
+  const poles = presets[state.currentPreset].poles(state.params);
+  if (poles.length === 0) return;
+  
+  const maxRe = Math.max(...poles.map(p => p.re));
+  
+  const geom = new THREE.PlaneGeometry(8, 8);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xa855f7,
+    transparent: true,
+    opacity: 0.08,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  rocBoundary = new THREE.Mesh(geom, mat);
+  rocBoundary.rotation.y = Math.PI / 2;
+  rocBoundary.position.set(maxRe, 4, 0);
+  rocBoundary.visible = state.view.showROC;
+  scene.add(rocBoundary);
+  
+  // Edge
+  const edges = new THREE.EdgesGeometry(geom);
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.4 });
+  rocBoundary.add(new THREE.LineSegments(edges, edgeMat));
+}
+
+// ============ UI SETUP ============
+function setupUI() {
+  // Preset selector
+  document.getElementById('presetSelector').addEventListener('change', e => {
+    state.currentPreset = e.target.value;
+    rebuildSliders();
+    updateAll();
+  });
+  
+  // Fourier toggle (header)
+  document.getElementById('fourierToggle').addEventListener('click', () => {
+    state.view.showFourier = !state.view.showFourier;
+    updateFourierVisibility();
+    updateToggleButtons();
+  });
+  
+  // Auto-rotate toggle
+  document.getElementById('rotateToggle').addEventListener('click', () => {
+    state.view.autoRotate = !state.view.autoRotate;
+    controls.autoRotate = state.view.autoRotate;
+    const btn = document.getElementById('rotateToggle');
+    btn.style.borderColor = state.view.autoRotate ? 'rgb(6,182,212)' : 'rgb(51,65,85)';
+  });
+  
+  // Theme toggle
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    document.body.classList.toggle('light-mode', state.theme === 'light');
+    if (renderer) {
+      renderer.setClearColor(state.theme === 'dark' ? 0x020617 : 0xe2e8f0, 1);
+      if (scene.fog) scene.fog.color.set(state.theme === 'dark' ? 0x020617 : 0xe2e8f0);
+    }
+    const icon = document.querySelector('#themeToggle i');
+    if (icon) icon.setAttribute('data-lucide', state.theme === 'dark' ? 'moon' : 'sun');
+    lucide.createIcons();
+  });
+  
+  // View toggle buttons
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.toggle;
+      state.view[key] = !state.view[key];
+      if (key === 'showFourier') updateFourierVisibility();
+      if (key === 'showROC') updateROCVisibility();
+      if (key === 'showPoles' || key === 'showZeros') updatePoleMarkers();
+      updateToggleButtons();
+    });
+  });
+  
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+  
+  // Property search
+  document.getElementById('propertySearch').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('.property-card').forEach(c => {
+      c.style.display = c.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+    });
+  });
+  
+  // Build sliders, render equations, property cards
+  rebuildSliders();
+  renderAllKaTeX();
+  renderPropertyCards();
+  renderQuiz();
+  updateToggleButtons();
+  updateSingularitiesDisplay();
+  updateRotateButtonStyle();
+  
+  // Initial tab
+  switchTab('intuition');
+}
+
+function rebuildSliders() {
+  const preset = presets[state.currentPreset];
+  const container = document.getElementById('slidersContainer');
+  container.innerHTML = '';
+  
+  document.getElementById('presetLabel').textContent = preset.name;
+  
+  preset.sliders.forEach(key => {
+    const def = sliderDefs[key];
+    const paramKey = def.key || key;
+    const val = state.params[paramKey];
+    
+    const div = document.createElement('div');
+    div.className = 'fade-in';
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <label class="text-xs text-slate-300">${def.label}</label>
+        <span class="text-xs font-mono text-${def.color}-400" id="val-${key}">${val.toFixed(2)}</span>
+      </div>
+      <input type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${val}"
+        class="slider-${def.color}" data-param="${paramKey}" data-key="${key}">
+    `;
+    container.appendChild(div);
+    
+    const input = div.querySelector('input');
+    input.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      state.params[paramKey] = v;
+      document.getElementById(`val-${key}`).textContent = v.toFixed(2);
+      updateAll();
+    });
+  });
+  
+  // Update formula
+  const formulaEl = document.getElementById('formulaDisplay');
+  formulaEl.innerHTML = '';
+  const mathEl = document.createElement('span');
+  katex.render(preset.formula, mathEl, { throwOnError: false, displayMode: true });
+  formulaEl.appendChild(mathEl);
+}
+
+function updateAll() {
+  updateSurface();
+  updatePoleMarkers();
+  updateROCBoundary();
+  renderDynamicKaTeX();
+  updateSingularitiesDisplay();
+}
+
+function updateFourierVisibility() {
+  fourierPlane.visible = state.view.showFourier;
+}
+
+function updateROCVisibility() {
+  if (rocBoundary) rocBoundary.visible = state.view.showROC;
+}
+
+function updateToggleButtons() {
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    const key = btn.dataset.toggle;
+    btn.style.opacity = state.view[key] ? '1' : '0.4';
+  });
+}
+
+function updateRotateButtonStyle() {
+  const btn = document.getElementById('rotateToggle');
+  if (btn) btn.style.borderColor = state.view.autoRotate ? 'rgb(6,182,212)' : 'rgb(51,65,85)';
+}
+
+// ============ KATEX RENDERING ============
+function renderKaTeX(el, tex, display=false) {
+  if (!el) return;
+  el.innerHTML = '';
+  try {
+    katex.render(tex, el, { throwOnError: false, displayMode: display });
+  } catch(e) {
+    el.textContent = tex;
+  }
+}
+
+function renderAllKaTeX() {
+  renderKaTeX(document.getElementById('eq-sigma'), 'e^{\\sigma t}', false);
+  renderKaTeX(document.getElementById('eq-omega'), 'e^{i\\omega t}', false);
+  renderKaTeX(document.getElementById('eq-complex-exp'), 'e^{st} = e^{\\sigma t}(\\cos\\omega t + i\\sin\\omega t)');
+  renderKaTeX(document.getElementById('eq-pole-mode'), 'e^{p_k t}');
+  renderKaTeX(document.getElementById('eq-fourier'), 'F(j\\omega) = \\mathcal{L}\\{f(t)\\}\\big|_{s=j\\omega}', true);
+  renderDynamicKaTeX();
+}
+
+function renderDynamicKaTeX() {
+  // Update current poles/zeros
+  const poles = presets[state.currentPreset].poles(state.params);
+  const zeros = presets[state.currentPreset].zeros(state.params);
+  
+  const polesEl = document.getElementById('currentPoles');
+  if (polesEl) {
+    polesEl.innerHTML = '';
+    poles.forEach((p, i) => {
+      const div = document.createElement('div');
+      div.className = 'text-rose-300 font-mono text-[11px]';
+      const s = p.im >= 0 ? '+' : '';
+      const imag = p.im === 0 ? '' : `${s}${p.im.toFixed(2)}j`;
+      div.innerHTML = `<span class="text-rose-500">×</span> ${p.re.toFixed(2)}${imag}`;
+      polesEl.appendChild(div);
+    });
+    if (poles.length === 0) polesEl.innerHTML = '<div class="text-slate-500 text-[11px]">None</div>';
+  }
+  
+  const zerosEl = document.getElementById('currentZeros');
+  if (zerosEl) {
+    zerosEl.innerHTML = '';
+    zeros.forEach(z => {
+      const div = document.createElement('div');
+      div.className = 'text-emerald-300 font-mono text-[11px]';
+      const s = z.im >= 0 ? '+' : '';
+      const imag = z.im === 0 ? '' : `${s}${z.im.toFixed(2)}j`;
+      div.innerHTML = `<span class="text-emerald-500">○</span> ${z.re.toFixed(2)}${imag}`;
+      zerosEl.appendChild(div);
+    });
+    if (zeros.length === 0) zerosEl.innerHTML = '<div class="text-slate-500 text-[11px]">None</div>';
+  }
+  
+  // Stability info
+  const stabEl = document.getElementById('stabilityInfo');
+  if (stabEl && poles.length > 0) {
+    const maxRe = Math.max(...poles.map(p => p.re));
+    let status, color, text;
+    if (maxRe < -0.01) {
+      status = 'Asymptotically Stable';
+      color = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+      text = 'All poles in LHP → decaying response';
+    } else if (maxRe < 0.01) {
+      status = 'Marginally Stable';
+      color = 'bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      text = 'Poles on imaginary axis → sustained oscillation';
+    } else {
+      status = 'Unstable';
+      color = 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
+      text = 'Poles in RHP → growing response';
+    }
+    stabEl.className = `mt-2 p-2 rounded-lg text-xs ${color}`;
+    stabEl.innerHTML = `<div class="font-semibold">${status}</div><div class="opacity-70 mt-0.5">${text}</div>`;
+  }
+}
+
+function updateSingularitiesDisplay() {
+  renderDynamicKaTeX();
+}
+
+// ============ PROPERTIES ============
+const properties = [
+  {
+    name: 'Linearity',
+    icon: 'git-merge',
+    math: '\\mathcal{L}\\{af_1(t) + bf_2(t)\\} = aF_1(s) + bF_2(s)',
+    meaning: 'The Laplace transform is a linear operator — it preserves weighted sums of signals.',
+    geometric: 'The 3D surface becomes a weighted sum of individual transfer function surfaces. Poles and zeros superimpose linearly in the combined transfer function.'
+  },
+  {
+    name: 'Frequency Shift',
+    icon: 'arrow-right-left',
+    math: '\\mathcal{L}\\{e^{at}f(t)\\} = F(s - a)',
+    meaning: 'Multiplying a time signal by an exponential shifts its frequency content.',
+    geometric: 'The entire 3D mesh translates rigidly along the real σ-axis by distance a. All poles and zeros shift by a in parallel.'
+  },
+  {
+    name: 'Time Shift',
+    icon: 'clock',
+    math: '\\mathcal{L}\\{f(t-a)u(t-a)\\} = e^{-as}F(s)',
+    meaning: 'Delaying a signal in time introduces a phase factor but preserves the magnitude response.',
+    geometric: 'Magnitude surface |F(s)| is unchanged — the surface shape is identical. Only the phase distribution rotates linearly with ω.'
+  },
+  {
+    name: 'Time Differentiation',
+    icon: 'trending-up',
+    math: '\\mathcal{L}\\{f\'(t)\\} = sF(s) - f(0^-)',
+    meaning: 'Differentiating in time multiplies by s, amplifying high frequencies.',
+    geometric: 'Surface is multiplied by |s|, tilting upward toward the outer edges of the s-plane. Adds a zero at the origin, sharpening high-frequency peaks.'
+  },
+  {
+    name: 'Time Integration',
+    icon: 'trending-down',
+    math: '\\mathcal{L}\\left\\{\\int_0^t f(\\tau)d\\tau\\right\\} = \\frac{F(s)}{s}',
+    meaning: 'Integration smooths signals and suppresses high frequencies (low-pass filtering).',
+    geometric: 'Surface is divided by |s|, tilting downward at the edges. Introduces a new pole at the origin, creating a resonance spike there.'
+  },
+  {
+    name: 'Convolution',
+    icon: 'layers',
+    math: '\\mathcal{L}\\{f * g\\} = F(s) \\cdot G(s)',
+    meaning: 'Convolution in time becomes multiplication in the s-domain — the cornerstone of cascade systems.',
+    geometric: 'Pointwise multiplication of two surfaces produces a new surface whose poles/zeros are the union of both. Cascaded filters stack their pole-zero patterns.'
+  }
+];
+
+function renderPropertyCards() {
+  const container = document.getElementById('propertyCards');
+  container.innerHTML = '';
+  
+  properties.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'property-card glass rounded-xl p-4 cursor-pointer';
+    
+    const mathId = `prop-math-${idx}`;
+    card.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="${p.icon}" class="w-4 h-4 text-cyan-400"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-semibold text-cyan-300">${p.name}</h4>
+          <div id="${mathId}" class="my-2 overflow-x-auto"></div>
+          <p class="text-xs text-slate-300"><strong class="text-slate-200">Physical:</strong> ${p.meaning}</p>
+          <p class="text-xs text-slate-400 mt-1.5"><strong class="text-purple-300">3D Effect:</strong> ${p.geometric}</p>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+    
+    // Render math
+    const mathEl = document.getElementById(mathId);
+    renderKaTeX(mathEl, p.math, true);
+  });
+  
+  lucide.createIcons();
+}
+
+// ============ TAB SWITCHING ============
+function switchTab(name) {
+  state.activeTab = name;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('tab-active', b.dataset.tab === name);
+    b.classList.toggle('text-cyan-400', b.dataset.tab === name);
+    b.classList.toggle('text-slate-400', b.dataset.tab !== name);
+    b.classList.toggle('border-cyan-400', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('hidden', c.id !== `tab-${name}`);
+  });
+  lucide.createIcons();
+}
+
+// ============ QUIZ ============
+const quizQuestions = [
+  {
+    q: 'A causal LTI system has transfer function $H(s) = \\frac{1}{s^2 + 3s + 2}$. Which statement is TRUE?',
+    options: [
+      'The system is asymptotically stable',
+      'The system is unstable',
+      'The system is marginally stable (oscillatory)',
+      'Stability depends on the input signal'
+    ],
+    correct: 0,
+    explanation: 'The poles are at $s = -1$ and $s = -2$, both in the left half-plane. Since all poles lie strictly in the LHP, the causal system is asymptotically stable.'
+  },
+  {
+    q: 'The Fourier transform $F(j\\omega)$ equals the Laplace transform $F(s)$ evaluated at which location in the s-plane?',
+    options: [
+      'Along the real axis ($\\omega = 0$)',
+      'Along the imaginary axis ($\\sigma = 0$, i.e. $s = j\\omega$)',
+      'At the origin ($s = 0$)',
+      'At infinity ($|s| \\to \\infty$)'
+    ],
+    correct: 1,
+    explanation: 'The Fourier transform is the Laplace transform restricted to the imaginary axis. This is exactly what the amber "Fourier slice" plane in the 3D view represents: the cross-section at $\\sigma = 0$.'
+  },
+  {
+    q: 'If all poles of $H(s)$ lie exactly on the imaginary axis ($\\sigma = 0$), the corresponding causal system produces:',
+    options: [
+      'Exponentially decaying output',
+      'Exponentially growing output',
+      'Undamped sustained oscillations',
+      'An output that always goes to zero'
+    ],
+    correct: 2,
+    explanation: 'Poles at $s = \\pm j\\omega_0$ contribute modes $e^{\\pm j\\omega_0 t} = \\cos(\\omega_0 t) + j\\sin(\\omega_0 t)$, which are pure sinusoids that neither grow nor decay — the hallmark of marginal stability.'
+  }
+];
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  
+  quizQuestions.forEach((q, qIdx) => {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'glass rounded-xl p-4';
+    
+    const qTextId = `quiz-q-${qIdx}`;
+    qDiv.innerHTML = `
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">${qIdx+1}</span>
+        <div id="${qTextId}" class="text-sm flex-1"></div>
+      </div>
+      <div class="space-y-2 mt-3" id="quiz-opts-${qIdx}"></div>
+      <div id="quiz-explain-${qIdx}" class="hidden mt-3 p-2.5 bg-slate-800/60 rounded-lg text-xs text-slate-300 border-l-2 border-cyan-400"></div>
+    `;
+    container.appendChild(qDiv);
+    
+    const qTextEl = document.getElementById(qTextId);
+    katex.render(q.q, qTextEl, { throwOnError: false });
+    
+    const optsContainer = document.getElementById(`quiz-opts-${qIdx}`);
+    q.options.forEach((opt, oIdx) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option w-full text-left p-2.5 bg-slate-800/40 border border-slate-700 rounded-lg text-xs hover:bg-slate-800/70 transition-all';
+      const optTextId = `quiz-opt-${qIdx}-${oIdx}`;
+      btn.innerHTML = `<span id="${optTextId}"></span>`;
+      btn.addEventListener('click', () => selectAnswer(qIdx, oIdx));
+      optsContainer.appendChild(btn);
+      
+      const optTextEl = document.getElementById(optTextId);
+      try {
+        // Handle potential LaTeX in options
+        if (opt.includes('$')) {
+          katex.render(opt.replace(/\$/g, ''), optTextEl, { throwOnError: false });
+        } else {
+          optTextEl.textContent = opt;
+        }
+      } catch(e) {
+        optTextEl.textContent = opt;
+      }
+    });
+  });
+  
+  document.getElementById('quizTotal').textContent = quizQuestions.length;
+  updateQuizUI();
+  
+  document.getElementById('restartQuiz').addEventListener('click', restartQuiz);
+}
+
+function selectAnswer(qIdx, oIdx) {
+  if (state.quiz.answered[qIdx]) return;
+  
+  state.quiz.answered[qIdx] = true;
+  state.quiz.selectedAnswers[qIdx] = oIdx;
+  
+  const correct = quizQuestions[qIdx].correct;
+  if (oIdx === correct) state.quiz.score++;
+  
+  // Highlight answers
+  const opts = document.querySelectorAll(`#quiz-opts-${qIdx} .quiz-option`);
+  opts.forEach((btn, i) => {
+    if (i === correct) btn.classList.add('correct');
+    else if (i === oIdx && i !== correct) btn.classList.add('incorrect');
+    btn.style.pointerEvents = 'none';
+  });
+  
+  // Show explanation
+  const explainEl = document.getElementById(`quiz-explain-${qIdx}`);
+  explainEl.classList.remove('hidden');
+  katex.render(quizQuestions[qIdx].explanation, explainEl, { throwOnError: false });
+  
+  updateQuizUI();
+  
+  // Check completion
+  if (state.quiz.answered.every(a => a)) {
+    setTimeout(() => {
+      document.getElementById('quizComplete').classList.remove('hidden');
+      document.getElementById('finalScore').textContent = state.quiz.score;
+    }, 500);
+  }
+}
+
+function updateQuizUI() {
+  const answered = state.quiz.answered.filter(a => a).length;
+  document.getElementById('quizCurrent').textContent = Math.min(answered + 1, quizQuestions.length);
+  document.getElementById('quizScore').textContent = `Score: ${state.quiz.score}`;
+}
+
+function restartQuiz() {
+  state.quiz = { currentQuestion: 0, score: 0, answered: [false,false,false], selectedAnswers: [null,null,null] };
+  document.getElementById('quizComplete').classList.add('hidden');
+  renderQuiz();
+}
+
+// ============ RESIZE ============
+function onResize() {
+  const container = document.getElementById('viewport');
+  const w = container.clientWidth, h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+
+// ============ ANIMATION LOOP ============
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  
+  // Subtle pole marker rotation
+  poleMarkers.forEach(m => {
+    m.children.forEach(c => {
+      if (c.isMesh) c.rotation.y += 0.02;
+    });
+  });
+  
+  renderer.render(scene, camera);
+}
+
+// ============ INIT ============
+window.addEventListener('load', () => {
+  try {
+    initThree();
+    setupUI();
+    animate();
+    lucide.createIcons();
+    // Initial resize to correct size
+    setTimeout(onResize, 100);
+  } catch(e) {
+    console.error('Init failed:', e);
+  }
+});
+
+// Handle initial size
+window.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>

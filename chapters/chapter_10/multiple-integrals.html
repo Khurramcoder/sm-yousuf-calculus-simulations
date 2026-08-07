@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Integrals 3D Explorer & Study Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background: #0f172a; 
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+        #three-canvas { width: 100%; height: 100%; display: block; }
+        .neon-cyan { color: #06b6d4; text-shadow: 0 0 10px #06b6d4; }
+        .neon-emerald { color: #10b981; text-shadow: 0 0 10px #10b981; }
+        .neon-amber { color: #f59e0b; text-shadow: 0 0 10px #f59e0b; }
+        .neon-rose { color: #f43f5e; text-shadow: 0 0 10px #f43f5e; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.1); }
+        .scrollbar::-webkit-scrollbar { width: 8px; }
+        .scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+        .scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+        input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            height: 6px; border-radius: 3px;
+            background: rgba(148, 163, 184, 0.2);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #06b6d4; cursor: pointer;
+            box-shadow: 0 0 10px #06b6d4;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #06b6d4; cursor: pointer; border: none;
+            box-shadow: 0 0 10px #06b6d4;
+        }
+        .tab-btn.active { background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; }
+        .card { 
+            background: rgba(30, 41, 59, 0.6); 
+            border: 1px solid rgba(148, 163, 184, 0.15); 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: rgba(6, 182, 212, 0.4); background: rgba(30, 41, 59, 0.8); }
+        .quiz-option {
+            cursor: pointer; padding: 12px; border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            transition: all 0.2s;
+        }
+        .quiz-option:hover { border-color: rgba(6, 182, 212, 0.5); background: rgba(6, 182, 212, 0.1); }
+        .quiz-option.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.2); }
+        .quiz-option.incorrect { border-color: #f43f5e; background: rgba(244, 63, 94, 0.2); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .katex { font-size: 1em !important; }
+        .katex-display { margin: 0.5em 0 !important; }
+        #overlay-controls { pointer-events: auto; }
+        #three-container { pointer-events: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- Header -->
+    <header class="glass border-b border-slate-700/50 px-4 py-3 flex items-center justify-between z-50 relative">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-500 flex items-center justify-center">
+                <i data-lucide="box" class="w-5 h-5 text-white"></i>
+            </div>
+            <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                Multiple Integrals 3D Explorer
+            </h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Mode Switcher -->
+            <select id="mode-select" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-400">
+                <option value="double">Double Integrals (Area & Volume)</option>
+                <option value="triple">Triple Integrals (Volume & Mass)</option>
+            </select>
+            <!-- Presets -->
+            <select id="preset-select" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-400">
+                <option value="paraboloid">Paraboloid z = x² + y²</option>
+                <option value="hemisphere">Hemisphere z = √(R²-x²-y²)</option>
+                <option value="saddle">Saddle z = x² - y²</option>
+                <option value="plane">Plane z = ax + by + c</option>
+            </select>
+            <!-- Theme Toggle -->
+            <button id="theme-toggle" class="p-2 rounded-lg bg-slate-800 border border-slate-600 hover:border-cyan-400 transition">
+                <i data-lucide="moon" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Left Panel: 3D Viewport -->
+        <div class="w-full lg:w-[60%] relative border-r border-slate-700/50 flex flex-col">
+            <div id="three-container" class="flex-1 relative">
+                <canvas id="three-canvas"></canvas>
+            </div>
+            <!-- Overlay Controls -->
+            <div id="overlay-controls" class="absolute bottom-4 left-4 right-4 glass rounded-xl p-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">X Min: <span id="xmin-val">-1.0</span></label>
+                        <input type="range" id="xmin-slider" min="-3" max="0" step="0.1" value="-1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">X Max: <span id="xmax-val">1.0</span></label>
+                        <input type="range" id="xmax-slider" min="0" max="3" step="0.1" value="1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Y Min: <span id="ymin-val">-1.0</span></label>
+                        <input type="range" id="ymin-slider" min="-3" max="0" step="0.1" value="-1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Y Max: <span id="ymax-val">1.0</span></label>
+                        <input type="range" id="ymax-slider" min="0" max="3" step="0.1" value="1" class="w-full">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3" id="triple-controls" style="display:none;">
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Z Min: <span id="zmin-val">-1.0</span></label>
+                        <input type="range" id="zmin-slider" min="-3" max="0" step="0.1" value="-1" class="w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Z Max: <span id="zmax-val">1.0</span></label>
+                        <input type="range" id="zmax-slider" min="0" max="3" step="0.1" value="1" class="w-full">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Resolution N: <span id="res-val">10</span></label>
+                        <input type="range" id="resolution-slider" min="4" max="50" step="1" value="10" class="w-full">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-slate-400">Wireframe</label>
+                        <input type="checkbox" id="wireframe-toggle" class="w-4 h-4 rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Opacity: <span id="opacity-val">0.7</span></label>
+                        <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.7" class="w-full">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="play-btn" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                            <i data-lucide="play" class="w-3 h-3"></i>
+                            <span>Sweep</span>
+                        </button>
+                        <button id="reset-btn" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Educational Hub -->
+        <div class="w-full lg:w-[40%] flex flex-col bg-slate-900/50">
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-700/50">
+                <button class="tab-btn active flex-1 px-4 py-3 text-sm font-medium border-b-2 border-transparent transition" data-tab="concepts">
+                    <i data-lucide="book-open" class="w-4 h-4 inline mr-1"></i>
+                    Concepts
+                </button>
+                <button class="tab-btn flex-1 px-4 py-3 text-sm font-medium border-b-2 border-transparent transition" data-tab="properties">
+                    <i data-lucide="settings" class="w-4 h-4 inline mr-1"></i>
+                    Properties
+                </button>
+                <button class="tab-btn flex-1 px-4 py-3 text-sm font-medium border-b-2 border-transparent transition" data-tab="quiz">
+                    <i data-lucide="help-circle" class="w-4 h-4 inline mr-1"></i>
+                    Practice
+                </button>
+            </div>
+            <!-- Tab Content -->
+            <div class="flex-1 overflow-y-auto scrollbar p-4">
+                <!-- Tab 1: Concepts -->
+                <div id="tab-concepts" class="tab-content">
+                    <h2 class="text-xl font-bold mb-4 neon-cyan">Geometric Intuition & Concepts</h2>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-emerald-400">From 1D to Higher Dimensions</h3>
+                        <div class="space-y-3 text-sm text-slate-300">
+                            <p><strong class="neon-cyan">1D Integration (Length):</strong></p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="eq-1d"></div>
+                            <p>Integrating \(f(x) = 1\) gives the length of an interval.</p>
+                            
+                            <p><strong class="neon-emerald">2D Integration (Area):</strong></p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="eq-2d-area"></div>
+                            <p>Integrating 1 over a region \(R\) gives its area.</p>
+                            
+                            <p><strong class="neon-amber">Double Integral (Volume):</strong></p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="eq-2d-vol"></div>
+                            <p>The volume under surface \(z = f(x,y)\) above region \(R\).</p>
+                            
+                            <p><strong class="neon-rose">Triple Integral (Mass):</strong></p>
+                            <div class="bg-slate-800/50 p-2 rounded" id="eq-3d-mass"></div>
+                            <p>Integrating density \(\rho(x,y,z)\) over 3D region \(E\) gives total mass.</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-3 text-amber-400">Live Computation</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Current Mode:</span>
+                                <span id="live-mode" class="font-medium neon-cyan">Double Integral</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Function:</span>
+                                <span id="live-function" class="font-medium">f(x,y)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Domain:</span>
+                                <span id="live-domain" class="font-medium">[−1, 1] × [−1, 1]</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Resolution:</span>
+                                <span id="live-resolution" class="font-medium">10 × 10</span>
+                            </div>
+                            <hr class="border-slate-700 my-2">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Riemann Approx:</span>
+                                <span id="live-riemann" class="font-bold neon-amber">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Exact Value:</span>
+                                <span id="live-exact" class="font-bold neon-emerald">—</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Rel. Error:</span>
+                                <span id="live-error" class="font-bold neon-rose">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-2 text-cyan-400">Visualization Guide</h3>
+                        <ul class="text-sm text-slate-300 space-y-2">
+                            <li class="flex items-start gap-2"><span class="w-3 h-3 rounded bg-cyan-400 mt-1"></span> Semi-transparent surface: the function being integrated</li>
+                            <li class="flex items-start gap-2"><span class="w-3 h-3 rounded bg-amber-400 mt-1"></span> Riemann boxes/voxels: approximation columns</li>
+                            <li class="flex items-start gap-2"><span class="w-3 h-3 rounded bg-emerald-400 mt-1"></span> Base projection: domain \(R\) on xy-plane</li>
+                            <li class="flex items-start gap-2"><span class="w-3 h-3 rounded bg-rose-400 mt-1"></span> Slicing plane: cross-section (Fubini's theorem)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Properties -->
+                <div id="tab-properties" class="tab-content hidden">
+                    <h2 class="text-xl font-bold mb-4 neon-cyan">Core Properties & Transformations</h2>
+                    <input type="text" id="property-search" placeholder="Search properties..." class="w-full mb-4 px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm focus:outline-none focus:border-cyan-400">
+                    <div id="properties-list">
+                        <div class="card property-card" data-keywords="linearity linear sum addition scalar multiple">
+                            <h3 class="font-semibold text-cyan-400 mb-2">1. Linearity</h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-linearity"></div>
+                            <p class="text-xs text-slate-400">Integrals preserve linear combinations: constants factor out, and sums split into separate integrals.</p>
+                        </div>
+                        <div class="card property-card" data-keywords="additivity domain region union split partition">
+                            <h3 class="font-semibold text-emerald-400 mb-2">2. Domain Additivity</h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-additivity"></div>
+                            <p class="text-xs text-slate-400">If region \(R\) splits into non-overlapping \(R_1\) and \(R_2\), the integral over \(R\) is the sum of integrals over each part.</p>
+                        </div>
+                        <div class="card property-card" data-keywords="bound inequality minimum maximum estimate">
+                            <h3 class="font-semibold text-amber-400 mb-2">3. Bounding Inequality</h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-bound"></div>
+                            <p class="text-xs text-slate-400">The integral is bounded by the minimum and maximum function values multiplied by the area of the domain.</p>
+                        </div>
+                        <div class="card property-card" data-keywords="fubini order integration switch iterated">
+                            <h3 class="font-semibold text-rose-400 mb-2">4. Fubini's Theorem</h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-fubini"></div>
+                            <p class="text-xs text-slate-400">For continuous functions, iterated integrals can be computed in either order. This enables flexible setup for easier integration.</p>
+                        </div>
+                        <div class="card property-card" data-keywords="change variables transformation jacobian determinant coordinate">
+                            <h3 class="font-semibold text-purple-400 mb-2">5. Change of Variables</h3>
+                            <div class="bg-slate-800/50 p-2 rounded mb-2" id="prop-jacobian"></div>
+                            <p class="text-xs text-slate-400 mb-2">Transform coordinates using the Jacobian determinant to adjust the area/volume element.</p>
+                            <div class="grid grid-cols-3 gap-2 text-xs">
+                                <div class="bg-slate-800/50 p-2 rounded text-center">
+                                    <div class="font-semibold text-cyan-300 mb-1">Polar</div>
+                                    <div id="jacob-polar"></div>
+                                </div>
+                                <div class="bg-slate-800/50 p-2 rounded text-center">
+                                    <div class="font-semibold text-emerald-300 mb-1">Cylindrical</div>
+                                    <div id="jacob-cylind"></div>
+                                </div>
+                                <div class="bg-slate-800/50 p-2 rounded text-center">
+                                    <div class="font-semibold text-amber-300 mb-1">Spherical</div>
+                                    <div id="jacob-sphere"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Quiz -->
+                <div id="tab-quiz" class="tab-content hidden">
+                    <h2 class="text-xl font-bold mb-4 neon-cyan">Self-Assessment Quiz</h2>
+                    <div class="mb-4 p-3 bg-slate-800/50 rounded-lg flex justify-between items-center">
+                        <span class="text-sm text-slate-400">Progress</span>
+                        <span id="quiz-progress" class="text-sm font-bold neon-amber">0 / 5</span>
+                        <span id="quiz-score" class="text-sm font-bold neon-emerald">0 correct</span>
+                    </div>
+                    <div id="quiz-container"></div>
+                    <button id="quiz-reset" class="mt-4 w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition">
+                        Reset Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // ==================== GLOBAL STATE ====================
+    const STATE = {
+        mode: 'double',
+        preset: 'paraboloid',
+        bounds: { xmin: -1, xmax: 1, ymin: -1, ymax: 1, zmin: -1, zmax: 1 },
+        resolution: 10,
+        wireframe: false,
+        opacity: 0.7,
+        animating: false,
+        animProgress: 0,
+        sweepAxis: 'x'
+    };
+
+    // ==================== FUNCTION LIBRARY ====================
+    const FUNCTIONS = {
+        double: {
+            paraboloid: {
+                name: 'Paraboloid',
+                expr: 'f(x,y) = x^2 + y^2',
+                fn: (x, y) => x*x + y*y,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    // ∫∫ (x²+y²) dx dy = (x³/3 + xy²)|limits
+                    const intX = (x) => x*x*x/3;
+                    const intY = (y) => y*y*y/3;
+                    const part1 = (intX(xmax) - intX(xmin)) * (ymax - ymin);
+                    const part2 = (xmax - xmin) * (intY(ymax) - intY(ymin));
+                    return part1 + part2;
+                }
+            },
+            hemisphere: {
+                name: 'Hemisphere',
+                expr: 'f(x,y) = \\sqrt{1 - x^2 - y^2}',
+                fn: (x, y) => {
+                    const val = 1 - x*x - y*y;
+                    return val >= 0 ? Math.sqrt(val) : 0;
+                },
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    // Numerical approximation for hemisphere over rectangle
+                    const N = 200;
+                    const dx = (xmax - xmin) / N;
+                    const dy = (ymax - ymin) / N;
+                    let sum = 0;
+                    for (let i = 0; i < N; i++) {
+                        for (let j = 0; j < N; j++) {
+                            const x = xmin + (i + 0.5) * dx;
+                            const y = ymin + (j + 0.5) * dy;
+                            const val = 1 - x*x - y*y;
+                            if (val > 0) sum += Math.sqrt(val) * dx * dy;
+                        }
+                    }
+                    return sum;
+                }
+            },
+            saddle: {
+                name: 'Saddle',
+                expr: 'f(x,y) = x^2 - y^2',
+                fn: (x, y) => x*x - y*y,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    const intX = (x) => x*x*x/3;
+                    const intY = (y) => y*y*y/3;
+                    const part1 = (intX(xmax) - intX(xmin)) * (ymax - ymin);
+                    const part2 = -(xmax - xmin) * (intY(ymax) - intY(ymin));
+                    return part1 + part2;
+                }
+            },
+            plane: {
+                name: 'Inclined Plane',
+                expr: 'f(x,y) = 0.5x + 0.3y + 1',
+                fn: (x, y) => 0.5*x + 0.3*y + 1,
+                exactIntegral: (xmin, xmax, ymin, ymax) => {
+                    // ∫∫ (0.5x + 0.3y + 1) dx dy
+                    const intX = (x) => 0.25*x*x;
+                    const intY = (y) => 0.15*y*y;
+                    const area = (xmax-xmin)*(ymax-ymin);
+                    const part1 = 0.5 * (intX(xmax) - intX(xmin)) * (ymax - ymin);
+                    const part2 = 0.3 * (xmax - xmin) * (intY(ymax) - intY(ymin));
+                    const part3 = area;
+                    return part1 + part2 + part3;
+                }
+            }
+        },
+        triple: {
+            sphere: {
+                name: 'Sphere',
+                expr: '\\rho(x,y,z) = 1',
+                zUpper: (x, y) => Math.sqrt(Math.max(0, 1 - x*x - y*y)),
+                zLower: (x, y) => -Math.sqrt(Math.max(0, 1 - x*x - y*y)),
+                density: (x, y, z) => 1,
+                exactVolume: (xmin, xmax, ymin, ymax) => {
+                    // Volume of sphere portion (numerical)
+                    const N = 150;
+                    const dx = (xmax - xmin) / N;
+                    const dy = (ymax - ymin) / N;
+                    let vol = 0;
+                    for (let i = 0; i < N; i++) {
+                        for (let j = 0; j < N; j++) {
+                            const x = xmin + (i + 0.5) * dx;
+                            const y = ymin + (j + 0.5) * dy;
+                            const r2 = 1 - x*x - y*y;
+                            if (r2 > 0) vol += 2 * Math.sqrt(r2) * dx * dy;
+                        }
+                    }
+                    return vol;
+                }
+            },
+            cylinder: {
+                name: 'Cylinder Region',
+                expr: '\\rho(x,y,z) = 1',
+                zUpper: (x, y) => 1,
+                zLower: (x, y) => -1,
+                density: (x, y, z) => 1,
+                exactVolume: (xmin, xmax, ymin, ymax) => {
+                    return 2 * (xmax - xmin) * (ymax - ymin);
+                }
+            },
+            paraboloids: {
+                name: 'Between Paraboloids',
+                expr: 'z: x^2+y^2 \\to 2-x^2-y^2',
+                zUpper: (x, y) => 2 - x*x - y*y,
+                zLower: (x, y) => x*x + y*y,
+                density: (x, y, z) => 1 + 0.1*(x*x + y*y + z*z),
+                exactVolume: (xmin, xmax, ymin, ymax) => {
+                    const N = 150;
+                    const dx = (xmax - xmin) / N;
+                    const dy = (ymax - ymin) / N;
+                    let vol = 0;
+                    for (let i = 0; i < N; i++) {
+                        for (let j = 0; j < N; j++) {
+                            const x = xmin + (i + 0.5) * dx;
+                            const y = ymin + (j + 0.5) * dy;
+                            const zU = 2 - x*x - y*y;
+                            const zL = x*x + y*y;
+                            if (zU > zL) vol += (zU - zL) * dx * dy;
+                        }
+                    }
+                    return vol;
+                }
+            }
+        }
+    };
+
+    // ==================== THREE.JS SETUP ====================
+    let scene, camera, renderer, controls;
+    let surfaceMesh, baseMesh, riemannGroup, slicingPlane, voxelGroup;
+    let gridHelper, axesHelper;
+
+    function initThreeJS() {
+        const canvas = document.getElementById('three-canvas');
+        const container = document.getElementById('three-container');
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.Fog(0x0f172a, 10, 30);
+
+        camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(3, 3, 3);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 2;
+        controls.maxDistance = 20;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(5, 10, 7);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+        const pointLight = new THREE.PointLight(0x06b6d4, 0.5, 20);
+        pointLight.position.set(-3, 5, -3);
+        scene.add(pointLight);
+
+        // Helpers
+        gridHelper = new THREE.GridHelper(10, 20, 0x475569, 0x1e293b);
+        scene.add(gridHelper);
+        axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        // Initial geometry
+        buildGeometry();
+
+        // Animation loop
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', onResize);
+    }
+
+    function onResize() {
+        const container = document.getElementById('three-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+
+        if (STATE.animating) {
+            STATE.animProgress += 0.005;
+            if (STATE.animProgress >= 1) {
+                STATE.animProgress = 0;
+            }
+            updateSlicingPlane();
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // ==================== GEOMETRY BUILDERS ====================
+    function buildGeometry() {
+        clearGeometry();
+        if (STATE.mode === 'double') {
+            buildDoubleIntegralGeometry();
+        } else {
+            buildTripleIntegralGeometry();
+        }
+        updateSlicingPlane();
+    }
+
+    function clearGeometry() {
+        if (surfaceMesh) { scene.remove(surfaceMesh); surfaceMesh.geometry?.dispose(); }
+        if (baseMesh) { scene.remove(baseMesh); baseMesh.geometry?.dispose(); }
+        if (riemannGroup) scene.remove(riemannGroup);
+        if (slicingPlane) { scene.remove(slicingPlane); slicingPlane.geometry?.dispose(); }
+        if (voxelGroup) scene.remove(voxelGroup);
+        surfaceMesh = null; baseMesh = null; riemannGroup = null; slicingPlane = null; voxelGroup = null;
+    }
+
+    function buildDoubleIntegralGeometry() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const fn = FUNCTIONS.double[STATE.preset].fn;
+
+        // Base domain on xy-plane
+        const baseGeom = new THREE.PlaneGeometry(xmax - xmin, ymax - ymin);
+        const baseMat = new THREE.MeshBasicMaterial({ 
+            color: 0x10b981, 
+            transparent: true, 
+            opacity: 0.3,
+            side: THREE.DoubleSide 
+        });
+        baseMesh = new THREE.Mesh(baseGeom, baseMat);
+        baseMesh.rotation.x = -Math.PI / 2;
+        baseMesh.position.set((xmin + xmax) / 2, 0, (ymin + ymax) / 2);
+        scene.add(baseMesh);
+
+        // Surface mesh
+        const N = Math.min(STATE.resolution * 2, 80);
+        const surfaceGeom = new THREE.BufferGeometry();
+        const vertices = [];
+        const indices = [];
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+
+        for (let i = 0; i <= N; i++) {
+            for (let j = 0; j <= N; j++) {
+                const x = xmin + i * dx;
+                const y = ymin + j * dy;
+                const z = fn(x, y);
+                vertices.push(x, z, y);
+            }
+        }
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const a = i * (N + 1) + j;
+                const b = a + 1;
+                const c = a + (N + 1);
+                const d = c + 1;
+                indices.push(a, b, c);
+                indices.push(b, d, c);
+            }
+        }
+        surfaceGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        surfaceGeom.setIndex(indices);
+        surfaceGeom.computeVertexNormals();
+
+        const surfaceMat = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: STATE.opacity,
+            wireframe: STATE.wireframe,
+            side: THREE.DoubleSide,
+            shininess: 80
+        });
+        surfaceMesh = new THREE.Mesh(surfaceGeom, surfaceMat);
+        scene.add(surfaceMesh);
+
+        // Riemann columns (instanced)
+        buildRiemannColumns();
+
+        // Slicing plane
+        buildSlicingPlane();
+    }
+
+    function buildRiemannColumns() {
+        if (riemannGroup) scene.remove(riemannGroup);
+        riemannGroup = new THREE.Group();
+
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const fn = FUNCTIONS.double[STATE.preset].fn;
+        const N = STATE.resolution;
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+
+        const count = N * N;
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.4,
+            wireframe: STATE.wireframe
+        });
+        const mesh = new THREE.InstancedMesh(geometry, material, count);
+
+        const dummy = new THREE.Object3D();
+        let idx = 0;
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const x = xmin + (i + 0.5) * dx;
+                const y = ymin + (j + 0.5) * dy;
+                const z = fn(x, y);
+                const height = Math.abs(z);
+
+                dummy.position.set(x, height / 2, y);
+                dummy.scale.set(dx * 0.95, Math.max(height, 0.001), dy * 0.95);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(idx, dummy.matrix);
+                idx++;
+            }
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+        riemannGroup.add(mesh);
+        scene.add(riemannGroup);
+    }
+
+    function buildTripleIntegralGeometry() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const preset = FUNCTIONS.triple[STATE.preset];
+
+        // Base domain
+        const baseGeom = new THREE.PlaneGeometry(xmax - xmin, ymax - ymin);
+        const baseMat = new THREE.MeshBasicMaterial({ 
+            color: 0x10b981, 
+            transparent: true, 
+            opacity: 0.2,
+            side: THREE.DoubleSide 
+        });
+        baseMesh = new THREE.Mesh(baseGeom, baseMat);
+        baseMesh.rotation.x = -Math.PI / 2;
+        baseMesh.position.set((xmin + xmax) / 2, 0, (ymin + ymax) / 2);
+        scene.add(baseMesh);
+
+        // Upper surface
+        const N = Math.min(STATE.resolution, 40);
+        const upperGeom = new THREE.BufferGeometry();
+        const vertices = [];
+        const indices = [];
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+
+        for (let i = 0; i <= N; i++) {
+            for (let j = 0; j <= N; j++) {
+                const x = xmin + i * dx;
+                const y = ymin + j * dy;
+                const z = preset.zUpper(x, y);
+                vertices.push(x, z, y);
+            }
+        }
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                const a = i * (N + 1) + j;
+                const b = a + 1;
+                const c = a + (N + 1);
+                const d = c + 1;
+                indices.push(a, b, c);
+                indices.push(b, d, c);
+            }
+        }
+        upperGeom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        upperGeom.setIndex(indices);
+        upperGeom.computeVertexNormals();
+
+        const upperMat = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4,
+            transparent: true,
+            opacity: STATE.opacity * 0.6,
+            wireframe: STATE.wireframe,
+            side: THREE.DoubleSide
+        });
+        surfaceMesh = new THREE.Mesh(upperGeom, upperMat);
+        scene.add(surfaceMesh);
+
+        // Voxels
+        buildVoxels();
+
+        // Slicing plane
+        buildSlicingPlane();
+    }
+
+    function buildVoxels() {
+        if (voxelGroup) scene.remove(voxelGroup);
+        voxelGroup = new THREE.Group();
+
+        const { xmin, xmax, ymin, ymax, zmin, zmax } = STATE.bounds;
+        const preset = FUNCTIONS.triple[STATE.preset];
+        const N = Math.min(STATE.resolution, 25);
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+        const dz = (zmax - zmin) / N;
+
+        // Estimate count (only inside region)
+        let validVoxels = [];
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                for (let k = 0; k < N; k++) {
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    const z = zmin + (k + 0.5) * dz;
+                    const zL = preset.zLower(x, y);
+                    const zU = preset.zUpper(x, y);
+                    if (z >= zL && z <= zU) {
+                        validVoxels.push({ x, y, z, density: preset.density(x, y, z) });
+                    }
+                }
+            }
+        }
+
+        if (validVoxels.length === 0) return;
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xf59e0b,
+            transparent: true,
+            opacity: 0.3,
+            wireframe: STATE.wireframe
+        });
+        const mesh = new THREE.InstancedMesh(geometry, material, validVoxels.length);
+
+        const dummy = new THREE.Object3D();
+        const color = new THREE.Color();
+
+        validVoxels.forEach((v, idx) => {
+            dummy.position.set(v.x, v.y, v.z);
+            dummy.scale.set(dx * 0.9, dz * 0.9, dy * 0.9);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(idx, dummy.matrix);
+            
+            // Color based on density (heatmap)
+            const t = Math.min(v.density / 2, 1);
+            color.setHSL(0.1 - t * 0.1, 0.8, 0.5);
+            mesh.setColorAt(idx, color);
+        });
+
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        voxelGroup.add(mesh);
+        scene.add(voxelGroup);
+    }
+
+    function buildSlicingPlane() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const width = xmax - xmin;
+        const height = 2;
+        const planeGeom = new THREE.PlaneGeometry(width, height);
+        const planeMat = new THREE.MeshBasicMaterial({
+            color: 0xf43f5e,
+            transparent: true,
+            opacity: 0.4,
+            side: THREE.DoubleSide
+        });
+        slicingPlane = new THREE.Mesh(planeGeom, planeMat);
+        slicingPlane.position.set(0, 0.5, ymin);
+        scene.add(slicingPlane);
+    }
+
+    function updateSlicingPlane() {
+        if (!slicingPlane) return;
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        
+        if (STATE.sweepAxis === 'y') {
+            slicingPlane.rotation.y = Math.PI / 2;
+            const t = STATE.animProgress;
+            slicingPlane.position.x = xmin + t * (xmax - xmin);
+            slicingPlane.position.z = (ymin + ymax) / 2;
+        } else {
+            slicingPlane.rotation.y = 0;
+            const t = STATE.animProgress;
+            slicingPlane.position.z = ymin + t * (ymax - ymin);
+            slicingPlane.position.x = (xmin + xmax) / 2;
+        }
+    }
+
+    // ==================== MATHEMATICS ENGINE ====================
+    function computeRiemannSum() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        const N = STATE.resolution;
+        const dx = (xmax - xmin) / N;
+        const dy = (ymax - ymin) / N;
+        const area = dx * dy;
+
+        if (STATE.mode === 'double') {
+            const fn = FUNCTIONS.double[STATE.preset].fn;
+            let sum = 0;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    sum += fn(x, y) * area;
+                }
+            }
+            return sum;
+        } else {
+            const preset = FUNCTIONS.triple[STATE.preset];
+            const { zmin, zmax } = STATE.bounds;
+            const dz = (zmax - zmin) / N;
+            const vol = dx * dy * dz;
+            let sum = 0;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const x = xmin + (i + 0.5) * dx;
+                    const y = ymin + (j + 0.5) * dy;
+                    const zL = preset.zLower(x, y);
+                    const zU = preset.zUpper(x, y);
+                    for (let k = 0; k < N; k++) {
+                        const z = zmin + (k + 0.5) * dz;
+                        if (z >= zL && z <= zU) {
+                            sum += preset.density(x, y, z) * vol;
+                        }
+                    }
+                }
+            }
+            return sum;
+        }
+    }
+
+    function computeExactValue() {
+        const { xmin, xmax, ymin, ymax } = STATE.bounds;
+        if (STATE.mode === 'double') {
+            return FUNCTIONS.double[STATE.preset].exactIntegral(xmin, xmax, ymin, ymax);
+        } else {
+            return FUNCTIONS.triple[STATE.preset].exactVolume(xmin, xmax, ymin, ymax);
+        }
+    }
+
+    // ==================== UI CONTROLLERS ====================
+    function updateUI() {
+        document.getElementById('xmin-val').textContent = STATE.bounds.xmin.toFixed(1);
+        document.getElementById('xmax-val').textContent = STATE.bounds.xmax.toFixed(1);
+        document.getElementById('ymin-val').textContent = STATE.bounds.ymin.toFixed(1);
+        document.getElementById('ymax-val').textContent = STATE.bounds.ymax.toFixed(1);
+        document.getElementById('zmin-val').textContent = STATE.bounds.zmin.toFixed(1);
+        document.getElementById('zmax-val').textContent = STATE.bounds.zmax.toFixed(1);
+        document.getElementById('res-val').textContent = STATE.resolution;
+        document.getElementById('opacity-val').textContent = STATE.opacity.toFixed(2);
+
+        document.getElementById('live-mode').textContent = STATE.mode === 'double' ? 'Double Integral' : 'Triple Integral';
+        document.getElementById('live-function').textContent = STATE.mode === 'double' 
+            ? FUNCTIONS.double[STATE.preset].expr.replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+            : FUNCTIONS.triple[STATE.preset].expr.replace(/\\to/g, 'to').replace(/\\rho/g, 'ρ');
+        document.getElementById('live-domain').textContent = `[${STATE.bounds.xmin.toFixed(1)}, ${STATE.bounds.xmax.toFixed(1)}] × [${STATE.bounds.ymin.toFixed(1)}, ${STATE.bounds.ymax.toFixed(1)}]`;
+        document.getElementById('live-resolution').textContent = STATE.mode === 'double' 
+            ? `${STATE.resolution} × ${STATE.resolution}` 
+            : `${STATE.resolution} × ${STATE.resolution} × ${STATE.resolution}`;
+
+        const riemann = computeRiemannSum();
+        const exact = computeExactValue();
+        const error = exact !== 0 ? Math.abs(riemann - exact) / Math.abs(exact) * 100 : 0;
+
+        document.getElementById('live-riemann').textContent = riemann.toFixed(4);
+        document.getElementById('live-exact').textContent = exact.toFixed(4);
+        document.getElementById('live-error').textContent = error.toFixed(2) + '%';
+
+        document.getElementById('triple-controls').style.display = STATE.mode === 'triple' ? 'grid' : 'none';
+    }
+
+    function rebuildScene() {
+        buildGeometry();
+        updateUI();
+    }
+
+    // ==================== EVENT HANDLERS ====================
+    function initEventHandlers() {
+        // Mode select
+        document.getElementById('mode-select').addEventListener('change', (e) => {
+            STATE.mode = e.target.value;
+            if (STATE.mode === 'triple') {
+                STATE.preset = 'sphere';
+            } else {
+                STATE.preset = 'paraboloid';
+            }
+            updatePresetSelect();
+            rebuildScene();
+        });
+
+        // Preset select
+        document.getElementById('preset-select').addEventListener('change', (e) => {
+            STATE.preset = e.target.value;
+            rebuildScene();
+        });
+
+        // Sliders
+        const sliders = {
+            'xmin-slider': (v) => { STATE.bounds.xmin = v; if (STATE.bounds.xmin >= STATE.bounds.xmax) STATE.bounds.xmax = STATE.bounds.xmin + 0.1; },
+            'xmax-slider': (v) => { STATE.bounds.xmax = v; if (STATE.bounds.xmax <= STATE.bounds.xmin) STATE.bounds.xmin = STATE.bounds.xmax - 0.1; },
+            'ymin-slider': (v) => { STATE.bounds.ymin = v; if (STATE.bounds.ymin >= STATE.bounds.ymax) STATE.bounds.ymax = STATE.bounds.ymin + 0.1; },
+            'ymax-slider': (v) => { STATE.bounds.ymax = v; if (STATE.bounds.ymax <= STATE.bounds.ymin) STATE.bounds.ymin = STATE.bounds.ymax - 0.1; },
+            'zmin-slider': (v) => { STATE.bounds.zmin = v; if (STATE.bounds.zmin >= STATE.bounds.zmax) STATE.bounds.zmax = STATE.bounds.zmin + 0.1; },
+            'zmax-slider': (v) => { STATE.bounds.zmax = v; if (STATE.bounds.zmax <= STATE.bounds.zmin) STATE.bounds.zmin = STATE.bounds.zmax - 0.1; }
+        };
+
+        Object.entries(sliders).forEach(([id, handler]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', (e) => {
+                    handler(parseFloat(e.target.value));
+                    rebuildScene();
+                });
+            }
+        });
+
+        document.getElementById('resolution-slider').addEventListener('input', (e) => {
+            STATE.resolution = parseInt(e.target.value);
+            rebuildScene();
+        });
+
+        document.getElementById('wireframe-toggle').addEventListener('change', (e) => {
+            STATE.wireframe = e.target.checked;
+            rebuildScene();
+        });
+
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            STATE.opacity = parseFloat(e.target.value);
+            rebuildScene();
+        });
+
+        document.getElementById('play-btn').addEventListener('click', (e) => {
+            STATE.animating = !STATE.animating;
+            const btn = e.currentTarget;
+            if (STATE.animating) {
+                btn.innerHTML = '<i data-lucide="pause" class="w-3 h-3"></i><span>Pause</span>';
+            } else {
+                btn.innerHTML = '<i data-lucide="play" class="w-3 h-3"></i><span>Sweep</span>';
+            }
+            lucide.createIcons();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            STATE.bounds = { xmin: -1, xmax: 1, ymin: -1, ymax: 1, zmin: -1, zmax: 1 };
+            STATE.resolution = 10;
+            STATE.opacity = 0.7;
+            STATE.wireframe = false;
+            STATE.animating = false;
+            document.getElementById('xmin-slider').value = -1;
+            document.getElementById('xmax-slider').value = 1;
+            document.getElementById('ymin-slider').value = -1;
+            document.getElementById('ymax-slider').value = 1;
+            document.getElementById('zmin-slider').value = -1;
+            document.getElementById('zmax-slider').value = 1;
+            document.getElementById('resolution-slider').value = 10;
+            document.getElementById('opacity-slider').value = 0.7;
+            document.getElementById('wireframe-toggle').checked = false;
+            document.getElementById('play-btn').innerHTML = '<i data-lucide="play" class="w-3 h-3"></i><span>Sweep</span>';
+            camera.position.set(3, 3, 3);
+            camera.lookAt(0, 0, 0);
+            rebuildScene();
+            lucide.createIcons();
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                e.currentTarget.classList.add('active');
+                document.getElementById('tab-' + e.currentTarget.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // Property search
+        document.getElementById('property-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.property-card').forEach(card => {
+                const keywords = card.dataset.keywords.toLowerCase();
+                const text = card.textContent.toLowerCase();
+                card.style.display = (keywords.includes(query) || text.includes(query)) ? 'block' : 'none';
+            });
+        });
+    }
+
+    function updatePresetSelect() {
+        const select = document.getElementById('preset-select');
+        select.innerHTML = '';
+        const funcs = FUNCTIONS[STATE.mode];
+        Object.entries(funcs).forEach(([key, val]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = val.name;
+            select.appendChild(opt);
+        });
+        select.value = STATE.preset;
+    }
+
+    // ==================== EDUCATIONAL CONTENT ====================
+    function renderMathContent() {
+        // Concepts tab
+        renderKatex('eq-1d', '\\int_a^b 1 \\, dx = b - a = \\text{Length}');
+        renderKatex('eq-2d-area', '\\iint_R 1 \\, dA = \\text{Area}(R)');
+        renderKatex('eq-2d-vol', '\\iint_R f(x,y) \\, dA = \\text{Volume under } z = f(x,y)');
+        renderKatex('eq-3d-mass', '\\iiint_E \\rho(x,y,z) \\, dV = \\text{Total Mass}');
+
+        // Properties tab
+        renderKatex('prop-linearity', '\\iint_R (af + bg) \\, dA = a\\iint_R f \\, dA + b\\iint_R g \\, dA');
+        renderKatex('prop-additivity', '\\iint_{R_1 \\cup R_2} f \\, dA = \\iint_{R_1} f \\, dA + \\iint_{R_2} f \\, dA');
+        renderKatex('prop-bound', 'm \\cdot \\text{Area}(R) \\le \\iint_R f \\, dA \\le M \\cdot \\text{Area}(R)');
+        renderKatex('prop-fubini', '\\iint_R f(x,y) \\, dA = \\int_a^b \\left[ \\int_{c}^{d} f(x,y) \\, dy \\right] dx = \\int_c^d \\left[ \\int_{a}^{b} f(x,y) \\, dx \\right] dy');
+        renderKatex('prop-jacobian', '\\iint_{R_{xy}} f(x,y) \\, dx\\,dy = \\iint_{R_{uv}} f(x(u,v), y(u,v)) \\left| \\frac{\\partial(x,y)}{\\partial(u,v)} \\right| du\\,dv');
+
+        // Jacobians
+        renderKatex('jacob-polar', 'dx\\,dy = r\\,dr\\,d\\theta');
+        renderKatex('jacob-cylind', 'dx\\,dy\\,dz = r\\,dr\\,d\\theta\\,dz');
+        renderKatex('jacob-sphere', 'dx\\,dy\\,dz = \\rho^2 \\sin\\phi \\, d\\rho \\, d\\phi \\, d\\theta');
+
+        // Render all KaTeX in the document
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '$$', right: '$$', display: true}
+                ]
+            });
+        }
+    }
+
+    function renderKatex(elementId, tex) {
+        const el = document.getElementById(elementId);
+        if (el && typeof katex !== 'undefined') {
+            katex.render(tex, el, { displayMode: true, throwOnError: false });
+        }
+    }
+
+    // ==================== QUIZ ====================
+    const QUIZ_QUESTIONS = [
+        {
+            question: 'Which integral represents the volume of a unit hemisphere above the xy-plane?',
+            options: [
+                '\\(\\int_{-1}^1 \\int_{-1}^1 \\sqrt{1-x^2-y^2} \\, dx\\,dy\\)',
+                '\\(\\int_0^{2\\pi} \\int_0^1 r\\sqrt{1-r^2} \\, dr\\,d\\theta\\)',
+                '\\(\\int_0^{2\\pi} \\int_0^1 \\sqrt{1-r^2} \\, dr\\,d\\theta\\)',
+                'Both A and B'
+            ],
+            correct: 3,
+            explanation: 'Both Cartesian (A) and polar (B, including Jacobian r) forms compute the same volume. The polar form is often easier to evaluate.'
+        },
+        {
+            question: 'When switching integration order from \\(\\int_0^1 \\int_0^x f(x,y)\\,dy\\,dx\\), the new form is:',
+            options: [
+                '\\(\\int_0^1 \\int_0^y f(x,y)\\,dx\\,dy\\)',
+                '\\(\\int_0^1 \\int_y^1 f(x,y)\\,dx\\,dy\\)',
+                '\\(\\int_0^1 \\int_0^1 f(x,y)\\,dx\\,dy\\)',
+                '\\(\\int_0^x \\int_0^1 f(x,y)\\,dx\\,dy\\)'
+            ],
+            correct: 1,
+            explanation: 'The original region is \\(0 \\le y \\le x \\le 1\\). When we integrate x first for a fixed y, x ranges from y to 1.'
+        },
+        {
+            question: 'The Jacobian for polar coordinates \\(x = r\\cos\\theta, y = r\\sin\\theta\\) is:',
+            options: [
+                '\\(r^2\\)',
+                '\\(r\\)',
+                '\\(1\\)',
+                '\\(\\sin\\theta\\)'
+            ],
+            correct: 1,
+            explanation: 'The Jacobian determinant \\(|\\partial(x,y)/\\partial(r,\\theta)| = |\\cos\\theta \\cdot r\\cos\\theta - (-r\\sin\\theta) \\cdot \\sin\\theta| = r\\).'
+        },
+        {
+            question: 'If \\(\\rho(x,y,z) = 2\\) is constant density throughout a region of volume V, the total mass is:',
+            options: [
+                '\\(V\\)',
+                '\\(2V\\)',
+                '\\(V/2\\)',
+                '\\(2\\)'
+            ],
+            correct: 1,
+            explanation: 'Mass = \\(\\iiint_E \\rho \\, dV = \\iiint_E 2 \\, dV = 2 \\iiint_E dV = 2V\\). Constant density factors out.'
+        },
+        {
+            question: 'For the region \\(R = [0,2] \\times [0,3]\\), if \\(f(x,y) \\ge 1\\) everywhere on R, which inequality holds?',
+            options: [
+                '\\(\\iint_R f\\,dA \\ge 6\\)',
+                '\\(\\iint_R f\\,dA \\le 6\\)',
+                '\\(\\iint_R f\\,dA = 0\\)',
+                '\\(\\iint_R f\\,dA \\ge 1\\)'
+            ],
+            correct: 0,
+            explanation: 'Since \\(f \\ge 1\\) and \\(\\text{Area}(R) = 2 \\times 3 = 6\\), we have \\(\\iint_R f \\, dA \\ge 1 \\cdot 6 = 6\\) by the bounding inequality.'
+        }
+    ];
+
+    function initQuiz() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+        let correct = 0;
+        let answered = 0;
+
+        QUIZ_QUESTIONS.forEach((q, qIdx) => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <h3 class="font-semibold text-cyan-400 mb-3 text-sm">Question ${qIdx + 1}</h3>
+                <p class="text-sm mb-3 text-slate-300">${q.question}</p>
+                <div class="space-y-2" id="q${qIdx}-options">
+                    ${q.options.map((opt, oIdx) => `
+                        <div class="quiz-option" data-q="${qIdx}" data-o="${oIdx}">
+                            <span class="text-xs font-medium text-slate-400">${String.fromCharCode(65 + oIdx)}.</span>
+                            <span class="ml-2">${opt}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="mt-3 text-xs text-slate-400 hidden" id="q${qIdx}-explanation">
+                    <strong class="text-emerald-400">Explanation:</strong> ${q.explanation}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        // Re-render KaTeX in quiz
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(container, {
+                delimiters: [
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ]
+            });
+        }
+
+        container.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                const qIdx = parseInt(e.currentTarget.dataset.q);
+                const oIdx = parseInt(e.currentTarget.dataset.o);
+                const optionsDiv = document.getElementById(`q${qIdx}-options`);
+                if (optionsDiv.dataset.answered) return;
+                optionsDiv.dataset.answered = 'true';
+
+                const q = QUIZ_QUESTIONS[qIdx];
+                optionsDiv.querySelectorAll('.quiz-option').forEach((o, i) => {
+                    if (i === q.correct) o.classList.add('correct');
+                    else if (i === oIdx) o.classList.add('incorrect');
+                    o.style.pointerEvents = 'none';
+                });
+                document.getElementById(`q${qIdx}-explanation`).classList.remove('hidden');
+                
+                answered++;
+                if (oIdx === q.correct) correct++;
+                document.getElementById('quiz-progress').textContent = `${answered} / ${QUIZ_QUESTIONS.length}`;
+                document.getElementById('quiz-score').textContent = `${correct} correct`;
+            });
+        });
+
+        document.getElementById('quiz-reset').addEventListener('click', () => {
+            initQuiz();
+        });
+    }
+
+    // ==================== INITIALIZATION ====================
+    function init() {
+        initThreeJS();
+        initEventHandlers();
+        updatePresetSelect();
+        
+        // Wait for KaTeX to load
+        const waitForKatex = setInterval(() => {
+            if (typeof katex !== 'undefined') {
+                clearInterval(waitForKatex);
+                renderMathContent();
+                initQuiz();
+            }
+        }, 100);
+
+        // Fallback
+        setTimeout(() => {
+            renderMathContent();
+            initQuiz();
+        }, 2000);
+
+        // Initialize Lucide icons
+        setTimeout(() => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }, 500);
+
+        updateUI();
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    </script>
+</body>
+</html>

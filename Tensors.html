@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Tensor Atlas — Interactive Tensor Analysis</title>
+<meta name="description" content="Symmetric and skew-symmetric tensors, addition, products, quotient law, matrix algebra, metrics, reciprocal and associated tensors — explained with live 3-D figures.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,900;1,9..144,400;1,9..144,600&family=Archivo:wght@400;500;600;700;800&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#0a141f; --bg1:#0e1c2b; --panel:#101f30; --panel2:#0c1826;
+  --line:#1f3a54; --line2:#2d4d6f;
+  --txt:#d7e5f3; --mut:#8ba6bf; --faint:#5d7c99;
+  --paper:#f7f5ef; --ptxt:#182430; --pmut:#54657a;
+  --amber:#ffb703; --teal:#2dd4bf; --coral:#ff5d5d; --blue:#5aa9ff;
+  --amber-d:#8a5f00; --teal-d:#0b6e63; --coral-d:#a12b2b; --blue-d:#1f4f9e;
+  --mono:'IBM Plex Mono',monospace; --disp:'Fraunces',serif; --body:'Archivo',sans-serif; --math:'STIX Two Text','Times New Roman',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg0); color:var(--txt); font-family:var(--body);
+  font-size:16.5px; line-height:1.6; overflow-x:hidden;
+  background-image:radial-gradient(1100px 600px at 85% -5%, rgba(45,212,191,.07), transparent 60%),
+                   radial-gradient(900px 700px at -10% 30%, rgba(255,183,3,.05), transparent 55%),
+                   radial-gradient(800px 800px at 50% 110%, rgba(90,169,255,.06), transparent 60%);
+}
+::selection{background:var(--amber);color:#14100a}
+a{color:inherit}
+#ambient{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.6}
+#progress{position:fixed;top:0;left:0;height:3px;width:0%;z-index:60;background:linear-gradient(90deg,var(--amber),var(--teal));box-shadow:0 0 12px rgba(255,183,3,.5)}
+main,header,footer,nav{position:relative;z-index:2}
+
+/* ---------- nav ---------- */
+#topnav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:1.4rem;
+  padding:.65rem 1.4rem;border-bottom:1px solid transparent;transition:background .35s,border-color .35s,backdrop-filter .35s}
+#topnav.scrolled{background:rgba(10,20,31,.86);backdrop-filter:blur(10px);border-color:var(--line)}
+.brand{font-family:var(--disp);font-weight:900;font-size:1.06rem;letter-spacing:.02em;white-space:nowrap}
+.brand .glyph{color:var(--amber);font-family:var(--math);font-style:italic;font-size:1.15rem;margin-right:.35rem}
+.brand .glyph sup{font-size:.62em;color:var(--teal)}
+.links{display:flex;gap:.15rem;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+.links::-webkit-scrollbar{display:none}
+.links a{font-size:.74rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);
+  padding:.42rem .6rem;border-radius:6px;text-decoration:none;white-space:nowrap;position:relative;transition:color .2s,background .2s}
+.links a b{font-family:var(--mono);color:var(--faint);margin-right:.3rem;font-weight:600;transition:color .2s}
+.links a:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+.links a:hover b{color:var(--amber)}
+.links a.cur{color:var(--amber)}
+.links a.cur b{color:var(--amber)}
+
+/* ---------- hero ---------- */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:6.5rem 5vw 3rem}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:3rem;align-items:center;max-width:1360px;margin:0 auto;width:100%}
+.kicker{font-size:.72rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--teal);margin-bottom:1rem}
+.kicker::before{content:'';display:inline-block;width:26px;height:2px;background:var(--teal);vertical-align:middle;margin-right:.6rem}
+#hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(3rem,7.4vw,6.2rem);line-height:.98;letter-spacing:-.015em}
+#hero h1 em{font-style:italic;font-weight:600;color:var(--amber)}
+.lede{margin-top:1.3rem;max-width:34rem;color:var(--mut);font-size:1.06rem}
+.lede b{color:var(--txt)}
+.meta-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.6rem}
+.chip{font-family:var(--mono);font-size:.72rem;font-weight:500;color:#a8d8ff;background:#0d1e2e;border:1px solid #234260;
+  padding:.28rem .6rem;border-radius:6px;transition:transform .18s,border-color .18s}
+.chip:hover{transform:translateY(-2px);border-color:#3d6a96}
+.chip.am{color:var(--amber);border-color:#6b5310}
+.chip.te{color:var(--teal);border-color:#135f56}
+.chip.co{color:#ff9a9a;border-color:#6b2a2a}
+.chip.ok{color:#7ff0dd;border-color:#1a6e60;background:#0c2a26}
+.toc{margin-top:1.9rem;columns:2;column-gap:2.4rem;max-width:34rem}
+.toc a{display:flex;gap:.7rem;align-items:baseline;text-decoration:none;padding:.32rem 0;color:var(--mut);
+  border-bottom:1px dotted #23405c;font-size:.88rem;transition:color .18s,padding-left .18s;break-inside:avoid}
+.toc a:hover{color:var(--amber);padding-left:.4rem}
+.toc b{font-family:var(--mono);font-weight:500;color:var(--faint);font-size:.72rem}
+.scroll-cue{position:absolute;bottom:1.2rem;left:50%;transform:translateX(-50%);font-family:var(--mono);
+  font-size:.7rem;letter-spacing:.2em;color:var(--faint);animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+.convention{margin-top:1.6rem;max-width:34rem}
+
+/* ---------- plates ---------- */
+.plate{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;
+  overflow:hidden;box-shadow:0 22px 60px rgba(2,8,16,.5);transition:transform .3s,border-color .3s}
+.plate:hover{transform:translateY(-3px);border-color:var(--line2)}
+.plate>header{display:flex;align-items:baseline;gap:.9rem;padding:.8rem 1.1rem;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.ptag{font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#14100a;
+  background:var(--amber);padding:.2rem .5rem;border-radius:4px;white-space:nowrap}
+.plate>header .ptitle{font-family:var(--disp);font-weight:600;font-style:italic;font-size:1.02rem;color:#e9f2fb}
+.hint{margin-left:auto;font-family:var(--mono);font-size:.64rem;color:var(--faint);letter-spacing:.08em;white-space:nowrap}
+.view{position:relative;height:clamp(300px,42vw,470px);background:radial-gradient(600px 300px at 50% 20%,rgba(45,80,120,.18),transparent 70%)}
+.view.short{height:clamp(260px,34vw,380px)}
+.view canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.view canvas:active{cursor:grabbing}
+.figcap{padding:.7rem 1.1rem .9rem;font-family:var(--math);font-style:italic;font-size:.9rem;color:var(--mut);border-top:1px dashed #1c344d}
+.fallback{display:flex;align-items:center;justify-content:center;height:100%;padding:2rem;text-align:center;color:var(--faint);font-size:.9rem}
+
+/* controls */
+.ctrl{padding:.9rem 1.1rem;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:.45rem 1.4rem;background:rgba(0,0,0,.14)}
+.ctrl.one{grid-template-columns:1fr}
+.crow{display:grid;grid-template-columns:3.4rem 1fr 3.4rem;align-items:center;gap:.6rem}
+.crow label{font-family:var(--math);font-style:italic;font-size:.95rem;color:#bcd3e8;text-align:right;line-height:1}
+.crow label sub,.crow label sup{font-size:.68em;font-style:italic}
+.crow output{font-family:var(--mono);font-size:.72rem;color:var(--amber);text-align:left}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:#23425f;border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--amber);
+  border:3px solid #0a141f;box-shadow:0 0 0 1px #6b5310,0 2px 6px rgba(0,0,0,.5);transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--amber);border:3px solid #0a141f}
+input[type=checkbox]{accent-color:var(--teal);width:15px;height:15px;cursor:pointer}
+.cbox{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--mut);cursor:pointer;user-select:none}
+.cbox:hover{color:var(--txt)}
+.readout{padding:.8rem 1.1rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:.7rem 1.2rem;align-items:center;background:rgba(0,0,0,.1)}
+.ro-label{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);width:100%}
+
+/* tabs */
+.tabbar{display:flex;gap:2px;padding:0 1.1rem;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.tabbar button{font-family:var(--body);font-weight:600;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);
+  background:none;border:none;border-bottom:2px solid transparent;padding:.75rem .9rem;cursor:pointer;transition:color .2s,border-color .2s}
+.tabbar button:hover{color:var(--txt)}
+.tabbar button.on{color:var(--amber);border-bottom-color:var(--amber)}
+.tabpane{display:none}
+.tabpane.on{display:block;animation:fadein .45s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- mathematics ---------- */
+.m{font-family:var(--math);font-size:1.04em}
+.m i{font-style:italic}
+.m sub,.m sup{font-size:.7em}
+.fr{display:inline-flex;flex-direction:column;text-align:center;vertical-align:-.65em;line-height:1.1;font-size:.92em;margin:0 .12em}
+.fr .nu{border-bottom:1.2px solid currentColor;padding:0 .3em .06em}
+.fr .de{padding-top:.06em}
+.mat{position:relative;display:inline-grid;gap:.1em .6em;padding:.32em .72em;vertical-align:middle;
+  font-family:var(--math);font-size:.98em;line-height:1.25;border-radius:2px}
+.mat::before,.mat::after{content:'';position:absolute;top:0;bottom:0;width:.42em;border:1.6px solid currentColor}
+.mat::before{left:0;border-right:none}
+.mat::after{right:0;border-left:none}
+.mat i{font-style:italic}
+.mat .c{color:var(--mut)}
+.badge-neq{font-family:var(--mono);font-size:.85rem;color:var(--coral);border:1px solid #6b2a2a;background:#2a1214;padding:.2rem .55rem;border-radius:6px}
+.badge-eq{font-family:var(--mono);font-size:.85rem;color:#7ff0dd;border:1px solid #1a6e60;background:#0c2a26;padding:.2rem .55rem;border-radius:6px}
+
+/* paper cards */
+.paper{background:var(--paper);color:var(--ptxt);border-radius:6px;padding:1.35rem 1.5rem 1.45rem;position:relative;
+  box-shadow:0 16px 40px rgba(2,8,16,.45),0 2px 0 rgba(255,255,255,.06) inset;transition:transform .3s,box-shadow .3s}
+.paper:hover{transform:translateY(-3px) rotate(-.2deg);box-shadow:0 26px 60px rgba(2,8,16,.6)}
+.paper::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tagc,var(--amber-d));border-radius:6px 0 0 6px}
+.paper.te{--tagc:var(--teal-d)} .paper.co{--tagc:var(--coral-d)} .paper.bl{--tagc:var(--blue-d)}
+.ptagline{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+.ptagline .tag{font-family:var(--mono);font-size:.64rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--tagc,var(--amber-d));border:1px solid currentColor;padding:.14rem .5rem;border-radius:4px}
+.ptagline .tname{font-family:var(--disp);font-weight:600;font-style:italic;font-size:1.02rem;color:#26364a}
+.paper h4{font-family:var(--disp);font-weight:600;font-size:1.06rem;margin:.2rem 0 .5rem;color:#101c28}
+.paper p{font-size:.93rem;line-height:1.68;color:#2c3b4d;margin-bottom:.65rem}
+.paper p:last-child{margin-bottom:0}
+.paper .m{color:#101c28}
+.paper .m .c{color:var(--pmut)}
+.paper ul,.paper ol{font-size:.93rem;color:#2c3b4d;margin:0 0 .65rem 1.2rem}
+.paper li{margin-bottom:.3rem}
+.qed{float:right;font-family:var(--math);font-size:1.05rem}
+.mini{font-size:.82rem;padding:1rem 1.2rem}
+.quotewrap{border-left:3px solid var(--tagc,var(--amber-d));padding-left:.9rem;margin:.4rem 0 .7rem;font-style:italic;color:#33455c}
+
+/* ---------- chapters ---------- */
+.chapter{max-width:1360px;margin:0 auto;padding:5.5rem 5vw 2rem}
+.chapter-head{position:relative;margin-bottom:2.6rem;max-width:56rem}
+.chap-no{position:absolute;top:-3.2rem;right:-1rem;font-family:var(--disp);font-weight:900;font-size:clamp(6rem,14vw,10.5rem);
+  line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(90,140,190,.22);pointer-events:none;user-select:none}
+.chapter h2{font-family:var(--disp);font-weight:900;font-size:clamp(1.9rem,3.6vw,3rem);line-height:1.08;letter-spacing:-.01em;margin-top:.3rem}
+.chapter h2 em{font-style:italic;font-weight:600;color:var(--amber)}
+.dek{margin-top:.9rem;color:var(--mut);max-width:44rem;font-size:1.02rem}
+.duo{display:grid;grid-template-columns:1.06fr .94fr;gap:2.2rem;align-items:start;margin-bottom:3.4rem}
+.duo.flip{grid-template-columns:.94fr 1.06fr}
+.duo.flip .plate{order:2}
+.papers{display:flex;flex-direction:column;gap:1.4rem}
+.standalone{max-width:1100px;margin:0 auto 3.4rem}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);margin-top:4rem;background:linear-gradient(180deg,transparent,rgba(6,12,19,.9))}
+.foot-grid{max-width:1360px;margin:0 auto;padding:3.5rem 5vw 2rem;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2.6rem}
+footer h3{font-family:var(--disp);font-weight:600;font-style:italic;font-size:1.15rem;margin-bottom:1rem;color:#e9f2fb}
+.gloss{font-size:.86rem;color:var(--mut)}
+.gloss div{padding:.4rem 0;border-bottom:1px dotted #1f3a54;display:flex;gap:.8rem}
+.gloss .m{color:#cfe2f5;white-space:nowrap;min-width:5.2rem}
+.legend-row{display:flex;align-items:center;gap:.7rem;font-size:.86rem;color:var(--mut);padding:.34rem 0}
+.sw{width:14px;height:14px;border-radius:3px;flex:none}
+.colophon{max-width:1360px;margin:0 auto;padding:1.2rem 5vw 2.4rem;font-family:var(--mono);font-size:.68rem;color:var(--faint);letter-spacing:.06em}
+
+@media(max-width:1020px){
+  .hero-grid,.duo,.duo.flip{grid-template-columns:1fr}
+  .duo.flip .plate{order:0}
+  .foot-grid{grid-template-columns:1fr}
+  .chap-no{right:0;top:-2.4rem}
+  .ctrl{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<canvas id="ambient" aria-hidden="true"></canvas>
+<div id="progress"></div>
+
+<nav id="topnav" aria-label="Sections">
+  <div class="brand"><span class="glyph">T<sup>ij</sup><sub>kl</sub></span>The Tensor Atlas</div>
+  <div class="links">
+    <a href="#s1"><b>01</b>Symmetry</a>
+    <a href="#s2"><b>02</b>Sums</a>
+    <a href="#s3"><b>03</b>Products</a>
+    <a href="#s4"><b>04</b>Matrices</a>
+    <a href="#s5"><b>05</b>Metric</a>
+    <a href="#s6"><b>06</b>Reciprocal</a>
+    <a href="#s7"><b>07</b>Associated</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header id="hero">
+  <div class="hero-grid">
+    <div>
+      <p class="kicker">An interactive treatise · seven sections · twelve plates</p>
+      <h1>The Tensor <em>Atlas</em></h1>
+      <p class="lede">Rank, valence, symmetry, products, metrics — the machinery beneath continuum mechanics and general relativity, drawn as <b>living geometry</b>. Every figure below is an instrument: drag it, deform it, decompose it.</p>
+      <div class="meta-row">
+        <span class="chip am">Einstein convention in force</span>
+        <span class="chip">ℝ³ figures · live WebGL</span>
+        <span class="chip">12 interactive plates</span>
+        <span class="chip te">definitions · theorems · proofs</span>
+      </div>
+      <article class="paper mini convention te">
+        <div class="ptagline"><span class="tag">Convention</span><span class="tname">Einstein summation</span></div>
+        <p>A repeated index — once up, once down, or twice lowered in Euclidean settings — is summed over <span class="m">1…<i>n</i></span>. Thus <span class="m"><i>a</i><sub><i>i</i></sub><i>b</i><sup><i>i</i></sup> = Σ<sub><i>i</i></sub> <i>a</i><sub><i>i</i></sub><i>b</i><sup><i>i</i></sup></span>, and <span class="m"><i>T</i><sub><i>ij</i></sub><i>x</i><sup><i>i</i></sup><i>x</i><sup><i>j</i></sup></span> is a double sum. Free indices must balance on both sides of every equation.</p>
+      </article>
+      <nav class="toc" aria-label="Contents">
+        <a href="#s1"><b>§01</b> Symmetric &amp; skew-symmetric tensors</a>
+        <a href="#s2"><b>§02</b> Addition &amp; subtraction of tensors</a>
+        <a href="#s3"><b>§03</b> Outer &amp; inner products · quotient law</a>
+        <a href="#s4"><b>§04</b> Matrix algebra</a>
+        <a href="#s5"><b>§05</b> The line element &amp; metric tensors</a>
+        <a href="#s6"><b>§06</b> Conjugate / reciprocal tensors</a>
+        <a href="#s7"><b>§07</b> Associated tensors</a>
+      </nav>
+    </div>
+    <figure class="plate reveal">
+      <header><span class="ptag">Fig. 0</span><span class="ptitle">A symmetric rank-2 tensor, breathing</span><span class="hint">drag to orbit</span></header>
+      <div class="view need3d"><canvas id="cv-hero"></canvas></div>
+      <figcaption class="figcap">The image of the unit sphere under a symmetric map <span class="m"><i>A</i><sup><i>i</i></sup><sub>&nbsp;<i>j</i></sub></span>: an ellipsoid whose principal axes (eigenvectors) stay orthogonal while off-diagonal components oscillate.</figcaption>
+    </figure>
+  </div>
+  <div class="scroll-cue">⌄ &nbsp;BEGIN §01</div>
+</header>
+
+<main>
+
+<!-- ============ §1 ============ -->
+<section id="s1" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">01</div>
+    <p class="kicker">Section 01 · Rank-2 anatomy</p>
+    <h2>Symmetric &amp; <em>Skew-Symmetric</em> Tensors</h2>
+    <p class="dek">Every rank-2 tensor splits, uniquely, into a part that <b>stretches</b> and a part that <b>rotates</b>. The two plates below are that theorem, made visible.</p>
+  </div>
+
+  <div class="duo">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate I</span><span class="ptitle">The stretch ellipsoid — symmetric part</span><span class="hint">drag to orbit</span></header>
+      <div class="view need3d"><canvas id="cv-sym"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>A<sub>11</sub></label><input type="range" id="sy11" min="-1" max="2.8" step="0.01" value="1.7" aria-label="A11"><output id="sy11v"></output></div>
+        <div class="crow"><label>A<sub>22</sub></label><input type="range" id="sy22" min="-1" max="2.8" step="0.01" value="1.1" aria-label="A22"><output id="sy22v"></output></div>
+        <div class="crow"><label>A<sub>33</sub></label><input type="range" id="sy33" min="-1" max="2.8" step="0.01" value="2.1" aria-label="A33"><output id="sy33v"></output></div>
+        <div class="crow"><label>A<sub>12</sub></label><input type="range" id="sy12" min="-1.4" max="1.4" step="0.01" value="0.55" aria-label="A12"><output id="sy12v"></output></div>
+        <div class="crow"><label>A<sub>13</sub></label><input type="range" id="sy13" min="-1.4" max="1.4" step="0.01" value="0.3" aria-label="A13"><output id="sy13v"></output></div>
+        <div class="crow"><label>A<sub>23</sub></label><input type="range" id="sy23" min="-1.4" max="1.4" step="0.01" value="-0.4" aria-label="A23"><output id="sy23v"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">symmetric matrix A = Aᵀ and its principal values λᵢ</div>
+        <span class="mat" id="ro-sym-mat" style="color:#ffd166"></span>
+        <span id="ro-sym-eig" style="display:flex;gap:.4rem;flex-wrap:wrap"></span>
+      </div>
+      <figcaption class="figcap">Ghost sphere = identity. Amber ellipsoid = image of the sphere under A. Arrows mark eigendirections; length = |λᵢ|, red tips mean λᵢ &lt; 0. Shear the sliders and watch the axes swing while staying orthogonal.</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Definition 1.1</span><span class="tname">Symmetry</span></div>
+        <p>A rank-2 tensor <span class="m"><i>T</i><sub><i>ij</i></sub></span> is <b>symmetric</b> if <span class="m"><i>T</i><sub><i>ij</i></sub> = <i>T</i><sub><i>ji</i></sub></span> and <b>skew-symmetric</b> (antisymmetric) if <span class="m"><i>T</i><sub><i>ij</i></sub> = −<i>T</i><sub><i>ji</i></sub></span>.</p>
+        <p>Setting <span class="m"><i>i</i> = <i>j</i></span> in the skew condition gives <span class="m"><i>T</i><sub><i>ii</i></sub> = −<i>T</i><sub><i>ii</i></sub> ⇒ <i>T</i><sub><i>ii</i></sub> = 0</span>: <b>every diagonal entry of a skew tensor vanishes</b>, so a skew tensor in <span class="m"><i>n</i></span> dimensions carries only <span class="m"><i>n</i>(<i>n</i>−1)/2</span> independent components, against <span class="m"><i>n</i>(<i>n</i>+1)/2</span> for a symmetric one.</p>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 1.2</span><span class="tname">Canonical decomposition</span></div>
+        <p>Every rank-2 tensor splits <b>uniquely</b> as symmetric + skew:</p>
+        <p style="text-align:center;font-size:1.06em"><span class="m"><i>T</i><sub><i>ij</i></sub> = <i>T</i><sub>(<i>ij</i>)</sub> + <i>T</i><sub>[<i>ij</i>]</sub>,&nbsp;&nbsp; <i>T</i><sub>(<i>ij</i>)</sub> := <span class="fr"><span class="nu">1</span><span class="de">2</span></span>(<i>T</i><sub><i>ij</i></sub>+<i>T</i><sub><i>ji</i></sub>),&nbsp;&nbsp; <i>T</i><sub>[<i>ij</i>]</sub> := <span class="fr"><span class="nu">1</span><span class="de">2</span></span>(<i>T</i><sub><i>ij</i></sub>−<i>T</i><sub><i>ji</i></sub>)</span></p>
+        <p><b>Proof.</b> Round brackets symmetrise, square brackets antisymmetrise by construction; adding the two definitions telescopes to <span class="m"><i>T</i><sub><i>ij</i></sub></span>. For uniqueness, suppose <span class="m"><i>T</i> = <i>S</i>+<i>K</i> = <i>S</i>′+<i>K</i>′</span>. Then <span class="m"><i>D</i> := <i>S</i>−<i>S</i>′ = <i>K</i>′−<i>K</i></span> is simultaneously symmetric and skew, so <span class="m"><i>D</i><sub><i>ij</i></sub> = <i>D</i><sub><i>ji</i></sub> = −<i>D</i><sub><i>ji</i></sub> ⇒ <i>D</i> = 0</span>. <span class="qed">∎</span></p>
+        <p>The dimensions agree: <span class="m"><i>n</i>(<i>n</i>+1)/2 + <i>n</i>(<i>n</i>−1)/2 = <i>n</i><sup>2</sup></span>, the full count of a rank-2 tensor.</p>
+      </article>
+      <article class="paper bl reveal">
+        <div class="ptagline"><span class="tag">Worked Example</span><span class="tname">Decompose by hand</span></div>
+        <p>Take <span class="mat" style="color:#1f4f9e"><i>4</i><i>5</i><i>2</i><i>1</i><i>6</i><i>3</i><i>−2</i><i>0</i><i>8</i></span> (3 columns). Symmetric part — average with the transpose:</p>
+        <p style="text-align:center"><span class="mat" style="color:#8a5f00"><i>4</i><i>3</i><i>0</i><i>3</i><i>6</i><i>1.5</i><i>0</i><i>1.5</i><i>8</i></span> &nbsp;+&nbsp; <span class="mat" style="color:#a12b2b"><i>0</i><i>2</i><i>2</i><i>−2</i><i>0</i><i>1.5</i><i>−2</i><i>−1.5</i><i>0</i></span></p>
+        <p>and their sum reproduces <span class="m"><i>T</i></span> exactly. Every numerical simulation in this atlas obeys the same identity to machine precision.</p>
+      </article>
+    </div>
+  </div>
+
+  <div class="duo flip">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate II</span><span class="ptitle">The rotation generator — skew part</span><span class="hint">drag to orbit</span></header>
+      <div class="view need3d"><canvas id="cv-skew"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>ω<sup>1</sup></label><input type="range" id="sk1" min="-2" max="2" step="0.01" value="0.3" aria-label="omega1"><output id="sk1v"></output></div>
+        <div class="crow"><label>ω<sup>2</sup></label><input type="range" id="sk2" min="-2" max="2" step="0.01" value="1.1" aria-label="omega2"><output id="sk2v"></output></div>
+        <div class="crow"><label>ω<sup>3</sup></label><input type="range" id="sk3" min="-2" max="2" step="0.01" value="0.5" aria-label="omega3"><output id="sk3v"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">skew tensor K generated by ω — note the zero diagonal</div>
+        <span class="mat" id="ro-skew-mat" style="color:#7ff0dd"></span>
+        <span class="chip te" id="ro-skew-norm">|ω| = 0</span>
+      </div>
+      <figcaption class="figcap">A skew tensor cannot stretch anything — it is an infinitesimal rotation. The rigid frame spins about the amber axis ω with angular speed |ω|; the ring of arrows shows the swirl field x ↦ ω × x.</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 1.3</span><span class="tname">Skew tensors ↔ axial vectors in ℝ³</span></div>
+        <p>In three dimensions the space of skew tensors is 3-dimensional, exactly like vectors. The bridge is the Levi-Civita symbol <span class="m"><i>ε</i><sub><i>ijk</i></sub></span>:</p>
+        <p style="text-align:center"><span class="m"><i>K</i><sub><i>ij</i></sub> = −<i>ε</i><sub><i>ijk</i></sub><i>ω</i><sup><i>k</i></sup>,&nbsp;&nbsp;&nbsp; <i>ω</i><sup><i>k</i></sup> = −<span class="fr"><span class="nu">1</span><span class="de">2</span></span><i>ε</i><sup><i>kij</i></sup><i>K</i><sub><i>ij</i></sub></span></p>
+        <p>so that acting with <span class="m"><i>K</i></span> is the cross product: <span class="m">(<i>Kx</i>)<sup><i>i</i></sup> = (<i>ω</i> × <i>x</i>)<sup><i>i</i></sup></span>. In components, <span class="m"><i>K</i><sub><i>ij</i></sub></span> is the matrix shown in Plate II. Consequently <span class="m">det <i>K</i> = 0</span> and <span class="m">rank <i>K</i> = 2</span> (when <span class="m"><i>ω</i> ≠ 0</span>): its kernel is the axis <span class="m"><i>ω</i></span> itself.</p>
+      </article>
+      <article class="paper co reveal">
+        <div class="ptagline"><span class="tag">Remark 1.4</span><span class="tname">What each part does to space</span></div>
+        <ul>
+          <li><b>Symmetric:</b> stretches along an orthogonal frame of principal directions (Plate I). Quadratic form <span class="m"><i>x</i><sup><i>i</i></sup><i>A</i><sub><i>ij</i></sub><i>x</i><sup><i>j</i></sup></span> — energy, inertia, stress.</li>
+          <li><b>Skew:</b> infinitesimal rigid rotation (Plate II); vorticity <span class="m"><i>ω</i> = <span class="fr"><span class="nu">1</span><span class="de">2</span></span>∇×<i>v</i></span> in fluid mechanics.</li>
+          <li>The symmetric part alone is felt by quadratic forms: <span class="m"><i>x</i><sup><i>i</i></sup><i>T</i><sub><i>ij</i></sub><i>x</i><sup><i>j</i></sup> = <i>x</i><sup><i>i</i></sup><i>T</i><sub>(<i>ij</i>)</sub><i>x</i><sup><i>j</i></sup></span>, since the skew part cancels against itself.</li>
+        </ul>
+      </article>
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Proposition 1.5</span><span class="tname">Symmetry survives coordinate changes</span></div>
+        <p>If <span class="m"><i>T</i><sub><i>ij</i></sub></span> transforms covariantly, <span class="m"><i>T</i>′<sub><i>ij</i></sub> = <span class="fr"><span class="nu">∂<i>x</i><sup><i>p</i></sup></span><span class="de">∂<i>x</i>′<sup><i>i</i></sup></span></span><span class="fr"><span class="nu">∂<i>x</i><sup><i>q</i></sup></span><span class="de">∂<i>x</i>′<sup><i>j</i></sup></span></span><i>T</i><sub><i>pq</i></sub></span>, then swapping <span class="m"><i>i</i>↔<i>j</i></span> merely swaps the dummy labels <span class="m"><i>p</i>,<i>q</i></span> — so symmetry (and skew-symmetry) is a <b>coordinate-independent property</b>, not an artefact of one frame.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §2 ============ -->
+<section id="s2" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">02</div>
+    <p class="kicker">Section 02 · The vector space of tensors</p>
+    <h2>Addition &amp; <em>Subtraction</em> of Tensors</h2>
+    <p class="dek">Tensors of a fixed type form a vector space: they add componentwise, they negate, they cancel. Plate III overlays three ellipsoids so you can watch <span class="m"><i>A</i>+<i>B</i></span> happen.</p>
+  </div>
+  <div class="duo">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate III</span><span class="ptitle">Adding maps: A, B and A ± B</span><span class="hint">drag to orbit</span></header>
+      <div class="view need3d"><canvas id="cv-add"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>A<sub>11</sub></label><input type="range" id="aa11" min="0.2" max="2.6" step="0.01" value="1.9"><output id="aa11v"></output></div>
+        <div class="crow"><label>B<sub>11</sub></label><input type="range" id="bb11" min="-1.4" max="2.2" step="0.01" value="0.8"><output id="bb11v"></output></div>
+        <div class="crow"><label>A<sub>22</sub></label><input type="range" id="aa22" min="0.2" max="2.6" step="0.01" value="1.2"><output id="aa22v"></output></div>
+        <div class="crow"><label>B<sub>22</sub></label><input type="range" id="bb22" min="-1.4" max="2.2" step="0.01" value="1.6"><output id="bb22v"></output></div>
+        <div class="crow"><label>A<sub>33</sub></label><input type="range" id="aa33" min="0.2" max="2.6" step="0.01" value="0.9"><output id="aa33v"></output></div>
+        <div class="crow"><label>B<sub>33</sub></label><input type="range" id="bb33" min="-1.4" max="2.2" step="0.01" value="1.3"><output id="bb33v"></output></div>
+        <div class="crow"><label>A<sub>12</sub></label><input type="range" id="aa12" min="-1.2" max="1.2" step="0.01" value="0.5"><output id="aa12v"></output></div>
+        <div class="crow"><label>B<sub>12</sub></label><input type="range" id="bb12" min="-1.2" max="1.2" step="0.01" value="-0.45"><output id="bb12v"></output></div>
+        <div class="crow"><label>A<sub>13</sub></label><input type="range" id="aa13" min="-1.2" max="1.2" step="0.01" value="0.2"><output id="aa13v"></output></div>
+        <div class="crow"><label>B<sub>13</sub></label><input type="range" id="bb13" min="-1.2" max="1.2" step="0.01" value="0.3"><output id="bb13v"></output></div>
+        <div class="crow"><label>A<sub>23</sub></label><input type="range" id="aa23" min="-1.2" max="1.2" step="0.01" value="-0.3"><output id="aa23v"></output></div>
+        <div class="crow"><label>B<sub>23</sub></label><input type="range" id="bb23" min="-1.2" max="1.2" step="0.01" value="0.15"><output id="bb23v"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">result mode &amp; invariants</div>
+        <label class="cbox"><input type="radio" name="addmode" value="1" checked> A + B</label>
+        <label class="cbox"><input type="radio" name="addmode" value="-1"> A − B</label>
+        <span class="chip co" id="trA"></span><span class="chip te" id="trB"></span><span class="chip am" id="trC"></span><span class="chip" id="detC"></span>
+      </div>
+      <figcaption class="figcap">Coral cage = image of the unit sphere under A; teal cage = under B; solid amber = under A ± B. The trace chips demonstrate tr(A±B) = tr A ± tr B — while det refuses to be linear.</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Definition 2.1</span><span class="tname">Sum and difference</span></div>
+        <p>For two tensors <b>of the same valence and the same variance type</b>, addition and subtraction are componentwise:</p>
+        <p style="text-align:center"><span class="m">(<i>A</i> ± <i>B</i>)<sup><i>i</i><i>j</i>…</sup><sub><i>p</i><i>q</i>…</sub> = <i>A</i><sup><i>i</i><i>j</i>…</sup><sub><i>p</i><i>q</i>…</sub> ± <i>B</i><sup><i>i</i><i>j</i>…</sup><sub><i>p</i><i>q</i>…</sub></span></p>
+        <p>The expression <span class="m"><i>A</i>+<i>B</i></span> is <b>undefined</b> if <span class="m"><i>A</i></span> and <span class="m"><i>B</i></span> have different index structures — you may not add a vector to a rank-2 tensor, nor a covariant pair to a mixed pair (without first using the metric of §07).</p>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 2.2</span><span class="tname">Closure: the sum is a tensor</span></div>
+        <p><b>Proof.</b> Both terms obey the same linear transformation law, e.g. for type (0,2):</p>
+        <p style="text-align:center"><span class="m">(<i>A</i>+<i>B</i>)′<sub><i>ij</i></sub> = <span class="fr"><span class="nu">∂<i>x</i><sup><i>p</i></sup></span><span class="de">∂<i>x</i>′<sup><i>i</i></sup></span></span><span class="fr"><span class="nu">∂<i>x</i><sup><i>q</i></sup></span><span class="de">∂<i>x</i>′<sup><i>j</i></sup></span></span>(<i>A</i><sub><i>pq</i></sub>+<i>B</i><sub><i>pq</i></sub>) = <span class="fr"><span class="nu">∂<i>x</i><sup><i>p</i></sup></span><span class="de">∂<i>x</i>′<sup><i>i</i></sup></span></span><span class="fr"><span class="nu">∂<i>x</i><sup><i>q</i></sup></span><span class="de">∂<i>x</i>′<sup><i>j</i></sup></span></span>(<i>A</i>+<i>B</i>)<sub><i>pq</i></sub></span></p>
+        <p>because the Jacobian factors distribute. Hence tensors of a fixed type form a <b>vector space</b> of dimension <span class="m"><i>n</i><sup><i>r</i>+<i>s</i></sup></span>: addition is commutative and associative, there is a zero tensor <span class="m">0</span>, and every tensor has the additive inverse <span class="m">−<i>B</i></span>, which is what subtraction means: <span class="m"><i>A</i>−<i>B</i> := <i>A</i>+(−<i>B</i>)</span>. <span class="qed">∎</span></p>
+      </article>
+      <article class="paper bl reveal">
+        <div class="ptagline"><span class="tag">Remark 2.3</span><span class="tname">What is and isn't linear</span></div>
+        <ul>
+          <li>The trace is linear: <span class="m">tr(<i>A</i>±<i>B</i>) = tr <i>A</i> ± tr <i>B</i></span> — verify with the chips beside Plate III.</li>
+          <li>The determinant is <b>not</b>: <span class="m">det(<i>A</i>+<i>B</i>) ≠ det <i>A</i> + det <i>B</i></span> in general.</li>
+          <li>There is no “division” of tensors; the quotient law of §03 is the closest legitimate substitute.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §3 ============ -->
+<section id="s3" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">03</div>
+    <p class="kicker">Section 03 · Building new tensors</p>
+    <h2>Outer Product, Inner Product &amp; the <em>Quotient Law</em></h2>
+    <p class="dek">Three operations manufacture tensors: juxtaposition (outer), contraction (inner), and implication (the quotient law — if it acts like a tensor on everything, it <b>is</b> one).</p>
+  </div>
+  <div class="standalone plate reveal">
+    <div class="tabbar" role="tablist">
+      <button class="on" data-pane="pane-outer" role="tab">Plate IV · Outer product</button>
+      <button data-pane="pane-inner" role="tab">Plate V · Inner product</button>
+      <button data-pane="pane-quot" role="tab">Plate VI · Quotient law</button>
+    </div>
+
+    <div class="tabpane on" id="pane-outer">
+      <div class="view need3d" style="height:clamp(300px,40vw,430px)"><canvas id="cv-out"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>θ<sub>a</sub></label><input type="range" id="oath" min="10" max="170" step="1" value="55"><output id="oathv"></output></div>
+        <div class="crow"><label>θ<sub>b</sub></label><input type="range" id="obth" min="10" max="170" step="1" value="110"><output id="obthv"></output></div>
+        <div class="crow"><label>φ<sub>a</sub></label><input type="range" id="oaph" min="0" max="360" step="1" value="20"><output id="oaphv"></output></div>
+        <div class="crow"><label>φ<sub>b</sub></label><input type="range" id="obph" min="0" max="360" step="1" value="200"><output id="obphv"></output></div>
+        <div class="crow"><label>|a|</label><input type="range" id="oar" min="0.3" max="1.8" step="0.01" value="1.3"><output id="oarv"></output></div>
+        <div class="crow"><label>|b|</label><input type="range" id="obr" min="0.3" max="1.8" step="0.01" value="1.1"><output id="obrv"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">dyad matrix aᵢ bⱼ</div>
+        <span class="mat" id="ro-dyad" style="color:#ffd166"></span>
+        <span class="chip co">rank = 1</span><span class="chip">det = 0</span><span class="chip te" id="ro-dotv">a·b = 0</span>
+      </div>
+      <figcaption class="figcap">The dyad x ↦ a(b·x) projects onto the teal plane (kernel: b⊥) and lands on the coral line span(a). The pancake is the image of the unit sphere (regularised by +ε·1 for visibility). In general a⊗b ≠ b⊗a; rather (a⊗b)ᵀ = b⊗a.</figcaption>
+    </div>
+
+    <div class="tabpane" id="pane-inner">
+      <div class="view need3d" style="height:clamp(300px,40vw,430px)"><canvas id="cv-in"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>θ<sub>a</sub></label><input type="range" id="iath" min="10" max="170" step="1" value="60"><output id="iathv"></output></div>
+        <div class="crow"><label>θ<sub>b</sub></label><input type="range" id="ibth" min="10" max="170" step="1" value="75"><output id="ibthv"></output></div>
+        <div class="crow"><label>φ<sub>a</sub></label><input type="range" id="iaph" min="0" max="360" step="1" value="0"><output id="iaphv"></output></div>
+        <div class="crow"><label>φ<sub>b</sub></label><input type="range" id="ibph" min="0" max="360" step="1" value="95"><output id="ibphv"></output></div>
+        <div class="crow"><label>|a|</label><input type="range" id="iar" min="0.4" max="2" step="0.01" value="1.5"><output id="iarv"></output></div>
+        <div class="crow"><label>|b|</label><input type="range" id="ibr" min="0.4" max="2" step="0.01" value="1.2"><output id="ibrv"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">the scalar product</div>
+        <span class="chip am" id="ro-dot"></span><span class="chip" id="ro-mags"></span><span class="chip te" id="ro-ang"></span>
+      </div>
+      <figcaption class="figcap">Contraction of the outer product: a·b = aᵢbⁱ. The dashed leg is the orthogonal projection of b onto the line of a; the amber arc marks θ. Two indices enter, a scalar leaves — rank reduced by two.</figcaption>
+    </div>
+
+    <div class="tabpane" id="pane-quot">
+      <div style="padding:1.2rem;display:grid;grid-template-columns:1fr 1.1fr;gap:1.6rem" class="quotgrid">
+        <div>
+          <div class="ro-label" style="margin-bottom:.6rem">choose an object Tⁱⱼ, a vector x, and rotate the frame by θ</div>
+          <div class="ctrl one" style="border:none;background:none;padding:0">
+            <div class="crow"><label>T<sup>1</sup><sub>1</sub></label><input type="range" id="q11" min="-2" max="2" step="0.01" value="1.2"><output id="q11v"></output></div>
+            <div class="crow"><label>T<sup>1</sup><sub>2</sub></label><input type="range" id="q12" min="-2" max="2" step="0.01" value="-0.7"><output id="q12v"></output></div>
+            <div class="crow"><label>T<sup>2</sup><sub>1</sub></label><input type="range" id="q21" min="-2" max="2" step="0.01" value="0.4"><output id="q21v"></output></div>
+            <div class="crow"><label>T<sup>2</sup><sub>2</sub></label><input type="range" id="q22" min="-2" max="2" step="0.01" value="0.9"><output id="q22v"></output></div>
+            <div class="crow"><label>x<sup>1</sup></label><input type="range" id="qx1" min="-2" max="2" step="0.01" value="1.1"><output id="qx1v"></output></div>
+            <div class="crow"><label>x<sup>2</sup></label><input type="range" id="qx2" min="-2" max="2" step="0.01" value="0.6"><output id="qx2v"></output></div>
+            <div class="crow"><label>θ</label><input type="range" id="qang" min="-180" max="180" step="1" value="37"><output id="qangv"></output></div>
+          </div>
+        </div>
+        <div>
+          <div class="ro-label" style="margin-bottom:.6rem">two routes to the rotated result — they must agree</div>
+          <p style="font-size:.86rem;color:var(--mut)">Route 1: compute <span class="m"><i>y</i> = <i>T</i><i>x</i></span>, then rotate the vector: <span class="m"><i>y</i>′ = <i>R</i><i>y</i></span></p>
+          <p><span class="mat" id="qy-r" style="color:#ffd166"></span></p>
+          <p style="font-size:.86rem;color:var(--mut)">Route 2: rotate the objects first — <span class="m"><i>T</i>′ = <i>R</i><i>T</i><i>R</i><sup>T</sup></span>, <span class="m"><i>x</i>′ = <i>R</i><i>x</i></span> — then contract: <span class="m">ŷ = <i>T</i>′<i>x</i>′</span></p>
+          <p><span class="mat" id="qy-t" style="color:#7ff0dd"></span></p>
+          <p style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap"><span class="badge-eq" id="qbadge">✓ equal</span>
+          <span style="font-size:.8rem;color:var(--mut)" id="qerr">|Δ| ≈ 0</span></p>
+        </div>
+      </div>
+      <figcaption class="figcap">A numerical trial of the quotient law. For every T, x and rotation θ, both routes coincide to ~10⁻¹⁵ — the array T inherits a transformation law from the vector it produces.</figcaption>
+    </div>
+  </div>
+
+  <div class="duo" style="margin-top:2.6rem">
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Definition 3.1</span><span class="tname">Outer (tensor) product</span></div>
+        <p>Multiply components, concatenate indices:</p>
+        <p style="text-align:center"><span class="m">(<i>A</i> ⊗ <i>B</i>)<sup><i>i</i>…<i>m</i></sup><sub><i>j</i>…<i>q</i></sub> = <i>A</i><sup><i>i</i>…</sup><sub><i>j</i>…</sub> · <i>B</i><sup><i>m</i>…</sup><sub><i>q</i>…</sub></span></p>
+        <p>Ranks <b>add</b>. The dyad of two vectors, <span class="m">(<i>a</i>⊗<i>b</i>)<sub><i>ij</i></sub> = <i>a</i><sub><i>i</i></sub><i>b</i><sub><i>j</i></sub></span>, is the rank-1 matrix of Plate IV. The outer product is <b>not commutative</b>: <span class="m"><i>a</i>⊗<i>b</i> ≠ <i>b</i>⊗<i>a</i></span>, but <span class="m">(<i>a</i>⊗<i>b</i>)<sup>T</sup> = <i>b</i>⊗<i>a</i></span>. That it produces a genuine tensor follows because products of Jacobian factors are Jacobian factors.</p>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Definition 3.2</span><span class="tname">Contraction &amp; inner product</span></div>
+        <p><b>Contraction</b> sets one upper index equal to one lower index and sums — rank drops by two: <span class="m"><i>C</i><sup><i>i</i></sup><sub><i>l</i></sub> = <i>A</i><sup><i>i</i><i>j</i></sup><sub><i>j</i><i>l</i></sub></span>. The <b>inner product</b> of two tensors is the contraction of their outer product; the archetypes:</p>
+        <ul>
+          <li><span class="m"><i>a</i>·<i>b</i> = <i>a</i><sub><i>i</i></sub><i>b</i><sup><i>i</i></sup></span> — scalar (Plate V);</li>
+          <li><span class="m"><i>C</i><sup><i>i</i></sup><sub><i>k</i></sub> = <i>A</i><sup><i>i</i></sup><sub><i>j</i></sub><i>B</i><sup><i>j</i></sup><sub><i>k</i></sub></span> — matrix multiplication (§04);</li>
+          <li><span class="m"><i>A</i>:<i>B</i> = <i>A</i><sub><i>ij</i></sub><i>B</i><sup><i>ij</i></sup></span> — full (double) contraction, the Frobenius pairing.</li>
+        </ul>
+        <p><b>Theorem (contraction).</b> Any contraction of a tensor is a tensor. <b>Proof sketch:</b> the paired Jacobians collapse, <span class="m"><span class="fr"><span class="nu">∂<i>x</i>′<sup><i>j</i></sup></span><span class="de">∂<i>x</i><sup><i>k</i></sup></span></span><span class="fr"><span class="nu">∂<i>x</i><sup><i>k</i></sup></span><span class="de">∂<i>x</i>′<sup><i>j</i></sup></span></span> = <i>δ</i><sup><i>j</i></sup><sub><i>j</i></sub></span>, by the chain rule — exactly one factor of the transformation law disappears for each contraction. <span class="qed">∎</span></p>
+      </article>
+    </div>
+    <div class="papers">
+      <article class="paper co reveal">
+        <div class="ptagline"><span class="tag">Theorem 3.3</span><span class="tname">The quotient law</span></div>
+        <p>Let <span class="m"><i>T</i><sup><i>i</i></sup><sub><i>j</i></sub></span> be a set of <span class="m"><i>n</i><sup>2</sup></span> functions in every coordinate system, and suppose that for <b>every</b> vector <span class="m"><i>x</i></span> the quantities <span class="m"><i>y</i><sup><i>i</i></sup> = <i>T</i><sup><i>i</i></sup><sub><i>j</i></sub><i>x</i><sup><i>j</i></sup></span> are the components of a <b>vector</b>. Then <span class="m"><i>T</i></span> is a tensor of type (1,1).</p>
+        <p><b>Proof.</b> In a primed frame, two expressions for <span class="m"><i>y</i>′<sup><i>p</i></sup></span> hold. First, because <span class="m"><i>y</i></span> is a vector: <span class="m"><i>y</i>′<sup><i>p</i></sup> = <span class="fr"><span class="nu">∂<i>x</i>′<sup><i>p</i></sup></span><span class="de">∂<i>x</i><sup><i>i</i></sup></span></span><i>T</i><sup><i>i</i></sup><sub><i>j</i></sub><i>x</i><sup><i>j</i></sup> = <span class="fr"><span class="nu">∂<i>x</i>′<sup><i>p</i></sup></span><span class="de">∂<i>x</i><sup><i>i</i></sup></span></span><span class="fr"><span class="nu">∂<i>x</i><sup><i>j</i></sup></span><span class="de">∂<i>x</i>′<sup><i>q</i></sup></span></span><i>T</i><sup><i>i</i></sup><sub><i>j</i></sub><i>x</i>′<sup><i>q</i></sup></span>. Second, by the hypothesis applied in the primed frame: <span class="m"><i>y</i>′<sup><i>p</i></sup> = <i>T</i>′<sup><i>p</i></sup><sub><i>q</i></sub><i>x</i>′<sup><i>q</i></sup></span>. Subtracting, <span class="m">(<i>T</i>′<sup><i>p</i></sup><sub><i>q</i></sub> − ∂<i>x</i>′<sup><i>p</i></sup>/∂<i>x</i><sup><i>i</i></sup> · ∂<i>x</i><sup><i>j</i></sup>/∂<i>x</i>′<sup><i>q</i></sup> <i>T</i><sup><i>i</i></sup><sub><i>j</i></sub>) <i>x</i>′<sup><i>q</i></sup> = 0</span> for <b>all</b> <span class="m"><i>x</i>′</span>, hence the bracket vanishes — the tensor law itself. <span class="qed">∎</span></p>
+      </article>
+      <article class="paper bl reveal">
+        <div class="ptagline"><span class="tag">Corollaries 3.4</span><span class="tname">Uses of the law</span></div>
+        <ul>
+          <li><b>Kronecker delta:</b> <span class="m"><i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub><i>x</i><sup><i>j</i></sup> = <i>x</i><sup><i>i</i></sup></span> is a vector for all <span class="m"><i>x</i></span>, so <span class="m"><i>δ</i></span> is a (1,1) tensor — in <b>every</b> coordinate system.</li>
+          <li><b>Metric from a line element:</b> if <span class="m"><i>g</i><sub><i>ij</i></sub><i>dx</i><sup><i>i</i></sup><i>dx</i><sup><i>j</i></sup></span> is a scalar for all displacements, then <span class="m"><i>g</i><sub><i>ij</i></sub></span> is a (0,2) tensor (the symmetric part; see §05).</li>
+          <li><b>Inverse map:</b> if <span class="m"><i>A</i><sup><i>i</i></sup><sub><i>j</i></sub><i>x</i><sup><i>j</i></sup></span> and its inverse output vectors for all inputs, the inverse array is a tensor too.</li>
+          <li>Variants exist for higher-rank testers: contracting with an arbitrary tensor and getting a tensor implies tensoriality of the quotient.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §4 ============ -->
+<section id="s4" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">04</div>
+    <p class="kicker">Section 04 · The familiar, promoted</p>
+    <h2><em>Matrix Algebra</em> as Tensor Algebra</h2>
+    <p class="dek">A matrix is the component array of a mixed (1,1) tensor — a linear map. Multiplication is composition, the trace is a contraction, and the determinant is the volume scale factor.</p>
+  </div>
+  <div class="standalone plate reveal">
+    <div class="tabbar" role="tablist">
+      <button class="on" data-pane="pane-comp" role="tab">Plate VII · Composition AB ≠ BA</button>
+      <button data-pane="pane-det" role="tab">Plate VIII · det = volume</button>
+    </div>
+    <div class="tabpane on" id="pane-comp">
+      <div class="view need3d" style="height:clamp(300px,40vw,430px)"><canvas id="cv-comp"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>α (deg)</label><input type="range" id="cpa" min="-120" max="120" step="1" value="48"><output id="cpav"></output></div>
+        <div class="crow"><label>k (shear)</label><input type="range" id="cpk" min="-1.2" max="1.2" step="0.01" value="0.7"><output id="cpkv"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">A = rotation about e₃ by α · B = shear x ↦ x + k·y</div>
+        <span class="mat" id="ro-AB" style="color:#ffd166"></span>
+        <span class="badge-neq" id="cpbadge">AB ≠ BA</span>
+        <span class="mat" id="ro-BA" style="color:#9cc8ff"></span>
+        <span class="chip">det A = 1</span><span class="chip">det B = 1</span><span class="chip am">det(AB) = 1</span>
+      </div>
+      <figcaption class="figcap">One cube, two orders: amber solid = AB applied to the unit cube, blue cage = BA. Both preserve volume (det = 1) yet land in different places — composition of maps is not commutative.</figcaption>
+    </div>
+    <div class="tabpane" id="pane-det">
+      <div class="view need3d" style="height:clamp(300px,40vw,430px)"><canvas id="cv-det"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>s<sub>1</sub></label><input type="range" id="ds1" min="0.35" max="1.9" step="0.01" value="1.4"><output id="ds1v"></output></div>
+        <div class="crow"><label>s<sub>2</sub></label><input type="range" id="ds2" min="0.35" max="1.9" step="0.01" value="0.8"><output id="ds2v"></output></div>
+        <div class="crow"><label>s<sub>3</sub></label><input type="range" id="ds3" min="0.35" max="1.9" step="0.01" value="1.15"><output id="ds3v"></output></div>
+        <div class="crow"><label>k<sub>12</sub></label><input type="range" id="dk" min="-1" max="1" step="0.01" value="0.5"><output id="dkv"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">parallelepiped spanned by M·e₁, M·e₂, M·e₃</div>
+        <span class="chip am" id="detv">det M = 0</span><span class="chip te" id="volv">volume = 0</span><span class="chip">shear leaves det unchanged</span>
+      </div>
+      <figcaption class="figcap">M sends the unit cube to a parallelepiped whose edge vectors are the columns of M. Its signed volume is exactly det M — slide the shear and watch the shape distort while the volume holds.</figcaption>
+    </div>
+  </div>
+
+  <div class="duo" style="margin-top:2.6rem">
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Dictionary</span><span class="tname">Matrix ↔ tensor</span></div>
+        <ul>
+          <li>Matrix entries ↔ components of a mixed tensor <span class="m"><i>A</i><sup><i>i</i></sup><sub><i>j</i></sup></sub></span> (a linear map <span class="m"><i>V</i>→<i>V</i></span>).</li>
+          <li><span class="m"><i>C</i><sup><i>i</i></sup><sub><i>k</i></sub> = <i>A</i><sup><i>i</i></sup><sub><i>j</i></sub><i>B</i><sup><i>j</i></sup><sub><i>k</i></sub></span> — inner product of (1,1) tensors = matrix multiplication = composition of maps.</li>
+          <li><span class="m">tr <i>A</i> = <i>A</i><sup><i>i</i></sup><sub><i>i</i></sub></span> — contraction; a true invariant.</li>
+          <li><span class="m"><i>I</i> ↔ <i>δ</i><sup><i>i</i></sup><sub><i>j</i></sup></span>, the identity tensor in all coordinates.</li>
+        </ul>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 4.1</span><span class="tname">Invariants under change of basis</span></div>
+        <p>Under <span class="m"><i>x</i>′ = <i>Λ</i><i>x</i></span> a mixed tensor transforms by similarity, <span class="m"><i>A</i>′ = <i>Λ</i><i>A</i><i>Λ</i><sup>−1</sup></span>. Therefore</p>
+        <p style="text-align:center"><span class="m">tr <i>A</i>′ = tr(<i>Λ</i><i>A</i><i>Λ</i><sup>−1</sup>) = tr <i>A</i>,&nbsp;&nbsp; det <i>A</i>′ = det <i>Λ</i> · det <i>A</i> · det <i>Λ</i><sup>−1</sup> = det <i>A</i></span></p>
+        <p>so trace, determinant, eigenvalues and every coefficient of the characteristic polynomial <span class="m">det(<i>A</i>−<i>λ</i><i>δ</i>) = 0</span> are <b>coordinate-free</b>. By Cayley–Hamilton, <span class="m"><i>A</i></span> satisfies its own characteristic polynomial. The inverse, when <span class="m">det <i>A</i> ≠ 0</span>, is <span class="m">(<i>A</i><sup>−1</sup>)<sup><i>i</i></sup><sub><i>j</i></sub> = <span class="fr"><span class="nu">cofactor(<i>A</i>)<sup><i>i</i></sup><sub><i>j</i></sub></span><span class="de">det <i>A</i></span></span></span> and is itself a tensor (quotient law).</p>
+      </article>
+    </div>
+    <div class="papers">
+      <article class="paper bl reveal">
+        <div class="ptagline"><span class="tag">Worked Example</span><span class="tname">Non-commutativity, numerically</span></div>
+        <p>Let <span class="m"><i>A</i> = </span><span class="mat" style="color:#1f4f9e"><i>1</i><i>2</i><i>0</i><i>1</i></span> (shear) and <span class="m"><i>B</i> = </span><span class="mat" style="color:#1f4f9e"><i>0</i><i>1</i><i>1</i><i>0</i></span> (swap). Then</p>
+        <p style="text-align:center"><span class="mat" style="color:#8a5f00"><i>2</i><i>1</i><i>1</i><i>0</i></span> = AB &nbsp;&nbsp;≠&nbsp;&nbsp; BA = <span class="mat" style="color:#a12b2b"><i>0</i><i>1</i><i>1</i><i>2</i></span></p>
+        <p>yet <span class="m">det(<i>AB</i>) = det <i>A</i> · det <i>B</i> = (−1)(−1)…</span> both determinants multiply consistently: det is a homomorphism even though multiplication is not commutative.</p>
+      </article>
+      <article class="paper co reveal">
+        <div class="ptagline"><span class="tag">Caution 4.2</span><span class="tname">The transpose is not a tensor operation</span></div>
+        <p>For a mixed tensor, “<span class="m"><i>A</i><sup>T</sup></span>” has no invariant meaning: swapping an upper and a lower index mixes variance types. Transpose becomes meaningful only after a metric identifies indices — which is precisely the content of §07. What <b>is</b> always meaningful: trace, determinant, symmetrisation of like-type index pairs, and contraction.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §5 ============ -->
+<section id="s5" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">05</div>
+    <p class="kicker">Section 05 · Measuring with tensors</p>
+    <h2>The Line Element &amp; <em>Metric Tensors</em></h2>
+    <p class="dek">One symmetric (0,2) tensor encodes every measurement a space allows: lengths, angles, areas, volumes. It is read directly off the line element ds².</p>
+  </div>
+  <div class="duo">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate IX</span><span class="ptitle">ds² on the unit sphere</span><span class="hint">drag to orbit</span></header>
+      <div class="view need3d"><canvas id="cv-sph"></canvas></div>
+      <div class="ctrl one">
+        <div class="crow"><label>θ (colat.)</label><input type="range" id="spth" min="15" max="165" step="1" value="55"><output id="spthv"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">metric in (θ, φ) coordinates — watch g<sub>φφ</sub> shrink toward the pole</div>
+        <span class="chip am" id="sph-sin">sin θ = 0</span>
+        <span class="chip te" id="sph-gpp">g_φφ = sin²θ = 0</span>
+        <span class="chip co" id="sph-len">arc(Δφ = 90°) = 0</span>
+        <span class="chip">g_θθ = 1 (fixed)</span>
+      </div>
+      <figcaption class="figcap">The amber arc subtends the same coordinate angle Δφ = 90° at every latitude, yet its physical length is sin θ · Δφ: the metric coefficient g<sub>φφ</sub> = sin²θ converts coordinate differences into distances. Blue arrow = e<sub>θ</sub>, amber arrow = e<sub>φ</sub>, drawn to true scale.</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Definition 5.1</span><span class="tname">Line element and metric</span></div>
+        <p>The squared infinitesimal distance between neighbouring points is a quadratic form in the coordinate differentials:</p>
+        <p style="text-align:center"><span class="m"><i>ds</i><sup>2</sup> = <i>g</i><sub><i>ij</i></sub> <i>dx</i><sup><i>i</i></sup> <i>dx</i><sup><i>j</i></sup></span></p>
+        <p>The coefficients form a <b>symmetric covariant rank-2 tensor</b> <span class="m"><i>g</i><sub><i>ij</i></sub></span> — the metric. Reading examples off: Euclidean plane <span class="m"><i>g</i> = diag(1,1)</span>; polar coordinates <span class="m"><i>ds</i><sup>2</sup> = <i>dr</i><sup>2</sup> + <i>r</i><sup>2</sup><i>dφ</i><sup>2</sup></span> so <span class="m"><i>g</i><sub><i>φφ</i></sub> = <i>r</i><sup>2</sup></span>; the unit sphere <span class="m"><i>ds</i><sup>2</sup> = <i>dθ</i><sup>2</sup> + sin<sup>2</sup><i>θ</i> <i>dφ</i><sup>2</sup></span> (Plate IX); and in relativity the Minkowski metric <span class="m">diag(−1,1,1,1)</span>, which is merely <b>non-degenerate</b> rather than positive-definite.</p>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 5.2</span><span class="tname">g is a tensor; what it measures</span></div>
+        <p>Since <span class="m"><i>ds</i><sup>2</sup></span> is a geometric scalar and <span class="m"><i>dx</i><sup><i>i</i></sup></span> is a vector, the quotient law (§03) forces <span class="m"><i>g</i><sub><i>ij</i></sub></span> to be a (0,2) tensor. Everything measurable follows:</p>
+        <ul>
+          <li><b>Length of a curve:</b> <span class="m"><i>L</i> = ∫ √(<i>g</i><sub><i>ij</i></sub> <i>ẋ</i><sup><i>i</i></sup><i>ẋ</i><sup><i>j</i></sup>) <i>dt</i></span></li>
+          <li><b>Angle:</b> <span class="m">cos <i>ϑ</i> = <i>g</i><sub><i>ij</i></sub><i>u</i><sup><i>i</i></sup><i>v</i><sup><i>j</i></sup> ⁄ (|<i>u</i>| |<i>v</i>|)</span></li>
+          <li><b>Volume:</b> <span class="m"><i>dV</i> = √<i>g</i> <i>dx</i><sup>1</sup>…<i>dx</i><sup><i>n</i></sup></span>, where <span class="m"><i>g</i> := det(<i>g</i><sub><i>ij</i></sub>)</span> — on the sphere <span class="m">√<i>g</i> = sin <i>θ</i></span>.</li>
+        </ul>
+        <p>Coordinates lie: equal coordinate steps are <b>not</b> equal distances. The metric is the correction table.</p>
+      </article>
+    </div>
+  </div>
+  <div class="duo flip">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate X</span><span class="ptitle">The metric's unit circle</span></header>
+      <div class="view short"><canvas id="cv-metric"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>g<sub>11</sub></label><input type="range" id="mg11" min="0.4" max="2.4" step="0.01" value="1.5"><output id="mg11v"></output></div>
+        <div class="crow"><label>g<sub>12</sub></label><input type="range" id="mg12" min="-1.1" max="1.1" step="0.01" value="0.55"><output id="mg12v"></output></div>
+        <div class="crow"><label>g<sub>22</sub></label><input type="range" id="mg22" min="0.4" max="2.4" step="0.01" value="0.9"><output id="mg22v"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">drag the coral vector dx</div>
+        <span class="chip co" id="mdx">dx = (0, 0)</span><span class="chip am" id="mds2">ds² = 0</span><span class="chip te" id="mds">ds = 0</span><span class="chip" id="meu">‖dx‖ Euclid = 0</span>
+      </div>
+      <figcaption class="figcap">The amber ellipse {x : g(x,x) = 1} is the true “unit circle” of this space; the dashed grey circle is the Euclidean illusion. Drag dx and compare ds with the naive length — the gap is the metric at work. (g is clamped to stay positive-definite.)</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper bl reveal">
+        <div class="ptagline"><span class="tag">Remark 5.3</span><span class="tname">Why g must be symmetric</span></div>
+        <p>In <span class="m"><i>g</i><sub><i>ij</i></sub><i>dx</i><sup><i>i</i></sup><i>dx</i><sup><i>j</i></sup></span>, only the symmetric part of <span class="m"><i>g</i></span> survives (Remark 1.4), so one takes <span class="m"><i>g</i><sub><i>ij</i></sub> = <i>g</i><sub><i>ji</i></sub></span> without loss. Non-degeneracy (<span class="m">det <i>g</i> ≠ 0</span>) guarantees the inverse <span class="m"><i>g</i><sup><i>ij</i></sup></span> exists — the “reciprocal tensor” of the next section.</p>
+      </article>
+      <article class="paper co reveal">
+        <div class="ptagline"><span class="tag">Example 5.4</span><span class="tname">A curved distance</span></div>
+        <p>On the unit sphere at colatitude <span class="m"><i>θ</i> = 60°</span>, a coordinate step <span class="m"><i>dφ</i> = 0.2</span> has true length <span class="m"><i>ds</i> = sin 60° · 0.2 ≈ 0.173</span>, while near the pole (<span class="m"><i>θ</i> = 5°</span>) the same step is only <span class="m">≈ 0.017</span> — ten times shorter. Reproduce both numbers with the Plate IX slider.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §6 ============ -->
+<section id="s6" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">06</div>
+    <p class="kicker">Section 06 · Two bases, two component systems</p>
+    <h2>Conjugate / <em>Reciprocal</em> Tensors</h2>
+    <p class="dek">Every basis has a shadow basis built from it, and the two measure components in complementary ways. Contravariant components climb against the basis; covariant components flow with it.</p>
+  </div>
+  <div class="duo">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate XI</span><span class="ptitle">The reciprocal basis</span></header>
+      <div class="view short"><canvas id="cv-recip"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>∠(e<sub>1</sub>,e<sub>2</sub>)</label><input type="range" id="rcang" min="30" max="150" step="1" value="64"><output id="rcangv"></output></div>
+        <div class="crow"><label>|e<sub>2</sub>|</label><input type="range" id="rclen" min="0.7" max="1.5" step="0.01" value="1.05"><output id="rclenv"></output></div>
+        <div class="cbox"><input type="checkbox" id="rcR" checked> show reciprocal basis eⁱ</div>
+        <div class="cbox"><input type="checkbox" id="rcC" checked> show covariant feet</div>
+      </div>
+      <div class="readout"><div class="ro-label">drag the coral vector v · constructions: dashed ‖ = contravariant, dashed ⟂ = covariant</div>
+        <span class="chip am" id="rvup">vⁱ = (0, 0)</span><span class="chip te" id="rvlo">vᵢ = (0, 0)</span><span class="chip ok" id="rcheck">eⁱ·eⱼ = δⁱⱼ ✓</span>
+      </div>
+      <div class="readout" style="border-top:none;padding-top:0"><div class="ro-label">metric and its reciprocal</div>
+        <span class="mat" id="rgd" style="color:#ffd166"></span>
+        <span class="mat" id="rgup" style="color:#7ff0dd"></span>
+      </div>
+      <figcaption class="figcap">Amber = covariant basis e₁,e₂. Teal = reciprocal basis e¹,e², perpendicular to the “other” basis vector and scaled so eⁱ·eⱼ = δⁱⱼ. The parallelogram resolves v into contravariant components vⁱ; the perpendicular feet give covariant components vᵢ. They agree only when the basis is orthonormal.</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Definition 6.1</span><span class="tname">Reciprocal basis</span></div>
+        <p>Given a basis <span class="m"><i>e</i><sub><i>i</i></sub></span>, its <b>reciprocal (conjugate) basis</b> <span class="m"><i>e</i><sup><i>i</i></sup></span> is defined by the duality condition</p>
+        <p style="text-align:center"><span class="m"><i>e</i><sup><i>i</i></sup> · <i>e</i><sub><i>j</i></sub> = <i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub></span></p>
+        <p>In terms of the metric, <span class="m"><i>e</i><sup><i>i</i></sup> = <i>g</i><sup><i>ij</i></sup><i>e</i><sub><i>j</i></sub></span>, and the check is one line: <span class="m"><i>e</i><sup><i>i</i></sup>·<i>e</i><sub><i>j</i></sub> = <i>g</i><sup><i>ik</i></sup><i>g</i><sub><i>kj</i></sub> = <i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub></span>. Geometrically in the plane, <span class="m"><i>e</i><sup>1</sup></span> is perpendicular to <span class="m"><i>e</i><sub>2</sub></span> — exactly what Plate XI draws.</p>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 6.2</span><span class="tname">Two component systems of one vector</span></div>
+        <p>The same vector expands in either basis:</p>
+        <p style="text-align:center"><span class="m"><i>v</i> = <i>v</i><sup><i>i</i></sup><i>e</i><sub><i>i</i></sub> = <i>v</i><sub><i>i</i></sub><i>e</i><sup><i>i</i></sup>,&nbsp;&nbsp; <i>v</i><sup><i>i</i></sup> = <i>e</i><sup><i>i</i></sup>·<i>v</i>,&nbsp;&nbsp; <i>v</i><sub><i>i</i></sub> = <i>e</i><sub><i>i</i></sup>·<i>v</i>,&nbsp;&nbsp; <i>v</i><sub><i>i</i></sub> = <i>g</i><sub><i>ij</i></sub><i>v</i><sup><i>j</i></sup></span></p>
+        <p>The <b>contravariant</b> components <span class="m"><i>v</i><sup><i>i</i></sup></span> come from projecting along parallels to the basis (the parallelogram); the <b>covariant</b> components <span class="m"><i>v</i><sub><i>i</i></sub></span> come from perpendicular projection. Under a change of coordinates they transform in opposite (contra- vs co-variant) ways, so that <span class="m"><i>v</i></span> itself is untouched.</p>
+      </article>
+    </div>
+  </div>
+  <div class="duo flip">
+    <div class="papers">
+      <article class="paper co reveal">
+        <div class="ptagline"><span class="tag">Definition 6.3</span><span class="tname">The reciprocal (contravariant) metric tensor</span></div>
+        <p>The matrix inverse of <span class="m"><i>g</i><sub><i>ij</i></sub></span> is itself a tensor, of type (2,0):</p>
+        <p style="text-align:center"><span class="m"><i>g</i><sup><i>ik</i></sup><i>g</i><sub><i>kj</i></sub> = <i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub></span></p>
+        <p>Classical texts call <span class="m"><i>g</i><sup><i>ij</i></sup></span> the <b>contravariant or reciprocal tensor</b> of <span class="m"><i>g</i><sub><i>ij</i></sub></span>. Proof it transforms correctly: invert both sides of the covariant law and use <span class="m">(<i>J</i><sup>−1</sup>)<sup>−1</sup> = <i>J</i></span>. Raising with <span class="m"><i>g</i><sup><i>ij</i></sup></span> generalises to any tensor: <span class="m"><i>A</i><sup><i>ij</i></sup> = <i>g</i><sup><i>ir</i></sup><i>g</i><sup><i>js</i></sup><i>A</i><sub><i>rs</i></sub></span> — the reciprocal associate of §07.</p>
+      </article>
+    </div>
+    <div class="papers">
+      <article class="paper bl reveal">
+        <div class="ptagline"><span class="tag">Mnemonic</span><span class="tname">Co- vs contra-</span></div>
+        <ul>
+          <li><b>Co</b>variant indices transform <b>with</b> the Jacobian <span class="m">∂<i>x</i>/∂<i>x</i>′</span> — like basis vectors and gradients.</li>
+          <li><b>Contra</b>variant indices transform <b>against</b> it, with the inverse — like displacements and velocities.</li>
+          <li>One up + one down, summed = invariant. Every equation in this atlas obeys the balance rule.</li>
+        </ul>
+      </article>
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Example 6.4</span><span class="tname">Reading Plate XI</span></div>
+        <p>With <span class="m"><i>e</i><sub>1</sub> = (1,0)</span>, <span class="m"><i>e</i><sub>2</sub> = (cos <i>α</i>, sin <i>α</i>)</span>, the covariant metric is <span class="m"><i>g</i><sub><i>ij</i></sub> = </span><span class="mat" style="color:#8a5f00;font-size:.9em"><i>1</i><i>c</i><i>c</i><i>1</i></span> with <span class="m"><i>c</i> = cos <i>α</i></span>, and its reciprocal <span class="m"><i>g</i><sup><i>ij</i></sup> = <span class="fr"><span class="nu">1</span><span class="de">sin²<i>α</i></span></span></span><span class="mat" style="color:#0b6e63;font-size:.9em"><i>1</i><i>−c</i><i>−c</i><i>1</i></span>. As <span class="m"><i>α</i> → 0</span> the bases blow up — a degenerate basis has no reciprocal, just as a singular matrix has no inverse.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §7 ============ -->
+<section id="s7" class="chapter">
+  <div class="chapter-head reveal">
+    <div class="chap-no" aria-hidden="true">07</div>
+    <p class="kicker">Section 07 · The metric as translator</p>
+    <h2><em>Associated</em> Tensors</h2>
+    <p class="dek">Raising and lowering indices: every tensor owns a family of associates, one for each pattern of up/down indices, and the metric is the dictionary between them.</p>
+  </div>
+  <div class="duo">
+    <figure class="plate reveal">
+      <header><span class="ptag">Plate XII</span><span class="ptitle">A vector and its covector</span></header>
+      <div class="view short"><canvas id="cv-assoc"></canvas></div>
+      <div class="ctrl">
+        <div class="crow"><label>g<sub>11</sub></label><input type="range" id="as11" min="0.5" max="2.5" step="0.01" value="2.0"><output id="as11v"></output></div>
+        <div class="crow"><label>g<sub>12</sub></label><input type="range" id="as12" min="-0.9" max="0.9" step="0.01" value="0.4"><output id="as12v"></output></div>
+        <div class="crow"><label>g<sub>22</sub></label><input type="range" id="as22" min="0.5" max="2.5" step="0.01" value="1.0"><output id="as22v"></output></div>
+      </div>
+      <div class="readout"><div class="ro-label">drag v · teal lines = the covector ω = g·v (level sets, spacing 1/|ω|) · blue arrow = ω</div>
+        <span class="chip co" id="avup">vⁱ = (0,0)</span><span class="chip te" id="avlo">vᵢ = (0,0)</span><span class="chip am" id="anorm">‖v‖²_g = 0</span>
+      </div>
+      <div class="readout" style="border-top:none;padding-top:0"><div class="ro-label">associating a fixed tensor A<sub>ij</sub> = [[2,1],[1,3]] with the current metric</div>
+        <span class="mat" id="roAc" style="color:#8a5f00"></span>
+        <span style="font-family:var(--math);color:var(--mut)">→&nbsp; <i>A</i><sup><i>i</i></sup><sub><i>j</i></sub> = <i>g</i><sup><i>ik</i></sup><i>A</i><sub><i>kj</i></sub> =</span>
+        <span class="mat" id="roAm" style="color:#7ff0dd"></span>
+      </div>
+      <figcaption class="figcap">The coral arrow is vⁱ; the stacked teal planes are the covector vᵢ = gᵢⱼvʲ — a measuring instrument that counts how many levels a vector crosses. Change the metric and the levels tilt and respace even though v never moved. When g = δ the arrow and its levels are perpendicular and the distinction vanishes.</figcaption>
+    </figure>
+    <div class="papers">
+      <article class="paper reveal">
+        <div class="ptagline"><span class="tag">Definition 7.1</span><span class="tname">Associates by raising and lowering</span></div>
+        <p>Given <span class="m"><i>A</i><sub><i>ij</i></sub></span> and the metric pair <span class="m"><i>g</i><sub><i>ij</i></sub>, <i>g</i><sup><i>ij</i></sup></span>, its <b>associated tensors</b> are obtained one index at a time:</p>
+        <p style="text-align:center"><span class="m"><i>A</i><sup><i>i</i></sup><sub><i>j</i></sub> = <i>g</i><sup><i>ik</i></sup><i>A</i><sub><i>kj</i></sub>,&nbsp;&nbsp; <i>A</i><sup><i>ij</i></sup> = <i>g</i><sup><i>ir</i></sup><i>g</i><sup><i>js</i></sup><i>A</i><sub><i>rs</i></sub>,&nbsp;&nbsp; <i>A</i><sub><i>ij</i></sub> = <i>g</i><sub><i>ik</i></sub><i>g</i><sub><i>jl</i></sub><i>A</i><sup><i>kl</i></sup></span></p>
+        <p>Raising then lowering (or conversely) is the identity, since <span class="m"><i>g</i><sup><i>ik</i></sup><i>g</i><sub><i>kj</i></sub> = <i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub></span>: the associates are <b>one tensor seen through different index placements</b>, not different tensors. For the metric itself the chain collapses beautifully: <span class="m"><i>g</i><sub><i>ij</i></sub> → <i>g</i><sup><i>i</i></sup><sub><i>j</i></sub> = <i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub> → <i>g</i><sup><i>ij</i></sup></span>.</p>
+      </article>
+      <article class="paper te reveal">
+        <div class="ptagline"><span class="tag">Theorem 7.2</span><span class="tname">The musical isomorphisms</span></div>
+        <p>A non-degenerate metric gives a canonical bijection between vectors and covectors:</p>
+        <p style="text-align:center"><span class="m">♭ : <i>v</i><sup><i>i</i></sup> ↦ <i>v</i><sub><i>i</i></sub> = <i>g</i><sub><i>ij</i></sub><i>v</i><sup><i>j</i></sup>&nbsp;&nbsp;&nbsp; ♯ : <i>ω</i><sub><i>i</i></sub> ↦ <i>ω</i><sup><i>i</i></sup> = <i>g</i><sup><i>ij</i></sup><i>ω</i><sub><i>j</i></sub></span></p>
+        <p><b>Proof of isomorphism:</b> linearity is obvious; injectivity follows because <span class="m"><i>g</i><sub><i>ij</i></sub><i>v</i><sup><i>j</i></sup> = 0</span> for all <span class="m"><i>i</i></span> implies <span class="m"><i>v</i> = 0</span> by non-degeneracy; equal finite dimensions finish it. <span class="qed">∎</span></p>
+        <p><b>Key point:</b> without a metric there is <b>no natural way</b> to convert a vector into a covector. The metric is precisely the extra structure that authorises the identification that Euclidean intuition takes for granted.</p>
+      </article>
+      <article class="paper co reveal">
+        <div class="ptagline"><span class="tag">Physical Interlude</span><span class="tname">Why associates matter</span></div>
+        <ul>
+          <li><b>Gradient:</b> <span class="m"><i>df</i> = (∂<i>f</i>/∂<i>x</i><sup><i>i</i></sup>)<i>dx</i><sup><i>i</i></sup></span> is naturally a covector; the “grad” vector of vector calculus is its sharp: <span class="m">(grad <i>f</i>)<sup><i>i</i></sup> = <i>g</i><sup><i>ij</i></sup>∂<sub><i>j</i></sub><i>f</i></span>.</li>
+          <li><b>Continuum mechanics:</b> stress and strain are swapped between covariant, mixed and contravariant forms to build invariants (energy density <span class="m"><i>σ</i><sup><i>ij</i></sup><i>ε</i><sub><i>ij</i></sub></span>).</li>
+          <li><b>Relativity:</b> <span class="m"><i>p</i><sub><i>i</i></sup> = <i>g</i><sub><i>ij</i></sub><i>p</i><sup><i>j</i></sup></span> turns four-velocity into four-momentum co-components; Maxwell's <span class="m"><i>F</i><sup><i>ij</i></sup></span> and <span class="m"><i>F</i><sub><i>ij</i></sub></span> are associates whose mixing encodes E ↔ B under boosts.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="foot-grid">
+    <div>
+      <h3>Notation glossary</h3>
+      <div class="gloss">
+        <div><span class="m"><i>δ</i><sup><i>i</i></sup><sub><i>j</i></sub></span> Kronecker delta — the identity (1,1) tensor, 1 if i = j else 0.</div>
+        <div><span class="m"><i>ε</i><sub><i>ijk</i></sub></span> Levi-Civita symbol — +1 on even permutations of 123, −1 on odd, 0 otherwise.</div>
+        <div><span class="m"><i>T</i><sub>(<i>ij</i>)</sub>, <i>T</i><sub>[<i>ij</i>]</sub></span> symmetric and skew-symmetric parts, weight ½.</div>
+        <div><span class="m"><i>g</i> = det <i>g</i><sub><i>ij</i></sub></span> metric determinant; <span class="m">√<i>g</i> <i>d</i><sup><i>n</i></sup><i>x</i></span> is the invariant volume element.</div>
+        <div><span class="m">♭, ♯</span> lowering and raising of indices by the metric.</div>
+      </div>
+    </div>
+    <div>
+      <h3>Colour code of the plates</h3>
+      <div class="legend-row"><span class="sw" style="background:var(--coral)"></span> first object / input vector / map A</div>
+      <div class="legend-row"><span class="sw" style="background:var(--teal)"></span> second object / reciprocal structures / map B</div>
+      <div class="legend-row"><span class="sw" style="background:var(--amber)"></span> result: sums, products, arcs, ellipsoids</div>
+      <div class="legend-row"><span class="sw" style="background:var(--blue)"></span> auxiliary directions and frames</div>
+      <div class="legend-row"><span class="sw" style="background:#3a5876"></span> ghosts: unit spheres, unit cubes, reference grids</div>
+    </div>
+    <div>
+      <h3>About this atlas</h3>
+      <p class="gloss" style="line-height:1.7">Seven sections and twelve plates covering the classical core of tensor analysis: symmetry decomposition, the tensor vector space, outer/inner products and the quotient law, matrix algebra as (1,1)-tensors, metrics and line elements, reciprocal systems, and associated tensors. All 3-D figures are live simulations — drag any canvas to orbit it, and every slider feeds the mathematics on the same frame.</p>
+    </div>
+  </div>
+  <div class="colophon">THE TENSOR ATLAS · SET IN FRAUNCES, ARCHIVO, STIX TWO TEXT &amp; IBM PLEX MONO · FIGURES IN WEBGL (THREE.JS) · EINSTEIN CONVENTION THROUGHOUT · MMXXVI</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){'use strict';
+const $=id=>document.getElementById(id);
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C={coral:0xff5d5d,teal:0x2dd4bf,amber:0xffb703,blue:0x5aa9ff,faint:0x35577a,ghost:0x8fb7d8};
+
+/* ---------- utilities ---------- */
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const d2r=d=>d*Math.PI/180;
+const fmt=(x,n=2)=>(Math.abs(x)<1e-10?0:x).toFixed(n);
+function bindR(id,out,fn,fmtFn){const el=$(id),o=$(out);const f=fmtFn||(v=>fmt(v));const go=()=>{o.textContent=f(+el.value);fn(+el.value)};el.addEventListener('input',go);go();}
+function sphVec(th,ph,r){const t=d2r(th),p=d2r(ph);return [r*Math.sin(t)*Math.cos(p), r*Math.cos(t), r*Math.sin(t)*Math.sin(p)];}
+function renderMat(el,M,cols){el.style.gridTemplateColumns=`repeat(${cols||M.length},auto)`;let h='';for(const row of M)for(const c of row)h+=`<span>${fmt(c)}</span>`;el.innerHTML=h;}
+function vecStr(v){return `(${fmt(v[0])}, ${fmt(v[1])})`;}
+function inv2(M){const[[a,b],[c,d]]=M;const D=a*d-b*c;return [[d,-b],[-c,a]].map(r=>r.map(x=>x/(Math.abs(D)<1e-9?1e-9:D)));}
+function mm2(A,B){return [[A[0][0]*B[0][0]+A[0][1]*B[1][0],A[0][0]*B[0][1]+A[0][1]*B[1][1]],[A[1][0]*B[0][0]+A[1][1]*B[1][0],A[1][0]*B[0][1]+A[1][1]*B[1][1]]];}
+function mv2(M,v){return [M[0][0]*v[0]+M[0][1]*v[1],M[1][0]*v[0]+M[1][1]*v[1]];}
+function det3(M){const m=M;return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);}
+
+/* Jacobi eigendecomposition of a symmetric 3x3 */
+function eigSym3(M){
+  let a=[M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]].slice();
+  let v=[1,0,0,0,1,0,0,0,1];
+  for(let s=0;s<60;s++){
+    if(Math.abs(a[1])+Math.abs(a[2])+Math.abs(a[5])<1e-13)break;
+    for(let p=0;p<3;p++)for(let q=p+1;q<3;q++){
+      const apq=a[p*3+q]; if(Math.abs(apq)<1e-15)continue;
+      const app=a[p*3+p],aqq=a[q*3+q];
+      const th=(aqq-app)/(2*apq);
+      let t=1/(Math.abs(th)+Math.sqrt(1+th*th)); if(th<0)t=-t;
+      const c=1/Math.sqrt(1+t*t),s2=t*c,tau=s2/(1+c);
+      for(let k=0;k<3;k++){ if(k===p||k===q)continue;
+        const g=a[k*3+p],h=a[k*3+q];
+        a[k*3+p]=a[p*3+k]=g-s2*(h+tau*g);
+        a[k*3+q]=a[q*3+k]=h+s2*(g-tau*h);}
+      a[p*3+p]=app-t*apq; a[q*3+q]=aqq+t*apq; a[p*3+q]=a[q*3+p]=0;
+      for(let k=0;k<3;k++){const g=v[k*3+p],h=v[k*3+q];
+        v[k*3+p]=g-s2*(h+tau*g); v[k*3+q]=h+s2*(g-tau*h);}
+    }
+  }
+  return {vals:[a[0],a[4],a[8]],vecs:[[v[0],v[3],v[6]],[v[1],v[4],v[7]],[v[2],v[5],v[8]]]};
+}
+
+/* ---------- ambient background ---------- */
+(function(){
+  const cv=$('ambient'),cx=cv.getContext('2d');let W,H,t0=0;
+  function fit(){W=cv.width=innerWidth*0.5;H=cv.height=innerHeight*0.5;}
+  fit();addEventListener('resize',fit);
+  function draw(t){
+    cx.clearRect(0,0,W,H);cx.strokeStyle='rgba(96,150,200,0.12)';cx.lineWidth=1;
+    const st=34;
+    for(let y=0;y<H;y+=st){cx.beginPath();for(let x=0;x<=W;x+=14){const o=5*Math.sin(x*0.012+t*0.00045+y*0.02)+3*Math.sin(y*0.02-t*0.0003);x?cx.lineTo(x,y+o):cx.moveTo(x,y+o);}cx.stroke();}
+    for(let x=0;x<W;x+=st){cx.beginPath();for(let y=0;y<=H;y+=14){const o=5*Math.sin(y*0.011+t*0.0004+x*0.02)+3*Math.cos(x*0.017+t*0.00026);y?cx.lineTo(x+o,y):cx.moveTo(x+o,y);}cx.stroke();}
+  }
+  if(RM){draw(0);}else{(function loop(t){draw(t);if(t-t0>33){t0=t;}requestAnimationFrame(loop);})(0);}
+})();
+
+/* ---------- progress + nav + reveal ---------- */
+const prog=$('progress');
+addEventListener('scroll',()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';$('topnav').classList.toggle('scrolled',h.scrollTop>40);},{passive:true});
+const secs=[...document.querySelectorAll('section.chapter')];
+const navLinks=[...document.querySelectorAll('.links a')];
+new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navLinks.forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'}).observe(secs[0]);
+secs.forEach(s=>new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navLinks.forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+s.id));}})},{rootMargin:'-40% 0px -55% 0px'}).observe(s));
+const rev=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rev.unobserve(e.target);}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>rev.observe(el));
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabbar').forEach(bar=>{
+  bar.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    const plate=bar.closest('.plate');
+    plate.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pane));
+    setTimeout(()=>{SCENES.forEach(s=>s.fit());PLATES2D.forEach(p=>p.redraw());},30);
+  });
+});
+
+/* ================= THREE.JS FRAMEWORK ================= */
+const SCENES=[],PLATES2D=[];
+const HAS3D=!!window.THREE;
+if(!HAS3D){document.querySelectorAll('.need3d').forEach(v=>{v.innerHTML='<div class="fallback">3-D figure dormant — WebGL / three.js unavailable. The mathematics around it stands on its own.</div>';});}
+
+function make3D(canvas,camDist,camY,spin){
+  const cv=$(canvas);
+  const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(36,1,0.1,120);
+  cam.position.set(0,camY==null?1.5:camY,camDist||7.5);cam.lookAt(0,0,0);
+  scene.add(new THREE.AmbientLight(0xbfd4e6,.6));
+  const dl=new THREE.DirectionalLight(0xffffff,.95);dl.position.set(5,9,6);scene.add(dl);
+  const fl=new THREE.DirectionalLight(0x66aaff,.3);fl.position.set(-6,-4,-5);scene.add(fl);
+  const world=new THREE.Group();scene.add(world);
+  const gh=new THREE.GridHelper(7,14,0x2a4a66,0x1a3049);gh.position.y=-2.15;
+  gh.material.transparent=true;gh.material.opacity=.45;world.add(gh);
+  const S={cv,renderer,scene,cam,world,visible:false,ry:.55,rx:.28,drag:false,spin:spin==null?.06:spin,step:null};
+  function fit(){const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+  S.fit=fit;new ResizeObserver(fit).observe(cv);fit();
+  new IntersectionObserver(es=>{es.forEach(e=>S.visible=e.isIntersecting);}).observe(cv);
+  let px=0,py=0;
+  cv.addEventListener('pointerdown',e=>{S.drag=true;px=e.clientX;py=e.clientY;cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!S.drag)return;S.ry+=(e.clientX-px)*.006;S.rx=clamp(S.rx+(e.clientY-py)*.004,-1.15,1.15);px=e.clientX;py=e.clientY;});
+  addEventListener('pointerup',()=>S.drag=false);
+  SCENES.push(S);return S;
+}
+function m4(M){return new THREE.Matrix4().set(M[0][0],M[0][1],M[0][2],0,M[1][0],M[1][1],M[1][2],0,M[2][0],M[2][1],M[2][2],0,0,0,0,1);}
+function V(a){return new THREE.Vector3(a[0],a[1],a[2]);}
+function arrow(parent,from,to,color,hl,hr){
+  const f=V(from),t=V(to),d=t.clone().sub(f),len=d.length();if(len<1e-6)return null;
+  const a=new THREE.ArrowHelper(d.normalize(),f,len,color,hl||Math.min(.22,len*.3),hr||.085);parent.add(a);return a;}
+function clearGroup(g){while(g.children.length){const c=g.children.pop();if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose&&c.material.dispose();}}
+function label(text,color,sc){
+  const c=document.createElement('canvas');c.width=192;c.height=96;const x=c.getContext('2d');
+  x.font='600 58px Archivo, sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=8;x.fillStyle=color;x.fillText(text,96,48);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
+  sp.scale.set(sc||.72,(sc||.72)/2,1);return sp;}
+function ellipsoidMesh(color,op,wire){
+  const geo=new THREE.SphereGeometry(1,wire?20:44,wire?14:30);
+  const m=wire?new THREE.MeshBasicMaterial({color,wireframe:true,transparent:true,opacity:op}):
+               new THREE.MeshPhongMaterial({color,transparent:true,opacity:op,shininess:70,specular:0x223344});
+  const mesh=new THREE.Mesh(geo,m);mesh.matrixAutoUpdate=false;return mesh;}
+function mappedCube(fill,edge,fop){
+  const g=new THREE.Group();const geo=new THREE.BoxGeometry(1,1,1);geo.translate(.5,.5,.5);
+  if(fill!=null)g.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:fill,transparent:true,opacity:fop==null?.45:fop,shininess:30})));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge})));
+  g.matrixAutoUpdate=false;return g;}
+
+/* main loop */
+let lastT=performance.now();
+(function tick(t){
+  const dt=Math.min(.05,(t-lastT)/1000);lastT=t;
+  for(const S of SCENES){
+    if(!S.visible)continue;
+    if(!S.drag&&!RM)S.ry+=dt*S.spin;
+    S.world.rotation.y+=(S.ry-S.world.rotation.y)*.12;
+    S.world.rotation.x+=(S.rx-S.world.rotation.x)*.12;
+    if(S.step)S.step(dt,t/1000);
+    S.renderer.render(S.scene,S.cam);
+  }
+  requestAnimationFrame(tick);
+})(lastT);
+
+/* ================= FIG 0 — HERO ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-hero',8.4,1.7,.1);
+  const solid=ellipsoidMesh(C.amber,.88);S.world.add(solid);
+  const wire=ellipsoidMesh(C.ghost,.14,true);S.world.add(wire);
+  const ghost=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.1}));S.world.add(ghost);
+  const ax=new THREE.Group();S.world.add(ax);
+  const N=260,pos=new Float32Array(N*3),pd=[];
+  for(let i=0;i<N;i++){const r=3+.9*Math.random(),a=Math.random()*Math.PI*2,h=(Math.random()-.5)*2.4;pd.push({r,a,h,s:.12+.3*Math.random()});pos.set([r*Math.cos(a),h,r*Math.sin(a)],i*3);}
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  S.world.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x9fd6ff,size:.045,transparent:true,opacity:.75})));
+  S.step=(dt,t)=>{
+    const M=[[1.55+.25*Math.sin(t*.5),.6*Math.sin(t*.33),.35*Math.cos(t*.27)],
+             [.6*Math.sin(t*.33),1.15+.2*Math.cos(t*.41),.5*Math.sin(t*.38+.7)],
+             [.35*Math.cos(t*.27),.5*Math.sin(t*.38+.7),1.85+.2*Math.sin(t*.45+1.3)]];
+    solid.matrix.copy(m4(M));wire.matrix.copy(m4(M));
+    const E=eigSym3(M);clearGroup(ax);
+    E.vals.forEach((l,i)=>{const v=E.vecs[i],s=Math.sign(l)||1,e=v.map(x=>x*s*(Math.abs(l)*1.12+.08));
+      arrow(ax,[0,0,0],e,l>=0?C.amber:C.coral);
+      const sp=label('λ',l>=0?'#ffd166':'#ff8f8f',.5);sp.position.set(e[0]*1.18,e[1]*1.18,e[2]*1.18);ax.add(sp);});
+    const p=pg.attributes.position.array;
+    for(let i=0;i<N;i++){const d=pd[i];d.a+=dt*d.s;p[i*3]=d.r*Math.cos(d.a);p[i*3+2]=d.r*Math.sin(d.a);}
+    pg.attributes.position.needsUpdate=true;
+  };
+})();
+
+/* ================= PLATE I — SYMMETRIC ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-sym',7.6,1.6);
+  const ghost=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.12}));S.world.add(ghost);
+  const solid=ellipsoidMesh(C.amber,.9);S.world.add(solid);
+  const ax=new THREE.Group();S.world.add(ax);
+  const st={};
+  function M(){return [[st.a11,st.a12,st.a13],[st.a12,st.a22,st.a23],[st.a13,st.a23,st.a33]];}
+  function up(){
+    const A=M();solid.matrix.copy(m4(A));
+    const E=eigSym3(A);clearGroup(ax);
+    const chips=[];
+    E.vals.forEach((l,i)=>{const v=E.vecs[i],s=Math.sign(l)||1,e=v.map(x=>x*s*(Math.abs(l)+.06));
+      arrow(ax,[0,0,0],e,l>=0?C.amber:C.coral);
+      const sp=label('λ'+(i+1),l>=0?'#ffd166':'#ff8f8f',.55);sp.position.set(e[0]*1.2,e[1]*1.2,e[2]*1.2);ax.add(sp);
+      chips.push(`<span class="chip ${l>=0?'am':'co'}">λ${i+1} = ${fmt(l)}</span>`);});
+    renderMat($('ro-sym-mat'),A);$('ro-sym-eig').innerHTML=chips.join('');
+  }
+  [['sy11','a11'],['sy22','a22'],['sy33','a33'],['sy12','a12'],['sy13','a13'],['sy23','a23']].forEach(([id,k])=>{bindR(id,null,v=>{st[k]=v;up();});});
+  up();
+})();
+
+/* ================= PLATE II — SKEW ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-skew',7.6,1.6);
+  const body=new THREE.Group();S.world.add(body);
+  arrow(body,[0,0,0],[1.5,0,0],C.coral);arrow(body,[0,0,0],[0,1.5,0],C.teal);arrow(body,[0,0,0],[0,0,1.5],C.blue);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.018,8,64),new THREE.MeshBasicMaterial({color:0x9fd6ff,transparent:true,opacity:.5}));
+  ring.rotation.x=Math.PI/2;body.add(ring);
+  const swirl=new THREE.Group();S.world.add(swirl);
+  for(let i=0;i<10;i++){const a=i/10*Math.PI*2,p=[1.9*Math.cos(a),1.9*Math.sin(a),0],t2=[-Math.sin(a),Math.cos(a),0];
+    arrow(swirl,p,p.map((x,j)=>x+t2[j]*.4),0x7fa8c9,.14,.05);}
+  const wArr=new THREE.Group();S.world.add(wArr);
+  let ang=0;const w={x:.3,y:1.1,z:.5};
+  function up(){
+    const K=[[0,-w.z,w.y],[w.z,0,-w.x],[-w.y,w.x,0]];
+    renderMat($('ro-skew-mat'),K);
+    $('ro-skew-norm').textContent='|ω| = '+fmt(Math.hypot(w.x,w.y,w.z));
+    clearGroup(wArr);const L=Math.hypot(w.x,w.y,w.z);
+    if(L>.02){arrow(wArr,[0,0,0],[w.x/L*L*1.15,w.y/L*L*1.15,w.z/L*L*1.15],C.amber,.24,.11);
+      const sp=label('ω','#ffd166',.6);sp.position.set(w.x/L*L*1.45,w.y/L*L*1.45,w.z/L*L*1.45);wArr.add(sp);
+      const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(w.x/L,w.y/L,w.z/L));
+      swirl.quaternion.copy(q);}
+  }
+  S.step=dt=>{const L=Math.hypot(w.x,w.y,w.z);if(L>.02){ang+=L*dt;body.quaternion.setFromAxisAngle(new THREE.Vector3(w.x/L,w.y/L,w.z/L),ang);}};
+  bindR('sk1',null,v=>{w.x=v;up();});bindR('sk2',null,v=>{w.y=v;up();});bindR('sk3',null,v=>{w.z=v;up();});
+  up();
+})();
+
+/* ================= PLATE III — ADDITION ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-add',8,1.7);
+  const eA=ellipsoidMesh(C.coral,.4,true),eB=ellipsoidMesh(C.teal,.4,true),eC=ellipsoidMesh(C.amber,.82);
+  S.world.add(eA);S.world.add(eB);S.world.add(eC);
+  const st={mode:1};
+  document.querySelectorAll('input[name=addmode]').forEach(r=>r.addEventListener('change',()=>{st.mode=+document.querySelector('input[name=addmode]:checked').value;up();}));
+  function mats(){
+    const A=[[st.a11,st.a12,st.a13],[st.a12,st.a22,st.a23],[st.a13,st.a23,st.a33]];
+    const B=[[st.b11,st.b12,st.b13],[st.b12,st.b22,st.b23],[st.b13,st.b23,st.b33]];
+    return [A,B];
+  }
+  function up(){
+    const [A,B]=mats(),m=st.mode;
+    const Cm=A.map((r,i)=>r.map((x,j)=>x+m*B[i][j]));
+    eA.matrix.copy(m4(A));eB.matrix.copy(m4(B));eC.matrix.copy(m4(Cm));
+    const tr=M=>M[0][0]+M[1][1]+M[2][2];
+    $('trA').textContent='tr A = '+fmt(tr(A));
+    $('trB').textContent='tr B = '+fmt(tr(B));
+    $('trC').textContent=`tr(A${m>0?'+':'−'}B) = ${fmt(tr(Cm))}`;
+    $('detC').textContent=`det(A${m>0?'+':'−'}B) = ${fmt(det3(Cm))}  (≠ det A ${m>0?'+':'−'} det B = ${fmt(det3(A)+m*det3(B))})`;
+  }
+  [['aa11','a11'],['aa22','a22'],['aa33','a33'],['aa12','a12'],['aa13','a13'],['aa23','a23'],
+   ['bb11','b11'],['bb22','b22'],['bb33','b33'],['bb12','b12'],['bb13','b13'],['bb23','b23']]
+   .forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();}));
+  up();
+})();
+
+/* ================= PLATE IV — OUTER PRODUCT ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-out',8,1.7);
+  const pancake=ellipsoidMesh(C.amber,.55);S.world.add(pancake);
+  const dyn=new THREE.Group();S.world.add(dyn);
+  const planeM=new THREE.Mesh(new THREE.PlaneGeometry(3.8,3.8),new THREE.MeshBasicMaterial({color:C.teal,transparent:true,opacity:.1,side:THREE.DoubleSide}));
+  const planeE=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.8,3.8)),new THREE.LineBasicMaterial({color:C.teal,transparent:true,opacity:.5}));
+  const planeG=new THREE.Group();planeG.add(planeM);planeG.add(planeE);S.world.add(planeG);
+  const st={ath:55,aph:20,ar:1.3,bth:110,bph:200,br:1.1};
+  function up(){
+    const a=sphVec(st.ath,st.aph,st.ar),b=sphVec(st.bth,st.bph,st.br);
+    const M=[[a[0]*b[0],a[0]*b[1],a[0]*b[2]],[a[1]*b[0],a[1]*b[1],a[1]*b[2]],[a[2]*b[0],a[2]*b[1],a[2]*b[2]]];
+    const Mr=M.map((r,i)=>r.map((x,j)=>x+(i===j?0.05:0)));
+    pancake.matrix.copy(m4(Mr));
+    clearGroup(dyn);
+    arrow(dyn,[0,0,0],a,C.coral);arrow(dyn,[0,0,0],b,C.blue);
+    const la=label('a','#ff8f8f',.6);la.position.set(a[0]*1.25,a[1]*1.25,a[2]*1.25);dyn.add(la);
+    const lb=label('b','#9cc8ff',.6);lb.position.set(b[0]*1.25,b[1]*1.25,b[2]*1.25);dyn.add(lb);
+    const bn=Math.hypot(b[0],b[1],b[2]);
+    planeG.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(b[0]/bn,b[1]/bn,b[2]/bn));
+    renderMat($('ro-dyad'),M);
+    $('ro-dotv').textContent='a·b = '+fmt(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
+  }
+  [['oath','ath'],['oaph','aph'],['oar','ar'],['obth','bth'],['obph','bph'],['obr','br']].forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();}));
+  up();
+})();
+
+/* ================= PLATE V — INNER PRODUCT ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-in',7.8,1.6);
+  const dyn=new THREE.Group();S.world.add(dyn);
+  const st={ath:60,aph:0,ar:1.5,bth:75,bph:95,br:1.2};
+  function up(){
+    const a=sphVec(st.ath,st.aph,st.ar),b=sphVec(st.bth,st.bph,st.br);
+    clearGroup(dyn);
+    arrow(dyn,[0,0,0],a,C.coral);arrow(dyn,[0,0,0],b,C.teal);
+    const an=Math.hypot(...a);const au=a.map(x=>x/an);
+    const proj=au.map(x=>x*(b[0]*au[0]+b[1]*au[1]+b[2]*au[2]));
+    const dash=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(b),V(proj)]),new THREE.LineDashedMaterial({color:C.amber,dashSize:.09,gapSize:.06}));
+    dash.computeLineDistances();dyn.add(dash);
+    arrow(dyn,au.map(x=>-x*2.2),au.map(x=>x*2.2),0x3a5876,.001,.001);
+    // arc between directions
+    const bn=Math.hypot(...b),bu=b.map(x=>x/bn),pts=[];
+    const dot=clamp(au[0]*bu[0]+au[1]*bu[1]+au[2]*bu[2],-1,1),th=Math.acos(dot);
+    for(let i=0;i<=24;i++){const t=i/24;
+      const s=Math.sin(th);const w1=Math.sin((1-t)*th)/(s||1),w2=Math.sin(t*th)/(s||1);
+      pts.push(V([0,1,2].map(j=>(w1*au[j]+w2*bu[j])*.85)));}
+    dyn.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:C.amber})));
+    const la=label('a','#ff8f8f',.6);la.position.set(a[0]*1.2,a[1]*1.2,a[2]*1.2);dyn.add(la);
+    const lt=label('θ','#ffd166',.55);const mid=pts[12];lt.position.set(mid.x*1.35,mid.y*1.35,mid.z*1.35);dyn.add(lt);
+    const d=a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+    $('ro-dot').textContent='a·b = aᵢbⁱ = '+fmt(d);
+    $('ro-mags').textContent=`|a| = ${fmt(an)}, |b| = ${fmt(bn)}`;
+    $('ro-ang').textContent=`θ = ${fmt(th*180/Math.PI,1)}° · |a||b|cosθ = ${fmt(an*bn*Math.cos(th))}`;
+  }
+  [['iath','ath'],['iaph','aph'],['iar','ar'],['ibth','bth'],['ibph','bph'],['ibr','br']].forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();}));
+  up();
+})();
+
+/* ================= PLATE VI — QUOTIENT (DOM) ================= */
+(function(){
+  const st={};
+  function up(){
+    const T=[[st.q11,st.q12],[st.q21,st.q22]],x=[st.qx1,st.qx2],a=d2r(st.qang);
+    const R=[[Math.cos(a),-Math.sin(a)],[Math.sin(a),Math.cos(a)]];
+    const y=mv2(T,x);
+    const yR=mv2(R,y);                       // route 1: rotate the result
+    const Tp=mm2(mm2(R,T),[[R[0][0],R[1][0]],[R[0][1],R[1][1]]]);
+    const xp=mv2(R,x),yT=mv2(Tp,xp);         // route 2: rotate the objects
+    renderMat($('qy-r'),[yR],2);renderMat($('qy-t'),[yT],2);
+    const err=Math.hypot(yR[0]-yT[0],yR[1]-yT[1]);
+    $('qbadge').textContent=err<1e-9?'✓ equal — tensor law holds':'✗ mismatch';
+    $('qerr').textContent='|Δ| ≈ '+err.toExponential(2);
+  }
+  [['q11','q11'],['q12','q12'],['q21','q21'],['q22','q22'],['qx1','qx1'],['qx2','qx2'],['qang','qang']]
+   .forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();},(v)=>id==='qang'?fmt(v,0)+'°':fmt(v)));
+  up();
+})();
+
+/* ================= PLATE VII — COMPOSITION ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-comp',7.8,1.9);
+  const ghost=mappedCube(null,C.faint);S.world.add(ghost);
+  const cAB=mappedCube(C.amber,C.amber,.4),cBA=mappedCube(C.blue,C.blue,.1);
+  S.world.add(cAB);S.world.add(cBA);
+  function up(alpha,k){
+    const a=d2r(alpha),A=[[Math.cos(a),-Math.sin(a),0],[Math.sin(a),Math.cos(a),0],[0,0,1]];
+    const B=[[1,k,0],[0,1,0],[0,0,1]];
+    const AB=[[0,1,2].map(j=>A[0][0]*B[0][j]+A[0][1]*B[1][j]+A[0][2]*B[2][j]),
+              [0,1,2].map(j=>A[1][0]*B[0][j]+A[1][1]*B[1][j]+A[1][2]*B[2][j]),
+              [0,1,2].map(j=>A[2][0]*B[0][j]+A[2][1]*B[1][j]+A[2][2]*B[2][j])];
+    const BA=[[0,1,2].map(j=>B[0][0]*A[0][j]+B[0][1]*A[1][j]+B[0][2]*A[2][j]),
+              [0,1,2].map(j=>B[1][0]*A[0][j]+B[1][1]*A[1][j]+B[1][2]*A[2][j]),
+              [0,1,2].map(j=>B[2][0]*A[0][j]+B[2][1]*A[1][j]+B[2][2]*A[2][j])];
+    cAB.matrix.copy(m4(AB));cBA.matrix.copy(m4(BA));
+    renderMat($('ro-AB'),AB);renderMat($('ro-BA'),BA);
+    let diff=0;for(let i=0;i<3;i++)for(let j=0;j<3;j++)diff+=Math.abs(AB[i][j]-BA[i][j]);
+    $('cpbadge').textContent=diff>.02?'AB ≠ BA':'AB = BA (degenerate case)';
+    $('cpbadge').className=diff>.02?'badge-neq':'badge-eq';
+  }
+  let al=48,kk=.7;
+  bindR('cpa',null,v=>{al=v;up(al,kk);},v=>fmt(v,0)+'°');
+  bindR('cpk',null,v=>{kk=v;up(al,kk);});
+  up(al,kk);
+})();
+
+/* ================= PLATE VIII — DETERMINANT ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-det',7.8,1.9);
+  const ghost=mappedCube(null,C.faint);S.world.add(ghost);
+  const cube=mappedCube(C.amber,C.amber,.42);S.world.add(cube);
+  const dyn=new THREE.Group();S.world.add(dyn);
+  function up(s1,s2,s3,k){
+    const M=[[s1,k,0],[0,s2,0],[0,0,s3]];
+    cube.matrix.copy(m4(M));
+    clearGroup(dyn);
+    arrow(dyn,[0,0,0],[M[0][0],M[1][0],M[2][0]],C.coral);
+    arrow(dyn,[0,0,0],[M[0][1],M[1][1],M[2][1]],C.teal);
+    arrow(dyn,[0,0,0],[M[0][2],M[1][2],M[2][2]],C.blue);
+    const d=det3(M);
+    $('detv').textContent='det M = '+fmt(d);
+    $('volv').textContent='volume = |det M| = '+fmt(Math.abs(d));
+  }
+  let s={s1:1.4,s2:.8,s3:1.15,k:.5};
+  const go=()=>up(s.s1,s.s2,s.s3,s.k);
+  bindR('ds1',null,v=>{s.s1=v;go();});bindR('ds2',null,v=>{s.s2=v;go();});
+  bindR('ds3',null,v=>{s.s3=v;go();});bindR('dk',null,v=>{s.k=v;go();});
+  go();
+})();
+
+/* ================= PLATE IX — SPHERE METRIC ================= */
+if(HAS3D)(function(){
+  const S=make3D('cv-sph',4.7,1.1,.05);
+  const sph=new THREE.Mesh(new THREE.SphereGeometry(1,32,22),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.14}));
+  S.world.add(sph);
+  const dyn=new THREE.Group();S.world.add(dyn);
+  function P(th,ph){return [Math.sin(th)*Math.cos(ph),Math.cos(th),Math.sin(th)*Math.sin(ph)];}
+  function up(thDeg){
+    const th=d2r(thDeg),dphi=Math.PI/2;clearGroup(dyn);
+    // full latitude ring
+    const ringPts=[];for(let i=0;i<=96;i++)ringPts.push(V(P(th,i/96*Math.PI*2)));
+    dyn.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts),new THREE.LineBasicMaterial({color:0x7fa8c9,transparent:true,opacity:.5})));
+    // highlighted arc (tube)
+    const arcPts=[];for(let i=0;i<=32;i++)arcPts.push(V(P(th,i/32*dphi)));
+    const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts),48,.02,8),new THREE.MeshBasicMaterial({color:C.amber}));
+    dyn.add(tube);
+    const p0=P(th,0);dyn.add(new THREE.Mesh(new THREE.SphereGeometry(.035,12,10),new THREE.MeshBasicMaterial({color:C.coral}))).children;
+    const marker=dyn.children[dyn.children.length-1];marker.position.set(p0[0],p0[1],p0[2]);
+    // tangent frame at arc midpoint
+    const phm=dphi/2,pm=P(th,phm);
+    const eth=[Math.cos(th)*Math.cos(phm),-Math.sin(th),Math.cos(th)*Math.sin(phm)];
+    const eph=[-Math.sin(th)*Math.sin(phm),0,Math.sin(th)*Math.cos(phm)];
+    arrow(dyn,pm,pm.map((x,j)=>x+eth[j]*.5),C.blue,.12,.05);
+    arrow(dyn,pm,pm.map((x,j)=>x+eph[j]),C.amber,.12,.05);
+    const lt=label('e_θ','#9cc8ff',.5);lt.position.set(pm[0]+eth[0]*.75,pm[1]+eth[1]*.75,pm[2]+eth[2]*.75);dyn.add(lt);
+    const lp=label('e_φ','#ffd166',.5);lp.position.set(pm[0]+eph[0]*1.3,pm[1]+eph[1]*1.3,pm[2]+eph[2]*1.3);dyn.add(lp);
+    const s=Math.sin(th);
+    $('sph-sin').textContent='sin θ = '+fmt(s);
+    $('sph-gpp').textContent='g_φφ = sin²θ = '+fmt(s*s);
+    $('sph-len').textContent='arc(Δφ = 90°) = sinθ·Δφ = '+fmt(s*dphi,3);
+  }
+  bindR('spth',null,up,v=>fmt(v,0)+'°');
+})();
+
+/* ---------- 2-D canvas framework ---------- */
+function make2D(id){
+  const cv=$(id),ctx=cv.getContext('2d');
+  const P={cv,ctx,redraw(){if(P.draw)P.draw();}};
+  function fit(){
+    const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
+    const d=Math.min(devicePixelRatio,2);cv.width=w*d;cv.height=h*d;ctx.setTransform(d,0,0,d,0,0);P.redraw();
+  }
+  new ResizeObserver(fit).observe(cv);fit();PLATES2D.push(P);return P;
+}
+function arrow2(ctx,x0,y0,x1,y1,color,w,head){
+  const a=Math.atan2(y1-y0,x1-x0),h=head||9;
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w||2;
+  ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1-Math.cos(a)*h*.6,y1-Math.sin(a)*h*.6);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1-Math.cos(a-.42)*h,y1-Math.sin(a-.42)*h);ctx.lineTo(x1-Math.cos(a+.42)*h,y1-Math.sin(a+.42)*h);ctx.closePath();ctx.fill();
+}
+function txt2(ctx,s,x,y,color,size,align){ctx.fillStyle=color;ctx.font=(size||13)+'px Archivo, sans-serif';ctx.textAlign=align||'left';ctx.textBaseline='middle';ctx.fillText(s,x,y);}
+function dragify(P,getTip,setPos){
+  let drag=false;
+  const rect=e=>{const r=P.cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+  P.cv.addEventListener('pointerdown',e=>{const [x,y]=rect(e),t=getTip();if(Math.hypot(x-t[0],y-t[1])<26){drag=true;P.cv.setPointerCapture(e.pointerId);}});
+  P.cv.addEventListener('pointermove',e=>{if(!drag)return;const [x,y]=rect(e);setPos(x,y);P.redraw();});
+  addEventListener('pointerup',()=>drag=false);
+}
+
+/* ================= PLATE X — METRIC ON THE PLANE ================= */
+(function(){
+  const P=make2D('cv-metric');const st={g11:1.5,g12:.55,g22:.9};let dx=[1.05,.55];
+  function G(){const det=st.g11*st.g22-st.g12*st.g12;let g12=st.g12;if(det<.08){g12=Math.sign(g12||1)*Math.sqrt(Math.max(0,st.g11*st.g22-.08));$('mg12').value=g12;st.g12=g12;return [[st.g11,g12],[g12,st.g22]];}return [[st.g11,st.g12],[st.g12,st.g22]];}
+  P.draw=function(){
+    const w=P.cv.clientWidth,h=P.cv.clientHeight,cx0=w/2,cy0=h/2,sc=Math.min(w,h)/6.4;
+    const X=(p)=>[cx0+p[0]*sc,cy0-p[1]*sc];
+    P.ctx.clearRect(0,0,w,h);
+    P.ctx.strokeStyle='rgba(90,140,190,.14)';P.ctx.lineWidth=1;
+    for(let i=-6;i<=6;i++){P.ctx.beginPath();P.ctx.moveTo(cx0+i*sc*.5,0);P.ctx.lineTo(cx0+i*sc*.5,h);P.ctx.stroke();
+      P.ctx.beginPath();P.ctx.moveTo(0,cy0+i*sc*.5);P.ctx.lineTo(w,cy0+i*sc*.5);P.ctx.stroke();}
+    const g=G();
+    // Euclidean unit circle
+    P.ctx.setLineDash([5,5]);P.ctx.strokeStyle='rgba(160,180,200,.5)';P.ctx.beginPath();
+    for(let i=0;i<=64;i++){const a=i/64*Math.PI*2,p=X([Math.cos(a),Math.sin(a)]);i?P.ctx.lineTo(p[0],p[1]):P.ctx.moveTo(p[0],p[1]);}
+    P.ctx.stroke();P.ctx.setLineDash([]);
+    // metric unit ellipse via eigen
+    const tr=g[0][0]+g[1][1],dd=Math.sqrt(Math.max(0,tr*tr/4-(g[0][0]*g[1][1]-g[0][1]*g[0][1])));
+    const l1=tr/2+dd,l2=Math.max(1e-6,tr/2-dd),ph=.5*Math.atan2(2*g[0][1],g[0][0]-g[1][1]);
+    P.ctx.strokeStyle='#ffb703';P.ctx.lineWidth=2.4;P.ctx.beginPath();
+    for(let i=0;i<=96;i++){const t=i/96*Math.PI*2,u=Math.cos(t)/Math.sqrt(l1),v2=Math.sin(t)/Math.sqrt(l2);
+      const x=Math.cos(ph)*u-Math.sin(ph)*v2,y=Math.sin(ph)*u+Math.cos(ph)*v2,p=X([x,y]);
+      i?P.ctx.lineTo(p[0],p[1]):P.ctx.moveTo(p[0],p[1]);}
+    P.ctx.stroke();
+    arrow2(P.ctx,cx0,cy0,cx0+sc,cy0,'rgba(160,180,200,.55)',1.5,7);
+    arrow2(P.ctx,cx0,cy0,cx0,cy0-sc,'rgba(160,180,200,.55)',1.5,7);
+    const t2=X(dx);arrow2(P.ctx,cx0,cy0,t2[0],t2[1],'#ff5d5d',3,12);
+    P.ctx.beginPath();P.ctx.arc(t2[0],t2[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
+    txt2(P.ctx,'dx',t2[0]+12,t2[1]-10,'#ff8f8f',14);
+    txt2(P.ctx,'g-unit circle',X([0,0])[0]+8,h-14,'#7fa8c9',11);
+    const ds2=g[0][0]*dx[0]*dx[0]+2*g[0][1]*dx[0]*dx[1]+g[1][1]*dx[1]*dx[1];
+    $('mdx').textContent='dx = ('+fmt(dx[0])+', '+fmt(dx[1])+')';
+    $('mds2').textContent='ds² = gᵢⱼdxⁱdxʲ = '+fmt(ds2);
+    $('mds').textContent='ds = '+fmt(Math.sqrt(Math.max(0,ds2)));
+    $('meu').textContent='‖dx‖ Euclid = '+fmt(Math.hypot(dx[0],dx[1]));
+  };
+  dragify(P,()=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/6.4;return [w/2+dx[0]*sc,h/2-dx[1]*sc];},
+    (x,y)=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/6.4;dx=[(x-w/2)/sc,(h/2-y)/sc];});
+  const go=()=>{st.g11=+$('mg11').value;st.g12=+$('mg12').value;st.g22=+$('mg22').value;P.redraw();};
+  bindR('mg11',null,go);bindR('mg12',null,go);bindR('mg22',null,go);
+  P.draw();
+})();
+
+/* ================= PLATE XI — RECIPROCAL BASIS ================= */
+(function(){
+  const P=make2D('cv-recip');const st={ang:64,len:1.05};let v=[0.85,0.95];
+  function basis(){const a=d2r(st.ang);return [[1,0],[st.len*Math.cos(a),st.len*Math.sin(a)]];}
+  P.draw=function(){
+    const w=P.cv.clientWidth,h=P.cv.clientHeight,cx0=w/2-40,cy0=h/2+20,sc=Math.min(w,h)/4.6;
+    const X=p=>[cx0+p[0]*sc,cy0-p[1]*sc];
+    P.ctx.clearRect(0,0,w,h);
+    const [e1,e2]=basis();
+    const det=e1[0]*e2[1]-e1[1]*e2[0];
+    const iE=[[e2[1]/det,-e2[0]/det],[-e1[1]/det,e1[0]/det]];      // E^-1 (rows)
+    const r1=[iE[0][0],iE[0][1]],r2=[iE[1][0],iE[1][1]];           // reciprocal = rows of E^-1
+    // oblique grid
+    P.ctx.strokeStyle='rgba(90,140,190,.13)';P.ctx.lineWidth=1;
+    for(let i=-4;i<=4;i++){
+      let p=X([e1[0]*i+e2[0]*-4,e1[1]*i+e2[1]*-4]),q=X([e1[0]*i+e2[0]*4,e1[1]*i+e2[1]*4]);
+      P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
+      p=X([e2[0]*i+e1[0]*-4,e2[1]*i+e1[1]*-4]);q=X([e2[0]*i+e1[0]*4,e2[1]*i+e1[1]*4]);
+      P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();}
+    // contravariant construction (parallelogram)
+    const vc=[iE[0][0]*v[0]+iE[0][1]*v[1],iE[1][0]*v[0]+iE[1][1]*v[1]]; // v^i
+    P.ctx.setLineDash([6,5]);P.ctx.strokeStyle='rgba(255,183,3,.55)';
+    let p=X(v),q=X([e1[0]*vc[0],e1[1]*vc[0]]);
+    P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
+    q=X([e2[0]*vc[1],e2[1]*vc[1]]);
+    P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
+    // covariant feet
+    if($('rcC').checked){
+      P.ctx.strokeStyle='rgba(90,169,255,.6)';
+      const f=(e)=>{const d=v[0]*e[0]+v[1]*e[1];return [e[0]*d,e[1]*d];};
+      let fp=X(f(e1));P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(fp[0],fp[1]);P.ctx.stroke();
+      fp=X(f(e2));P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(fp[0],fp[1]);P.ctx.stroke();}
+    P.ctx.setLineDash([]);
+    // basis + reciprocal arrows
+    let t=X(e1);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ffb703',3,11);txt2(P.ctx,'e₁',t[0]+10,t[1]+8,'#ffd166',14);
+    t=X(e2);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ffb703',3,11);txt2(P.ctx,'e₂',t[0]+10,t[1]-6,'#ffd166',14);
+    if($('rcR').checked){
+      t=X(r1);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#2dd4bf',2.4,10);txt2(P.ctx,'e¹',t[0]+10,t[1],'#7ff0dd',14);
+      t=X(r2);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#2dd4bf',2.4,10);txt2(P.ctx,'e²',t[0]+10,t[1],'#7ff0dd',14);}
+    t=X(v);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ff5d5d',3,12);
+    P.ctx.beginPath();P.ctx.arc(t[0],t[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
+    txt2(P.ctx,'v',t[0]+12,t[1]-10,'#ff8f8f',15);
+    const vl=[e1[0]*v[0]+e1[1]*v[1],e2[0]*v[0]+e2[1]*v[1]]; // covariant v_i = E^T v
+    $('rvup').textContent='vⁱ = ('+fmt(vc[0])+', '+fmt(vc[1])+')';
+    $('rvlo').textContent='vᵢ = ('+fmt(vl[0])+', '+fmt(vl[1])+')';
+    $('rcheck').textContent='eⁱ·eⱼ = δⁱⱼ ✓ (err ≈ '+Math.abs(r1[0]*e2[0]+r1[1]*e2[1]).toExponential(1)+')';
+    const g=[[e1[0]*e1[0]+e1[1]*e1[1],e1[0]*e2[0]+e1[1]*e2[1]],[e1[0]*e2[0]+e1[1]*e2[1],e2[0]*e2[0]+e2[1]*e2[1]]];
+    const gu=inv2(g);
+    renderMat($('rgd'),g);renderMat($('rgup'),gu);
+  };
+  dragify(P,()=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/4.6;return [w/2-40+v[0]*sc,h/2+20-v[1]*sc];},
+    (x,y)=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/4.6;v=[(x-(w/2-40))/sc,(h/2+20-y)/sc];});
+  bindR('rcang',null,()=>{st.ang=+$('rcang').value;P.redraw();},v=>fmt(v,0)+'°');
+  bindR('rclen',null,()=>{st.len=+$('rclen').value;P.redraw();});
+  $('rcR').addEventListener('change',P.redraw);$('rcC').addEventListener('change',P.redraw);
+  P.draw();
+})();
+
+/* ================= PLATE XII — ASSOCIATED TENSORS ================= */
+(function(){
+  const P=make2D('cv-assoc');const st={g11:2,g12:.4,g22:1};let v=[1.0,0.7];
+  const Ac=[[2,1],[1,3]];
+  function G(){const det=st.g11*st.g22-st.g12*st.g12;let g12=st.g12;
+    if(det<.1){g12=Math.sign(g12||1)*Math.sqrt(Math.max(0,st.g11*st.g22-.1));$('as12').value=g12;st.g12=g12;}
+    return [[st.g11,st.g12],[st.g12,st.g22]];}
+  P.draw=function(){
+    const w=P.cv.clientWidth,h=P.cv.clientHeight,cx0=w/2,cy0=h/2,sc=Math.min(w,h)/5.6;
+    const X=p=>[cx0+p[0]*sc,cy0-p[1]*sc];
+    P.ctx.clearRect(0,0,w,h);
+    P.ctx.strokeStyle='rgba(90,140,190,.13)';P.ctx.lineWidth=1;
+    for(let i=-8;i<=8;i++){P.ctx.beginPath();P.ctx.moveTo(cx0+i*sc*.5,0);P.ctx.lineTo(cx0+i*sc*.5,h);P.ctx.stroke();
+      P.ctx.beginPath();P.ctx.moveTo(0,cy0+i*sc*.5);P.ctx.lineTo(w,cy0+i*sc*.5);P.ctx.stroke();}
+    const g=G(),om=mv2(g,v);                        // ωᵢ = gᵢⱼ vʲ
+    const on=Math.hypot(om[0],om[1])||1e-9;
+    const dir=[-om[1]/on,om[0]/on],sp=1/on;         // level spacing in world units
+    P.ctx.strokeStyle='rgba(45,212,191,.75)';P.ctx.lineWidth=1.6;
+    const n=Math.ceil(4/sp);
+    for(let k=-n;k<=n;k++){
+      const off=k*sp,p0=[dir[0]*(-4)+om[0]/on*off*on/on? 0:0];void p0;
+      const bx=dir[0]*-4+ (om[0]/on)*off, by=dir[1]*-4+(om[1]/on)*off;
+      const p1=X([bx,by]),p2=X([bx+dir[0]*8,by+dir[1]*8]);
+      P.ctx.globalAlpha=k===0?.95:.55;
+      P.ctx.beginPath();P.ctx.moveTo(p1[0],p1[1]);P.ctx.lineTo(p2[0],p2[1]);P.ctx.stroke();}
+    P.ctx.globalAlpha=1;
+    // ω arrow (blue)
+    let t=X([om[0]*.55,om[1]*.55]);
+    P.ctx.setLineDash([4,4]);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#5aa9ff',2,9);P.ctx.setLineDash([]);
+    txt2(P.ctx,'ωᵢ = gᵢⱼvʲ',t[0]+10,t[1]+12,'#9cc8ff',12);
+    // v arrow
+    t=X(v);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ff5d5d',3,12);
+    P.ctx.beginPath();P.ctx.arc(t[0],t[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
+    txt2(P.ctx,'vⁱ',t[0]+12,t[1]-10,'#ff8f8f',14);
+    $('avup').textContent='vⁱ = '+vecStr(v);
+    $('avlo').textContent='vᵢ = '+vecStr(om);
+    $('anorm').textContent='‖v‖²_g = vᵢvⁱ = '+fmt(om[0]*v[0]+om[1]*v[1]);
+    renderMat($('roAc'),Ac);
+    renderMat($('roAm'),mm2(inv2(g),Ac));
+  };
+  dragify(P,()=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/5.6;return [w/2+v[0]*sc,h/2-v[1]*sc];},
+    (x,y)=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/5.6;v=[(x-w/2)/sc,(h/2-y)/sc];});
+  const go=()=>{st.g11=+$('as11').value;st.g12=+$('as12').value;st.g22=+$('as22').value;P.redraw();};
+  bindR('as11',null,go);bindR('as12',null,go);bindR('as22',null,go);
+  P.draw();
+})();
+
+})();
+</script>
+<noscript><div style="padding:2rem;font-family:sans-serif">This atlas is interactive — please enable JavaScript.</div></noscript>
+</body>
+</html>

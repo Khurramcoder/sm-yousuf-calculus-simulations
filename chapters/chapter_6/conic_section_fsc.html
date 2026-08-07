@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONICA — Interactive Conic Sections Explorer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><ellipse cx='16' cy='16' rx='13' ry='8' fill='none' stroke='%2322d3ee' stroke-width='2.5'/><circle cx='16' cy='16' r='3' fill='%23fbbf24'/></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme:{ extend:{
+  fontFamily:{ disp:['"Bricolage Grotesque"','sans-serif'], body:['"Instrument Sans"','sans-serif'], mono:['"JetBrains Mono"','monospace'] },
+  colors:{ ink:'#070f1d', panel:'#0c1930', edge:'#1e3a5c', mist:'#8ca6c4' }
+}}}
+</script>
+
+<style>
+:root{
+  --bg:#070f1d; --panel:#0c1930; --panel2:#112138; --edge:#1c3654;
+  --text:#e7f0fa; --muted:#8ca6c4;
+  --c-circle:#34d399; --c-ellipse:#fbbf24; --c-parabola:#fb7185; --c-hyperbola:#a78bfa; --c-unified:#22d3ee;
+  --mc:#34d399;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;overflow-x:hidden}
+i,em{font-style:italic;font-family:'JetBrains Mono',monospace;font-size:.95em}
+
+#bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+#bg .glow1{position:absolute;top:-220px;left:-160px;width:640px;height:640px;border-radius:50%;
+  background:radial-gradient(circle,rgba(34,211,238,.10),transparent 65%)}
+#bg .glow2{position:absolute;bottom:-260px;right:-180px;width:760px;height:760px;border-radius:50%;
+  background:radial-gradient(circle,rgba(167,139,250,.10),transparent 65%)}
+#bg svg{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+#bg .drift1{animation:dashdrift 60s linear infinite}
+#bg .drift2{animation:dashdrift 90s linear infinite reverse}
+#bg .floaty{animation:floaty 16s ease-in-out infinite alternate}
+@keyframes dashdrift{to{stroke-dashoffset:-1200}}
+@keyframes floaty{from{transform:translateY(-14px)}to{transform:translateY(16px)}}
+
+.reveal{animation:fadeUp .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.brandmark{width:40px;height:40px;flex:none}
+.brandmark .orb{transform-origin:20px 20px;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#conePlane{transition:transform .9s cubic-bezier(.45,1.4,.35,1)}
+
+#tabbar{position:sticky;top:0;z-index:40;background:rgba(7,15,29,.94);border-bottom:1px solid #16304e}
+#tabs{position:relative;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:8px 12px 11px}
+#tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:8px;padding:8px 15px;font-weight:600;font-size:14px;color:var(--muted);
+  border-radius:10px;white-space:nowrap;cursor:pointer;transition:color .2s,transform .2s,background .2s;border:1px solid transparent}
+.tab svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.tab:hover{color:#e3efff;transform:translateY(-1px);background:rgba(30,58,92,.35)}
+.tab.on{color:#fff;background:rgba(30,58,92,.45);border-color:#234568}
+#tabInd{position:absolute;bottom:4px;height:3px;border-radius:99px;background:var(--mc);
+  transition:left .4s cubic-bezier(.5,1.6,.4,1),width .4s cubic-bezier(.5,1.6,.4,1),background .4s;box-shadow:0 0 12px var(--mc)}
+
+.card{background:linear-gradient(180deg,#0d1c33,#0b1729);border:1px solid var(--edge);border-radius:16px;
+  box-shadow:0 14px 44px -20px rgba(0,0,0,.75)}
+.app-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,1fr);gap:18px;align-items:start}
+@media (max-width:1100px){.app-grid{grid-template-columns:1fr}}
+#mathCard{position:sticky;top:72px}
+@media (max-width:1100px){#mathCard{position:static}}
+
+#stage{position:relative;height:clamp(340px,54vh,620px);border-radius:12px;overflow:hidden;background:#081324;
+  border:1px solid #1a3350;user-select:none;touch-action:none}
+@media (max-width:640px){#stage{height:min(72vw,420px)}}
+#stage::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 58%,rgba(3,8,18,.5) 100%)}
+#cv{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;display:block}
+#stage.flash{animation:flashb .9s ease}
+@keyframes flashb{0%{box-shadow:0 0 0 3px var(--mc)}100%{box-shadow:0 0 0 0 transparent}}
+#banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;max-width:94%;
+  background:rgba(9,22,42,.92);border:1px solid var(--mc);color:#eaf6ff;border-radius:999px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 4px 18px -6px rgba(0,0,0,.6)}
+#coordChip{position:absolute;left:10px;bottom:10px;z-index:5;background:rgba(9,22,42,.85);border:1px solid #20405f;
+  border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fc1e4;padding:4px 9px;pointer-events:none}
+#hintChip{position:absolute;right:10px;bottom:10px;z-index:5;font-size:10.5px;color:#5f7ea3;letter-spacing:.04em;pointer-events:none}
+@media (max-width:640px){#hintChip{display:none}}
+#errChip{display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:999;max-width:92%;
+  background:#3b0d14;border:1px solid #fb7185;color:#ffd7dc;font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:7px 16px;border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.tbtn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;
+  border:1px solid #274a70;background:#122947;color:#bcd6f2;cursor:pointer;transition:.18s}
+.tbtn:hover{background:#1a3a61;color:#fff;transform:translateY(-1px)}
+.tbtn svg{width:16px;height:16px}
+
+.ctl{background:#0b1a30;border:1px solid #1b3556;border-radius:12px;padding:10px 12px 6px}
+.ctl-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.ctl-top label{font-size:12px;font-weight:600;color:#a9c3e0;letter-spacing:.02em}
+.ctl-top output{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--mc);font-weight:700}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;
+  background:linear-gradient(90deg,var(--mc) var(--fill,50%),#1a2f4c var(--fill,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;margin-top:-5.5px;
+  background:#fff;border:3px solid var(--mc);box-shadow:0 0 0 4px rgba(255,255,255,.07),0 2px 8px rgba(0,0,0,.5);transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#1a2f4c}
+input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--mc)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid var(--mc)}
+
+.seg{display:inline-flex;background:#0e1f38;border:1px solid #24405f;border-radius:11px;padding:3px;gap:2px}
+.seg button{padding:6px 13px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted);transition:.18s;white-space:nowrap}
+.seg button:hover{color:#dceafe}
+.seg button.on{background:var(--mc);color:#08131f;box-shadow:0 2px 10px -2px var(--mc)}
+
+.tgl{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid #24405f;border-radius:999px;
+  cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted);transition:.2s;background:#0d1d35}
+.tgl:hover{border-color:#3a628f;color:#cfe2f6}
+.tgl input{display:none}
+.tgl .dot{width:26px;height:15px;border-radius:99px;background:#1a2f4c;position:relative;transition:.25s;flex:none}
+.tgl .dot::after{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#7d95b5;top:2px;left:2px;transition:.25s}
+.tgl input:checked ~ .dot{background:var(--mc)}
+.tgl input:checked ~ .dot::after{left:13px;background:#08131f}
+.tgl:has(input:checked){border-color:var(--mc);color:#eef7ff}
+
+.eqbox{background:#0a1729;border:1px solid #1a3350;border-radius:12px;padding:12px 14px;position:relative;overflow-x:auto}
+.eqbox .katex{color:#eef6ff}
+.eqlab{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6f8db1;font-weight:700;margin-bottom:6px}
+.copybtn{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:7px;border:1px solid #24456b;
+  background:#12294a;color:#9fc1e4;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:.6;transition:.18s}
+.copybtn:hover{opacity:1;color:#fff;transform:translateY(-1px)}
+.copybtn svg{width:12px;height:12px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.pcell{background:#0b1a30;border:1px solid #1b3556;border-radius:10px;padding:8px 10px;min-width:0;transition:border-color .2s}
+.pcell:hover{border-color:#2f5680}
+.plab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7f99bb;font-weight:700;margin-bottom:3px}
+.pval{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#eaf3ff;overflow-x:auto;white-space:nowrap}
+.pval .katex{font-size:1.02em}
+.ins-item{display:flex;gap:10px;padding:9px 11px;background:#0b1a30;border:1px solid #1b3556;border-left:3px solid var(--mc);
+  border-radius:9px;font-size:13px;line-height:1.55;color:#c6d9ee;animation:insIn .5s cubic-bezier(.2,.7,.2,1) both}
+.ins-item b{color:#fff}
+@keyframes insIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+
+.opt{border:1px solid #24456b;background:#0d1f3a;border-radius:12px;padding:13px 10px;text-align:center;cursor:pointer;
+  transition:.18s;font-size:15px;color:#dceafe;min-height:56px;display:flex;align-items:center;justify-content:center}
+.opt .katex{font-size:1.05em}
+.opt:hover:not(:disabled){transform:translateY(-2px);border-color:#3f79b8;background:#123055;box-shadow:0 8px 20px -10px rgba(0,0,0,.7)}
+.opt:disabled{cursor:default;opacity:.85}
+.opt.correct{border-color:var(--c-circle);background:rgba(52,211,153,.13);opacity:1;animation:pop .45s cubic-bezier(.3,1.6,.4,1)}
+.opt.wrong{border-color:var(--c-parabola);background:rgba(251,113,133,.1);opacity:1;animation:shake .4s}
+.opt.dim{opacity:.4}
+@keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.statchip{display:inline-flex;align-items:center;gap:6px;background:#0b1a30;border:1px solid #1b3556;border-radius:999px;
+  padding:5px 12px;font-size:12.5px;font-weight:600;color:#a9c3e0}
+.statchip svg{width:13px;height:13px}
+.statchip b{color:#fff;font-family:'JetBrains Mono',monospace}
+
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;border:1px solid #2a4a70;
+  background:#12294a;color:#dbeafe;font-weight:600;font-size:13px;cursor:pointer;transition:.18s}
+.btn:hover{background:#1a3a61;color:#fff;transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn svg{width:15px;height:15px}
+.btn-primary{background:var(--mc);color:#08131f;border-color:transparent}
+.btn-primary:hover{background:var(--mc);filter:brightness(1.12);color:#08131f}
+
+#toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,16px);z-index:99;background:#12294a;border:1px solid #2f5680;
+  color:#eaf4ff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:.3s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+.hairline{height:1px;background:linear-gradient(90deg,transparent,#234a72,transparent)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}}
+</style>
+</head>
+
+<body class="font-body min-h-screen">
+
+<div id="errChip"></div>
+
+<div id="bg">
+  <div class="glow1"></div><div class="glow2"></div>
+  <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" fill="none">
+    <g class="floaty">
+      <ellipse cx="200" cy="620" rx="300" ry="130" stroke="#22d3ee" stroke-opacity=".08" stroke-width="1.5" stroke-dasharray="6 10" class="drift1"/>
+      <path d="M 620 780 Q 900 -80 1240 780" stroke="#a78bfa" stroke-opacity=".08" stroke-width="1.5" stroke-dasharray="6 10" class="drift2"/>
+      <path d="M -60 120 C 220 300 220 480 -60 660 M 1260 120 C 980 300 980 480 1260 660" stroke="#fb7185" stroke-opacity=".06" stroke-width="1.5" stroke-dasharray="5 9" class="drift1"/>
+      <circle cx="1030" cy="150" r="105" stroke="#fbbf24" stroke-opacity=".07" stroke-width="1.5" stroke-dasharray="4 8" class="drift2"/>
+    </g>
+  </svg>
+</div>
+
+<header class="max-w-[1460px] mx-auto px-4 md:px-6 pt-5 pb-3 flex items-center justify-between gap-6 reveal">
+  <div class="flex items-center gap-3.5 min-w-0">
+    <svg class="brandmark" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="4" fill="#fbbf24"/>
+      <g class="orb"><ellipse cx="20" cy="20" rx="17" ry="8.5" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="4 5" transform="rotate(-24 20 20)"/>
+      <circle cx="35.5" cy="13" r="2.4" fill="#22d3ee"/></g>
+    </svg>
+    <div class="min-w-0">
+      <h1 class="font-disp font-extrabold text-2xl md:text-[27px] leading-none tracking-tight">C<span class="text-cyan-300">O</span>NICA</h1>
+      <p class="text-mist text-[11.5px] md:text-xs mt-1 truncate">an interactive field guide to the conic sections</p>
+    </div>
+  </div>
+
+  <div class="hidden md:flex items-center gap-3 flex-none">
+    <svg id="coneSvg" viewBox="0 0 220 150" class="w-44 lg:w-52">
+      <g stroke="#3b82f6" stroke-opacity=".5" fill="none" stroke-width="1.1">
+        <path d="M110 75 L58 20 M110 75 L162 20"/>
+        <ellipse cx="110" cy="20" rx="52" ry="9"/>
+        <path d="M110 75 L58 130 M110 75 L162 130"/>
+        <ellipse cx="110" cy="130" rx="52" ry="9"/>
+        <line x1="110" y1="20" x2="110" y2="130" stroke-dasharray="3 4" stroke-opacity=".35"/>
+      </g>
+      <g id="conePlane" style="transform-origin:110px 47px">
+        <rect x="34" y="41" width="152" height="12" rx="6" fill="#22d3ee" opacity=".13"/>
+        <line x1="34" y1="47" x2="186" y2="47" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="max-w-[150px]">
+      <p id="coneCap" class="font-mono text-[11px] text-cyan-200/90 leading-snug">horizontal slice → circle</p>
+      <p class="text-[10.5px] text-mist/80 mt-1 leading-snug">one cone, four curves — tilt the plane.</p>
+    </div>
+  </div>
+</header>
+
+<nav id="tabbar" class="reveal" style="animation-delay:.08s">
+  <div class="max-w-[1460px] mx-auto">
+    <div id="tabs">
+      <button class="tab" data-mode="circle"><svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.2"/></svg>Circle</button>
+      <button class="tab" data-mode="ellipse"><svg viewBox="0 0 18 18"><ellipse cx="9" cy="9" rx="7" ry="4.4"/></svg>Ellipse</button>
+      <button class="tab" data-mode="parabola"><svg viewBox="0 0 18 18"><path d="M2 15.5 Q 9 -5.5 16 15.5"/></svg>Parabola</button>
+      <button class="tab" data-mode="hyperbola"><svg viewBox="0 0 18 18"><path d="M4 2 C 8.5 6.5 8.5 11.5 4 16 M14 2 C 9.5 6.5 9.5 11.5 14 16"/></svg>Hyperbola</button>
+      <button class="tab" data-mode="unified"><svg viewBox="0 0 18 18"><path d="M9 1.5 L3 14.5 M9 1.5 L15 14.5"/><ellipse cx="9" cy="14.5" rx="6" ry="1.7"/></svg>Focus–Directrix</button>
+      <button class="tab" data-mode="quiz"><svg viewBox="0 0 18 18"><path d="M4 3 h10 v3.5 a5 5 0 0 1 -10 0 Z M2.5 3 h2 M13.5 3 h2 M9 12 v3 M6 15.5 h6"/></svg>Challenge</button>
+      <div id="tabInd"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-[1460px] mx-auto px-4 md:px-6 py-5">
+
+  <div id="vizGrid" class="app-grid">
+
+    <section class="card p-3.5 md:p-4 reveal" style="animation-delay:.14s">
+      <div class="flex items-start justify-between gap-3 flex-wrap mb-3">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h2 id="canvasTitle" class="font-disp font-bold text-xl md:text-2xl tracking-tight">Circle</h2>
+            <span id="eBadge" class="font-mono text-[11px] px-2 py-0.5 rounded-full border" style="border-color:var(--mc);color:var(--mc)">e = 0</span>
+          </div>
+          <p id="canvasSub" class="text-mist text-xs md:text-[13px] mt-0.5">All points at a fixed distance r from the center.</p>
+        </div>
+        <div class="flex gap-1.5">
+          <button class="tbtn" id="btnZo" title="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/></svg></button>
+          <button class="tbtn" id="btnZi" title="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg></button>
+          <button class="tbtn" id="btnFit" title="Auto-fit curve (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+          <button class="tbtn" id="btnHome" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 4v4h4"/></svg></button>
+        </div>
+      </div>
+
+      <div id="stage">
+        <canvas id="cv"></canvas>
+        <div id="banner" hidden></div>
+        <div id="coordChip">x: 0.00&nbsp;&nbsp;y: 0.00</div>
+        <div id="hintChip">drag P · scroll = zoom · drag = pan · dbl-click = zoom in</div>
+      </div>
+
+      <div class="mt-3.5 pt-3.5 border-t border-[#1a3350]">
+        <div id="sliders" class="grid gap-2.5" style="grid-template-columns:repeat(auto-fit,minmax(215px,1fr))"></div>
+        <div id="orientRow" class="mt-3 flex items-center gap-3 flex-wrap"></div>
+        <div class="hairline my-3"></div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-[10px] font-bold tracking-[.16em] text-[#6f8db1] uppercase mr-1">Overlays</span>
+          <div id="toggles" class="flex gap-2 flex-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside id="mathCard" class="card p-4 md:p-5 reveal" style="animation-delay:.2s">
+      <div class="flex items-center justify-between">
+        <h3 class="font-disp font-bold text-lg tracking-tight">Live Mathematics</h3>
+        <span class="text-[10px] font-mono text-mist">KaTeX · realtime</span>
+      </div>
+
+      <div class="mt-3.5">
+        <div class="eqlab">Standard form</div>
+        <div class="eqbox"><button class="copybtn" id="copyStd" title="Copy LaTeX"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button><div id="standardEq" class="min-h-[42px] overflow-x-auto"></div></div>
+      </div>
+      <div class="mt-2.5">
+        <div class="eqlab">General form</div>
+        <div class="eqbox"><button class="copybtn" id="copyGen" title="Copy LaTeX"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button><div id="generalEq" class="min-h-[30px] overflow-x-auto"></div></div>
+      </div>
+      <div id="extraEq" class="mt-2.5 hidden">
+        <div class="eqlab">Focus–directrix (polar) form</div>
+        <div class="eqbox"><div id="polarEq" class="overflow-x-auto"></div></div>
+      </div>
+
+      <div class="eqlab mt-5">Computed properties</div>
+      <div id="props" class="pgrid"></div>
+
+      <div class="eqlab mt-5 flex items-center gap-1.5">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mc)" stroke-width="2" stroke-linecap="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5A7 7 0 1 0 5 9c0 1 .2 2.2 1 3 .8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 21h4"/></svg>
+        Insight
+      </div>
+      <div id="insights" class="flex flex-col gap-2 mt-1"></div>
+    </aside>
+  </div>
+
+  <section id="quizCard" class="card p-4 md:p-7 max-w-3xl mx-auto hidden reveal">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h2 class="font-disp font-extrabold text-2xl tracking-tight">Challenge Mode</h2>
+        <p class="text-mist text-[13px] mt-0.5">Read the equation. Identify the features. Then plot it to check your intuition.</p>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <span class="statchip"><svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 5h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 2h4v4a2 2 0 0 1-4 0Z"/></svg>Score <b id="statScore">0</b></span>
+        <span class="statchip"><svg viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3 2.5.5 5 2.5 5 6a5 5 0 1 1-10 0c0-1.5.5-3 2-4.5.5 1.5 1 2.5 1.5 4Z"/></svg>Streak <b id="statStreak">0</b></span>
+        <span class="statchip"><svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>Best <b id="statBest">0</b></span>
+        <span class="statchip">Acc <b id="statAcc">—</b></span>
+      </div>
+    </div>
+
+    <div class="hairline my-4"></div>
+
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <p id="qCount" class="font-mono text-[11px] text-mist">QUESTION 1</p>
+      <label class="flex items-center gap-2 text-[12px] text-mist font-semibold">Topic
+        <select id="qTopic" class="bg-[#0d1f3a] border border-[#24456b] rounded-lg px-2.5 py-1.5 text-[12px] text-[#dceafe] outline-none cursor-pointer">
+          <option value="mixed">Mixed</option>
+          <option value="classify">Classify only</option>
+          <option value="features">Features only</option>
+        </select>
+      </label>
+    </div>
+
+    <p id="qPrompt" class="mt-3 text-[15px] font-semibold text-[#cfe2f6]"></p>
+    <div class="eqbox mt-2.5"><div id="qEq" class="text-center min-h-[46px]"></div></div>
+
+    <div id="qOpts" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4"></div>
+
+    <div id="qFeedback" class="mt-4 hidden">
+      <div id="qVerdict" class="font-disp font-bold text-lg"></div>
+      <div class="ins-item mt-2"><div id="qExplain" class="overflow-x-auto"></div></div>
+      <div class="flex gap-2.5 mt-3.5 flex-wrap">
+        <button class="btn btn-primary" id="btnNext">Next question
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+        <button class="btn" id="btnPlot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>Plot this conic</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="max-w-[1460px] mx-auto px-4 md:px-6 pb-8 pt-2 flex items-center justify-between text-[11px] text-mist/70 flex-wrap gap-2">
+  <span>CONICA · built for students of analytic geometry</span>
+  <span class="font-mono">PF = e·PD — one definition, every curve</span>
+</footer>
+
+<div id="toast">Copied!</div>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>
+'use strict';
+/* ================================================================ helpers */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmtT=(x,d=2)=>{let v=+Number(x).toFixed(d);if(Object.is(v,-0))v=0;return String(v);};
+const fmt=(x,d=2)=>fmtT(x,d).replace(/-/g,'−');
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function tex(el,s,display=false){ if(!s){el.innerHTML='';return;} try{ if(window.katex){katex.render(s,el,{throwOnError:false,displayMode:display});} else el.textContent=s; }catch(e){ el.textContent=s; } }
+const linT=(sym,v)=>Math.abs(v)<1e-9?sym:`(${sym} ${v>0?'-':'+'} ${fmtT(Math.abs(v))})`;
+function frac(n,d){const g=(a,b)=>b?g(b,a%b):a;const k=g(Math.abs(n),Math.abs(d))||1;n/=k;d/=k;if(d===1)return fmtT(n);return `\\tfrac{${fmtT(n)}}{${fmtT(d)}}`;}
+function polyTex(terms){
+  let first=terms.find(t=>Math.abs(t.c)>1e-9);
+  if(first&&first.c<0) terms=terms.map(t=>({c:-t.c,s:t.s}));
+  let out='';
+  for(const t of terms){ if(Math.abs(t.c)<1e-9)continue;
+    const sign=t.c<0?(out?' - ':'-'):(out?' + ':'');
+    const a=Math.abs(t.c), coef=(t.s&&Math.abs(a-1)<1e-9)?'':fmtT(a);
+    out+=sign+coef+t.s; }
+  return (out||'0')+' = 0';
+}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1400);}
+
+/* visible error reporting — if anything ever throws, you see it on screen */
+let lastErr='';
+function showErr(m){ if(m===lastErr)return; lastErr=m;
+  const c=$('#errChip'); if(c){c.textContent='⚠ '+m;c.style.display='block';}
+  console.error('[CONICA] '+m); }
+window.addEventListener('error',e=>showErr(e.message||'script error'));
+
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this;
+  };
+}
+
+/* ================================================================ state */
+const MODE_COLORS={circle:'#34d399',ellipse:'#fbbf24',parabola:'#fb7185',hyperbola:'#a78bfa',unified:'#22d3ee',quiz:'#22d3ee'};
+const MODE_NAMES={circle:'Circle',ellipse:'Ellipse',parabola:'Parabola',hyperbola:'Hyperbola',unified:'Focus–Directrix',quiz:'Challenge'};
+const MODE_SUBS={
+  circle:'All points at a fixed distance r from the center.',
+  ellipse:'PF₁ + PF₂ is constant — the string property.',
+  parabola:'PF = PD — equidistant from focus and directrix.',
+  hyperbola:'|PF₁ − PF₂| is constant on each branch.',
+  unified:'PF = e · PD — one rule that generates every conic.'};
+
+const state={
+  mode:'circle',
+  params:{
+    circle:{h:0,k:0,r:3},
+    ellipse:{h:0,k:0,a:4,b:2.5,orient:'h'},
+    parabola:{h:0,k:0,p:1.5,orient:'v'},
+    hyperbola:{h:0,k:0,a:2,b:3,orient:'h'},
+    unified:{e:0.7,d:3}
+  },
+  toggles:{foci:true,directrix:true,asymp:true,vectors:true,latus:false,grid:true},
+  P:{circle:Math.PI/3,ellipse:1.05,parabola:2.6,hyperbola:{u:1.0,s:1},unified:{th:1.0,t:2.2,u:0.9,s:1}},
+  drag:null
+};
+const view={s:44,x:0,y:0}, tview={s:44,x:0,y:0};
+
+/* ================================================================ geometry */
+function geometry(mode=state.mode, prm=state.params[mode]){
+  const g={mode};
+  if(mode==='circle'){
+    const{h,k,r}=prm;
+    Object.assign(g,{kind:'circle',center:[h,k],r,e:0,foci:[[h,k]],directrix:[],asympSlope:null,area:Math.PI*r*r,circ:2*Math.PI*r});
+  } else if(mode==='ellipse'){
+    const{h,k,a,b,orient}=prm;
+    const sx=orient==='h'?a:b, sy=orient==='h'?b:a;
+    const major=Math.max(sx,sy), minor=Math.min(sx,sy), axis=sx>=sy?'h':'v';
+    const c=Math.sqrt(Math.max(0,major*major-minor*minor)), e=major>0?c/major:0;
+    const foci=e<1e-9?[[h,k]]:axis==='h'?[[h-c,k],[h+c,k]]:[[h,k-c],[h,k+c]];
+    const directrix=e<1e-6?[]:axis==='h'?[{axis:'v',v:h-major/e},{axis:'v',v:h+major/e}]:[{axis:'h',v:k-major/e},{axis:'h',v:k+major/e}];
+    Object.assign(g,{kind:'ellipse',center:[h,k],semiX:sx,semiY:sy,major,minor,axis,c,e,foci,directrix,area:Math.PI*sx*sy,latus:2*minor*minor/major});
+  } else if(mode==='parabola'){
+    const{h,k,p,orient}=prm;
+    const focus=orient==='v'?[h,k+p]:[h+p,k];
+    const directrix=[orient==='v'?{axis:'h',v:k-p}:{axis:'v',v:h-p}];
+    Object.assign(g,{kind:'parabola',vertex:[h,k],h,k,p,orient,focus,directrix,e:1,latus:4*Math.abs(p),
+      opens:orient==='v'?(p>0?'Up':'Down'):(p>0?'Right':'Left')});
+  } else if(mode==='hyperbola'){
+    const{h,k,a,b,orient}=prm;
+    const c=Math.hypot(a,b), e=c/a;
+    const foci=orient==='h'?[[h-c,k],[h+c,k]]:[[h,k-c],[h,k+c]];
+    const verts=orient==='h'?[[h-a,k],[h+a,k]]:[[h,k-a],[h,k+a]];
+    const directrix=orient==='h'?[{axis:'v',v:h-a/e},{axis:'v',v:h+a/e}]:[{axis:'h',v:k-a/e},{axis:'h',v:k+a/e}];
+    Object.assign(g,{kind:'hyperbola',center:[h,k],a,b,orient,c,e,foci,verts,directrix,asympSlope:orient==='h'?b/a:a/b,latus:2*b*b/a});
+  } else {
+    const{e,d}=prm, l=e*d;
+    g.u={F:[0,0],dirV:-d};
+    if(Math.abs(e-1)<0.005){
+      const vx=-d/2, pp=d/2;
+      Object.assign(g,{kind:'parabola',vertex:[vx,0],h:vx,k:0,p:pp,orient:'h',focus:[0,0],
+        directrix:[{axis:'v',v:-d}],e:1,latus:4*pp,opens:'Right',classification:'Parabola'});
+    } else if(e<1){
+      const a=l/(1-e*e), b=a*Math.sqrt(1-e*e), cx=a*e;
+      Object.assign(g,{kind:'ellipse',center:[cx,0],semiX:a,semiY:b,major:a,minor:b,axis:'h',c:a*e,e,
+        foci:[[0,0],[2*cx,0]],directrix:[{axis:'v',v:-d},{axis:'v',v:cx+a/e}],area:Math.PI*a*b,latus:2*b*b/a,classification:'Ellipse'});
+    } else {
+      const a=l/(e*e-1), b=a*Math.sqrt(e*e-1), cx=-a*e;
+      Object.assign(g,{kind:'hyperbola',center:[cx,0],a,b,orient:'h',c:a*e,e,
+        foci:[[0,0],[2*cx,0]],verts:[[cx-a,0],[cx+a,0]],
+        directrix:[{axis:'v',v:-d},{axis:'v',v:cx-a/e}],asympSlope:b/a,latus:2*b*b/a,classification:'Hyperbola'});
+    }
+  }
+  return g;
+}
+
+/* ================================================================ equations */
+function makeEquations(g){
+  const o={std:'',gen:'',polar:''};
+  if(g.kind==='circle'){
+    const[h,k]=g.center,r=g.r;
+    o.std=`${linT('x',h)}^{2} + ${linT('y',k)}^{2} = ${fmtT(r*r)}`;
+    o.gen=polyTex([{c:1,s:'x^{2}'},{c:1,s:'y^{2}'},{c:-2*h,s:'x'},{c:-2*k,s:'y'},{c:h*h+k*k-r*r,s:''}]);
+  } else if(g.kind==='ellipse'){
+    const[h,k]=g.center,sx=g.semiX,sy=g.semiY;
+    o.std=`\\frac{${linT('x',h)}^{2}}{${fmtT(sx*sx)}} + \\frac{${linT('y',k)}^{2}}{${fmtT(sy*sy)}} = 1`;
+    o.gen=polyTex([{c:sy*sy,s:'x^{2}'},{c:sx*sx,s:'y^{2}'},{c:-2*sy*sy*h,s:'x'},{c:-2*sx*sx*k,s:'y'},{c:sy*sy*h*h+sx*sx*k*k-sx*sx*sy*sy,s:''}]);
+  } else if(g.kind==='parabola'){
+    const{h,k,p,orient}=g;
+    if(orient==='v'){
+      o.std=`${linT('x',h)}^{2} = ${fmtT(4*p)}\\,${Math.abs(k)<1e-9?'y':linT('y',k)}`;
+      o.gen=polyTex([{c:1,s:'x^{2}'},{c:-2*h,s:'x'},{c:-4*p,s:'y'},{c:h*h+4*p*k,s:''}]);
+    } else {
+      o.std=`${linT('y',k)}^{2} = ${fmtT(4*p)}\\,${Math.abs(h)<1e-9?'x':linT('x',h)}`;
+      o.gen=polyTex([{c:1,s:'y^{2}'},{c:-4*p,s:'x'},{c:-2*k,s:'y'},{c:k*k+4*p*h,s:''}]);
+    }
+  } else if(g.kind==='hyperbola'){
+    const{a,b,orient}=g,[h,k]=g.center;
+    if(orient==='h'){
+      o.std=`\\frac{${linT('x',h)}^{2}}{${fmtT(a*a)}} - \\frac{${linT('y',k)}^{2}}{${fmtT(b*b)}} = 1`;
+      o.gen=polyTex([{c:b*b,s:'x^{2}'},{c:-a*a,s:'y^{2}'},{c:-2*b*b*h,s:'x'},{c:2*a*a*k,s:'y'},{c:b*b*h*h-a*a*k*k-a*a*b*b,s:''}]);
+    } else {
+      o.std=`\\frac{${linT('y',k)}^{2}}{${fmtT(a*a)}} - \\frac{${linT('x',h)}^{2}}{${fmtT(b*b)}} = 1`;
+      o.gen=polyTex([{c:-b*b,s:'x^{2}'},{c:a*a,s:'y^{2}'},{c:2*b*b*h,s:'x'},{c:-2*a*a*k,s:'y'},{c:a*a*k*k-b*b*h*h-a*a*b*b,s:''}]);
+    }
+  }
+  if(g.mode==='unified'){ o.polar=`r = \\frac{e\\,d}{1 - e\\cos\\theta} = \\frac{${fmtT(g.e*(state.params.unified.d))}}{1 - ${fmtT(g.e)}\\cos\\theta}\\,,\\quad F \\text{ at pole}`; }
+  return o;
+}
+
+/* ================================================================ properties + insights */
+function coordT(x,y){return `(${fmtT(x)},\\,${fmtT(y)})`;}
+function makeProps(g){
+  const rows=[];
+  if(g.kind==='circle'){
+    const[h,k]=g.center;
+    rows.push(['Center',coordT(h,k)],['Radius',fmtT(g.r)],['Eccentricity','e = 0'],
+      ['Focus',coordT(h,k)+'\\ (\\text{center})'],['Directrix','\\text{at infinity}'],
+      ['Area',`\\pi r^{2} = ${fmtT(g.area)}`],['Circumference',`2\\pi r = ${fmtT(g.circ)}`]);
+  } else if(g.kind==='ellipse'){
+    const[h,k]=g.center;
+    const verts=g.axis==='h'?`${coordT(h-g.major,k)},\\ ${coordT(h+g.major,k)}`:`${coordT(h,k-g.major)},\\ ${coordT(h,k+g.major)}`;
+    rows.push(['Center',coordT(h,k)],['Semi-axes',`x\\!:\\ ${fmtT(g.semiX)},\\ \\ y\\!:\\ ${fmtT(g.semiY)}`],
+      ['Vertices',verts],['Foci',g.foci.length===1?coordT(h,k):g.foci.map(f=>coordT(f[0],f[1])).join(',\\ ')],
+      ['Eccentricity',`e = ${fmtT(g.e)}`],
+      ['Directrix',g.directrix.length?g.directrix.map(d=>`${d.axis==='v'?'x':'y'} = ${fmtT(d.v)}`).join(',\\ '):'\\text{—}'],
+      ['Latus rectum',fmtT(g.latus)],['Area',`\\pi ab = ${fmtT(g.area)}`]);
+  } else if(g.kind==='parabola'){
+    const d=g.directrix[0];
+    rows.push(['Vertex',coordT(g.h,g.k)],['Focus',coordT(g.focus[0],g.focus[1])],
+      ['Directrix',`${d.axis==='v'?'x':'y'} = ${fmtT(d.v)}`],['Eccentricity','e = 1'],
+      ['Latus rectum',`4|p| = ${fmtT(g.latus)}`],['Axis of symmetry',g.orient==='v'?`x = ${fmtT(g.h)}`:`y = ${fmtT(g.k)}`],
+      ['Opens',`\\text{${g.opens}}`]);
+  } else if(g.kind==='hyperbola'){
+    const[h,k]=g.center;
+    const asy=`${linT('y',k)} = \\pm\\,${fmtT(g.asympSlope)}\\,${linT('x',h)}`;
+    rows.push(['Center',coordT(h,k)],['Vertices',g.verts.map(f=>coordT(f[0],f[1])).join(',\\ ')],
+      ['Foci',g.foci.map(f=>coordT(f[0],f[1])).join(',\\ ')],['Eccentricity',`e = ${fmtT(g.e)}`],
+      ['Directrix',g.directrix.map(d=>`${d.axis==='v'?'x':'y'} = ${fmtT(d.v)}`).join(',\\ ')],
+      ['Asymptotes',asy],['Latus rectum',fmtT(g.latus)],['c (focal dist)',`c = ${fmtT(g.c)}`]);
+  }
+  if(g.mode==='unified'){
+    rows.unshift(['Classification',`\\textbf{${g.classification}}`]);
+    rows.push(['Fixed focus F','(0,\\,0)'],['Fixed directrix',`x = ${fmtT(-state.params.unified.d)}`]);
+  }
+  return rows;
+}
+function makeInsights(g){
+  const out=[];
+  if(g.kind==='circle'){
+    out.push(`A circle is the ellipse pushed to <b>e = 0</b>: both foci merge into the center and the directrix escapes to infinity.`);
+    out.push(`Every point sits exactly <b>r = ${fmt(g.r)}</b> from the center. Grow r and watch the constant term in the general equation grow as r².`);
+    out.push(`<b>Transition:</b> tilt the slicing plane even slightly and this circle stretches into an ellipse — try the Ellipse tab.`);
+  } else if(g.kind==='ellipse'){
+    if(g.e<0.15) out.push(`<b>e ≈ ${fmt(g.e)}</b> is nearly 0 — this ellipse is almost a circle. At exactly e = 0 it becomes one.`);
+    else if(g.e>0.85) out.push(`<b>e ≈ ${fmt(g.e)}</b> is close to 1 — the ellipse is stretched thin. At e = 1 it breaks open into a parabola.`);
+    else out.push(`With <b>e = ${fmt(g.e)}</b>, this ellipse lives between a circle (e = 0) and a parabola (e = 1).`);
+    out.push(`<b>String property:</b> for every point P, PF₁ + PF₂ = 2a = <b>${fmt(2*g.major)}</b>. Drag P — the glowing segments trade length but their sum never changes.`);
+    out.push(`Area = πab = <b>${fmt(g.area)}</b>. Shrink the smaller semi-axis and watch the area shrink while the foci slide apart.`);
+  } else if(g.kind==='parabola'){
+    out.push(`This parabola opens <b>${g.opens.toLowerCase()}</b> with focal length <b>p = ${fmt(g.p)}</b>: the focus lies p units from the vertex, the directrix p units behind it.`);
+    out.push(`The parabola is the <b>boundary case e = 1</b> — exactly balanced between the closed ellipse (e &lt; 1) and the open hyperbola (e &gt; 1).`);
+    out.push(`<b>Reflector property:</b> any ray parallel to the axis bounces through the focus — the geometry behind satellite dishes, telescopes and headlights.`);
+    out.push(`|p| controls the aperture: bigger |p| → a wider bowl, with focus and directrix drifting further apart.`);
+  } else if(g.kind==='hyperbola'){
+    out.push(`For any P on either branch, <b>|PF₁ − PF₂| = 2a = ${fmt(2*g.a)}</b>. Drag P along a branch and watch the difference stay locked.`);
+    out.push(`The asymptotes have slope <b>± b/a = ± ${fmt(g.asympSlope)}</b> — the branches chase these lines forever without touching them.`);
+    if(Math.abs(g.a-g.b)<0.06) out.push(`Here <b>a ≈ b</b>: a <b>rectangular hyperbola</b>, whose asymptotes meet at right angles.`);
+    out.push(`<b>e = ${fmt(g.e)} &gt; 1.</b> Raise b relative to a and e climbs — the branches swing open toward steeper asymptotes.`);
+  }
+  if(g.mode==='unified'){
+    const e=g.e;
+    out.unshift(`Every point satisfies <b>PF = e · PD</b>. Drag P: the ratio PF ÷ PD stays pinned at <b>e = ${fmt(e)}</b>.`);
+    if(Math.abs(e-1)<0.03) out.push(`Balanced exactly at <b>e = 1</b> — the curve is a parabola, the knife-edge between closed and open.`);
+    else if(e<1) out.push(`<b>e &lt; 1</b> keeps the curve closed: an ellipse${e<0.25?', nearly circular':''}. Slide e toward 0 and it rounds into a circle.`);
+    else out.push(`<b>e &gt; 1</b> rips the curve open into a hyperbola${e>1.6?', a strongly open one':''}.`);
+    out.push(`<b>Experiment:</b> drag the e slider slowly through 1 and watch one family of curves morph continuously into another.`);
+  }
+  return out.slice(0,4);
+}
+
+/* ================================================================ canvas */
+const stage=$('#stage'), cv=$('#cv'), ctx=cv.getContext('2d'), banner=$('#banner'), coordChip=$('#coordChip');
+let W=0,H=0,DPR=1;
+const toSX=x=>view.x+x*view.s, toSY=y=>view.y-y*view.s, toWX=p=>(p-view.x)/view.s, toWY=p=>(view.y-p)/view.s;
+
+function resize(){
+  const r=stage.getBoundingClientRect(); if(r.width<10)return;
+  const cw=W?toWX(W/2):0, ch=H?toWY(H/2):0;
+  DPR=Math.min(2.5,window.devicePixelRatio||1);
+  W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  centerOn(cw,ch,true);
+  paintNow();
+}
+new ResizeObserver(resize).observe(stage);
+
+function centerOn(cx,cy,now=false){
+  tview.x=W/2-cx*tview.s; tview.y=H/2+cy*tview.s;
+  if(now){view.x=tview.x;view.y=tview.y;view.s=tview.s;}
+}
+function zoomTarget(px,py,f){
+  const ns=clamp(tview.s*f,6,420);
+  const wx=(px-tview.x)/tview.s, wy=(tview.y-py)/tview.s;
+  tview.x=px-wx*ns; tview.y=py+wy*ns; tview.s=ns;
+}
+function bbox(g){
+  if(g.kind==='circle'){const[h,k]=g.center,r=g.r;return[h-r-1.2,h+r+1.2,k-r-1.2,k+r+1.2];}
+  if(g.kind==='ellipse'){const[h,k]=g.center;return[h-g.semiX-1.3,h+g.semiX+1.3,k-g.semiY-1.3,k+g.semiY+1.3];}
+  if(g.kind==='parabola'){
+    const{h,k,p,orient}=g, depth=Math.max(3.5,Math.abs(p)*3), cross=Math.min(9,Math.sqrt(4*Math.abs(p)*depth)+1);
+    if(orient==='v'){const y0=p>0?k-1.8:k-depth,y1=p>0?k+depth:k+1.8;return[h-cross,h+cross,Math.min(y0,k-p-1),Math.max(y1,k-p+1)];}
+    const x0=p>0?h-1.8:h-depth,x1=p>0?h+depth:h+1.8;return[Math.min(x0,h-p-1),Math.max(x1,h-p+1),k-cross,k+cross];
+  }
+  const[h,k]=g.center;
+  return g.orient==='h'?[h-(g.c+2.2),h+(g.c+2.2),k-(g.b+2.2),k+(g.b+2.2)]:[h-(g.b+2.2),h+(g.b+2.2),k-(g.c+2.2),k+(g.c+2.2)];
+}
+function fitView(){
+  const b=bbox(geometry());
+  const sc=clamp(Math.min(W/((b[1]-b[0])*1.12),H/((b[3]-b[2])*1.18)),6,300);
+  tview.s=sc; centerOn((b[0]+b[1])/2,(b[2]+b[3])/2);
+}
+function niceStep(t){ if(!isFinite(t)||t<=0)return 1; const p=Math.pow(10,Math.floor(Math.log10(t)));for(const m of[1,2,5,10]){if(m*p>=t)return m*p;} return 10*p; }
+
+/* -------- point P -------- */
+function pPoint(g){
+  if(g.mode==='unified'){
+    const u=state.P.unified;
+    if(g.kind==='ellipse') return [g.center[0]+g.semiX*Math.cos(u.th), g.center[1]+g.semiY*Math.sin(u.th)];
+    if(g.kind==='parabola') return [g.h+u.t*u.t/(4*g.p), g.k+u.t];
+    return [g.center[0]+u.s*g.a*Math.cosh(u.u), g.center[1]+g.b*Math.sinh(u.u)];
+  }
+  if(g.kind==='circle'){const t=state.P.circle;return[g.center[0]+g.r*Math.cos(t),g.center[1]+g.r*Math.sin(t)];}
+  if(g.kind==='ellipse'){const t=state.P.ellipse;return[g.center[0]+g.semiX*Math.cos(t),g.center[1]+g.semiY*Math.sin(t)];}
+  if(g.kind==='parabola'){const t=state.P.parabola;return g.orient==='v'?[g.h+t,g.k+t*t/(4*g.p)]:[g.h+t*t/(4*g.p),g.k+t];}
+  const{u,s}=state.P.hyperbola;
+  if(g.orient==='h') return [g.center[0]+s*g.a*Math.cosh(u), g.center[1]+g.b*Math.sinh(u)];
+  return [g.center[0]+g.b*Math.sinh(u), g.center[1]+s*g.a*Math.cosh(u)];
+}
+function projectP(g,wx,wy){
+  if(g.mode==='unified'){
+    const u=state.P.unified;
+    if(g.kind==='ellipse') u.th=Math.atan2((wy-g.center[1])/g.semiY,(wx-g.center[0])/g.semiX);
+    else if(g.kind==='parabola') u.t=clamp(wy-g.k,-40,40);
+    else {u.s=Math.sign(wx-g.center[0])||1; u.u=Math.asinh(wy/g.b);}
+    return;
+  }
+  if(g.kind==='circle') state.P.circle=Math.atan2(wy-g.center[1],wx-g.center[0]);
+  else if(g.kind==='ellipse') state.P.ellipse=Math.atan2((wy-g.center[1])/g.semiY,(wx-g.center[0])/g.semiX);
+  else if(g.kind==='parabola') state.P.parabola=clamp(g.orient==='v'?wx-g.h:wy-g.k,-40,40);
+  else {
+    const hp=state.P.hyperbola;
+    if(g.orient==='h'){ hp.s=Math.sign(wx-g.center[0])||1; hp.u=Math.asinh((wy-g.center[1])/g.b); }
+    else { hp.s=Math.sign(wy-g.center[1])||1; hp.u=Math.asinh((wx-g.center[0])/g.b); }
+  }
+}
+
+/* -------- vector overlay data -------- */
+function vectorData(g,P){
+  const segs=[];let note='';
+  if(g.mode==='unified'){
+    const F=g.u.F, foot=[g.u.dirV,P[1]];
+    const pf=dist(P,F),pd=dist(P,foot);
+    segs.push({a:F,b:P,lab:fmt(pf),c:'#f0f9ff'},{a:foot,b:P,lab:fmt(pd),c:'#67e8f9'});
+    note=`PF = ${fmt(pf)}   PD = ${fmt(pd)}   PF ÷ PD = ${fmt(pf/pd)} = e`;
+    return{segs,note,foot};
+  }
+  if(g.kind==='circle'){segs.push({a:g.center,b:P,lab:`r = ${fmt(g.r)}`,c:'#f0f9ff'});note=`r = ${fmt(g.r)} — constant everywhere (e = 0)`;}
+  else if(g.kind==='ellipse'){
+    const d1=dist(P,g.foci[0]),d2=dist(P,g.foci[g.foci.length>1?1:0]);
+    segs.push({a:g.foci[0],b:P,lab:fmt(d1),c:'#f0f9ff'});
+    if(g.foci.length>1)segs.push({a:g.foci[1],b:P,lab:fmt(d2),c:'#fde68a'});
+    note=`d₁ + d₂ = ${fmt(d1+d2)} = 2a ✓`;
+  } else if(g.kind==='parabola'){
+    const d=g.directrix[0], foot=d.axis==='v'?[d.v,P[1]]:[P[0],d.v];
+    const pf=dist(P,g.focus);
+    segs.push({a:g.focus,b:P,lab:fmt(pf),c:'#f0f9ff'},{a:foot,b:P,lab:fmt(pf),c:'#67e8f9'});
+    note=`PF = PD = ${fmt(pf)} (e = 1) ✓`;
+    return{segs,note,foot};
+  } else {
+    const d1=dist(P,g.foci[0]),d2=dist(P,g.foci[1]);
+    segs.push({a:g.foci[0],b:P,lab:fmt(d1),c:'#f0f9ff'},{a:g.foci[1],b:P,lab:fmt(d2),c:'#fde68a'});
+    note=`|d₁ − d₂| = ${fmt(Math.abs(d1-d2))} = 2a ✓`;
+  }
+  return{segs,note};
+}
+
+/* ================================================================ drawing */
+function drawGrid(){
+  const s=view.s, step=niceStep(70/s), px=step*s;
+  const x0=toWX(0),x1=toWX(W),y1=toWY(0),y0=toWY(H);
+  if(![x0,x1,y0,y1,step].every(isFinite))return;
+  const dec=step>=1?0:step>=0.1?1:2;
+  ctx.lineWidth=1;
+  if(px/5>=9){ ctx.strokeStyle='rgba(120,180,255,.05)';ctx.beginPath();
+    const ms=step/5;
+    for(let x=Math.floor(x0/ms)*ms;x<=x1;x+=ms){const p=Math.round(toSX(x))+.5;ctx.moveTo(p,0);ctx.lineTo(p,H);}
+    for(let y=Math.floor(y0/ms)*ms;y<=y1;y+=ms){const p=Math.round(toSY(y))+.5;ctx.moveTo(0,p);ctx.lineTo(W,p);}
+    ctx.stroke(); }
+  ctx.strokeStyle='rgba(120,180,255,.12)';ctx.beginPath();
+  for(let x=Math.floor(x0/step)*step;x<=x1;x+=step){const p=Math.round(toSX(x))+.5;ctx.moveTo(p,0);ctx.lineTo(p,H);}
+  for(let y=Math.floor(y0/step)*step;y<=y1;y+=step){const p=Math.round(toSY(y))+.5;ctx.moveTo(0,p);ctx.lineTo(W,p);}
+  ctx.stroke();
+  ctx.strokeStyle='#4a6f9b';ctx.lineWidth=1.5;ctx.beginPath();
+  const ax=toSX(0),ay=toSY(0);
+  if(ax>=0&&ax<=W){ctx.moveTo(ax,0);ctx.lineTo(ax,H);}
+  if(ay>=0&&ay<=H){ctx.moveTo(0,ay);ctx.lineTo(W,ay);}
+  ctx.stroke();
+  ctx.font='11px "JetBrains Mono",monospace';ctx.fillStyle='#7f9cc0';
+  const ly=clamp(ay+15,14,H-6), lx=clamp(ax-8,30,W-8);
+  for(let x=Math.ceil(x0/step)*step;x<=x1;x+=step){if(Math.abs(x)<step/2)continue;ctx.textAlign='center';ctx.fillText(fmt(x,dec),toSX(x),ly);}
+  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){if(Math.abs(y)<step/2)continue;ctx.textAlign='right';ctx.fillText(fmt(y,dec),lx,toSY(y)+4);}
+  ctx.textAlign='left';ctx.fillStyle='#9db8d8';ctx.font='600 12px "JetBrains Mono",monospace';
+  if(ay>=0&&ay<=H){ctx.fillText('x',W-16,clamp(ay-8,12,H-8));
+    ctx.beginPath();ctx.moveTo(W-4,ay);ctx.lineTo(W-12,ay-4);ctx.lineTo(W-12,ay+4);ctx.fillStyle='#4a6f9b';ctx.fill();}
+  if(ax>=0&&ax<=W){ctx.fillStyle='#9db8d8';ctx.fillText('y',clamp(ax+8,4,W-16),14);
+    ctx.beginPath();ctx.moveTo(ax,4);ctx.lineTo(ax-4,12);ctx.lineTo(ax+4,12);ctx.fillStyle='#4a6f9b';ctx.fill();}
+  if(ax>=0&&ax<=W&&ay>=0&&ay<=H){ctx.fillStyle='#7f9cc0';ctx.font='11px "JetBrains Mono",monospace';ctx.fillText('0',ax+5,ay+14);}
+}
+/* layered-alpha glow: no shadowBlur, robust on every engine */
+function strokeGlow(path,color){
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.strokeStyle=color;
+  ctx.globalAlpha=.14;ctx.lineWidth=10;path();ctx.stroke();
+  ctx.globalAlpha=.32;ctx.lineWidth=5.5;path();ctx.stroke();
+  ctx.globalAlpha=1;ctx.lineWidth=2.4;path();ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.1;path();ctx.stroke();
+  ctx.restore();
+}
+function drawConic(g,color){
+  const path=()=>{
+    ctx.beginPath();
+    if(g.kind==='circle'){
+      const R=g.r*view.s; if(isFinite(R)&&R>0)ctx.arc(toSX(g.center[0]),toSY(g.center[1]),R,0,7);
+    }
+    else if(g.kind==='ellipse'){
+      const rx=g.semiX*view.s, ry=g.semiY*view.s;
+      if(isFinite(rx)&&isFinite(ry)&&rx>0&&ry>0)ctx.ellipse(toSX(g.center[0]),toSY(g.center[1]),rx,ry,0,0,7);
+    }
+    else if(g.kind==='parabola'){
+      let first=true;
+      if(g.orient==='v'){for(let px=-4;px<=W+4;px+=2){const wx=toWX(px),wy=g.k+(wx-g.h)*(wx-g.h)/(4*g.p),py=toSY(wy);
+        if(!isFinite(py)||py<-3000||py>H+3000){first=true;continue;} first?ctx.moveTo(px,py):ctx.lineTo(px,py);first=false;}}
+      else{for(let py=-4;py<=H+4;py+=2){const wy=toWY(py),wx=g.h+(wy-g.k)*(wy-g.k)/(4*g.p),px=toSX(wx);
+        if(!isFinite(px)||px<-3000||px>W+3000){first=true;continue;} first?ctx.moveTo(px,py):ctx.lineTo(px,py);first=false;}}
+    }
+    else{
+      const[h,k]=g.center,{a,b,orient}=g;
+      const run=(fn,from,to)=>{let st=false;const stp=from<=to?2:-2;
+        for(let q=from;stp>0?q<=to:q>=to;q+=stp){const pt=fn(q);
+          if(!pt||!isFinite(pt[0])||!isFinite(pt[1])){st=false;continue;}
+          st?ctx.lineTo(pt[0],pt[1]):ctx.moveTo(pt[0],pt[1]);st=true;}};
+      if(orient==='h'){
+        for(const sg of[1,-1]){
+          run(px=>{const dx=toWX(px)-h;if(dx<a)return null;const w=Math.sqrt(dx*dx/(a*a)-1);return[px,toSY(k+sg*b*w)];},toSX(h+a),W+4);
+          run(px=>{const dx=h-toWX(px);if(dx<a)return null;const w=Math.sqrt(dx*dx/(a*a)-1);return[px,toSY(k+sg*b*w)];},toSX(h-a),-4);
+        }
+      }else{
+        for(const sg of[1,-1]){
+          run(py=>{const dy=toWY(py)-k;if(dy<a)return null;const w=Math.sqrt(dy*dy/(a*a)-1);return[toSX(h+sg*b*w),py];},toSY(k+a),-4);
+          run(py=>{const dy=k-toWY(py);if(dy<a)return null;const w=Math.sqrt(dy*dy/(a*a)-1);return[toSX(h+sg*b*w),py];},toSY(k-a),H+4);
+        }
+      }
+    }
+  };
+  strokeGlow(path,color);
+}
+function drawDashedLineWorld(a,b,color,width=1.6,dash=[9,7]){
+  if(!a.every(isFinite)||!b.every(isFinite))return;
+  ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);
+  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.restore();
+}
+function labelPill(x,y,text,color='#eaf6ff'){
+  if(!isFinite(x)||!isFinite(y))return;
+  ctx.save();ctx.font='11px "JetBrains Mono",monospace';
+  const w=ctx.measureText(text).width+12;
+  ctx.fillStyle='rgba(8,20,38,.88)';ctx.strokeStyle='rgba(120,180,255,.25)';
+  ctx.beginPath();ctx.roundRect(x-w/2,y-9,w,18,8);ctx.fill();ctx.stroke();
+  ctx.fillStyle=color;ctx.textAlign='center';ctx.fillText(text,x,y+4);ctx.restore();
+}
+function drawMarker(x,y,color,label,t,pulse=true){
+  const sx=toSX(x),sy=toSY(y);
+  if(!isFinite(sx)||!isFinite(sy))return;
+  if(pulse){const ph=(Math.sin(t/450)+1)/2;
+    ctx.save();ctx.strokeStyle=color;ctx.globalAlpha=.5*(1-ph);ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(sx,sy,6+ph*9,0,7);ctx.stroke();ctx.restore();}
+  ctx.save();ctx.fillStyle=color;
+  ctx.beginPath();ctx.arc(sx,sy,4.5,0,7);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.lineWidth=3;ctx.strokeStyle=color;ctx.stroke();ctx.restore();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx,sy,1.7,0,7);ctx.fill();
+  if(label){ctx.save();ctx.font='700 11px "JetBrains Mono",monospace';ctx.fillStyle=color;ctx.fillText(label,sx+8,sy-8);ctx.restore();}
+}
+
+let lastBanner='';
+function draw(t){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#081324';ctx.fillRect(0,0,W,H);
+  const g=geometry(), color=MODE_COLORS[state.mode];
+  if(state.toggles.grid) drawGrid();
+
+  if(g.kind==='hyperbola'&&state.toggles.asymp){
+    const[h,k]=g.center,m=g.asympSlope,xa=toWX(-50),xb=toWX(W+50);
+    drawDashedLineWorld([toSX(xa),toSY(k+m*(xa-h))],[toSX(xb),toSY(k+m*(xb-h))],'rgba(196,181,253,.5)',1.3,[5,7]);
+    drawDashedLineWorld([toSX(xa),toSY(k-m*(xa-h))],[toSX(xb),toSY(k-m*(xb-h))],'rgba(196,181,253,.5)',1.3,[5,7]);
+  }
+  if(state.toggles.directrix&&g.directrix.length){
+    for(const d of g.directrix){
+      ctx.save();ctx.strokeStyle='rgba(103,232,249,.75)';ctx.lineWidth=1.5;ctx.setLineDash([11,8]);ctx.lineDashOffset=-t/120;
+      ctx.beginPath();
+      if(d.axis==='v'){const p=toSX(d.v);ctx.moveTo(p,0);ctx.lineTo(p,H);}else{const p=toSY(d.v);ctx.moveTo(0,p);ctx.lineTo(W,p);}
+      ctx.stroke();ctx.restore();
+      ctx.save();ctx.font='11px "JetBrains Mono",monospace';ctx.fillStyle='rgba(103,232,249,.9)';
+      const txt=`${d.axis==='v'?'x':'y'} = ${fmt(d.v)}`;
+      if(d.axis==='v')ctx.fillText(txt,toSX(d.v)+6,18);else ctx.fillText(txt,W-ctx.measureText(txt).width-8,toSY(d.v)-7);
+      ctx.restore();
+    }
+  }
+
+  drawConic(g,color);
+
+  if(state.toggles.latus&&g.kind!=='circle'){
+    ctx.save();ctx.strokeStyle=color;ctx.globalAlpha=.55;ctx.lineWidth=2;ctx.setLineDash([2,5]);ctx.beginPath();
+    if(g.kind==='parabola'){const f=g.focus,hl=2*Math.abs(g.p);
+      g.orient==='v'?(ctx.moveTo(toSX(f[0]-hl),toSY(f[1])),ctx.lineTo(toSX(f[0]+hl),toSY(f[1])))
+                    :(ctx.moveTo(toSX(f[0]),toSY(f[1]-hl)),ctx.lineTo(toSX(f[0]),toSY(f[1]+hl)));}
+    else{const sl=g.latus/2;
+      for(const f of g.foci){
+        if((g.kind==='ellipse'?g.axis:g.orient)==='h'){ctx.moveTo(toSX(f[0]),toSY(f[1]-sl));ctx.lineTo(toSX(f[0]),toSY(f[1]+sl));}
+        else{ctx.moveTo(toSX(f[0]-sl),toSY(f[1]));ctx.lineTo(toSX(f[0]+sl),toSY(f[1]));}}}
+    ctx.stroke();ctx.restore();
+  }
+
+  const P=pPoint(g);
+  if(state.toggles.vectors){
+    const vd=vectorData(g,P);
+    for(const s of vd.segs){
+      drawDashedLineWorld([toSX(s.a[0]),toSY(s.a[1])],[toSX(s.b[0]),toSY(s.b[1])],s.c,1.8,[6,6]);
+      const mx=(toSX(s.a[0])+toSX(s.b[0]))/2,my=(toSY(s.a[1])+toSY(s.b[1]))/2;
+      labelPill(mx,my-12,s.lab,s.c);
+    }
+    if(vd.foot&&vd.foot.every(isFinite)){ctx.save();ctx.fillStyle='#67e8f9';ctx.fillRect(toSX(vd.foot[0])-3,toSY(vd.foot[1])-3,6,6);ctx.restore();}
+    if(vd.note!==lastBanner){banner.textContent=vd.note;lastBanner=vd.note;}
+    banner.hidden=false;banner.style.borderColor=color;
+  } else banner.hidden=true;
+
+  if(g.kind!=='parabola'){const c=g.center;
+    ctx.save();ctx.strokeStyle='rgba(231,240,250,.55)';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(toSX(c[0])-6,toSY(c[1]));ctx.lineTo(toSX(c[0])+6,toSY(c[1]));
+    ctx.moveTo(toSX(c[0]),toSY(c[1])-6);ctx.lineTo(toSX(c[0]),toSY(c[1])+6);ctx.stroke();ctx.restore();}
+
+  if(state.toggles.foci){
+    if(g.mode==='unified'){drawMarker(g.u.F[0],g.u.F[1],color,'F',t);
+      if(g.foci.length>1)drawMarker(g.foci[1][0],g.foci[1][1],color,'F₂',t);}
+    else if(g.kind==='circle')drawMarker(g.center[0],g.center[1],color,'F = C',t);
+    else g.foci.forEach((f,i)=>drawMarker(f[0],f[1],color,g.foci.length>1?`F${i===0?'₁':'₂'}`:'F',t));
+  }
+  {const sx=toSX(P[0]),sy=toSY(P[1]);
+   if(isFinite(sx)&&isFinite(sy)){
+     ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fillStyle=color;
+     ctx.beginPath();ctx.arc(sx,sy,state.drag==='P'?8:6.2,0,7);ctx.fill();ctx.stroke();ctx.restore();
+     ctx.save();ctx.font='700 12px "JetBrains Mono",monospace';ctx.fillStyle='#fff';ctx.fillText('P',sx+10,sy+14);ctx.restore();}}
+}
+
+/* crash-proof loop: always reschedules, reports errors visibly */
+function loop(t){
+  try{
+    view.s+=(tview.s-view.s)*.22; view.x+=(tview.x-view.x)*.22; view.y+=(tview.y-view.y)*.22;
+    if(W>0)draw(t||0);
+  }catch(err){ showErr('render: '+(err&&err.message?err.message:err)); }
+  requestAnimationFrame(loop);
+}
+function paintNow(){ try{ if(W>0)draw(performance.now()); }catch(err){ showErr('render: '+(err&&err.message?err.message:err)); } }
+
+/* ================================================================ pointer interaction */
+const pointers=new Map(); let lastPt=null,pinch=null;
+cv.addEventListener('pointerdown',e=>{
+  cv.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  if(pointers.size===1){
+    const g=geometry(),P=pPoint(g);
+    const hit=Math.hypot(e.offsetX-toSX(P[0]),e.offsetY-toSY(P[1]))<16;
+    state.drag=hit?'P':'pan'; lastPt={x:e.offsetX,y:e.offsetY};
+    cv.style.cursor=hit?'grabbing':'grab';
+  } else { state.drag=null; const[a,b]=[...pointers.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y),mid:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}; }
+});
+cv.addEventListener('pointermove',e=>{
+  coordChip.innerHTML=`x: ${fmt(toWX(e.offsetX))}&nbsp;&nbsp;y: ${fmt(toWY(e.offsetY))}`;
+  if(!pointers.has(e.pointerId)){
+    if(!state.drag){const g=geometry(),P=pPoint(g);
+      cv.style.cursor=Math.hypot(e.offsetX-toSX(P[0]),e.offsetY-toSY(P[1]))<16?'grab':'crosshair';}
+    return;
+  }
+  pointers.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  if(pinch&&pointers.size>=2){
+    const[a,b]=[...pointers.values()];
+    const d=Math.hypot(a.x-b.x,a.y-b.y),mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+    if(pinch.d>0){ zoomTarget(mid.x,mid.y,d/pinch.d);
+      view.s=tview.s;
+      const wx=(mid.x-view.x)/view.s, wy=(view.y-mid.y)/view.s;
+      view.x=mid.x-wx*view.s; view.y=mid.y+wy*view.s;
+      tview.x=view.x;tview.y=view.y;tview.s=view.s; }
+    pinch={d,mid}; return;
+  }
+  const g=geometry();
+  if(state.drag==='P'){ projectP(g,toWX(e.offsetX),toWY(e.offsetY)); }
+  else if(state.drag==='pan'&&lastPt){
+    const dx=e.offsetX-lastPt.x, dy=e.offsetY-lastPt.y;
+    view.x+=dx;view.y+=dy;tview.x=view.x;tview.y=view.y;
+  }
+  lastPt={x:e.offsetX,y:e.offsetY};
+});
+const endPtr=e=>{pointers.delete(e.pointerId);if(pointers.size<2)pinch=null;if(pointers.size===0){state.drag=null;cv.style.cursor='crosshair';}};
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomTarget(e.offsetX,e.offsetY,Math.exp(-e.deltaY*0.0013));},{passive:false});
+cv.addEventListener('dblclick',e=>zoomTarget(e.offsetX,e.offsetY,1.7));
+window.addEventListener('keydown',e=>{
+  if(/input|select|textarea/i.test(document.activeElement?.tagName||''))return;
+  if(e.key==='+'||e.key==='=')zoomTarget(W/2,H/2,1.3);
+  if(e.key==='-')zoomTarget(W/2,H/2,1/1.3);
+  if(e.key==='f'||e.key==='F')fitView();
+});
+$('#btnZi').onclick=()=>zoomTarget(W/2,H/2,1.35);
+$('#btnZo').onclick=()=>zoomTarget(W/2,H/2,1/1.35);
+$('#btnFit').onclick=fitView;
+$('#btnHome').onclick=()=>{tview.s=44;centerOn(0,0);};
+
+/* ================================================================ controls */
+const SLIDER_DEFS={
+  circle:[['h','Center <i>h</i>',-6,6,.1],['k','Center <i>k</i>',-6,6,.1],['r','Radius <i>r</i>',0.4,6,.1]],
+  ellipse:[['h','Center <i>h</i>',-6,6,.1],['k','Center <i>k</i>',-6,6,.1],['a','Semi-axis <i>a</i>',0.4,6,.1],['b','Semi-axis <i>b</i>',0.4,6,.1]],
+  parabola:[['h','Vertex <i>h</i>',-6,6,.1],['k','Vertex <i>k</i>',-6,6,.1],['p','Focal length <i>p</i>',-4,4,.1]],
+  hyperbola:[['h','Center <i>h</i>',-6,6,.1],['k','Center <i>k</i>',-6,6,.1],['a','Semi-transverse <i>a</i>',0.4,5,.1],['b','Semi-conjugate <i>b</i>',0.4,5,.1]],
+  unified:[['e','Eccentricity <i>e</i>',0.05,2.4,.01],['d','Focus–directrix dist <i>d</i>',0.8,6,.1]]
+};
+const ORIENTS={ellipse:[['h','Horizontal'],['v','Vertical']],parabola:[['v','Vertical ↑↓'],['h','Horizontal ↔']],hyperbola:[['h','Horizontal'],['v','Vertical']]};
+const TOGGLE_DEFS=[['foci','Foci'],['directrix','Directrix'],['asymp','Asymptotes'],['vectors','Distances'],['latus','Latus rectum'],['grid','Grid']];
+
+function buildControls(){
+  const wrap=$('#sliders');wrap.innerHTML='';
+  for(const[key,label,min,max,step]of SLIDER_DEFS[state.mode]){
+    const v=state.params[state.mode][key];
+    const div=document.createElement('div');div.className='ctl';
+    div.innerHTML=`<div class="ctl-top"><label>${label}</label><output>${fmt(v)}</output></div>
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${v}">`;
+    const inp=div.querySelector('input'),out=div.querySelector('output');
+    const fill=()=>inp.style.setProperty('--fill',((inp.value-min)/(max-min)*100)+'%');fill();
+    inp.addEventListener('input',()=>{
+      let nv=parseFloat(inp.value);
+      if(state.mode==='parabola'&&key==='p'&&Math.abs(nv)<0.2){nv=nv>=0?0.2:-0.2;inp.value=nv;}
+      state.params[state.mode][key]=nv;out.textContent=fmt(nv);fill();
+      if(state.mode==='unified'){setPlaneAngle(planeAngleForE());
+        const nk=geometry().kind;if(nk!==window.__uKind){window.__uKind=nk;setTimeout(fitView,60);}}
+      updatePanel();
+    });
+    wrap.appendChild(div);
+  }
+  const orow=$('#orientRow');orow.innerHTML='';
+  if(ORIENTS[state.mode]){
+    const lab=document.createElement('span');
+    lab.className='text-[10px] font-bold tracking-[.16em] text-[#6f8db1] uppercase';lab.textContent='Orientation';
+    const seg=document.createElement('div');seg.className='seg';
+    for(const[val,txt]of ORIENTS[state.mode]){
+      const b=document.createElement('button');b.textContent=txt;
+      if(state.params[state.mode].orient===val)b.classList.add('on');
+      b.onclick=()=>{state.params[state.mode].orient=val;seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');updatePanel();fitView();};
+      seg.appendChild(b);
+    }
+    orow.appendChild(lab);orow.appendChild(seg);
+  }
+  const tw=$('#toggles');tw.innerHTML='';
+  for(const[key,label]of TOGGLE_DEFS){
+    if(key==='asymp'&&state.mode!=='hyperbola'&&state.mode!=='unified')continue;
+    if(key==='directrix'&&state.mode==='circle')continue;
+    if(key==='latus'&&state.mode==='circle')continue;
+    const l=document.createElement('label');l.className='tgl';
+    l.innerHTML=`<input type="checkbox" ${state.toggles[key]?'checked':''}><span class="dot"></span>${label}`;
+    l.querySelector('input').addEventListener('change',e=>{state.toggles[key]=e.target.checked;paintNow();});
+    tw.appendChild(l);
+  }
+}
+
+/* ================================================================ panel */
+function updatePanel(){
+  const g=geometry(), eqs=makeEquations(g), color=MODE_COLORS[state.mode];
+  document.documentElement.style.setProperty('--mc',color);
+  $('#canvasTitle').textContent=MODE_NAMES[state.mode];
+  $('#canvasSub').textContent=MODE_SUBS[state.mode];
+  $('#eBadge').textContent=`e = ${fmt(g.e)}`;
+  tex($('#standardEq'),eqs.std,true);
+  tex($('#generalEq'),eqs.gen,true);
+  $('#standardEq').dataset.tex=eqs.std;$('#generalEq').dataset.tex=eqs.gen;
+  if(eqs.polar){$('#extraEq').classList.remove('hidden');tex($('#polarEq'),eqs.polar,true);}
+  else $('#extraEq').classList.add('hidden');
+  const props=$('#props');props.innerHTML='';
+  for(const[label,val]of makeProps(g)){
+    const c=document.createElement('div');c.className='pcell';
+    c.innerHTML=`<div class="plab">${label}</div><div class="pval"></div>`;
+    tex(c.querySelector('.pval'),val);props.appendChild(c);
+  }
+  const ins=$('#insights');ins.innerHTML='';
+  makeInsights(g).forEach((h,i)=>{
+    const d=document.createElement('div');d.className='ins-item';d.style.animationDelay=(i*90)+'ms';
+    d.innerHTML=`<span style="color:var(--mc);font-weight:800;flex:none">§</span><span>${h}</span>`;
+    ins.appendChild(d);
+  });
+  if(state.mode==='unified'){
+    const t=[...$('#toggles').querySelectorAll('.tgl')].find(x=>x.textContent.includes('Asymptotes'));
+    if(t)t.style.display=(g.kind==='hyperbola')?'':'none';
+  }
+  paintNow();
+}
+$('#copyStd').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('#standardEq').dataset.tex||'').then(()=>toast('LaTeX copied'));};
+$('#copyGen').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('#generalEq').dataset.tex||'').then(()=>toast('LaTeX copied'));};
+
+/* ================================================================ cone slicer */
+const CONE_INFO={
+  circle:{a:0,c:'horizontal slice → circle'},
+  ellipse:{a:24,c:'tilted slice → ellipse'},
+  parabola:{a:47,c:'parallel to the cone side → parabola'},
+  hyperbola:{a:76,c:'vertical slice → two branches'}
+};
+function planeAngleForE(){const e=state.params.unified.e;return e<=1?47*e:47+Math.min(1,(e-1)/1.4)*29;}
+function setPlaneAngle(deg,cap){
+  const p=$('#conePlane');if(p)p.style.transform=`rotate(${-deg}deg)`;
+  if(cap)$('#coneCap').textContent=cap;
+}
+function updateCone(){
+  if(state.mode==='unified'){
+    const g=geometry();
+    setPlaneAngle(planeAngleForE(),`e = ${fmt(state.params.unified.e)} → ${g.classification.toLowerCase()}`);
+  } else if(CONE_INFO[state.mode]){const c=CONE_INFO[state.mode];setPlaneAngle(c.a,c.c);}
+}
+
+/* ================================================================ tabs & modes */
+function positionIndicator(){
+  const btn=$(`.tab[data-mode="${state.mode}"]`),ind=$('#tabInd');
+  if(!btn||!ind)return;
+  ind.style.left=btn.offsetLeft+'px';ind.style.width=btn.offsetWidth+'px';
+  ind.style.background=MODE_COLORS[state.mode];ind.style.boxShadow=`0 0 12px ${MODE_COLORS[state.mode]}`;
+}
+$$('.tab').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+window.addEventListener('resize',positionIndicator);
+
+function setMode(m){
+  state.mode=m;
+  document.documentElement.style.setProperty('--mc',MODE_COLORS[m]);
+  $$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  positionIndicator();
+  if(m==='quiz'){
+    $('#vizGrid').classList.add('hidden');$('#quizCard').classList.remove('hidden');
+    if(!quiz.q)newQuestion();
+    $('#coneCap').textContent='can you read the equations?';
+    return;
+  }
+  $('#quizCard').classList.add('hidden');$('#vizGrid').classList.remove('hidden');
+  buildControls();updatePanel();updateCone();
+  window.__uKind=m==='unified'?geometry().kind:null;
+  setTimeout(()=>{fitView();positionIndicator();},30);
+}
+
+/* ================================================================ quiz engine */
+const quiz={score:0,streak:0,answered:0,best:0,q:null};
+try{quiz.best=parseInt(localStorage.getItem('conica-best')||'0');}catch(e){}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[rnd(0,a.length-1)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
+function coord(x,y){return `(${fmtT(x)},\\ ${fmtT(y)})`;}
+
+function qClassify(){
+  const mode=pick(['circle','ellipse','parabola','hyperbola']);let prm;
+  if(mode==='circle')prm={h:rnd(-3,3),k:rnd(-3,3),r:rnd(1,5)};
+  else if(mode==='ellipse'){const a=rnd(2,5);prm={h:rnd(-3,3),k:rnd(-3,3),a,b:rnd(1,a-1),orient:'h'};}
+  else if(mode==='parabola')prm={h:rnd(-3,3),k:rnd(-3,3),p:pick([-3,-2,-1,1,2,3]),orient:pick(['v','h'])};
+  else {let a=rnd(1,4),b=rnd(1,4);if(a===b)b=a+1;prm={h:rnd(-3,3),k:rnd(-3,3),a,b,orient:pick(['h','v'])};}
+  const eq=makeEquations(geometry(mode,prm)).std;
+  const expl={circle:'Both variables are squared with <b>equal</b> coefficients → circle.',
+    ellipse:'Both variables squared, <b>same sign, unequal</b> coefficients → ellipse.',
+    parabola:'Only <b>one</b> variable is squared → parabola.',
+    hyperbola:'Squared terms with <b>opposite signs</b> → hyperbola.'}[mode];
+  return{prompt:'Which conic section is this?',eq,options:['Circle','Ellipse','Parabola','Hyperbola'].map(t=>({label:t,tex:null})),
+    answer:MODE_NAMES[mode],explain:expl,plot:{mode,prm}};
+}
+function qCenter(){
+  const mode=pick(['circle','ellipse','hyperbola']);const h=rnd(-4,4),k=rnd(-4,4);let prm;
+  if(mode==='circle')prm={h,k,r:rnd(1,5)};
+  else if(mode==='ellipse'){const a=rnd(2,5);prm={h,k,a,b:rnd(1,a-1),orient:'h'};}
+  else{let a=rnd(1,4),b=rnd(1,4);if(a===b)b++;prm={h,k,a,b,orient:'h'};}
+  const eq=makeEquations(geometry(mode,prm)).std;
+  const correct=coord(h,k);
+  const dstrs=[coord(-h,-k),coord(k,h),coord(h+1,k-1),coord(-k,-h)].filter(x=>x!==correct);
+  return{prompt:`Find the center of this ${mode}.`,eq,
+    options:shuffle([correct,...dstrs.slice(0,3)]).map(t=>({label:null,tex:t})),
+    answer:correct,explain:`Read <b>(h, k)</b> straight from the squared brackets: the signs inside the brackets are flipped.`,
+    plot:{mode,prm}};
+}
+const TRIPLES=[[5,3,4],[5,4,3],[13,12,5],[10,8,6],[17,15,8],[25,24,7]];
+function qEllipseFoci(){
+  const[a,b,c]=pick(TRIPLES),h=rnd(-3,3),k=rnd(-3,3),orient=pick(['h','v']);
+  const prm={h,k,a,b,orient},eq=makeEquations(geometry('ellipse',prm)).std;
+  const correct=orient==='h'?`${coord(h+c,k)},\\ ${coord(h-c,k)}`:`${coord(h,k+c)},\\ ${coord(h,k-c)}`;
+  const wrongAxis=orient==='h'?`${coord(h,k+c)},\\ ${coord(h,k-c)}`:`${coord(h+c,k)},\\ ${coord(h-c,k)}`;
+  const wrongC=orient==='h'?`${coord(h+b,k)},\\ ${coord(h-b,k)}`:`${coord(h,k+b)},\\ ${coord(h,k-b)}`;
+  const wrongA=orient==='h'?`${coord(h+a,k)},\\ ${coord(h-a,k)}`:`${coord(h,k+a)},\\ ${coord(h,k-a)}`;
+  return{prompt:'Find the foci of this ellipse.',eq,
+    options:shuffle([correct,wrongAxis,wrongC,wrongA]).map(t=>({label:null,tex:t})),
+    answer:correct,explain:`<b>c² = a² − b² = ${a*a} − ${b*b} = ${c*c}</b>, so c = ${c}. The foci always sit on the major axis.`,
+    plot:{mode:'ellipse',prm}};
+}
+function qParabola(){
+  const h=rnd(-3,3),k=rnd(-3,3),p=pick([-3,-2,-1,1,2,3]),orient=pick(['v','h']);
+  const prm={h,k,p,orient},eq=makeEquations(geometry('parabola',prm)).std;
+  if(Math.random()<0.5){
+    const correct=coord(orient==='v'?h:h+p,orient==='v'?k+p:k);
+    const ds=[coord(orient==='v'?h:h-p,orient==='v'?k-p:k),coord(orient==='v'?h+p:h,orient==='v'?k:k+p),coord(h,k)].filter(x=>x!==correct);
+    return{prompt:'Find the focus of this parabola.',eq,
+      options:shuffle([correct,...ds.slice(0,3)]).map(t=>({label:null,tex:t})),
+      answer:correct,explain:`The focus sits <b>|p| = ${Math.abs(p)}</b> units from the vertex, <i>inside</i> the opening.`,plot:{mode:'parabola',prm}};
+  }
+  const dv=orient==='v'?k-p:h-p,axis=orient==='v'?'y':'x';
+  const correct=`${axis} = ${fmtT(dv)}`;
+  const ds=[`${axis} = ${fmtT(orient==='v'?k+p:h+p)}`,`${orient==='v'?'x':'y'} = ${fmtT(orient==='v'?h-p:k-p)}`,`${axis} = ${fmtT(orient==='v'?k:h)}`].filter(x=>x!==correct);
+  return{prompt:'Find the directrix of this parabola.',eq,
+    options:shuffle([correct,...ds.slice(0,3)]).map(t=>({label:null,tex:t})),
+    answer:correct,explain:`The directrix hides <b>|p| = ${Math.abs(p)}</b> units behind the vertex — opposite the focus.`,plot:{mode:'parabola',prm}};
+}
+function qAsymptotes(){
+  let a=rnd(1,4),b=rnd(1,4);if(a===b)b=a%4+1;
+  const h=rnd(-3,3),k=rnd(-3,3),orient=pick(['h','v']);
+  const prm={h,k,a,b,orient},eq=makeEquations(geometry('hyperbola',prm)).std;
+  const m=orient==='h'?b/a:a/b;
+  const correct=`${linT('y',k)} = \\pm\\,${fmtT(m)}\\,${linT('x',h)}`;
+  const swapped=`${linT('y',k)} = \\pm\\,${fmtT(1/m)}\\,${linT('x',h)}`;
+  const wrongPt=`${linT('y',h)} = \\pm\\,${fmtT(m)}\\,${linT('x',k)}`;
+  const oneSign=`${linT('y',k)} = ${fmtT(m)}\\,${linT('x',h)}`;
+  return{prompt:'Find the asymptotes of this hyperbola.',eq,
+    options:shuffle([correct,swapped,wrongPt,oneSign]).map(t=>({label:null,tex:t})),
+    answer:correct,explain:`The slopes come from the a/b box: <b>±${orient==='h'?'b/a':'a/b'} = ±${fmtT(m)}</b>, pivoting around the center (h, k).`,
+    plot:{mode:'hyperbola',prm}};
+}
+function qEcc(){
+  const t=pick(['circle','parabola','ellipse','hyperbola']);
+  if(t==='circle'){const prm={h:rnd(-2,2),k:rnd(-2,2),r:rnd(1,4)};
+    return{prompt:'What is the eccentricity of this conic?',eq:makeEquations(geometry('circle',prm)).std,
+      options:shuffle(['0','1',frac(1,2),'2']).map(x=>({label:null,tex:`e = ${x}`})),answer:'e = 0',
+      explain:'A circle has <b>e = 0</b> — the foci coincide at the center.',plot:{mode:'circle',prm}};}
+  if(t==='parabola'){const prm={h:rnd(-2,2),k:rnd(-2,2),p:pick([-2,-1,1,2]),orient:'v'};
+    return{prompt:'What is the eccentricity of this conic?',eq:makeEquations(geometry('parabola',prm)).std,
+      options:shuffle(['1','0',frac(1,2),'2']).map(x=>({label:null,tex:`e = ${x}`})),answer:'e = 1',
+      explain:'Every parabola has <b>e = 1</b> — it is the boundary between closed and open conics.',plot:{mode:'parabola',prm}};}
+  if(t==='ellipse'){const[a,b,c]=pick(TRIPLES);const prm={h:rnd(-2,2),k:rnd(-2,2),a,b,orient:'h'};
+    const correct=`e = ${frac(c,a)}`;
+    return{prompt:'What is the eccentricity of this ellipse?',eq:makeEquations(geometry('ellipse',prm)).std,
+      options:shuffle([correct,`e = ${frac(a,c)}`,`e = ${frac(c,b)}`,'e = 1']).map(x=>({label:null,tex:x})),answer:correct,
+      explain:`<b>e = c/a</b> with c² = a² − b² = ${a*a} − ${b*b} = ${c*c} → c = ${c}.`,plot:{mode:'ellipse',prm}};}
+  const[a,b,c]=pick([[3,4,5],[5,12,13],[8,15,17]]);const prm={h:rnd(-2,2),k:rnd(-2,2),a,b,orient:'h'};
+  const correct=`e = ${frac(c,a)}`;
+  return{prompt:'What is the eccentricity of this hyperbola?',eq:makeEquations(geometry('hyperbola',prm)).std,
+    options:shuffle([correct,`e = ${frac(a,c)}`,'e = 1','e = 0']).map(x=>({label:null,tex:x})),answer:correct,
+    explain:`<b>e = c/a</b> with c² = a² + b² = ${a*a} + ${b*b} = ${c*c} → c = ${c}. Note e &gt; 1.`,plot:{mode:'hyperbola',prm}};
+}
+function newQuestion(){
+  const topic=$('#qTopic').value;
+  const gens=topic==='classify'?[qClassify]:topic==='features'?[qCenter,qEllipseFoci,qParabola,qAsymptotes,qEcc]
+    :[qClassify,qCenter,qEllipseFoci,qParabola,qAsymptotes,qEcc];
+  quiz.q=pick(gens)();
+  quiz.answered0=false;
+  $('#qCount').textContent=`QUESTION ${quiz.answered+1}`;
+  $('#qPrompt').textContent=quiz.q.prompt;
+  tex($('#qEq'),quiz.q.eq,true);
+  const wrap=$('#qOpts');wrap.innerHTML='';
+  quiz.q.options.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='opt';
+    if(o.tex)tex(b,o.tex,true);else b.textContent=o.label;
+    b.onclick=()=>answerQuiz(i,b);wrap.appendChild(b);
+  });
+  $('#qFeedback').classList.add('hidden');
+}
+function answerQuiz(i,btn){
+  const q=quiz.q;if(quiz.answered0)return;quiz.answered0=true;
+  const chosen=q.options[i],key=chosen.tex??chosen.label;
+  const right=key===q.answer;
+  $$('#qOpts .opt').forEach((b,j)=>{const k=q.options[j].tex??q.options[j].label;
+    b.disabled=true;
+    if(k===q.answer)b.classList.add('correct');
+    else if(b===btn)b.classList.add('wrong');else b.classList.add('dim');});
+  quiz.answered++;
+  if(right){quiz.score++;quiz.streak++;quiz.best=Math.max(quiz.best,quiz.streak);
+    try{localStorage.setItem('conica-best',String(quiz.best));}catch(e){}}
+  else quiz.streak=0;
+  $('#statScore').textContent=quiz.score;$('#statStreak').textContent=quiz.streak;
+  $('#statBest').textContent=quiz.best;
+  $('#statAcc').textContent=Math.round(quiz.score/quiz.answered*100)+'%';
+  const v=$('#qVerdict');
+  v.textContent=right?(quiz.streak>2?`Correct — ${quiz.streak} in a row!`:'Correct!'):'Not quite.';
+  v.style.color=right?'var(--c-circle)':'var(--c-parabola)';
+  $('#qExplain').innerHTML=q.explain;
+  $('#qFeedback').classList.remove('hidden');
+}
+$('#btnNext').onclick=newQuestion;
+$('#qTopic').addEventListener('change',newQuestion);
+$('#btnPlot').onclick=()=>{
+  const{mode,prm}=quiz.q.plot;
+  state.params[mode]=JSON.parse(JSON.stringify(prm));
+  setMode(mode);
+  $('#stage').classList.remove('flash');void $('#stage').offsetWidth;$('#stage').classList.add('flash');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+/* ================================================================ init */
+window.addEventListener('DOMContentLoaded',()=>{
+  try{
+    resize();
+    buildControls();
+    updatePanel();
+    updateCone();
+    setMode('circle');
+    tview.s=44;centerOn(0,0,true);
+    fitView();view.s=tview.s;view.x=tview.x;view.y=tview.y;
+    $('#statBest').textContent=quiz.best;
+    try{if(window.lucide)lucide.createIcons();}catch(e){}
+    setTimeout(positionIndicator,350);
+    paintNow();
+    requestAnimationFrame(loop);
+  }catch(err){ showErr('init: '+(err&&err.message?err.message:err)); }
+});
+</script>
+</body>
+</html>

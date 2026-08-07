@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domain & Range Explorer Pro</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- MathJax Configuration -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+:root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --panel2: #1f2937;
+  --accent: #38bdf8;
+  --accent2: #22c55e; /* Green for Domain */
+  --warning: #f59e0b; /* Orange for Range */
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: #334155;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100vh;
+}
+
+/* ==========================
+   SIDEBAR
+========================== */
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo h1 {
+  font-size: 1.3rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.logo p {
+  font-size: .8rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.function-list {
+  padding: 20px;
+  overflow: auto;
+  flex: 1;
+}
+
+.function-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.function-card:hover {
+  transform: translateX(4px);
+  border-color: var(--accent);
+}
+
+.function-card.active {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.function-number {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.function-title {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: .75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ==========================
+   MAIN
+========================== */
+.main {
+  display: grid;
+  grid-template-rows: 70px 1fr;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h2 {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+  overflow: auto;
+}
+
+/* ==========================
+   PANELS
+========================== */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-content {
+  padding: 20px;
+  flex: 1;
+  overflow: auto;
+}
+
+/* ==========================
+   GRAPH
+========================== */
+#graphPanel {
+  height: 100%;
+  min-height: 500px;
+}
+
+#graphContainer {
+  flex: 1;
+  width: 100%;
+  position: relative;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.axis {
+  stroke: #cbd5e1;
+  stroke-width: 2;
+}
+
+.grid {
+  stroke: #1e293b;
+  stroke-width: 1;
+}
+
+.functionPath {
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  fill: none;
+  filter: url(#glow);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.graph-legend {
+  display: flex;
+  gap: 20px;
+  padding: 12px 20px;
+  background: rgba(15, 23, 42, 0.5);
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.legend-dot.domain { background: rgba(34, 197, 94, 0.6); box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
+.legend-dot.range { background: rgba(245, 158, 11, 0.6); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+.legend-dot.func { background: var(--accent); box-shadow: 0 0 8px rgba(56, 189, 248, 0.6); }
+
+/* ==========================
+   INFO PANEL
+========================== */
+.info-card {
+  background: var(--panel2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.info-title {
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.math {
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.description-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.status-box {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-box.domain {
+  border-left: 4px solid var(--accent2);
+}
+
+.status-box.range {
+  border-left: 4px solid var(--warning);
+}
+
+.status-box h3 {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.status-box p {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+@media (max-width: 1000px) {
+  #app {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+  .sidebar {
+    display: none;
+  }
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  body {
+    overflow: auto;
+    height: auto;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <h1>Domain & Range Explorer</h1>
+      <p>Interactive Mathematical Visualizations</p>
+    </div>
+
+    <div class="function-list">
+      <div class="function-card active" onclick="selectFunction(17, this)">
+        <div class="function-number">Problem 17</div>
+        <div class="function-title">√(1 − x²)</div>
+      </div>
+
+      <div class="function-card" onclick="selectFunction(18, this)">
+        <div class="function-number">Problem 18</div>
+        <div class="function-title">(a+x)/(a−x)</div>
+      </div>
+
+      <div class="function-card" onclick="selectFunction(19, this)">
+        <div class="function-number">Problem 19</div>
+        <div class="function-title">1/√((1−x)(2−x))</div>
+      </div>
+
+      <div class="function-card" onclick="selectFunction(20, this)">
+        <div class="function-number">Problem 20</div>
+        <div class="function-title">√(3+x)+√(7−x)</div>
+      </div>
+
+      <div class="function-card" onclick="selectFunction(21, this)">
+        <div class="function-number">Problem 21</div>
+        <div class="function-title">Piecewise Function</div>
+      </div>
+
+      <div class="function-card" onclick="selectFunction(22, this)">
+        <div class="function-number">Problem 22</div>
+        <div class="function-title">√((x−4)/(x+1))</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      SigmaMath Framework V2
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="functionHeading">Problem 17</h2>
+      <div class="badge">Live Graphing Engine</div>
+    </div>
+
+    <div class="workspace">
+      <!-- GRAPH PANEL -->
+      <div class="panel" id="graphPanel">
+        <div class="panel-header">
+          <span>Interactive Graph Window</span>
+        </div>
+        <div class="panel-content" id="graphContainer" style="padding: 0; display: flex; flex-direction: column;">
+          <svg id="graphSVG" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <g id="gridLayer"></g>
+            <g id="highlightLayer"></g>
+            <g id="axisLayer"></g>
+            <g id="labelLayer"></g>
+            <g id="functionLayer"></g>
+          </svg>
+          <div class="graph-legend">
+            <div class="legend-item">
+              <div class="legend-dot func"></div>
+              <span>Function f(x)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot domain"></div>
+              <span>Domain (Valid X)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot range"></div>
+              <span>Range (Valid Y)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INFO -->
+      <div>
+        <div class="panel" style="height: 100%;">
+          <div class="panel-header">Function Information</div>
+          <div class="panel-content">
+            <div class="info-card">
+              <div class="info-title">Current Function</div>
+              <div id="functionFormula" class="math">
+                \[ f(x)=\sqrt{1-x^2} \]
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-title">Description</div>
+              <div id="description" class="description-text">
+                Upper semicircle of radius 1.
+              </div>
+            </div>
+
+            <div class="status">
+              <div class="status-box domain">
+                <h3>DOMAIN</h3>
+                <p id="domainStatus">[-1, 1]</p>
+              </div>
+              <div class="status-box range">
+                <h3>RANGE</h3>
+                <p id="rangeStatus">[0, 1]</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====================================
+   FUNCTION DATABASE
+==================================== */
+const FUNCTIONS = {
+  17: {
+    title: "Problem 17",
+    formula: "\\[ f(x)=\\sqrt{1-x^2} \\]",
+    description: "Upper semicircle of radius 1. The function is only defined where the radicand is non-negative.",
+    domain: "[-1, 1]",
+    range: "[0, 1]"
+  },
+  18: {
+    title: "Problem 18",
+    formula: "\\[ f(x)=\\frac{a+x}{a-x} \\]",
+    description: "Rational function with a vertical asymptote at x = a and a horizontal asymptote at y = -1. (Graph assumes a = 1 for visualization).",
+    domain: "(-∞, a) ∪ (a, ∞)",
+    range: "(-∞, -1) ∪ (-1, ∞)"
+  },
+  19: {
+    title: "Problem 19",
+    formula: "\\[ f(x)=\\frac{1}{\\sqrt{(1-x)(2-x)}} \\]",
+    description: "Radical denominator function. Defined strictly where (1-x)(2-x) > 0, creating two separate valid regions.",
+    domain: "(-∞, 1) ∪ (2, ∞)",
+    range: "(0, ∞)"
+  },
+  20: {
+    title: "Problem 20",
+    formula: "\\[ f(x)=\\sqrt{3+x}+\\sqrt{7-x} \\]",
+    description: "Sum of radicals. Both radicands must be non-negative simultaneously, restricting x to a closed interval.",
+    domain: "[-3, 7]",
+    range: "[2, 2\\sqrt{5}]"
+  },
+  21: {
+    title: "Problem 21",
+    formula: "\\[ f(x)=\\begin{cases} x^2-1, & x \\le 2 \\\\ \\sqrt{x-1}, & x > 2 \\end{cases} \\]",
+    description: "Piecewise function. Notice the behavior change at x = 2, though the function remains continuous and defined everywhere.",
+    domain: "(-∞, ∞)",
+    range: "[-1, ∞)"
+  },
+  22: {
+    title: "Problem 22",
+    formula: "\\[ f(x)=\\sqrt{\\frac{x-4}{x+1}} \\]",
+    description: "Radical rational function. The entire fraction must be ≥ 0, and the denominator cannot be zero.",
+    domain: "(-∞, -1) ∪ [4, ∞)",
+    range: "[0, ∞)"
+  }
+};
+
+/* Visual intervals for graph highlighting (approximated to viewport bounds: X: -10 to 10, Y: -7.5 to 7.5) */
+const VISUAL_INTERVALS = {
+  17: { domain: [[-1, 1]], range: [[0, 1]] },
+  18: { domain: [[-10, 1], [1, 10]], range: [[-7.5, -1], [-1, 7.5]] },
+  19: { domain: [[-10, 1], [2, 10]], range: [[0, 7.5]] },
+  20: { domain: [[-3, 7]], range: [[2, 4.5]] }, // 2*sqrt(5) ≈ 4.47
+  21: { domain: [[-10, 10]], range: [[-1, 7.5]] },
+  22: { domain: [[-10, -1], [4, 10]], range: [[0, 7.5]] }
+};
+
+let currentFunction = 17;
+
+/* ====================================
+   GRAPH ENGINE
+==================================== */
+const svg = document.getElementById("graphSVG");
+const scaleX = 40; 
+const scaleY = 40; 
+const offsetX = 400;
+const offsetY = 300;
+
+function drawGrid() {
+  const grid = document.getElementById("gridLayer");
+  grid.innerHTML = "";
+  const width = 800;
+  const height = 600;
+
+  for (let x = 0; x <= width; x += 40) {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x);
+    line.setAttribute("y1", 0);
+    line.setAttribute("x2", x);
+    line.setAttribute("y2", height);
+    line.setAttribute("class", "grid");
+    grid.appendChild(line);
+  }
+
+  for (let y = 0; y <= height; y += 40) {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", 0);
+    line.setAttribute("y1", y);
+    line.setAttribute("x2", width);
+    line.setAttribute("y2", y);
+    line.setAttribute("class", "grid");
+    grid.appendChild(line);
+  }
+}
+
+function drawAxes() {
+  const axis = document.getElementById("axisLayer");
+  axis.innerHTML = "";
+  const width = 800;
+  const height = 600;
+
+  const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  xAxis.setAttribute("x1", 0);
+  xAxis.setAttribute("y1", offsetY);
+  xAxis.setAttribute("x2", width);
+  xAxis.setAttribute("y2", offsetY);
+  xAxis.setAttribute("class", "axis");
+  axis.appendChild(xAxis);
+
+  const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  yAxis.setAttribute("x1", offsetX);
+  yAxis.setAttribute("y1", 0);
+  yAxis.setAttribute("x2", offsetX);
+  yAxis.setAttribute("y2", height);
+  yAxis.setAttribute("class", "axis");
+  axis.appendChild(yAxis);
+}
+
+function drawAxisLabels() {
+  const labelLayer = document.getElementById("labelLayer");
+  labelLayer.innerHTML = "";
+
+  // X-axis labels
+  for (let i = -9; i <= 9; i++) {
+    if (i === 0) continue;
+    const x = offsetX + i * scaleX;
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", x);
+    text.setAttribute("y", offsetY + 20);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("fill", "#64748b");
+    text.setAttribute("font-size", "11");
+    text.setAttribute("font-weight", "500");
+    text.textContent = i;
+    labelLayer.appendChild(text);
+  }
+
+  // Y-axis labels
+  for (let i = -7; i <= 7; i++) {
+    if (i === 0) continue;
+    const y = offsetY - i * scaleY;
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", offsetX - 10);
+    text.setAttribute("y", y + 4);
+    text.setAttribute("text-anchor", "end");
+    text.setAttribute("fill", "#64748b");
+    text.setAttribute("font-size", "11");
+    text.setAttribute("font-weight", "500");
+    text.textContent = i;
+    labelLayer.appendChild(text);
+  }
+  
+  // Origin label
+  const origin = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  origin.setAttribute("x", offsetX - 10);
+  origin.setAttribute("y", offsetY + 20);
+  origin.setAttribute("text-anchor", "end");
+  origin.setAttribute("fill", "#64748b");
+  origin.setAttribute("font-size", "11");
+  origin.setAttribute("font-weight", "600");
+  origin.textContent = "0";
+  labelLayer.appendChild(origin);
+}
+
+function drawHighlights(id) {
+  const highlightLayer = document.getElementById("highlightLayer");
+  highlightLayer.innerHTML = "";
+  
+  const intervals = VISUAL_INTERVALS[id];
+  if (!intervals) return;
+
+  const graphMinX = -10;
+  const graphMaxX = 10;
+  const graphMinY = -7.5;
+  const graphMaxY = 7.5;
+
+  // Draw Domain Highlights (X-axis) - Green
+  intervals.domain.forEach(interval => {
+    let start = interval[0] === -Infinity ? graphMinX : interval[0];
+    let end = interval[1] === Infinity ? graphMaxX : interval[1];
+    
+    let x1 = offsetX + start * scaleX;
+    let x2 = offsetX + end * scaleX;
+    let width = Math.max(0, x2 - x1);
+    
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", x1);
+    rect.setAttribute("y", offsetY - 5);
+    rect.setAttribute("width", width);
+    rect.setAttribute("height", 10);
+    rect.setAttribute("fill", "rgba(34, 197, 94, 0.35)");
+    rect.setAttribute("rx", 5);
+    highlightLayer.appendChild(rect);
+  });
+
+  // Draw Range Highlights (Y-axis) - Orange
+  intervals.range.forEach(interval => {
+    let start = interval[0] === -Infinity ? graphMinY : interval[0];
+    let end = interval[1] === Infinity ? graphMaxY : interval[1];
+    
+    // Note: SVG y is inverted. Higher math y = lower SVG y
+    let y1 = offsetY - end * scaleY; 
+    let y2 = offsetY - start * scaleY;
+    let height = Math.max(0, y2 - y1);
+    
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", offsetX - 5);
+    rect.setAttribute("y", y1);
+    rect.setAttribute("width", 10);
+    rect.setAttribute("height", height);
+    rect.setAttribute("fill", "rgba(245, 158, 11, 0.35)");
+    rect.setAttribute("rx", 5);
+    highlightLayer.appendChild(rect);
+  });
+}
+
+function evaluateFunction(x, id) {
+  switch(id) {
+    case 17:
+      const v17 = 1 - x * x;
+      return v17 >= 0 ? Math.sqrt(v17) : null;
+    case 18:
+      const a = 1; // assuming a=1 for graph visualization
+      if (Math.abs(x - a) < 0.0001) return null;
+      return (a + x) / (a - x);
+    case 19:
+      const v19 = (1 - x) * (2 - x);
+      return v19 > 0 ? 1 / Math.sqrt(v19) : null;
+    case 20:
+      if (3 + x >= 0 && 7 - x >= 0) {
+        return Math.sqrt(3 + x) + Math.sqrt(7 - x);
+      }
+      return null;
+    case 21:
+      if (x <= 2) return x * x - 1;
+      else return Math.sqrt(x - 1);
+    case 22:
+      if (Math.abs(x + 1) < 0.0001) return null;
+      const v22 = (x - 4) / (x + 1);
+      return v22 >= 0 ? Math.sqrt(v22) : null;
+    default:
+      return null;
+  }
+}
+
+function drawGraph(id) {
+  const layer = document.getElementById("functionLayer");
+  layer.innerHTML = "";
+  
+  const width = 800;
+  let path = "";
+  let prevY = null;
+
+  for (let px = 0; px <= width; px += 1) {
+    let x = (px - offsetX) / scaleX;
+    let y = evaluateFunction(x, id);
+
+    if (y !== null && !isNaN(y) && isFinite(y)) {
+      let py = offsetY - y * scaleY;
+      
+      // If it's way off screen, treat as a break (handles asymptotes cleanly)
+      if (py < -50 || py > 650) {
+        prevY = null;
+        continue;
+      }
+
+      if (prevY === null) {
+        path += `M ${px} ${py}`;
+      } else {
+        // Break path if there's a massive jump (handles piecewise discontinuities)
+        if (Math.abs(py - prevY) > 80) {
+           path += ` M ${px} ${py}`;
+        } else {
+           path += ` L ${px} ${py}`;
+        }
+      }
+      prevY = py;
+    } else {
+      prevY = null; // reset on gap
+    }
+  }
+
+  if (path !== "") {
+    const curve = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    curve.setAttribute("d", path);
+    curve.setAttribute("class", "functionPath");
+    layer.appendChild(curve);
+  }
+}
+
+/* ====================================
+   FUNCTION SELECTOR
+==================================== */
+function selectFunction(id, element) {
+  currentFunction = id;
+  const func = FUNCTIONS[id];
+
+  document.getElementById("functionHeading").innerText = func.title;
+  document.getElementById("functionFormula").innerHTML = func.formula;
+  document.getElementById("description").innerText = func.description;
+  document.getElementById("domainStatus").innerText = func.domain;
+  document.getElementById("rangeStatus").innerText = func.range;
+
+  document.querySelectorAll(".function-card").forEach(card => card.classList.remove("active"));
+  if (element) {
+    element.classList.add("active");
+  }
+
+  // Re-render MathJax
+  if (window.MathJax) {
+    MathJax.typesetPromise();
+  }
+  
+  // Update Graph
+  drawHighlights(id);
+  drawGraph(id);
+}
+
+/* ====================================
+   INIT
+==================================== */
+window.addEventListener('DOMContentLoaded', () => {
+  drawGrid();
+  drawAxes();
+  drawAxisLabels();
+  drawHighlights(currentFunction);
+  drawGraph(currentFunction);
+  
+  if (window.MathJax) {
+    MathJax.typesetPromise();
+  }
+});
+</script>
+
+</body>
+</html>

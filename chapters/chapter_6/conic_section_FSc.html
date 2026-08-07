@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conic Sections Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #6366f1; cursor: pointer; border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(99,102,241,0.4);
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #6366f1; cursor: pointer; border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(99,102,241,0.4);
+        }
+        .tab-active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .tab-inactive { background: #f3f4f6; color: #6b7280; }
+        .tab-inactive:hover { background: #e5e7eb; }
+        .glass-panel {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .math-panel { min-height: 80px; }
+        canvas { cursor: crosshair; touch-action: none; }
+        .prop-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-left: 3px solid #6366f1;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .quiz-option:hover { transform: translateX(4px); }
+        .quiz-option.correct { background: #dcfce7; border-color: #22c55e; }
+        .quiz-option.wrong { background: #fee2e2; border-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 min-h-screen">
+    <div class="max-w-[1600px] mx-auto p-4 lg:p-6">
+        <header class="mb-6">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <i data-lucide="circle" class="w-5 h-5 text-white"></i>
+                </div>
+                <h1 class="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    Conic Sections Explorer
+                </h1>
+            </div>
+            <p class="text-slate-500 text-sm lg:text-base ml-[52px]">Interactive visualization for Circle, Ellipse, Parabola, and Hyperbola</p>
+        </header>
+
+        <nav class="flex flex-wrap gap-2 mb-6">
+            <button onclick="setMode('circle')" id="tab-circle" class="tab-active px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-sm">
+                <i data-lucide="circle" class="w-4 h-4"></i> Circle
+            </button>
+            <button onclick="setMode('ellipse')" id="tab-ellipse" class="tab-inactive px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-sm">
+                <i data-lucide="oval" class="w-4 h-4"></i> Ellipse
+            </button>
+            <button onclick="setMode('parabola')" id="tab-parabola" class="tab-inactive px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-sm">
+                <i data-lucide="move-horizontal" class="w-4 h-4"></i> Parabola
+            </button>
+            <button onclick="setMode('hyperbola')" id="tab-hyperbola" class="tab-inactive px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-sm">
+                <i data-lucide="git-branch" class="w-4 h-4"></i> Hyperbola
+            </button>
+            <button onclick="setMode('focus-directrix')" id="tab-focus-directrix" class="tab-inactive px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-sm">
+                <i data-lucide="target" class="w-4 h-4"></i> Focus-Directrix
+            </button>
+            <button onclick="setMode('quiz')" id="tab-quiz" class="tab-inactive px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-sm">
+                <i data-lucide="brain-circuit" class="w-4 h-4"></i> Quiz
+            </button>
+        </nav>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6" id="main-grid">
+            <div class="xl:col-span-1 space-y-4">
+                <div id="controls-panel" class="glass-panel rounded-2xl p-5 shadow-lg">
+                    <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-500"></i>
+                        Parameters
+                    </h3>
+                    <div id="sliders-container" class="space-y-4"></div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 shadow-lg">
+                    <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4 text-indigo-500"></i>
+                        Visual Overlays
+                    </h3>
+                    <div class="space-y-2.5" id="overlays-container">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="show-foci" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">Show Foci</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="show-directrix" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">Show Directrix</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group" id="asymptote-toggle" style="display:none">
+                            <input type="checkbox" id="show-asymptotes" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">Show Asymptotes</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="show-distances" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">Show Distance Vectors</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="show-grid" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">Show Grid</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 shadow-lg">
+                    <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="zoom-in" class="w-4 h-4 text-indigo-500"></i>
+                        View Controls
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="zoomCanvas(1.2)" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">Zoom In</button>
+                        <button onclick="zoomCanvas(0.8)" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">Zoom Out</button>
+                        <button onclick="resetView()" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">Reset</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Tip: Drag to pan, scroll to zoom</p>
+                </div>
+            </div>
+
+            <div class="xl:col-span-1">
+                <div class="glass-panel rounded-2xl p-1 shadow-lg">
+                    <canvas id="conicCanvas" class="w-full rounded-xl bg-white" style="height: 500px;"></canvas>
+                </div>
+            </div>
+
+            <div class="xl:col-span-1 space-y-4">
+                <div class="glass-panel rounded-2xl p-5 shadow-lg">
+                    <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="sigma" class="w-4 h-4 text-indigo-500"></i>
+                        Equations
+                    </h3>
+                    <div id="math-standard" class="math-panel mb-3 p-3 bg-slate-50 rounded-lg"></div>
+                    <div id="math-general" class="math-panel p-3 bg-slate-50 rounded-lg"></div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 shadow-lg">
+                    <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-indigo-500"></i>
+                        Properties
+                    </h3>
+                    <div id="properties-container" class="space-y-2"></div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 shadow-lg border-l-4 border-l-amber-400">
+                    <h3 class="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i>
+                        Insight
+                    </h3>
+                    <p id="insight-text" class="text-sm text-slate-600 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-panel" class="hidden mt-6">
+            <div class="glass-panel rounded-2xl p-6 shadow-lg max-w-3xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="brain-circuit" class="w-5 h-5 text-indigo-500"></i>
+                        Challenge Mode
+                    </h3>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-slate-500">Score: <span id="quiz-score" class="font-bold text-indigo-600">0</span></span>
+                        <span class="text-sm text-slate-500">Streak: <span id="quiz-streak" class="font-bold text-amber-500">0</span></span>
+                    </div>
+                </div>
+                <div id="quiz-question" class="mb-6"></div>
+                <div id="quiz-options" class="space-y-3"></div>
+                <div id="quiz-feedback" class="mt-4 hidden p-4 rounded-xl"></div>
+                <button onclick="nextQuizQuestion()" id="quiz-next" class="hidden mt-4 w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all">
+                    Next Question
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+let currentMode = 'circle';
+let canvas, ctx;
+let scale = 40;
+let offsetX = 0, offsetY = 0;
+let isDragging = false;
+let lastMouseX, lastMouseY;
+
+const params = {
+    circle: { h: 0, k: 0, r: 3 },
+    ellipse: { h: 0, k: 0, a: 5, b: 3, orientation: 'horizontal' },
+    parabola: { h: 0, k: 0, p: 2, orientation: 'vertical' },
+    hyperbola: { h: 0, k: 0, a: 3, b: 2, orientation: 'horizontal' },
+    'focus-directrix': { h: 0, k: 0, e: 0.5, p: 3, orientation: 'vertical' }
+};
+
+let quizState = { score: 0, streak: 0, currentQuestion: null, answered: false };
+
+function init() {
+    canvas = document.getElementById('conicCanvas');
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onMouseUp);
+
+    document.querySelectorAll('#overlays-container input').forEach(cb => {
+        cb.addEventListener('change', draw);
+    });
+
+    setMode('circle');
+    lucide.createIcons();
+}
+
+function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 500;
+    offsetX = canvas.width / 2;
+    offsetY = canvas.height / 2;
+    draw();
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('tab-inactive');
+    });
+    document.getElementById('tab-' + mode).classList.remove('tab-inactive');
+    document.getElementById('tab-' + mode).classList.add('tab-active');
+
+    const isQuiz = mode === 'quiz';
+    document.getElementById('quiz-panel').classList.toggle('hidden', !isQuiz);
+    document.getElementById('main-grid').classList.toggle('hidden', isQuiz);
+
+    if (isQuiz) {
+        nextQuizQuestion();
+    } else {
+        buildSliders();
+        updateMath();
+        updateProperties();
+        updateInsight();
+        updateOverlayVisibility();
+        draw();
+    }
+    lucide.createIcons();
+}
+
+function updateOverlayVisibility() {
+    const asym = document.getElementById('asymptote-toggle');
+    asym.style.display = currentMode === 'hyperbola' ? 'flex' : 'none';
+}
+
+function buildSliders() {
+    const container = document.getElementById('sliders-container');
+    container.innerHTML = '';
+    const p = params[currentMode];
+
+    const defs = {
+        circle: [
+            { key: 'h', label: 'Center h', min: -10, max: 10, step: 0.5 },
+            { key: 'k', label: 'Center k', min: -10, max: 10, step: 0.5 },
+            { key: 'r', label: 'Radius r', min: 0.5, max: 10, step: 0.5 }
+        ],
+        ellipse: [
+            { key: 'h', label: 'Center h', min: -10, max: 10, step: 0.5 },
+            { key: 'k', label: 'Center k', min: -10, max: 10, step: 0.5 },
+            { key: 'a', label: 'Semi-major a', min: 1, max: 10, step: 0.5 },
+            { key: 'b', label: 'Semi-minor b', min: 0.5, max: 10, step: 0.5 },
+            { key: 'orientation', label: 'Orientation', type: 'select', options: ['horizontal', 'vertical'] }
+        ],
+        parabola: [
+            { key: 'h', label: 'Vertex h', min: -10, max: 10, step: 0.5 },
+            { key: 'k', label: 'Vertex k', min: -10, max: 10, step: 0.5 },
+            { key: 'p', label: 'Focal parameter p', min: 0.5, max: 8, step: 0.5 },
+            { key: 'orientation', label: 'Orientation', type: 'select', options: ['vertical', 'horizontal'] }
+        ],
+        hyperbola: [
+            { key: 'h', label: 'Center h', min: -10, max: 10, step: 0.5 },
+            { key: 'k', label: 'Center k', min: -10, max: 10, step: 0.5 },
+            { key: 'a', label: 'Semi-transverse a', min: 0.5, max: 8, step: 0.5 },
+            { key: 'b', label: 'Semi-conjugate b', min: 0.5, max: 8, step: 0.5 },
+            { key: 'orientation', label: 'Orientation', type: 'select', options: ['horizontal', 'vertical'] }
+        ],
+        'focus-directrix': [
+            { key: 'h', label: 'Center h', min: -10, max: 10, step: 0.5 },
+            { key: 'k', label: 'Center k', min: -10, max: 10, step: 0.5 },
+            { key: 'e', label: 'Eccentricity e', min: 0.05, max: 3, step: 0.05 },
+            { key: 'p', label: 'Focal parameter p', min: 0.5, max: 8, step: 0.5 },
+            { key: 'orientation', label: 'Orientation', type: 'select', options: ['vertical', 'horizontal'] }
+        ]
+    };
+
+    (defs[currentMode] || []).forEach(def => {
+        if (def.type === 'select') {
+            const div = document.createElement('div');
+            div.innerHTML = `<label class="text-xs font-medium text-slate-500 mb-1 block">${def.label}</label>
+                <select onchange="updateParam('${def.key}', this.value)" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    ${def.options.map(o => `<option value="${o}" ${p[def.key] === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`).join('')}
+                </select>`;
+            container.appendChild(div);
+        } else {
+            const div = document.createElement('div');
+            div.innerHTML = `<div class="flex justify-between mb-1">
+                    <label class="text-xs font-medium text-slate-500">${def.label}</label>
+                    <span class="text-xs font-mono text-indigo-600" id="val-${def.key}">${p[def.key]}</span>
+                </div>
+                <input type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${p[def.key]}"
+                    oninput="updateParam('${def.key}', parseFloat(this.value))"
+                    class="slider-thumb w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">`;
+            container.appendChild(div);
+        }
+    });
+}
+
+function updateParam(key, value) {
+    params[currentMode][key] = value;
+    const el = document.getElementById('val-' + key);
+    if (el) el.textContent = value;
+    updateMath();
+    updateProperties();
+    updateInsight();
+    draw();
+}
+
+function toCanvas(x, y) {
+    return { x: offsetX + x * scale, y: offsetY - y * scale };
+}
+
+function draw() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+    drawAxes();
+    switch(currentMode) {
+        case 'circle': drawCircle(); break;
+        case 'ellipse': drawEllipse(); break;
+        case 'parabola': drawParabola(); break;
+        case 'hyperbola': drawHyperbola(); break;
+        case 'focus-directrix': drawFocusDirectrix(); break;
+    }
+}
+
+function drawGrid() {
+    if (!document.getElementById('show-grid').checked) return;
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 0.5;
+    const startX = Math.floor((-offsetX) / scale);
+    const endX = Math.floor((canvas.width - offsetX) / scale);
+    const startY = Math.floor((offsetY - canvas.height) / scale);
+    const endY = Math.floor(offsetY / scale);
+
+    for (let x = startX; x <= endX; x++) {
+        const c = toCanvas(x, 0);
+        ctx.beginPath(); ctx.moveTo(c.x, 0); ctx.lineTo(c.x, canvas.height); ctx.stroke();
+    }
+    for (let y = startY; y <= endY; y++) {
+        const c = toCanvas(0, y);
+        ctx.beginPath(); ctx.moveTo(0, c.y); ctx.lineTo(canvas.width, c.y); ctx.stroke();
+    }
+}
+
+function drawAxes() {
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1.5;
+    const y0 = toCanvas(0, 0).y;
+    ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(canvas.width, y0); ctx.stroke();
+    const x0 = toCanvas(0, 0).x;
+    ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, canvas.height); ctx.stroke();
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    const startX = Math.floor((-offsetX) / scale);
+    const endX = Math.floor((canvas.width - offsetX) / scale);
+    const startY = Math.floor((offsetY - canvas.height) / scale);
+    const endY = Math.floor(offsetY / scale);
+
+    for (let x = startX; x <= endX; x++) {
+        if (x === 0) continue;
+        const c = toCanvas(x, 0);
+        ctx.fillText(x.toString(), c.x, y0 + 16);
+    }
+    ctx.textAlign = 'right';
+    for (let y = startY; y <= endY; y++) {
+        if (y === 0) continue;
+        const c = toCanvas(0, y);
+        ctx.fillText(y.toString(), x0 - 6, c.y + 4);
+    }
+    ctx.fillText('O', x0 - 8, y0 + 16);
+}
+
+function drawCircle() {
+    const { h, k, r } = params.circle;
+    const c = toCanvas(h, k);
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+    ctx.fill();
+    drawPoint(h, k, '#6366f1', 'C');
+    ctx.strokeStyle = '#a5b4fc';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y);
+    ctx.lineTo(c.x + r * scale, c.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#6366f1';
+    ctx.font = '12px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('r = ' + r, c.x + r * scale / 2, c.y - 6);
+    if (document.getElementById('show-foci').checked) {
+        drawPoint(h, k, '#ef4444', 'F');
+    }
+}
+
+function drawEllipse() {
+    const { h, k, a, b, orientation } = params.ellipse;
+    const c = toCanvas(h, k);
+    const isHoriz = orientation === 'horizontal';
+    const rx = isHoriz ? a * scale : b * scale;
+    const ry = isHoriz ? b * scale : a * scale;
+
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.06)';
+    ctx.fill();
+
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(c.x - rx, c.y); ctx.lineTo(c.x + rx, c.y);
+    ctx.moveTo(c.x, c.y - ry); ctx.lineTo(c.x, c.y + ry);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawPoint(h, k, '#6366f1', 'C');
+
+    const cVal = Math.sqrt(Math.abs(a*a - b*b));
+    if (document.getElementById('show-foci').checked) {
+        if (isHoriz) {
+            drawPoint(h + cVal, k, '#ef4444', 'F1');
+            drawPoint(h - cVal, k, '#ef4444', 'F2');
+        } else {
+            drawPoint(h, k + cVal, '#ef4444', 'F1');
+            drawPoint(h, k - cVal, '#ef4444', 'F2');
+        }
+        if (document.getElementById('show-distances').checked) {
+            const t = Date.now() / 2000;
+            let px, py;
+            if (isHoriz) { px = h + a * Math.cos(t); py = k + b * Math.sin(t); }
+            else { px = h + b * Math.cos(t); py = k + a * Math.sin(t); }
+            const f1x = isHoriz ? h + cVal : h;
+            const f1y = isHoriz ? k : k + cVal;
+            const f2x = isHoriz ? h - cVal : h;
+            const f2y = isHoriz ? k : k - cVal;
+            drawDashedLine(f1x, f1y, px, py, '#ef4444');
+            drawDashedLine(f2x, f2y, px, py, '#ef4444');
+            drawPoint(px, py, '#f59e0b', 'P');
+        }
+    }
+
+    if (document.getElementById('show-directrix').checked) {
+        const e = cVal / a;
+        if (e > 0.01) {
+            const d = a / e;
+            if (isHoriz) { drawVerticalLine(h + d, '#10b981', 'd1'); drawVerticalLine(h - d, '#10b981', 'd2'); }
+            else { drawHorizontalLine(k + d, '#10b981', 'd1'); drawHorizontalLine(k - d, '#10b981', 'd2'); }
+        }
+    }
+}
+
+function drawParabola() {
+    const { h, k, p, orientation } = params.parabola;
+    const isVert = orientation === 'vertical';
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    if (isVert) {
+        for (let x = -15; x <= 15; x += 0.05) {
+            const y = k + (x - h) * (x - h) / (4 * p);
+            const c = toCanvas(x, y);
+            if (x === -15) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+        }
+    } else {
+        for (let y = -15; y <= 15; y += 0.05) {
+            const x = h + (y - k) * (y - k) / (4 * p);
+            const c = toCanvas(x, y);
+            if (y === -15) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+        }
+    }
+    ctx.stroke();
+    drawPoint(h, k, '#6366f1', 'V');
+
+    if (document.getElementById('show-foci').checked) {
+        if (isVert) drawPoint(h, k + p, '#ef4444', 'F');
+        else drawPoint(h + p, k, '#ef4444', 'F');
+    }
+    if (document.getElementById('show-directrix').checked) {
+        if (isVert) drawHorizontalLine(k - p, '#10b981', 'd');
+        else drawVerticalLine(h - p, '#10b981', 'd');
+    }
+    if (document.getElementById('show-distances').checked && document.getElementById('show-foci').checked && document.getElementById('show-directrix').checked) {
+        const t = Date.now() / 2000;
+        let px, py;
+        if (isVert) { const tp = 2 * Math.sin(t); px = h + 2 * p * tp; py = k + p * tp * tp; }
+        else { const tp = 2 * Math.sin(t); px = h + p * tp * tp; py = k + 2 * p * tp; }
+        const fx = isVert ? h : h + p;
+        const fy = isVert ? k + p : k;
+        drawDashedLine(fx, fy, px, py, '#ef4444');
+        const dc = isVert ? toCanvas(px, k - p) : toCanvas(h - p, py);
+        const pc = toCanvas(px, py);
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        if (isVert) { ctx.moveTo(pc.x, pc.y); ctx.lineTo(pc.x, dc.y); }
+        else { ctx.moveTo(pc.x, pc.y); ctx.lineTo(dc.x, pc.y); }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        drawPoint(px, py, '#f59e0b', 'P');
+    }
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    if (isVert) { const top = toCanvas(h, 20); const bot = toCanvas(h, -20); ctx.moveTo(top.x, top.y); ctx.lineTo(bot.x, bot.y); }
+    else { const left = toCanvas(-20, k); const right = toCanvas(20, k); ctx.moveTo(left.x, left.y); ctx.lineTo(right.x, right.y); }
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function drawHyperbola() {
+    const { h, k, a, b, orientation } = params.hyperbola;
+    const isHoriz = orientation === 'horizontal';
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.5;
+
+    if (isHoriz) {
+        ctx.beginPath();
+        for (let x = a; x <= 20; x += 0.05) {
+            const y = k + b * Math.sqrt(x*x/(a*a) - 1);
+            const c = toCanvas(h + x, y);
+            if (x === a) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+        }
+        for (let x = 20; x >= a; x -= 0.05) {
+            const y = k - b * Math.sqrt(x*x/(a*a) - 1);
+            const c = toCanvas(h + x, y);
+            ctx.lineTo(c.x, c.y);
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        for (let x = a; x <= 20; x += 0.05) {
+            const y = k + b * Math.sqrt(x*x/(a*a) - 1);
+            const c = toCanvas(h - x, y);
+            if (x === a) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+        }
+        for (let x = 20; x >= a; x -= 0.05) {
+            const y = k - b * Math.sqrt(x*x/(a*a) - 1);
+            const c = toCanvas(h - x, y);
+            ctx.lineTo(c.x, c.y);
+        }
+        ctx.stroke();
+    } else {
+        ctx.beginPath();
+        for (let y = a; y <= 20; y += 0.05) {
+            const x = h + b * Math.sqrt(y*y/(a*a) - 1);
+            const c = toCanvas(x, k + y);
+            if (y === a) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+        }
+        for (let y = 20; y >= a; y -= 0.05) {
+            const x = h - b * Math.sqrt(y*y/(a*a) - 1);
+            const c = toCanvas(x, k + y);
+            ctx.lineTo(c.x, c.y);
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        for (let y = a; y <= 20; y += 0.05) {
+            const x = h + b * Math.sqrt(y*y/(a*a) - 1);
+            const c = toCanvas(x, k - y);
+            if (y === a) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+        }
+        for (let y = 20; y >= a; y -= 0.05) {
+            const x = h - b * Math.sqrt(y*y/(a*a) - 1);
+            const c = toCanvas(x, k - y);
+            ctx.lineTo(c.x, c.y);
+        }
+        ctx.stroke();
+    }
+
+    drawPoint(h, k, '#6366f1', 'C');
+
+    if (document.getElementById('show-asymptotes').checked) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        const m = isHoriz ? b/a : a/b;
+        let p1 = toCanvas(-15, k + m * (-15 - h));
+        let p2 = toCanvas(15, k + m * (15 - h));
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+        p1 = toCanvas(-15, k - m * (-15 - h));
+        p2 = toCanvas(15, k - m * (15 - h));
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    const cVal = Math.sqrt(a*a + b*b);
+    if (document.getElementById('show-foci').checked) {
+        if (isHoriz) { drawPoint(h + cVal, k, '#ef4444', 'F1'); drawPoint(h - cVal, k, '#ef4444', 'F2'); }
+        else { drawPoint(h, k + cVal, '#ef4444', 'F1'); drawPoint(h, k - cVal, '#ef4444', 'F2'); }
+    }
+    if (document.getElementById('show-directrix').checked) {
+        const e = cVal / a;
+        const d = a / e;
+        if (isHoriz) { drawVerticalLine(h + d, '#10b981', 'd1'); drawVerticalLine(h - d, '#10b981', 'd2'); }
+        else { drawHorizontalLine(k + d, '#10b981', 'd1'); drawHorizontalLine(k - d, '#10b981', 'd2'); }
+    }
+    if (isHoriz) { drawPoint(h + a, k, '#8b5cf6', 'V1'); drawPoint(h - a, k, '#8b5cf6', 'V2'); }
+    else { drawPoint(h, k + a, '#8b5cf6', 'V1'); drawPoint(h, k - a, '#8b5cf6', 'V2'); }
+}
+
+function drawFocusDirectrix() {
+    const { h, k, e, p, orientation } = params['focus-directrix'];
+    const isVert = orientation === 'vertical';
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    if (e < 1) {
+        const a = e * p / (1 - e*e);
+        const b = a * Math.sqrt(1 - e*e);
+        const cx = toCanvas(h, k);
+        if (isVert) ctx.ellipse(cx.x, cx.y, b * scale, a * scale, 0, 0, Math.PI * 2);
+        else ctx.ellipse(cx.x, cx.y, a * scale, b * scale, 0, 0, Math.PI * 2);
+    } else if (Math.abs(e - 1) < 0.05) {
+        if (isVert) {
+            for (let x = -15; x <= 15; x += 0.05) {
+                const y = k + (x - h) * (x - h) / (4 * p);
+                const c = toCanvas(x, y);
+                if (x === -15) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+            }
+        } else {
+            for (let y = -15; y <= 15; y += 0.05) {
+                const x = h + (y - k) * (y - k) / (4 * p);
+                const c = toCanvas(x, y);
+                if (y === -15) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+            }
+        }
+    } else {
+        const a = e * p / (e*e - 1);
+        const b = a * Math.sqrt(e*e - 1);
+        if (isVert) {
+            for (let y = a; y <= 20; y += 0.05) {
+                const x = h + b * Math.sqrt(y*y/(a*a) - 1);
+                const c2 = toCanvas(x, k + y);
+                if (y === a) ctx.moveTo(c2.x, c2.y); else ctx.lineTo(c2.x, c2.y);
+            }
+            for (let y = 20; y >= a; y -= 0.05) {
+                const x = h - b * Math.sqrt(y*y/(a*a) - 1);
+                const c2 = toCanvas(x, k + y);
+                ctx.lineTo(c2.x, c2.y);
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let y = a; y <= 20; y += 0.05) {
+                const x = h + b * Math.sqrt(y*y/(a*a) - 1);
+                const c2 = toCanvas(x, k - y);
+                if (y === a) ctx.moveTo(c2.x, c2.y); else ctx.lineTo(c2.x, c2.y);
+            }
+            for (let y = 20; y >= a; y -= 0.05) {
+                const x = h - b * Math.sqrt(y*y/(a*a) - 1);
+                const c2 = toCanvas(x, k - y);
+                ctx.lineTo(c2.x, c2.y);
+            }
+        } else {
+            for (let x = a; x <= 20; x += 0.05) {
+                const y = k + b * Math.sqrt(x*x/(a*a) - 1);
+                const c2 = toCanvas(h + x, y);
+                if (x === a) ctx.moveTo(c2.x, c2.y); else ctx.lineTo(c2.x, c2.y);
+            }
+            for (let x = 20; x >= a; x -= 0.05) {
+                const y = k - b * Math.sqrt(x*x/(a*a) - 1);
+                const c2 = toCanvas(h + x, y);
+                ctx.lineTo(c2.x, c2.y);
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let x = a; x <= 20; x += 0.05) {
+                const y = k + b * Math.sqrt(x*x/(a*a) - 1);
+                const c2 = toCanvas(h - x, y);
+                if (x === a) ctx.moveTo(c2.x, c2.y); else ctx.lineTo(c2.x, c2.y);
+            }
+            for (let x = 20; x >= a; x -= 0.05) {
+                const y = k - b * Math.sqrt(x*x/(a*a) - 1);
+                const c2 = toCanvas(h - x, y);
+                ctx.lineTo(c2.x, c2.y);
+            }
+        }
+    }
+    ctx.stroke();
+
+    if (document.getElementById('show-foci').checked) {
+        if (isVert) drawPoint(h, k + p, '#ef4444', 'F');
+        else drawPoint(h + p, k, '#ef4444', 'F');
+    }
+    if (document.getElementById('show-directrix').checked) {
+        const d = p / e;
+        if (isVert) drawHorizontalLine(k - d, '#10b981', 'd');
+        else drawVerticalLine(h - d, '#10b981', 'd');
+    }
+    drawPoint(h, k, '#6366f1', 'C');
+}
+
+function drawPoint(x, y, color, label) {
+    const c = toCanvas(x, y);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    if (label) {
+        ctx.fillStyle = color;
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, c.x + 8, c.y - 8);
+    }
+}
+
+function drawDashedLine(x1, y1, x2, y2, color) {
+    const c1 = toCanvas(x1, y1);
+    const c2 = toCanvas(x2, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(c1.x, c1.y);
+    ctx.lineTo(c2.x, c2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function drawVerticalLine(x, color, label) {
+    const c1 = toCanvas(x, -20);
+    const c2 = toCanvas(x, 20);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(c1.x, c1.y);
+    ctx.lineTo(c2.x, c2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (label) {
+        ctx.fillStyle = color;
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, c1.x + 4, c1.y + 14);
+    }
+}
+
+function drawHorizontalLine(y, color, label) {
+    const c1 = toCanvas(-20, y);
+    const c2 = toCanvas(20, y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(c1.x, c1.y);
+    ctx.lineTo(c2.x, c2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (label) {
+        ctx.fillStyle = color;
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(label, c2.x - 6, c2.y - 6);
+    }
+}
+
+function zoomCanvas(factor) {
+    scale *= factor;
+    scale = Math.max(10, Math.min(200, scale));
+    draw();
+}
+
+function resetView() {
+    scale = 40;
+    offsetX = canvas.width / 2;
+    offsetY = canvas.height / 2;
+    draw();
+}
+
+function onMouseDown(e) {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+}
+
+function onMouseMove(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    offsetX += dx;
+    offsetY += dy;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    draw();
+}
+
+function onMouseUp() { isDragging = false; }
+
+function onWheel(e) {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    zoomCanvas(factor);
+}
+
+function onTouchStart(e) {
+    if (e.touches.length === 1) {
+        isDragging = true;
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+    }
+}
+
+function onTouchMove(e) {
+    e.preventDefault();
+    if (isDragging && e.touches.length === 1) {
+        const dx = e.touches[0].clientX - lastMouseX;
+        const dy = e.touches[0].clientY - lastMouseY;
+        offsetX += dx;
+        offsetY += dy;
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+        draw();
+    }
+}
+
+function updateMath() {
+    const p = params[currentMode];
+    let standard = '', general = '';
+
+    switch(currentMode) {
+        case 'circle':
+            standard = `\\((x - ${fmt(p.h)})^2 + (y - ${fmt(p.k)})^2 = ${fmt(p.r)}^2\\)`;
+            general = `\\(x^2 + y^2 ${sgn(-2*p.h)}x ${sgn(-2*p.k)}y ${sgn(p.h*p.h + p.k*p.k - p.r*p.r)} = 0\\)`;
+            break;
+        case 'ellipse':
+            if (p.orientation === 'horizontal') {
+                standard = `\\(\\frac{(x - ${fmt(p.h)})^2}{${fmt(p.a)}^2} + \\(frac{(y - ${fmt(p.k)})^2}{${fmt(p.b)}^2} = 1\\)`;
+            } else {
+                standard = `\\(\\frac{(x - ${fmt(p.h)})^2}{${fmt(p.b)}^2} + \\(frac{(y - ${fmt(p.k)})^2}{${fmt(p.a)}^2} = 1\\)`;
+            }
+            general = '\\(Ax^2 + By^2 + Cx + Dy + E = 0\\)\quad\text{where } A, B > 0';
+            break;
+        case 'parabola':
+            if (p.orientation === 'vertical') {
+                standard = `\\((x - ${fmt(p.h)})^2 = 4(${fmt(p.p)})(y - ${fmt(p.k)})\\)`;
+            } else {
+                standard = `\\((y - ${fmt(p.k)})^2 = 4(${fmt(p.p)})(x - ${fmt(p.h)})\\)`;
+            }
+            general = '\\(Ax^2 + Bx + Cy + D = 0\\)\quad\text{or}\quad\text{\(Ay^2 + By + Cx + D = 0\)}';
+            break;
+        case 'hyperbola':
+            if (p.orientation === 'horizontal') {
+                standard = `\\(\\frac{(x - ${fmt(p.h)})^2}{${fmt(p.a)}^2} - \\(frac{(y - ${fmt(p.k)})^2}{${fmt(p.b)}^2} = 1\\)`;
+            } else {
+                standard = `\\(\\frac{(y - ${fmt(p.k)})^2}{${fmt(p.a)}^2} - \\(frac{(x - ${fmt(p.h)})^2}{${fmt(p.b)}^2} = 1\\)`;
+            }
+            general = '\\(Ax^2 - By^2 + Cx + Dy + E = 0\\)\quad\text{where } A, B > 0';
+            break;
+        case 'focus-directrix':
+            standard = `\\(e = ${fmt(p.e)},\\ p = ${fmt(p.p)}\\)`;
+            general = '\\(PF = e \cdot Pd\\)\quad\text{(Focus-Directrix Property)}';
+            break;
+    }
+
+    renderMath('math-standard', '**Standard Form:** ' + standard);
+    renderMath('math-general', '**General Form:** ' + general);
+}
+
+function fmt(n) {
+    return Number(n).toFixed(1).replace(/\.0$/, '');
+}
+
+function sgn(n) {
+    if (Math.abs(n) < 0.001) return '';
+    return (n > 0 ? ' + ' : ' - ') + fmt(Math.abs(n));
+}
+
+function renderMath(id, text) {
+    const el = document.getElementById(id);
+    if (window.katex) {
+        katex.render(text, el, { throwOnError: false, displayMode: false });
+    } else {
+        el.innerHTML = text;
+    }
+}
+
+function updateProperties() {
+    const container = document.getElementById('properties-container');
+    const p = params[currentMode];
+    let props = [];
+
+    switch(currentMode) {
+        case 'circle':
+            props = [
+                ['Center', `(${fmt(p.h)}, ${fmt(p.k)})`],
+                ['Radius', fmt(p.r)],
+                ['Area', fmt(Math.PI * p.r * p.r)],
+                ['Circumference', fmt(2 * Math.PI * p.r)],
+                ['Eccentricity', '0 (by definition)']
+            ];
+            break;
+        case 'ellipse': {
+            const c = Math.sqrt(Math.abs(p.a*p.a - p.b*p.b));
+            const e = c / Math.max(p.a, p.b);
+            const area = Math.PI * p.a * p.b;
+            props = [
+                ['Center', `(${fmt(p.h)}, ${fmt(p.k)})`],
+                ['Semi-major axis', fmt(Math.max(p.a, p.b))],
+                ['Semi-minor axis', fmt(Math.min(p.a, p.b))],
+                ['Focal distance c', fmt(c)],
+                ['Eccentricity e', fmt(e)],
+                ['Area', fmt(area)]
+            ];
+            break;
+        }
+        case 'parabola':
+            props = [
+                ['Vertex', `(${fmt(p.h)}, ${fmt(p.k)})`],
+                ['Focal parameter p', fmt(p.p)],
+                ['Focus', p.orientation === 'vertical' ? `(${fmt(p.h)}, ${fmt(p.k + p.p)})` : `(${fmt(p.h + p.p)}, ${fmt(p.k)})`],
+                ['Directrix', p.orientation === 'vertical' ? `y = ${fmt(p.k - p.p)}` : `x = ${fmt(p.h - p.p)}`],
+                ['Eccentricity', '1 (by definition)'],
+                ['Latus Rectum', fmt(4 * p.p)]
+            ];
+            break;
+        case 'hyperbola': {
+            const c = Math.sqrt(p.a*p.a + p.b*p.b);
+            const e = c / p.a;
+            props = [
+                ['Center', `(${fmt(p.h)}, ${fmt(p.k)})`],
+                ['Semi-transverse a', fmt(p.a)],
+                ['Semi-conjugate b', fmt(p.b)],
+                ['Focal distance c', fmt(c)],
+                ['Eccentricity e', fmt(e)],
+                ['Asymptote slope', `±${fmt(p.b/p.a)}`]
+            ];
+            break;
+        }
+        case 'focus-directrix': {
+            let type = p.e < 1 ? 'Ellipse' : (Math.abs(p.e - 1) < 0.05 ? 'Parabola' : 'Hyperbola');
+            props = [
+                ['Conic Type', type],
+                ['Eccentricity e', fmt(p.e)],
+                ['Focal parameter p', fmt(p.p)],
+                ['Center', `(${fmt(p.h)}, ${fmt(p.k)})`]
+            ];
+            break;
+        }
+    }
+
+    container.innerHTML = props.map(([label, value]) => `
+        <div class="prop-card rounded-lg px-3 py-2 flex justify-between items-center">
+            <span class="text-xs font-medium text-slate-500">${label}</span>
+            <span class="text-sm font-mono font-semibold text-slate-700">${value}</span>
+        </div>
+    `).join('');
+}
+
+function updateInsight() {
+    const p = params[currentMode];
+    let text = '';
+
+    switch(currentMode) {
+        case 'circle':
+            text = `A circle is the set of all points equidistant from a center. When the radius grows, the area increases quadratically (A = πr²). The circle is a special case of an ellipse where both foci coincide at the center.`;
+            break;
+        case 'ellipse': {
+            const c = Math.sqrt(Math.abs(p.a*p.a - p.b*p.b));
+            const e = c / Math.max(p.a, p.b);
+            if (e < 0.1) text = 'This ellipse is nearly circular! As eccentricity e approaches 0, the ellipse becomes a perfect circle (both foci merge at the center).';
+            else if (e > 0.8) text = 'This ellipse is highly elongated. As eccentricity e approaches 1, the ellipse stretches into a parabola-like shape.';
+            else text = `The sum of distances from any point on the ellipse to the two foci is constant and equals 2a = ${fmt(2*Math.max(p.a,p.b))}. This is the defining property of an ellipse.`;
+            break;
+        }
+        case 'parabola':
+            text = `A parabola is the set of all points equidistant from a focus and a directrix. The parameter p = ${fmt(p.p)} determines how "wide" the parabola opens. Larger p means a wider, flatter curve. Parabolas model projectile motion and satellite dishes.`;
+            break;
+        case 'hyperbola': {
+            const e = Math.sqrt(p.a*p.a + p.b*p.b) / p.a;
+            text = `A hyperbola consists of two disconnected branches. The difference of distances from any point to the two foci is constant (2a = ${fmt(2*p.a)}). The asymptotes (y = ±${fmt(p.b/p.a)}x) guide the shape. Eccentricity e = ${fmt(e)} — greater than 1, unlike ellipses.`;
+            break;
+        }
+        case 'focus-directrix': {
+            let type = p.e < 1 ? 'ellipse' : (Math.abs(p.e - 1) < 0.05 ? 'parabola' : 'hyperbola');
+            text = `The unified definition: a conic is the locus of points where the ratio of distance to focus and distance to directrix equals e. Here e = ${fmt(p.e)}, giving a ${type}. When e < 1: ellipse. e = 1: parabola. e > 1: hyperbola.`;
+            break;
+        }
+    }
+
+    document.getElementById('insight-text').textContent = text;
+}
+
+function nextQuizQuestion() {
+    quizState.answered = false;
+    document.getElementById('quiz-feedback').classList.add('hidden');
+    document.getElementById('quiz-next').classList.add('hidden');
+
+    const types = ['circle', 'ellipse', 'parabola', 'hyperbola'];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    let question, options, correct, explanation;
+
+    if (type === 'circle') {
+        const h = Math.floor(Math.random() * 10) - 5;
+        const k = Math.floor(Math.random() * 10) - 5;
+        const r = Math.floor(Math.random() * 6) + 2;
+        const qType = Math.random() > 0.5 ? 'center' : 'radius';
+
+        if (qType === 'center') {
+            question = `For the circle $(x ${h>=0?'-':'+'} ${Math.abs(h)})^2 + (y ${k>=0?'-':'+'} ${Math.abs(k)})^2 = ${r}^2$, what is the center?`;
+            correct = `(${h}, ${k})`;
+            options = [correct, `(${-h}, ${k})`, `(${h}, ${-k})`, `(${r}, 0)`];
+            explanation = `The standard form is $(x-h)^2 + (y-k)^2 = r^2$, so the center is (${h}, ${k}).`;
+        } else {
+            question = `For the circle $(x ${h>=0?'-':'+'} ${Math.abs(h)})^2 + (y ${k>=0?'-':'+'} ${Math.abs(k)})^2 = ${r}^2$, what is the radius?`;
+            correct = `${r}`;
+            options = [correct, `${r*r}`, `${2*r}`, `${Math.PI*r*r}`];
+            explanation = `The right side of the equation is $r^2 = ${r*r}$, so $r = ${r}$.`;
+        }
+    } else if (type === 'ellipse') {
+        const a = Math.floor(Math.random() * 5) + 3;
+        const b = Math.floor(Math.random() * (a-1)) + 1;
+        const h = Math.floor(Math.random() * 6) - 3;
+        const k = Math.floor(Math.random() * 6) - 3;
+        const orient = Math.random() > 0.5 ? 'horizontal' : 'vertical';
+        const qType = Math.random() > 0.5 ? 'eccentricity' : 'foci';
+
+        if (orient === 'horizontal') {
+            question = `For the ellipse $\\frac{(x - ${h})^2}{${a}^2} + \\(frac{(y - ${k})^2}{${b}^2} = 1$`;
+        } else {
+            question = `For the ellipse $\\frac{(x - ${h})^2}{${b}^2} + \\(frac{(y - ${k})^2}{${a}^2} = 1$`;
+        }
+
+        const c = Math.sqrt(Math.abs(a*a - b*b));
+        const e = c / a;
+
+        if (qType === 'eccentricity') {
+            question += `, what is the eccentricity?`;
+            correct = e.toFixed(2);
+            options = [correct, (e*2).toFixed(2), (e/2).toFixed(2), (1/e).toFixed(2)];
+            explanation = `Eccentricity $e = c/a$ where $c = \\sqrt{a^2 - b^2} = ${c.toFixed(2)}$, so $e = ${c.toFixed(2)}/${a} = ${e.toFixed(2)}$.`;
+        } else {
+            question += `, where are the foci?`;
+            if (orient === 'horizontal') {
+                correct = `(${h + c.toFixed(1)}, ${k}) and (${h - c.toFixed(1)}, ${k})`;
+                options = [correct, `(${h}, ${k + c.toFixed(1)}) and (${h}, ${k - c.toFixed(1)})`, `(${h + a}, ${k}) and (${h - a}, ${k})`, `(${h}, ${k})`];
+            } else {
+                correct = `(${h}, ${k + c.toFixed(1)}) and (${h}, ${k - c.toFixed(1)})`;
+                options = [correct, `(${h + c.toFixed(1)}, ${k}) and (${h - c.toFixed(1)}, ${k})`, `(${h}, ${k + a}) and (${h}, ${k - a})`, `(${h}, ${k})`];
+            }
+            explanation = `For an ellipse, $c = \\sqrt{a^2 - b^2} = ${c.toFixed(2)}$. Foci are located $c$ units from the center along the major axis.`;
+        }
+    } else if (type === 'parabola') {
+        const h = Math.floor(Math.random() * 6) - 3;
+        const k = Math.floor(Math.random() * 6) - 3;
+        const p = Math.floor(Math.random() * 4) + 1;
+        const orient = Math.random() > 0.5 ? 'vertical' : 'horizontal';
+        const qType = Math.random() > 0.5 ? 'focus' : 'directrix';
+
+        if (orient === 'vertical') {
+            question = `For the parabola $(x - ${h})^2 = 4(${p})(y - ${k})$`;
+        } else {
+            question = `For the parabola $(y - ${k})^2 = 4(${p})(x - ${h})$`;
+        }
+
+        if (qType === 'focus') {
+            question += `, where is the focus?`;
+            if (orient === 'vertical') {
+                correct = `(${h}, ${k + p})`;
+                options = [correct, `(${h}, ${k - p})`, `(${h + p}, ${k})`, `(${h}, ${k})`];
+            } else {
+                correct = `(${h + p}, ${k})`;
+                options = [correct, `(${h - p}, ${k})`, `(${h}, ${k + p})`, `(${h}, ${k})`];
+            }
+            explanation = `For a parabola, the focus is $p$ units from the vertex in the direction the parabola opens.`;
+        } else {
+            question += `, what is the directrix?`;
+            if (orient === 'vertical') {
+                correct = `y = ${k - p}`;
+                options = [correct, `y = ${k + p}`, `x = ${h - p}`, `x = ${h}`];
+            } else {
+                correct = `x = ${h - p}`;
+                options = [correct, `x = ${h + p}`, `y = ${k - p}`, `y = ${k}`];
+            }
+            explanation = `The directrix is $p$ units from the vertex, on the opposite side from the focus.`;
+        }
+    } else {
+        const a = Math.floor(Math.random() * 4) + 2;
+        const b = Math.floor(Math.random() * 4) + 1;
+        const h = Math.floor(Math.random() * 4) - 2;
+        const k = Math.floor(Math.random() * 4) - 2;
+        const orient = Math.random() > 0.5 ? 'horizontal' : 'vertical';
+        const qType = Math.random() > 0.5 ? 'asymptotes' : 'eccentricity';
+
+        if (orient === 'horizontal') {
+            question = `For the hyperbola $\\frac{(x - ${h})^2}{${a}^2} - \\(frac{(y - ${k})^2}{${b}^2} = 1$`;
+        } else {
+            question = `For the hyperbola $\\frac{(y - ${k})^2}{${a}^2} - \\(frac{(x - ${h})^2}{${b}^2} = 1$`;
+        }
+
+        const c = Math.sqrt(a*a + b*b);
+        const e = c / a;
+
+        if (qType === 'asymptotes') {
+            question += `, what are the asymptotes?`;
+            const m = (b/a).toFixed(2);
+            if (orient === 'horizontal') {
+                correct = `y - ${k} = ±${m}(x - ${h})`;
+                options = [correct, `y - ${k} = ±${(a/b).toFixed(2)}(x - ${h})`, `y = ${m}x`, `y = ±${m}x`];
+            } else {
+                correct = `y - ${k} = ±${(a/b).toFixed(2)}(x - ${h})`;
+                options = [correct, `y - ${k} = ±${m}(x - ${h})`, `y = ${(a/b).toFixed(2)}x`, `y = ±${(a/b).toFixed(2)}x`];
+            }
+            explanation = `Asymptotes have slope $±b/a$ for horizontal hyperbolas and $±a/b$ for vertical hyperbolas.`;
+        } else {
+            question += `, what is the eccentricity?`;
+            correct = e.toFixed(2);
+            options = [correct, (1/e).toFixed(2), (e*2).toFixed(2), (e/2).toFixed(2)];
+            explanation = `For hyperbolas, $e = c/a$ where $c = \\sqrt{a^2 + b^2} = ${c.toFixed(2)}$, so $e = ${c.toFixed(2)}/${a} = ${e.toFixed(2)}$.`;
+        }
+    }
+
+    quizState.currentQuestion = { correct, explanation };
+    options = shuffleArray(options);
+
+    const qEl = document.getElementById('quiz-question');
+    if (window.katex) {
+        katex.render(question, qEl, { throwOnError: false, displayMode: true });
+    } else {
+        qEl.textContent = question;
+    }
+
+    const optsEl = document.getElementById('quiz-options');
+    optsEl.innerHTML = options.map((opt, i) => `
+        <button onclick="answerQuiz(${i}, '${opt.replace(/'/g, "\'")}')" 
+            class="quiz-option w-full text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200 text-sm font-medium text-slate-700">
+            ${String.fromCharCode(65 + i)}. <span id="opt-${i}"></span>
+        </button>
+    `).join('');
+
+    options.forEach((opt, i) => {
+        const el = document.getElementById('opt-' + i);
+        if (window.katex) {
+            katex.render(opt, el, { throwOnError: false, displayMode: false });
+        } else {
+            el.textContent = opt;
+        }
+    });
+}
+
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function answerQuiz(idx, selected) {
+    if (quizState.answered) return;
+    quizState.answered = true;
+
+    const { correct, explanation } = quizState.currentQuestion;
+    const isCorrect = selected === correct;
+
+    const buttons = document.querySelectorAll('.quiz-option');
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        const optText = btn.querySelector('span').textContent;
+        if (optText === correct) {
+            btn.classList.add('correct');
+            btn.style.borderColor = '#22c55e';
+        } else if (i === idx && !isCorrect) {
+            btn.classList.add('wrong');
+            btn.style.borderColor = '#ef4444';
+        }
+    });
+
+    if (isCorrect) {
+        quizState.score += 10 + quizState.streak * 2;
+        quizState.streak++;
+    } else {
+        quizState.streak = 0;
+    }
+
+    document.getElementById('quiz-score').textContent = quizState.score;
+    document.getElementById('quiz-streak').textContent = quizState.streak;
+
+    const fb = document.getElementById('quiz-feedback');
+    fb.classList.remove('hidden');
+    fb.className = `mt-4 p-4 rounded-xl ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`;
+
+    const fbText = isCorrect 
+        ? `<div class="flex items-center gap-2 text-green-700 font-semibold mb-1"><i data-lucide="check-circle" class="w-5 h-5"></i> Correct!</div>`
+        : `<div class="flex items-center gap-2 text-red-700 font-semibold mb-1"><i data-lucide="x-circle" class="w-5 h-5"></i> Incorrect</div>`;
+
+    fb.innerHTML = fbText + `<div class="text-sm text-slate-600 mt-1" id="fb-explain"></div>`;
+
+    const explainEl = document.getElementById('fb-explain');
+    if (window.katex) {
+        katex.render(explanation, explainEl, { throwOnError: false, displayMode: false });
+    } else {
+        explainEl.textContent = explanation;
+    }
+
+    document.getElementById('quiz-next').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

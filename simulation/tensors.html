@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 1 — Curvilinear Coordinates & Tensor Algebra</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #16181f;
+      --surface: #1e212b;
+      --surface-hover: #252836;
+      --border: #2a2e3b;
+      --text: #e8eaf0;
+      --text-sec: #9aa0b0;
+      --text-dim: #5a6070;
+      --accent: #5b8def;
+      --accent-2: #ef5b5b;
+      --accent-3: #5bef8d;
+      --accent-4: #b85bef;
+      --chart-1: #5b8def;
+      --chart-2: #ef5b5b;
+      --chart-3: #5bef8d;
+      --chart-4: #b85bef;
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --surface: #f0f1f5;
+        --surface-hover: #e8e9ef;
+        --border: #d8dae2;
+        --text: #1a1c23;
+        --text-sec: #4a4f5e;
+        --text-dim: #8a90a0;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }
+    header span { font-size: 12px; color: var(--text-dim); }
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 12px 18px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s ease;
+      font-family: var(--font);
+    }
+    .tab:hover { color: var(--text-sec); background: var(--surface-hover); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface); }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    .sidebar {
+      width: 400px;
+      min-width: 320px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      flex-shrink: 0;
+    }
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .page { display: none; animation: fade .25s ease; }
+    .page.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+    .sec-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+    .sec-body { font-size: 13.5px; line-height: 1.7; color: var(--text-sec); margin-bottom: 14px; }
+    .formula {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 12px 0;
+      font-size: 14px;
+      overflow-x: auto;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 0 4px 4px 0;
+      letter-spacing: 0.3px;
+    }
+    .b1 { background: rgba(91,141,239,0.12); color: var(--chart-1); }
+    .b2 { background: rgba(239,91,91,0.12); color: var(--chart-2); }
+    .b3 { background: rgba(91,239,141,0.12); color: var(--chart-3); }
+    .b4 { background: rgba(184,91,239,0.12); color: var(--chart-4); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .card .lab { font-size: 10px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; letter-spacing: 0.5px; }
+    .card .val { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+    table.tbl { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+    table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+    table.tbl th { background: var(--surface); font-weight: 600; color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .viz-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--bg);
+    }
+    #three-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #three-container canvas { display: block; width: 100%; height: 100%; }
+    .overlay-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      font-size: 11px;
+      color: var(--text-dim);
+      pointer-events: none;
+      background: rgba(15,17,21,0.6);
+      padding: 4px 10px;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 18px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .ctrl-group { display: flex; align-items: center; gap: 8px; }
+    .ctrl-group label { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+    .ctrl-group select {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+    }
+    .ctrl-group input[type="range"] {
+      width: 100px;
+      accent-color: var(--accent);
+    }
+    .ctrl-group button {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s;
+      font-weight: 500;
+    }
+    .ctrl-group button:hover { background: var(--surface-hover); }
+    .ctrl-group button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .ctrl-group button.primary:hover { opacity: 0.9; }
+    @media (max-width: 900px) {
+      .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); max-height: 45vh; }
+      .main { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Chapter 1 — Curvilinear Coordinates & Tensor Algebra</h1>
+  <span>Interactive 3D Courseware</span>
+</header>
+
+<nav class="tabs" id="tabBar">
+  <button class="tab active" data-target="coords">Curvilinear Coordinates</button>
+  <button class="tab" data-target="unitvec">Unit Vectors</button>
+  <button class="tab" data-target="arcvol">Arc Length & Volume</button>
+  <button class="tab" data-target="contracova">Contra / Covariant</button>
+  <button class="tab" data-target="transform">Coordinate Transform</button>
+  <button class="tab" data-target="tensors">Tensors</button>
+  <button class="tab" data-target="kronecker">Kronecker Delta</button>
+</nav>
+
+<div class="main">
+  <aside class="sidebar" id="sidebar">
+
+    <!-- 1. Curvilinear Coordinates -->
+    <div class="page active" id="coords">
+      <div class="sec-title">Curvilinear Coordinates</div>
+      <div class="sec-body">
+        A coordinate system for Euclidean space where coordinate lines may be curved. The position vector $\mathbf{r}$ is expressed as a function of generalized coordinates $(q^1, q^2, q^3)$.
+      </div>
+      <div class="formula">
+        $$ \mathbf{r} = x(q^1,q^2,q^3)\,\mathbf{e}_x + y(q^1,q^2,q^3)\,\mathbf{e}_y + z(q^1,q^2,q^3)\,\mathbf{e}_z $$
+      </div>
+      <div class="sec-body">
+        Surfaces $q^i = \text{const}$ are <strong>coordinate surfaces</strong>. Their pairwise intersections form <strong>coordinate curves</strong>. The tangent vectors to these curves define the natural basis.
+      </div>
+      <div class="formula">
+        $$ \mathbf{b}_i = \frac{\partial \mathbf{r}}{\partial q^i} \quad\text{(natural / covariant basis)} $$
+      </div>
+      <div class="sec-body">
+        Common systems: <span class="badge b1">Cartesian</span> <span class="badge b2">Polar</span> <span class="badge b3">Cylindrical</span> <span class="badge b4">Spherical</span>
+      </div>
+    </div>
+
+    <!-- 2. Unit Vectors -->
+    <div class="page" id="unitvec">
+      <div class="sec-title">Unit Vectors & Lamé Coefficients</div>
+      <div class="sec-body">
+        Natural basis vectors are tangent to coordinate curves but generally not unit length. The <strong>scale factors</strong> (Lamé coefficients) $h_i$ normalize them.
+      </div>
+      <div class="formula">
+        $$ h_i = \|\mathbf{b}_i\| = \left\|\frac{\partial \mathbf{r}}{\partial q^i}\right\|, \qquad \hat{\mathbf{e}}_i = \frac{\mathbf{b}_i}{h_i} $$
+      </div>
+      <div class="sec-body">
+        <strong>Polar:</strong> $h_r = 1,\; h_\theta = r$.<br>
+        <strong>Spherical:</strong> $h_r = 1,\; h_\theta = r,\; h_\phi = r\sin\theta$.
+      </div>
+      <div class="formula">
+        $$ \hat{\mathbf{e}}_i \cdot \hat{\mathbf{e}}_j = \delta_{ij} \quad\text{(orthogonal systems)} $$
+      </div>
+      <div class="sec-body">
+        In the 3D view, the colored arrows show the local orthonormal basis at the current point. Drag the point or change coordinates to see them rotate.
+      </div>
+    </div>
+
+    <!-- 3. Arc Length & Volume -->
+    <div class="page" id="arcvol">
+      <div class="sec-title">Arc Length, Volume & Metric</div>
+      <div class="sec-body">
+        The <strong>metric tensor</strong> $g_{ij}$ encodes distances and angles. For orthogonal systems it is diagonal with entries $h_i^2$.
+      </div>
+      <div class="formula">
+        $$ ds^2 = g_{ij}\,dq^i\,dq^j, \qquad dV = h_1 h_2 h_3\,dq^1 dq^2 dq^3 = \sqrt{g}\,dq^1 dq^2 dq^3 $$
+      </div>
+      <div class="sec-body">
+        The 3D view visualizes an infinitesimal volume element (blue wireframe box) whose edges scale with the local $h_i$.
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="lab">Polar area element</div>
+          <div class="val">$dA = r\,dr\,d\theta$</div>
+        </div>
+        <div class="card">
+          <div class="lab">Spherical volume</div>
+          <div class="val">$dV = r^2\sin\phi\,dr\,d\theta\,d\phi$</div>
+        </div>
+      </div>
+      <div class="formula">
+        $$ g_{ij} = \mathbf{b}_i \cdot \mathbf{b}_j = \frac{\partial \mathbf{r}}{\partial q^i}\cdot\frac{\partial \mathbf{r}}{\partial q^j} $$
+      </div>
+    </div>
+
+    <!-- 4. Contra / Covariant -->
+    <div class="page" id="contracova">
+      <div class="sec-title">Contravariant & Covariant Vectors</div>
+      <div class="sec-body">
+        A vector $\mathbf{V}$ is geometrically invariant, but its <em>components</em> depend on the chosen basis. Contravariant components pair with covariant basis vectors and vice versa.
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="lab">Contravariant</div>
+          <div class="val">$\mathbf{V} = V^i \mathbf{b}_i$</div>
+        </div>
+        <div class="card">
+          <div class="lab">Covariant</div>
+          <div class="val">$\mathbf{V} = V_i \mathbf{b}^i$</div>
+        </div>
+      </div>
+      <div class="formula">
+        $$ V^i = \mathbf{V}\cdot\mathbf{b}^i, \qquad V_i = \mathbf{V}\cdot\mathbf{b}_i $$
+      </div>
+      <div class="sec-body">
+        <strong>Key insight:</strong> The gradient $\partial\phi/\partial x^i$ is naturally <em>covariant</em>. An infinitesimal displacement $dx^i$ is naturally <em>contravariant</em>.
+      </div>
+      <div class="formula">
+        $$ \mathbf{b}^i \cdot \mathbf{b}_j = \delta^i_j \quad\text{(reciprocal bases)} $$
+      </div>
+    </div>
+
+    <!-- 5. Coordinate Transform -->
+    <div class="page" id="transform">
+      <div class="sec-title">Coordinate Transformation</div>
+      <div class="sec-body">
+        Changing from $x^i$ to $x^{i'}$ uses the Jacobian matrix and its inverse. The determinant gives the local volume scaling factor.
+      </div>
+      <div class="formula">
+        $$ J^i_{\;j} = \frac{\partial x^{i'}}{\partial x^j}, \qquad V^{i'} = \frac{\partial x^{i'}}{\partial x^k} V^k $$
+      </div>
+      <div class="sec-body">
+        The visualization shows Cartesian and polar planes side-by-side. The Jacobian for polar coordinates is displayed in the 3D view.
+      </div>
+      <div class="formula">
+        $$ x = r\cos\theta,\quad y = r\sin\theta $$
+        $$ r = \sqrt{x^2+y^2},\quad \theta = \arctan\frac{y}{x} $$
+      </div>
+      <div class="formula">
+        $$ J = \begin{bmatrix} \cos\theta & \sin\theta \\ -\frac{\sin\theta}{r} & \frac{\cos\theta}{r} \end{bmatrix} $$
+      </div>
+    </div>
+
+    <!-- 6. Tensors -->
+    <div class="page" id="tensors">
+      <div class="sec-title">Contravariant, Covariant & Mixed Tensors</div>
+      <div class="sec-body">
+        A tensor of type $(p,q)$ has $p$ contravariant and $q$ covariant indices. Each index transforms with the appropriate Jacobian factor.
+      </div>
+      <table class="tbl">
+        <tr><th>Type</th><th>Notation</th><th>Example</th></tr>
+        <tr><td>$(0,0)$</td><td>Scalar</td><td>$\phi$, $T$</td></tr>
+        <tr><td>$(1,0)$</td><td>Contravariant vector</td><td>$dx^i$</td></tr>
+        <tr><td>$(0,1)$</td><td>Covariant vector</td><td>$\partial_i\phi$</td></tr>
+        <tr><td>$(1,1)$</td><td>Mixed tensor</td><td>$\delta^i_j$</td></tr>
+        <tr><td>$(0,2)$</td><td>Covariant 2-tensor</td><td>$g_{ij}$</td></tr>
+        <tr><td>$(2,0)$</td><td>Contravariant 2-tensor</td><td>$g^{ij}$</td></tr>
+      </table>
+      <div class="formula">
+        $$ T'^{i'_1\ldots i'_p}_{\;\;j'_1\ldots j'_q} = \frac{\partial x^{i'_1}}{\partial x^{k_1}}\cdots\frac{\partial x^{l_1}}{\partial x^{j'_1}}\cdots T^{k_1\ldots k_p}_{\;\;l_1\ldots l_q} $$
+      </div>
+      <div class="sec-body">
+        The metric tensor raises and lowers indices: $V^i = g^{ij}V_j$ and $V_i = g_{ij}V^j$.
+      </div>
+    </div>
+
+    <!-- 7. Kronecker Delta -->
+    <div class="page" id="kronecker">
+      <div class="sec-title">The Kronecker Delta</div>
+      <div class="sec-body">
+        $\delta^i_j$ is the <strong>identity tensor</strong>. It is invariant under all coordinate changes and serves as the index-replacement operator.
+      </div>
+      <div class="formula">
+        $$ \delta^i_j = \begin{cases} 1 & i=j \\ 0 & i\neq j \end{cases} $$
+      </div>
+      <div class="formula">
+        $$ \delta^i_i = n \quad\text{(dimension)} $$
+        $$ \delta^i_j V^j = V^i \quad\text{(index replacement)} $$
+        $$ \delta^i_j = \frac{\partial x^i}{\partial x^j} \quad\text{(chain rule identity)} $$
+      </div>
+      <div class="sec-body">
+        The 3D view shows the $3\times3$ identity matrix. Unlike other tensors whose components mix under transformation, $\delta^i_j$ remains the identity in <em>every</em> basis.
+      </div>
+    </div>
+
+  </aside>
+
+  <div class="viz-wrap">
+    <div id="three-container"></div>
+    <div class="overlay-hint" id="hintText">Left click to rotate • Right click to pan • Scroll to zoom</div>
+    <div class="controls">
+      <div class="ctrl-group">
+        <label>System</label>
+        <select id="sysSel">
+          <option value="cart">Cartesian</option>
+          <option value="polar" selected>Polar</option>
+          <option value="cyl">Cylindrical</option>
+          <option value="sph">Spherical</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label>r</label>
+        <input type="range" id="parR" min="0.5" max="5" step="0.1" value="3">
+      </div>
+      <div class="ctrl-group">
+        <label>θ</label>
+        <input type="range" id="parTheta" min="0" max="6.283" step="0.05" value="0.8">
+      </div>
+      <div class="ctrl-group" id="grpPhi">
+        <label>φ</label>
+        <input type="range" id="parPhi" min="0.1" max="3.1" step="0.05" value="0.8">
+      </div>
+      <div class="ctrl-group">
+        <button id="btnAnim" class="primary">Animate</button>
+        <button id="btnReset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // --- Three.js Setup ---
+  const container = document.getElementById('three-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0f1115);
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    scene.background = new THREE.Color(0xf7f8fa);
+  }
+
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(8, 6, 8);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirLight.position.set(5, 10, 7);
+  scene.add(dirLight);
+
+  // Colors
+  const C_AXIS = 0x5a6070;
+  const C_GRID = 0x2a2e3b;
+  const C_POINT = 0x5b8def;
+  const C_E1 = 0x5b8def;
+  const C_E2 = 0xef5b5b;
+  const C_E3 = 0x5bef8d;
+  const C_VOL = 0x5b8def;
+
+  // Groups
+  const gCoords = new THREE.Group();
+  const gUnit = new THREE.Group();
+  const gArcVol = new THREE.Group();
+  const gContra = new THREE.Group();
+  const gTransform = new THREE.Group();
+  const gTensor = new THREE.Group();
+  const gKronecker = new THREE.Group();
+  scene.add(gCoords, gUnit, gArcVol, gContra, gTransform, gTensor, gKronecker);
+
+  // Helper: make arrow
+  function makeArrow(dir, color, origin, len) {
+    const arrow = new THREE.ArrowHelper(dir.clone().normalize(), origin, len, color, 0.3, 0.2);
+    return arrow;
+  }
+
+  // Helper: text sprite
+  function makeText(text, color) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 128; canvas.height = 64;
+    ctx.font = 'bold 32px sans-serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, 64, 44);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(1.5, 0.75, 1);
+    return sprite;
+  }
+
+  // --- Build Scenes ---
+
+  // 1. Coordinates & 2. Unit Vectors (shared geometry)
+  function buildCoords() {
+    gCoords.clear();
+    // Axes
+    [-1,1].forEach(s => {
+      const gx = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-5*s,0,0), new THREE.Vector3(5*s,0,0)]);
+      gCoords.add(new THREE.Line(gx, new THREE.LineBasicMaterial({ color: C_AXIS })));
+      const gy = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-5*s,0), new THREE.Vector3(0,5*s,0)]);
+      gCoords.add(new THREE.Line(gy, new THREE.LineBasicMaterial({ color: C_AXIS })));
+      const gz = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,-5*s), new THREE.Vector3(0,0,5*s)]);
+      gCoords.add(new THREE.Line(gz, new THREE.LineBasicMaterial({ color: C_AXIS })));
+    });
+    // Axis labels
+    const lx = makeText('x', '#9aa0b0'); lx.position.set(5.3,0,0); gCoords.add(lx);
+    const ly = makeText('y', '#9aa0b0'); ly.position.set(0,5.3,0); gCoords.add(ly);
+    const lz = makeText('z', '#9aa0b0'); lz.position.set(0,0,5.3); gCoords.add(lz);
+  }
+  buildCoords();
+
+  // 3. Arc & Volume
+  function buildArcVol() {
+    gArcVol.clear();
+    // Axes only
+    [-1,1].forEach(s => {
+      gArcVol.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-5*s,0,0), new THREE.Vector3(5*s,0,0)]), new THREE.LineBasicMaterial({ color: C_AXIS })));
+      gArcVol.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-5*s,0), new THREE.Vector3(0,5*s,0)]), new THREE.LineBasicMaterial({ color: C_AXIS })));
+      gArcVol.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,-5*s), new THREE.Vector3(0,0,5*s)]), new THREE.LineBasicMaterial({ color: C_AXIS })));
+    });
+  }
+
+  // 4. Contra/Covariant
+  function buildContra() {
+    gContra.clear();
+    // Two planes: cartesian left, polar right
+  }
+
+  // 5. Transform
+  function buildTransform() {
+    gTransform.clear();
+  }
+
+  // 6. Tensor
+  function buildTensor() {
+    gTensor.clear();
+    // 3x3 grid of cubes representing T^i_j
+    const geo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+    const mat = new THREE.MeshStandardMaterial({ color: 0x5b8def, transparent: true, opacity: 0.25 });
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x5b8def });
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(j - 1, 1 - i, 0);
+        gTensor.add(mesh);
+        const edges = new THREE.EdgesGeometry(geo);
+        gTensor.add(new THREE.LineSegments(edges, edgeMat));
+      }
+    }
+    // Vector arrow
+    gTensor.add(makeArrow(new THREE.Vector3(3, 2, 1).normalize(), C_E3, new THREE.Vector3(0,0,0), 4));
+  }
+
+  // 7. Kronecker
+  function buildKronecker() {
+    gKronecker.clear();
+    const geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        const isDiag = (i === j);
+        const mat = new THREE.MeshStandardMaterial({
+          color: isDiag ? 0x5b8def : 0x2a2e3b,
+          transparent: true,
+          opacity: isDiag ? 0.6 : 0.2
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(j - 1, 1 - i, 0);
+        gKronecker.add(mesh);
+        const edges = new THREE.EdgesGeometry(geo);
+        gKronecker.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: isDiag ? 0x5b8def : 0x5a6070 })));
+      }
+    }
+  }
+  buildKronecker();
+
+  // --- Update Functions ---
+
+  function clearDynamic(group) {
+    // Remove all children except static axes
+    const toRemove = [];
+    group.traverse(c => {
+      if (c.userData.dynamic) toRemove.push(c);
+    });
+    toRemove.forEach(c => {
+      c.parent.remove(c);
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) c.material.dispose();
+    });
+  }
+
+  function updateCoords() {
+    clearDynamic(gCoords);
+    const sys = document.getElementById('sysSel').value;
+    const r = parseFloat(document.getElementById('parR').value);
+    const th = parseFloat(document.getElementById('parTheta').value);
+    const ph = parseFloat(document.getElementById('parPhi').value);
+    const p = new THREE.Vector3();
+
+    if (sys === 'cart') {
+      p.set(2, 2, 0);
+      // Grid
+      for (let i = -4; i <= 4; i++) {
+        const ly = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i, -4, 0), new THREE.Vector3(i, 4, 0)]), new THREE.LineBasicMaterial({ color: C_GRID }));
+        ly.userData.dynamic = true; gCoords.add(ly);
+        const lx = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-4, i, 0), new THREE.Vector3(4, i, 0)]), new THREE.LineBasicMaterial({ color: C_GRID }));
+        lx.userData.dynamic = true; gCoords.add(lx);
+      }
+    } else if (sys === 'polar') {
+      p.set(r * Math.cos(th), r * Math.sin(th), 0);
+      for (let rad = 1; rad <= 5; rad++) {
+        const pts = [];
+        for (let a = 0; a <= Math.PI * 2; a += 0.15) pts.push(new THREE.Vector3(rad * Math.cos(a), rad * Math.sin(a), 0));
+        const circ = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: C_GRID }));
+        circ.userData.dynamic = true; gCoords.add(circ);
+      }
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(5 * Math.cos(a), 5 * Math.sin(a), 0)]), new THREE.LineBasicMaterial({ color: C_GRID }));
+        line.userData.dynamic = true; gCoords.add(line);
+      }
+    } else if (sys === 'cyl') {
+      p.set(r * Math.cos(th), r * Math.sin(th), 0);
+      for (let rad = 1; rad <= 5; rad++) {
+        for (let z of [-2, 2]) {
+          const pts = [];
+          for (let a = 0; a <= Math.PI * 2; a += 0.15) pts.push(new THREE.Vector3(rad * Math.cos(a), rad * Math.sin(a), z));
+          const circ = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: C_GRID }));
+          circ.userData.dynamic = true; gCoords.add(circ);
+        }
+      }
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(5 * Math.cos(a), 5 * Math.sin(a), -2), new THREE.Vector3(5 * Math.cos(a), 5 * Math.sin(a), 2)]), new THREE.LineBasicMaterial({ color: C_GRID }));
+        line.userData.dynamic = true; gCoords.add(line);
+      }
+    } else if (sys === 'sph') {
+      p.set(r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph));
+      for (let rad = 1; rad <= 5; rad++) {
+        const pts = [];
+        for (let a = 0; a <= Math.PI * 2; a += 0.15) pts.push(new THREE.Vector3(rad * Math.cos(a), rad * Math.sin(a), 0));
+        const circ = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: C_GRID }));
+        circ.userData.dynamic = true; gCoords.add(circ);
+      }
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+        const pts = [];
+        for (let t = 0; t <= Math.PI; t += 0.15) pts.push(new THREE.Vector3(5 * Math.sin(t) * Math.cos(a), 5 * Math.sin(t) * Math.sin(a), 5 * Math.cos(t)));
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: C_GRID }));
+        line.userData.dynamic = true; gCoords.add(line);
+      }
+      for (let t = 0.3; t < Math.PI; t += 0.3) {
+        const pts = [];
+        for (let a = 0; a <= Math.PI * 2; a += 0.15) pts.push(new THREE.Vector3(5 * Math.sin(t) * Math.cos(a), 5 * Math.sin(t) * Math.sin(a), 5 * Math.cos(t)));
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: C_GRID }));
+        line.userData.dynamic = true; gCoords.add(line);
+      }
+    }
+
+    // Point sphere
+    const sphGeo = new THREE.SphereGeometry(0.15, 16, 16);
+    const sphMat = new THREE.MeshStandardMaterial({ color: C_POINT });
+    const pointMesh = new THREE.Mesh(sphGeo, sphMat);
+    pointMesh.position.copy(p);
+    pointMesh.userData.dynamic = true;
+    gCoords.add(pointMesh);
+
+    // Basis vectors
+    let e1, e2, e3;
+    if (sys === 'cart') {
+      e1 = new THREE.Vector3(1, 0, 0); e2 = new THREE.Vector3(0, 1, 0); e3 = new THREE.Vector3(0, 0, 1);
+    } else if (sys === 'polar') {
+      e1 = new THREE.Vector3(Math.cos(th), Math.sin(th), 0);
+      e2 = new THREE.Vector3(-Math.sin(th), Math.cos(th), 0);
+      e3 = new THREE.Vector3(0, 0, 1);
+    } else if (sys === 'cyl') {
+      e1 = new THREE.Vector3(Math.cos(th), Math.sin(th), 0);
+      e2 = new THREE.Vector3(-Math.sin(th), Math.cos(th), 0);
+      e3 = new THREE.Vector3(0, 0, 1);
+    } else if (sys === 'sph') {
+      e1 = new THREE.Vector3(Math.sin(ph) * Math.cos(th), Math.sin(ph) * Math.sin(th), Math.cos(ph));
+      e2 = new THREE.Vector3(-Math.sin(th), Math.cos(th), 0);
+      e3 = new THREE.Vector3(Math.cos(ph) * Math.cos(th), Math.cos(ph) * Math.sin(th), -Math.sin(ph));
+    }
+
+    [ [e1, C_E1, 'ê₁'], [e2, C_E2, 'ê₂'], [e3, C_E3, 'ê₃'] ].forEach(([dir, col, lab]) => {
+      const arr = makeArrow(dir, col, p, 1.5);
+      arr.userData.dynamic = true;
+      gCoords.add(arr);
+      const lbl = makeText(lab, '#' + col.toString(16).padStart(6, '0'));
+      lbl.position.copy(p).add(dir.clone().multiplyScalar(1.8));
+      lbl.userData.dynamic = true;
+      gCoords.add(lbl);
+    });
+  }
+
+  function updateArcVol() {
+    clearDynamic(gArcVol);
+    const sys = document.getElementById('sysSel').value;
+    const r = parseFloat(document.getElementById('parR').value);
+    const th = parseFloat(document.getElementById('parTheta').value);
+    const ph = parseFloat(document.getElementById('parPhi').value);
+    const dr = 0.8, dth = 0.25, dph = 0.25;
+
+    let corners = [];
+    if (sys === 'sph') {
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) for (let k = 0; k < 2; k++) {
+        const rr = r + i * dr, tt = th + j * dth, pp = ph + k * dph;
+        corners.push(new THREE.Vector3(rr * Math.sin(pp) * Math.cos(tt), rr * Math.sin(pp) * Math.sin(tt), rr * Math.cos(pp)));
+      }
+    } else if (sys === 'cyl') {
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) for (let k = 0; k < 2; k++) {
+        const rr = r + i * dr, tt = th + j * dth, zz = k * 1.2;
+        corners.push(new THREE.Vector3(rr * Math.cos(tt), rr * Math.sin(tt), zz));
+      }
+    } else {
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) corners.push(new THREE.Vector3(2 + i * 1.5, 1 + j * 1.5, 0));
+    }
+
+    const edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+    edges.forEach(e => {
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([corners[e[0]], corners[e[1]]]), new THREE.LineBasicMaterial({ color: C_VOL, linewidth: 2 }));
+      line.userData.dynamic = true; gArcVol.add(line);
+    });
+
+    // Fill one face
+    if (corners.length >= 4) {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0); shape.lineTo(1, 0); shape.lineTo(1, 1); shape.lineTo(0, 1);
+      const geom = new THREE.ShapeGeometry(shape);
+      const mat = new THREE.MeshBasicMaterial({ color: C_VOL, transparent: true, opacity: 0.08, side: THREE.DoubleSide });
+      // Simplified: just show wireframe
+    }
+  }
+
+  // --- Tab Switching ---
+  let currentTab = 'coords';
+  const pages = { coords: gCoords, unitvec: gCoords, arcvol: gArcVol, contracova: gContra, transform: gTransform, tensors: gTensor, kronecker: gKronecker };
+
+  function setTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.target === tab));
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === tab));
+    Object.values(pages).forEach(g => g.visible = false);
+    if (tab === 'coords' || tab === 'unitvec') { gCoords.visible = true; updateCoords(); }
+    else if (tab === 'arcvol') { gArcVol.visible = true; updateArcVol(); }
+    else if (tab === 'contracova') { gContra.visible = true; }
+    else if (tab === 'transform') { gTransform.visible = true; }
+    else if (tab === 'tensors') { gTensor.visible = true; }
+    else if (tab === 'kronecker') { gKronecker.visible = true; }
+  }
+
+  document.getElementById('tabBar').addEventListener('click', e => {
+    if (!e.target.classList.contains('tab')) return;
+    setTab(e.target.dataset.target);
+  });
+
+  // Controls
+  ['sysSel', 'parR', 'parTheta', 'parPhi'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      if (currentTab === 'coords' || currentTab === 'unitvec') updateCoords();
+      if (currentTab === 'arcvol') updateArcVol();
+    });
+  });
+
+  document.getElementById('sysSel').addEventListener('change', e => {
+    const show = e.target.value === 'sph';
+    document.getElementById('grpPhi').style.display = show ? 'flex' : 'none';
+  });
+  document.getElementById('grpPhi').style.display = 'none';
+
+  let animating = false;
+  document.getElementById('btnAnim').addEventListener('click', () => {
+    animating = !animating;
+    document.getElementById('btnAnim').textContent = animating ? 'Stop' : 'Animate';
+  });
+
+  document.getElementById('btnReset').addEventListener('click', () => {
+    camera.position.set(8, 6, 8);
+    controls.reset();
+    document.getElementById('parR').value = 3;
+    document.getElementById('parTheta').value = 0.8;
+    document.getElementById('parPhi').value = 0.8;
+    if (currentTab === 'coords' || currentTab === 'unitvec') updateCoords();
+    if (currentTab === 'arcvol') updateArcVol();
+  });
+
+  // Render loop
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (animating && (currentTab === 'coords' || currentTab === 'unitvec')) {
+      const th = parseFloat(document.getElementById('parTheta').value) + 0.008;
+      document.getElementById('parTheta').value = th % 6.283;
+      updateCoords();
+    }
+    renderer.render(scene, camera);
+  }
+
+  // Resize
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth, h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+
+  // Init
+  setTab('coords');
+  animate();
+})();
+</script>
+</body>
+</html>

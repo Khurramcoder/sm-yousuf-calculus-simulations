@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classical Special Curves — 3D Visualizer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{--bg:#0b0c15;--panel:rgba(20,22,35,0.72);--panel-border:rgba(255,255,255,0.08);--text:#e8eaf0;--muted:#8b92a8;--accent:#60a5fa;--accent2:#a78bfa;--danger:#f87171;--success:#34d399;--radius:14px;--shadow:0 8px 32px rgba(0,0,0,0.45);}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden}
+#app{display:grid;grid-template-columns:280px 1fr 320px;grid-template-rows:1fr;width:100%;height:100%}
+@media(max-width:1100px){#app{grid-template-columns:240px 1fr 280px}}
+@media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}#sidebar{max-height:200px}#rightPanel{max-height:220px}}
+.glass{background:var(--panel);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--panel-border);box-shadow:var(--shadow)}
+#sidebar{display:flex;flex-direction:column;padding:18px;gap:12px;overflow:hidden}
+#sidebar h1{font-size:1.15rem;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.3px}
+#searchBox{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);color:var(--text);font-size:0.9rem;outline:none}
+#searchBox::placeholder{color:var(--muted)}
+#searchBox:focus{border-color:var(--accent)}
+#curveList{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+#curveList::-webkit-scrollbar{width:5px}
+#curveList::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:4px}
+.category{font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:8px;margin-bottom:2px;padding-left:4px}
+.curveItem{padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.18s ease;font-size:0.88rem;border:1px solid transparent;display:flex;align-items:center;justify-content:space-between}
+.curveItem:hover{background:rgba(255,255,255,0.05)}
+.curveItem.active{background:rgba(96,165,250,0.12);border-color:rgba(96,165,250,0.35);color:var(--accent)}
+.curveItem .num{font-size:0.7rem;color:var(--muted);font-variant-numeric:tabular-nums}
+#mainArea{position:relative;overflow:hidden;display:flex;flex-direction:column}
+#canvasContainer{flex:1;position:relative}
+canvas{display:block;width:100%;height:100%}
+#infoCard{position:absolute;top:16px;left:16px;max-width:420px;padding:18px 22px;border-radius:var(--radius);pointer-events:auto;transition:opacity 0.3s,transform 0.3s}
+#infoCard h2{font-size:1.25rem;font-weight:700;margin-bottom:6px;color:#fff}
+#infoCard .desc{font-size:0.88rem;color:var(--muted);line-height:1.5;margin-bottom:12px}
+#eqContainer{background:rgba(0,0,0,0.3);border-radius:10px;padding:12px 16px;font-size:0.92rem}
+#eqContainer .eq-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:4px}
+#eqContainer .eq-block{margin-bottom:8px}
+#eqContainer .eq-block:last-child{margin-bottom:0}
+#rightPanel{display:flex;flex-direction:column;padding:18px;gap:14px;overflow-y:auto}
+#rightPanel::-webkit-scrollbar{width:5px}
+#rightPanel::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:4px}
+.panelSection h3{font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.controlRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
+.controlRow label{font-size:0.85rem;color:var(--text);min-width:80px}
+.controlRow input[type="range"]{flex:1;accent-color:var(--accent)}
+.controlRow .val{font-size:0.8rem;color:var(--accent);min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
+.btnRow{display:flex;gap:8px;flex-wrap:wrap}
+button{padding:8px 14px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,0.06);color:var(--text);font-size:0.85rem;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
+button:hover{background:rgba(255,255,255,0.12)}
+button.primary{background:rgba(96,165,250,0.2);border-color:rgba(96,165,250,0.4);color:var(--accent)}
+button.primary:hover{background:rgba(96,165,250,0.3)}
+button.danger{background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.35);color:var(--danger)}
+button.danger:hover{background:rgba(248,113,113,0.25)}
+.toggleRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.toggleRow label{font-size:0.85rem}
+.switch{position:relative;width:40px;height:22px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,0.15);border-radius:22px;transition:0.2s}
+.slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s}
+input:checked+.slider{background:var(--accent)}
+input:checked+.slider:before{transform:translateX(18px)}
+input[type="color"]{width:36px;height:28px;border:none;border-radius:6px;background:none;cursor:pointer}
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;transition:opacity 0.5s}
+.spinner{width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--accent);animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div></div>
+<div id="app">
+<aside id="sidebar" class="glass">
+<h1>Special Curves</h1>
+<input type="text" id="searchBox" placeholder="Search curves…">
+<div id="curveList"></div>
+</aside>
+<main id="mainArea">
+<div id="canvasContainer"></div>
+<div id="infoCard" class="glass">
+<h2 id="curveName">Select a curve</h2>
+<p class="desc" id="curveDesc">Choose a curve from the sidebar to explore its geometry, history, and parametric equations.</p>
+<div id="eqContainer"></div>
+</div>
+</main>
+<aside id="rightPanel" class="glass">
+<div class="panelSection">
+<h3>Animation</h3>
+<div class="btnRow">
+<button id="btnPlay" class="primary">▶ Play</button>
+<button id="btnPause">⏸ Pause</button>
+<button id="btnReset">↺ Reset</button>
+<button id="btnClear" class="danger">✕ Clear</button>
+</div>
+<div class="controlRow">
+<label>Speed</label>
+<input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
+<span class="val" id="speedVal">1.0×</span>
+</div>
+</div>
+<div class="panelSection">
+<h3>Parameters</h3>
+<div id="paramControls"></div>
+</div>
+<div class="panelSection">
+<h3>Visuals</h3>
+<div class="controlRow">
+<label>Trace Color</label>
+<input type="color" id="traceColor" value="#60a5fa">
+</div>
+<div class="controlRow">
+<label>Thickness</label>
+<input type="range" id="thicknessSlider" min="1" max="10" step="0.5" value="2.5">
+<span class="val" id="thicknessVal">2.5</span>
+</div>
+<div class="toggleRow">
+<label>3D Extrusion (Z modulation)</label>
+<label class="switch">
+<input type="checkbox" id="extrudeToggle">
+<span class="slider"></span>
+</label>
+</div>
+<div class="toggleRow">
+<label>Show Grid</label>
+<label class="switch">
+<input type="checkbox" id="gridToggle" checked>
+<span class="slider"></span>
+</label>
+</div>
+<div class="toggleRow">
+<label>Show Axes</label>
+<label class="switch">
+<input type="checkbox" id="axesToggle" checked>
+<span class="slider"></span>
+</label>
+</div>
+<div class="toggleRow">
+<label>Show Rolling Circles</label>
+<label class="switch">
+<input type="checkbox" id="rollingToggle" checked>
+<span class="slider"></span>
+</label>
+</div>
+<div class="controlRow">
+<label>Z Scale</label>
+<input type="range" id="zScaleSlider" min="0" max="5" step="0.1" value="1">
+<span class="val" id="zScaleVal">1.0</span>
+</div>
+</div>
+</aside>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===================== CURVE LIBRARY =====================
+const CURVES = [
+  {
+    id: 'lemniscate',
+    name: "Lemniscate of Bernoulli",
+    category: 'Algebraic',
+    history: 'Studied by Jacob Bernoulli in 1694 as a modification of an ellipse. Named from the Latin lemniscus, meaning "ribbon".',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.5, max: 5, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [-Math.PI, Math.PI],
+    equations: {
+      param: 'x = \\frac{a\\sqrt{2}\\cos t}{1+\\sin^2 t}, \\; y = \\frac{a\\sqrt{2}\\sin t\\cos t}{1+\\sin^2 t}',
+      implicit: '(x^2+y^2)^2 = 2a^2(x^2-y^2)',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, s = Math.sin(t), c = Math.cos(t);
+      const den = 1 + s * s;
+      const x = a * Math.sqrt(2) * c / den;
+      const y = a * Math.sqrt(2) * s * c / den;
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'cycloid',
+    name: 'Cycloid',
+    category: 'Rolling',
+    history: 'The path of a point on a rolling circle. Galileo named it and attempted to find its area. It has the brachistochrone property.',
+    params: [
+      { key: 'r', label: 'Radius r', min: 0.5, max: 4, step: 0.1, val: 1.5 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 4 * Math.PI],
+    equations: {
+      param: 'x = r(t - \\sin t), \\; y = r(1 - \\cos t)',
+      cartesian: 'x = r\\arccos(1-y/r) - \\sqrt{y(2r-y)}',
+    },
+    rolling: true,
+    generate(t, p) {
+      const r = p.r;
+      const x = r * (t - Math.sin(t));
+      const y = r * (1 - Math.cos(t));
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    },
+    rollingObjects(t, p) {
+      const r = p.r;
+      const cx = r * t, cy = r;
+      return [
+        { type: 'circle', center: new THREE.Vector3(cx, cy, 0), radius: r, color: 0xff5555 },
+        { type: 'point', pos: new THREE.Vector3(r*(t-Math.sin(t)), r*(1-Math.cos(t)), 0), color: 0x60a5fa }
+      ];
+    }
+  },
+  {
+    id: 'astroid',
+    name: 'Astroid',
+    category: 'Rolling',
+    history: 'A hypocycloid with four cusps, first studied by Roemer in 1674. Its name comes from the Greek astron, meaning "star".',
+    params: [
+      { key: 'a', label: 'Scale a', min: 1, max: 5, step: 0.1, val: 3 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      param: 'x = a\\cos^3 t, \\; y = a\\sin^3 t',
+      implicit: 'x^{2/3} + y^{2/3} = a^{2/3}',
+    },
+    rolling: true,
+    generate(t, p) {
+      const a = p.a, c = Math.cos(t), s = Math.sin(t);
+      const x = a * c * c * c;
+      const y = a * s * s * s;
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    },
+    rollingObjects(t, p) {
+      const a = p.a, R = a, r = a / 4;
+      const cx = (R - r) * Math.cos(t), cy = (R - r) * Math.sin(t);
+      return [
+        { type: 'circle', center: new THREE.Vector3(cx, cy, 0), radius: r, color: 0xff5555 },
+        { type: 'circle', center: new THREE.Vector3(0, 0, 0), radius: R, color: 0x44ff88, wireframe: true }
+      ];
+    }
+  },
+  {
+    id: 'cardioid',
+    name: 'Cardioid',
+    category: 'Rolling',
+    history: 'First studied by Ole Roemer in 1674 while investigating gear teeth. A special epicycloid with equal rolling and fixed circle radii.',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.5, max: 4, step: 0.1, val: 1.5 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      param: 'x = a(2\\cos t - \\cos 2t), \\; y = a(2\\sin t - \\sin 2t)',
+      polar: 'r = 2a(1 + \\cos\\theta)',
+    },
+    rolling: true,
+    generate(t, p) {
+      const a = p.a;
+      const x = a * (2 * Math.cos(t) - Math.cos(2 * t));
+      const y = a * (2 * Math.sin(t) - Math.sin(2 * t));
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    },
+    rollingObjects(t, p) {
+      const a = p.a, R = a, r = a;
+      const cx = (R + r) * Math.cos(t), cy = (R + r) * Math.sin(t);
+      return [
+        { type: 'circle', center: new THREE.Vector3(cx, cy, 0), radius: r, color: 0xff5555 },
+        { type: 'circle', center: new THREE.Vector3(0, 0, 0), radius: R, color: 0x44ff88, wireframe: true }
+      ];
+    }
+  },
+  {
+    id: 'catenary',
+    name: 'Catenary',
+    category: 'Transcendental',
+    history: 'The shape of a hanging chain. Galileo thought it was a parabola; Jungius disproved this in 1669. The term was coined by Huygens.',
+    params: [
+      { key: 'a', label: 'Parameter a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [-4, 4],
+    equations: {
+      cartesian: 'y = a\\cosh(x/a)',
+      param: 'x = t, \\; y = a\\cosh(t/a)',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const x = t;
+      const y = a * Math.cosh(t / a);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'rose3',
+    name: 'Three-Leaved Rose',
+    category: 'Polar',
+    history: 'A polar curve studied by Guido Grandi in 1723. The petals arise from the periodicity of cosine.',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.5, max: 5, step: 0.1, val: 3 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, Math.PI],
+    equations: {
+      polar: 'r = a\\cos(3\\theta)',
+      param: 'x = a\\cos(3t)\\cos t, \\; y = a\\cos(3t)\\sin t',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const r = a * Math.cos(3 * t);
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'rose4',
+    name: 'Four-Leaved Rose',
+    category: 'Polar',
+    history: 'Another rose curve by Guido Grandi. With an even coefficient, the number of petals doubles.',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.5, max: 5, step: 0.1, val: 3 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      polar: 'r = a\\cos(2\\theta)',
+      param: 'x = a\\cos(2t)\\cos t, \\; y = a\\cos(2t)\\sin t',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const r = a * Math.cos(2 * t);
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'epicycloid',
+    name: 'Epicycloid',
+    category: 'Rolling',
+    history: 'The path of a point on a circle rolling around the outside of a fixed circle. Special cases include the cardioid and nephroid.',
+    params: [
+      { key: 'R', label: 'Fixed R', min: 1, max: 5, step: 0.1, val: 3 },
+      { key: 'r', label: 'Rolling r', min: 0.5, max: 3, step: 0.1, val: 1 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      param: 'x = (R+r)\\cos t - r\\cos(\\frac{R+r}{r}t), \\; y = (R+r)\\sin t - r\\sin(\\frac{R+r}{r}t)',
+    },
+    rolling: true,
+    generate(t, p) {
+      const R = p.R, r = p.r;
+      const x = (R + r) * Math.cos(t) - r * Math.cos((R + r) / r * t);
+      const y = (R + r) * Math.sin(t) - r * Math.sin((R + r) / r * t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    },
+    rollingObjects(t, p) {
+      const R = p.R, r = p.r;
+      const cx = (R + r) * Math.cos(t), cy = (R + r) * Math.sin(t);
+      return [
+        { type: 'circle', center: new THREE.Vector3(cx, cy, 0), radius: r, color: 0xff5555 },
+        { type: 'circle', center: new THREE.Vector3(0, 0, 0), radius: R, color: 0x44ff88, wireframe: true }
+      ];
+    }
+  },
+  {
+    id: 'hypocycloid',
+    name: 'General Hypocycloid',
+    category: 'Rolling',
+    history: 'A point on a circle rolling inside a fixed circle. The astroid (R=4r) and deltoid (R=3r) are famous special cases.',
+    params: [
+      { key: 'R', label: 'Fixed R', min: 1, max: 5, step: 0.1, val: 3 },
+      { key: 'r', label: 'Rolling r', min: 0.5, max: 2.5, step: 0.1, val: 0.75 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      param: 'x = (R-r)\\cos t + r\\cos(\\frac{R-r}{r}t), \\; y = (R-r)\\sin t - r\\sin(\\frac{R-r}{r}t)',
+    },
+    rolling: true,
+    generate(t, p) {
+      const R = p.R, r = p.r;
+      const x = (R - r) * Math.cos(t) + r * Math.cos((R - r) / r * t);
+      const y = (R - r) * Math.sin(t) - r * Math.sin((R - r) / r * t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    },
+    rollingObjects(t, p) {
+      const R = p.R, r = p.r;
+      const cx = (R - r) * Math.cos(t), cy = (R - r) * Math.sin(t);
+      return [
+        { type: 'circle', center: new THREE.Vector3(cx, cy, 0), radius: r, color: 0xff5555 },
+        { type: 'circle', center: new THREE.Vector3(0, 0, 0), radius: R, color: 0x44ff88, wireframe: true }
+      ];
+    }
+  },
+  {
+    id: 'trochoid',
+    name: 'Trochoid',
+    category: 'Rolling',
+    history: 'Generalizes the cycloid: a point at distance d from the center of a rolling circle. When d < r it is curtate; d > r prolate.',
+    params: [
+      { key: 'r', label: 'Radius r', min: 0.5, max: 3, step: 0.1, val: 1.5 },
+      { key: 'd', label: 'Distance d', min: 0.1, max: 4, step: 0.1, val: 1.0 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 4 * Math.PI],
+    equations: {
+      param: 'x = rt - d\\sin t, \\; y = r - d\\cos t',
+    },
+    rolling: true,
+    generate(t, p) {
+      const r = p.r, d = p.d;
+      const x = r * t - d * Math.sin(t);
+      const y = r - d * Math.cos(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    },
+    rollingObjects(t, p) {
+      const r = p.r;
+      const cx = r * t, cy = r;
+      return [
+        { type: 'circle', center: new THREE.Vector3(cx, cy, 0), radius: r, color: 0xff5555 },
+        { type: 'point', pos: new THREE.Vector3(r * t - p.d * Math.sin(t), r - p.d * Math.cos(t), 0), color: 0x60a5fa }
+      ];
+    }
+  },
+  {
+    id: 'tractrix',
+    name: 'Tractrix',
+    category: 'Transcendental',
+    history: 'The curve of pursuit: a dog pulling a leash of length a walks along the x-axis while the owner moves along the y-axis.',
+    params: [
+      { key: 'a', label: 'Length a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0.05, Math.PI - 0.05],
+    equations: {
+      param: 'x = a(\\ln\\tan(t/2) + \\cos t), \\; y = a\\sin t',
+      cartesian: 'x = a\\ln(\\frac{a + \\sqrt{a^2 - y^2}}{y}) - \\sqrt{a^2 - y^2}',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const x = a * (Math.log(Math.tan(t / 2)) + Math.cos(t));
+      const y = a * Math.sin(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'witch',
+    name: 'Witch of Agnesi',
+    category: 'Algebraic',
+    history: 'Studied by Maria Gaetana Agnesi in 1748. The name "witch" is a mistranslation of the Italian versiera (sheet / turning).',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [-1.4, 1.4],
+    equations: {
+      param: 'x = 2a\\tan t, \\; y = 2a\\cos^2 t',
+      cartesian: 'y = \\frac{8a^3}{x^2 + 4a^2}',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const x = 2 * a * Math.tan(t);
+      const y = 2 * a * Math.cos(t) * Math.cos(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'folium',
+    name: 'Folium of Descartes',
+    category: 'Algebraic',
+    history: 'Proposed by René Descartes in 1638. He challenged Fermat to find its tangent; the area of the loop was later found to be 3a²/2.',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.3, max: 3, step: 0.1, val: 1.5 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [-10, 10],
+    equations: {
+      param: 'x = \\frac{3at}{1+t^3}, \\; y = \\frac{3at^2}{1+t^3}',
+      implicit: 'x^3 + y^3 = 3axy',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, den = 1 + t * t * t;
+      if (Math.abs(den) < 0.001) return new THREE.Vector3(0, 0, 0);
+      const x = 3 * a * t / den;
+      const y = 3 * a * t * t / den;
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'involute',
+    name: 'Involute of a Circle',
+    category: 'Transcendental',
+    history: 'The path traced by the end of a taut string unwinding from a circle. Critical for gear tooth profiles.',
+    params: [
+      { key: 'a', label: 'Radius a', min: 0.5, max: 4, step: 0.1, val: 1.5 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 4 * Math.PI],
+    equations: {
+      param: 'x = a(\\cos t + t\\sin t), \\; y = a(\\sin t - t\\cos t)',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const x = a * (Math.cos(t) + t * Math.sin(t));
+      const y = a * (Math.sin(t) - t * Math.cos(t));
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'evolute',
+    name: 'Evolute of an Ellipse',
+    category: 'Transcendental',
+    history: 'The locus of centers of curvature of an ellipse. It is an astroid-like curve with four cusps.',
+    params: [
+      { key: 'a', label: 'Semi-major a', min: 1, max: 5, step: 0.1, val: 3 },
+      { key: 'b', label: 'Semi-minor b', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      param: 'x = \\frac{a^2-b^2}{a}\\cos^3 t, \\; y = \\frac{b^2-a^2}{b}\\sin^3 t',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, b = p.b;
+      const x = ((a * a - b * b) / a) * Math.pow(Math.cos(t), 3);
+      const y = ((b * b - a * a) / b) * Math.pow(Math.sin(t), 3);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'cassini',
+    name: 'Ovals of Cassini',
+    category: 'Polar',
+    history: 'Introduced by Giovanni Cassini in 1680 to model planetary motion. Generalizes the lemniscate when the two foci are distinct.',
+    params: [
+      { key: 'a', label: 'Scale a', min: 1, max: 4, step: 0.1, val: 2 },
+      { key: 'c', label: 'Focus c', min: 0.5, max: 4, step: 0.1, val: 1.8 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      polar: 'r^2 = a^2\\cos(2\\theta) \\pm \\sqrt{a^4\\cos^2(2\\theta) - (a^4 - c^4)}',
+      implicit: '((x-a)^2 + y^2)((x+a)^2 + y^2) = c^4',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, c = p.c;
+      const cos2 = Math.cos(2 * t);
+      const a4 = a * a * a * a, c4 = c * c * c * c;
+      const disc = a4 * cos2 * cos2 - (a4 - c4);
+      if (disc < 0) return null;
+      const r2 = a * a * cos2 + Math.sqrt(disc);
+      if (r2 < 0) return null;
+      const r = Math.sqrt(r2);
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'limacon',
+    name: 'Limaçon of Pascal',
+    category: 'Polar',
+    history: 'Named after Étienne Pascal (Blaise Pascal\'s father). Special cases include the cardioid (a=b) and the trisectrix.',
+    params: [
+      { key: 'a', label: 'Radius a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'b', label: 'Offset b', min: 0.1, max: 4, step: 0.1, val: 1.5 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      polar: 'r = b + a\\cos\\theta',
+      param: 'x = (b + a\\cos t)\\cos t, \\; y = (b + a\\cos t)\\sin t',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, b = p.b;
+      const r = b + a * Math.cos(t);
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'cissoid',
+    name: 'Cissoid of Diocles',
+    category: 'Algebraic',
+    history: 'Invented by Diocles around 180 BCE to solve the doubling of the cube problem. The name means "ivy-like".',
+    params: [
+      { key: 'a', label: 'Scale a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [-1.3, 1.3],
+    equations: {
+      param: 'x = 2a\\sin^2 t, \\; y = \\frac{2a\\sin^3 t}{\\cos t}',
+      cartesian: 'y^2 = \\frac{x^3}{2a - x}',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const x = 2 * a * Math.sin(t) * Math.sin(t);
+      const cos = Math.cos(t);
+      if (Math.abs(cos) < 0.001) return null;
+      const y = 2 * a * Math.sin(t) * Math.sin(t) * Math.sin(t) / cos;
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'archimedes',
+    name: 'Spiral of Archimedes',
+    category: 'Spiral',
+    history: 'One of the oldest known spirals, described by Archimedes in his work On Spirals (225 BCE). Used for squaring the circle.',
+    params: [
+      { key: 'a', label: 'Offset a', min: 0, max: 3, step: 0.1, val: 0.5 },
+      { key: 'b', label: 'Growth b', min: 0.1, max: 2, step: 0.05, val: 0.5 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 6 * Math.PI],
+    equations: {
+      polar: 'r = a + b\\theta',
+      param: 'x = (a + bt)\\cos t, \\; y = (a + bt)\\sin t',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, b = p.b;
+      const r = a + b * t;
+      const x = r * Math.cos(t);
+      const y = r * Math.sin(t);
+      const z = p.extrude ? Math.sin(p.n * t) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'helix',
+    name: 'Circular Helix',
+    category: 'Spiral',
+    history: 'The canonical 3D spiral. Its curvature and torsion are constant, making it fundamental in differential geometry.',
+    params: [
+      { key: 'a', label: 'Radius a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'b', label: 'Pitch b', min: 0.1, max: 3, step: 0.1, val: 0.8 },
+      { key: 'n', label: 'Turns', min: 1, max: 10, step: 0.5, val: 4 },
+    ],
+    tRange: [0, 8 * Math.PI],
+    equations: {
+      param: 'x = a\\cos t, \\; y = a\\sin t, \\; z = bt',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a, b = p.b;
+      const x = a * Math.cos(t);
+      const y = a * Math.sin(t);
+      const z = b * t * p.zScale;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+  {
+    id: 'viviani',
+    name: "Viviani's Curve",
+    category: 'Algebraic',
+    history: 'The intersection of a sphere with a cylinder passing through its center. Studied by Vincenzo Viviani in 1692.',
+    params: [
+      { key: 'a', label: 'Radius a', min: 0.5, max: 4, step: 0.1, val: 2 },
+      { key: 'n', label: 'Freq n', min: 0, max: 5, step: 0.1, val: 1 },
+    ],
+    tRange: [0, 2 * Math.PI],
+    equations: {
+      param: 'x = a(1 + \\cos t), \\; y = a\\sin t, \\; z = 2a\\sin(t/2)',
+    },
+    rolling: false,
+    generate(t, p) {
+      const a = p.a;
+      const x = a * (1 + Math.cos(t));
+      const y = a * Math.sin(t);
+      const z = p.extrude ? 2 * a * Math.sin(t / 2) * p.zScale : 0;
+      return new THREE.Vector3(x, y, z);
+    }
+  },
+];
+
+// ===================== STATE =====================
+let currentCurve = CURVES[0];
+let params = {};
+let isPlaying = true;
+let animTime = 0;
+let speed = 1;
+let tracePoints = [];
+let maxTracePoints = 4000;
+let traceColor = new THREE.Color('#60a5fa');
+let traceThickness = 2.5;
+let extrude = false;
+let zScale = 1;
+let showGrid = true;
+let showAxes = true;
+let showRolling = true;
+
+// ===================== THREE.JS SETUP =====================
+const container = document.getElementById('canvasContainer');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0c15);
+scene.fog = new THREE.FogExp2(0x0b0c15, 0.02);
+
+const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+camera.position.set(8, 6, 10);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 0, 0);
+
+// Lights
+const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(5, 10, 7);
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x60a5fa, 0.6, 50);
+pointLight.position.set(0, 5, 5);
+scene.add(pointLight);
+
+// Grid & Axes
+let gridHelper = new THREE.GridHelper(30, 30, 0x334466, 0x1a2233);
+scene.add(gridHelper);
+let axesHelper = new THREE.AxesHelper(4);
+scene.add(axesHelper);
+
+// Trace line
+const traceGeometry = new THREE.BufferGeometry();
+const traceMaterial = new THREE.LineBasicMaterial({ color: traceColor, linewidth: traceThickness });
+let traceLine = new THREE.Line(traceGeometry, traceMaterial);
+scene.add(traceLine);
+
+// Glow particle (head)
+const particleGeo = new THREE.SphereGeometry(0.12, 16, 16);
+const particleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const particle = new THREE.Mesh(particleGeo, particleMat);
+scene.add(particle);
+
+// Glow light around particle
+const glowLight = new THREE.PointLight(traceColor, 1.5, 6);
+particle.add(glowLight);
+
+// Rolling objects group
+const rollingGroup = new THREE.Group();
+scene.add(rollingGroup);
+
+// Tube geometry for thick trace
+let tubeMesh = null;
+
+// ===================== HELPERS =====================
+function initParams(curve) {
+  const p = { extrude: extrude, zScale: zScale };
+  for (const pr of curve.params) {
+    p[pr.key] = pr.val;
+  }
+  return p;
+}
+
+function updateTrace() {
+  const positions = new Float32Array(tracePoints.length * 3);
+  for (let i = 0; i < tracePoints.length; i++) {
+    positions[i * 3] = tracePoints[i].x;
+    positions[i * 3 + 1] = tracePoints[i].y;
+    positions[i * 3 + 2] = tracePoints[i].z;
+  }
+  traceGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  traceGeometry.attributes.position.needsUpdate = true;
+  traceGeometry.computeBoundingSphere();
+
+  if (tubeMesh) {
+    scene.remove(tubeMesh);
+    tubeMesh.geometry.dispose();
+    tubeMesh = null;
+  }
+  if (tracePoints.length > 1 && traceThickness > 1) {
+    const curve3 = new THREE.CatmullRomCurve3(tracePoints);
+    const tubeGeo = new THREE.TubeGeometry(curve3, Math.min(tracePoints.length * 2, 400), traceThickness * 0.015, 8, false);
+    const tubeMat = new THREE.MeshStandardMaterial({
+      color: traceColor,
+      emissive: traceColor,
+      emissiveIntensity: 0.4,
+      transparent: true,
+      opacity: 0.85,
+      roughness: 0.2,
+      metalness: 0.8
+    });
+    tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    scene.add(tubeMesh);
+  }
+}
+
+function buildRollingObjects(t, curve, p) {
+  while (rollingGroup.children.length > 0) {
+    const child = rollingGroup.children[0];
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) child.material.dispose();
+    rollingGroup.remove(child);
+  }
+  if (!curve.rolling || !showRolling) return;
+  const objs = curve.rollingObjects(t, p);
+  if (!objs) return;
+  for (const obj of objs) {
+    if (obj.type === 'circle') {
+      const geo = new THREE.TorusGeometry(obj.radius, 0.04, 8, 64);
+      const mat = new THREE.MeshBasicMaterial({ color: obj.color, wireframe: !!obj.wireframe, transparent: true, opacity: obj.wireframe ? 0.3 : 0.8 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(obj.center);
+      rollingGroup.add(mesh);
+    } else if (obj.type === 'point') {
+      const geo = new THREE.SphereGeometry(0.08, 12, 12);
+      const mat = new THREE.MeshBasicMaterial({ color: obj.color });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(obj.pos);
+      rollingGroup.add(mesh);
+    }
+  }
+}
+
+function getCurvePoint(t, curve, p) {
+  const pt = curve.generate(t, p);
+  return pt || new THREE.Vector3(0, 0, 0);
+}
+
+// ===================== UI BUILDERS =====================
+function renderSidebar() {
+  const list = document.getElementById('curveList');
+  const query = document.getElementById('searchBox').value.toLowerCase();
+  list.innerHTML = '';
+  const cats = {};
+  for (let i = 0; i < CURVES.length; i++) {
+    const c = CURVES[i];
+    if (query && !c.name.toLowerCase().includes(query) && !c.category.toLowerCase().includes(query)) continue;
+    if (!cats[c.category]) {
+      const catDiv = document.createElement('div');
+      catDiv.className = 'category';
+      catDiv.textContent = c.category;
+      list.appendChild(catDiv);
+      cats[c.category] = true;
+    }
+    const item = document.createElement('div');
+    item.className = 'curveItem' + (currentCurve.id === c.id ? ' active' : '');
+    item.innerHTML = '<span>' + c.name + '</span><span class="num">' + (i + 1) + '</span>';
+    item.onclick = () => selectCurve(c);
+    list.appendChild(item);
+  }
+}
+
+function buildParamControls() {
+  const container = document.getElementById('paramControls');
+  container.innerHTML = '';
+  for (const pr of currentCurve.params) {
+    const row = document.createElement('div');
+    row.className = 'controlRow';
+    row.innerHTML = '<label>' + pr.label + '</label>' +
+      '<input type="range" min="' + pr.min + '" max="' + pr.max + '" step="' + pr.step + '" value="' + pr.val + '" data-key="' + pr.key + '">' +
+      '<span class="val" id="val-' + pr.key + '">' + pr.val + '</span>';
+    container.appendChild(row);
+    const input = row.querySelector('input');
+    input.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      params[pr.key] = val;
+      document.getElementById('val-' + pr.key).textContent = val.toFixed(2).replace(/\.00$/, '');
+      resetTrace();
+    });
+  }
+}
+
+function renderEquations() {
+  const eqc = document.getElementById('eqContainer');
+  eqc.innerHTML = '';
+  const eqs = currentCurve.equations;
+  for (const [key, val] of Object.entries(eqs)) {
+    const block = document.createElement('div');
+    block.className = 'eq-block';
+    const label = document.createElement('div');
+    label.className = 'eq-label';
+    label.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+    block.appendChild(label);
+    const math = document.createElement('div');
+    math.className = 'math-render';
+    block.appendChild(math);
+    eqc.appendChild(block);
+    if (window.katex) {
+      try {
+        katex.render(val, math, { throwOnError: false, displayMode: false });
+      } catch (e) { math.textContent = val; }
+    } else {
+      math.textContent = val;
+    }
+  }
+}
+
+function selectCurve(curve) {
+  currentCurve = curve;
+  params = initParams(curve);
+  animTime = curve.tRange[0];
+  tracePoints = [];
+  document.getElementById('curveName').textContent = curve.name;
+  document.getElementById('curveDesc').textContent = curve.history;
+  renderSidebar();
+  buildParamControls();
+  renderEquations();
+  resetTrace();
+}
+
+function resetTrace() {
+  tracePoints = [];
+  animTime = currentCurve.tRange[0];
+  updateTrace();
+}
+
+// ===================== ANIMATION LOOP =====================
+let lastTime = performance.now();
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+
+  if (isPlaying) {
+    const range = currentCurve.tRange[1] - currentCurve.tRange[0];
+    animTime += dt * speed * (range / 8);
+    if (animTime > currentCurve.tRange[1]) {
+      animTime = currentCurve.tRange[0];
+      tracePoints = [];
+    }
+  }
+
+  const pt = getCurvePoint(animTime, currentCurve, params);
+  if (pt) {
+    particle.position.copy(pt);
+    glowLight.color.copy(traceColor);
+    particleMat.color.set(traceColor);
+    particleMat.color.lerp(new THREE.Color(0xffffff), 0.5);
+
+    if (tracePoints.length === 0 || pt.distanceTo(tracePoints[tracePoints.length - 1]) > 0.02) {
+      tracePoints.push(pt.clone());
+      if (tracePoints.length > maxTracePoints) tracePoints.shift();
+      updateTrace();
+    }
+  }
+
+  buildRollingObjects(animTime, currentCurve, params);
+  gridHelper.visible = showGrid;
+  axesHelper.visible = showAxes;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// ===================== EVENT LISTENERS =====================
+document.getElementById('searchBox').addEventListener('input', renderSidebar);
+
+document.getElementById('btnPlay').addEventListener('click', () => { isPlaying = true; });
+document.getElementById('btnPause').addEventListener('click', () => { isPlaying = false; });
+document.getElementById('btnReset').addEventListener('click', () => { resetTrace(); });
+document.getElementById('btnClear').addEventListener('click', () => { tracePoints = []; updateTrace(); });
+
+document.getElementById('speedSlider').addEventListener('input', (e) => {
+  speed = parseFloat(e.target.value);
+  document.getElementById('speedVal').textContent = speed.toFixed(1) + '×';
+});
+
+document.getElementById('traceColor').addEventListener('input', (e) => {
+  traceColor.set(e.target.value);
+  traceMaterial.color.set(traceColor);
+  if (tubeMesh) tubeMesh.material.color.set(traceColor);
+  if (tubeMesh) tubeMesh.material.emissive.set(traceColor);
+});
+
+document.getElementById('thicknessSlider').addEventListener('input', (e) => {
+  traceThickness = parseFloat(e.target.value);
+  document.getElementById('thicknessVal').textContent = traceThickness.toFixed(1);
+  updateTrace();
+});
+
+document.getElementById('extrudeToggle').addEventListener('change', (e) => {
+  extrude = e.target.checked;
+  params.extrude = extrude;
+  resetTrace();
+});
+
+document.getElementById('gridToggle').addEventListener('change', (e) => {
+  showGrid = e.target.checked;
+});
+
+document.getElementById('axesToggle').addEventListener('change', (e) => {
+  showAxes = e.target.checked;
+});
+
+document.getElementById('rollingToggle').addEventListener('change', (e) => {
+  showRolling = e.target.checked;
+});
+
+document.getElementById('zScaleSlider').addEventListener('input', (e) => {
+  zScale = parseFloat(e.target.value);
+  params.zScale = zScale;
+  document.getElementById('zScaleVal').textContent = zScale.toFixed(1);
+  resetTrace();
+});
+
+window.addEventListener('resize', () => {
+  const w = container.clientWidth, h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+
+// ===================== INIT =====================
+params = initParams(currentCurve);
+renderSidebar();
+buildParamControls();
+renderEquations();
+document.getElementById('curveName').textContent = currentCurve.name;
+document.getElementById('curveDesc').textContent = currentCurve.history;
+
+setTimeout(() => {
+  const loading = document.getElementById('loading');
+  loading.style.opacity = '0';
+  setTimeout(() => loading.style.display = 'none', 500);
+}, 600);
+
+animate();
+</script>
+</body>
+</html>
