@@ -1,0 +1,751 @@
+[
+    {
+        "title": "8 12 Quadric Surfaces",
+        "path": "chapters/chapter_8/8-12-quadric-surfaces.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "8-12-quadric-surfaces.html",
+        "thumb": ""
+    },
+    {
+        "title": "Advanced Moving Sofa Problem Solver",
+        "path": "simulation/Advanced Moving Sofa Problem Solver.html",
+        "category": "Simulation",
+        "raw_file": "Advanced Moving Sofa Problem Solver.html",
+        "thumb": ""
+    },
+    {
+        "title": "Bessel Legendre Sim",
+        "path": "simulation/bessel_legendre_sim.html",
+        "category": "Simulation",
+        "raw_file": "bessel_legendre_sim.html",
+        "thumb": ""
+    },
+    {
+        "title": "Bessel'S & Legendre'S Equations",
+        "path": "simulation/Bessel's & Legendre's Equations.html",
+        "category": "Simulation",
+        "raw_file": "Bessel's & Legendre's Equations.html",
+        "thumb": ""
+    },
+    {
+        "title": "Blood Flow",
+        "path": "simulation/blood flow .html",
+        "category": "Simulation",
+        "raw_file": "blood flow .html",
+        "thumb": ""
+    },
+    {
+        "title": "Calculus",
+        "path": "chapters/chapter_5/calculus.html",
+        "category": "Chapters - Chapter 5",
+        "raw_file": "calculus.html",
+        "thumb": ""
+    },
+    {
+        "title": "Cardioid Simulation",
+        "path": "simulation/Cardioid Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Cardioid Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Chapter1",
+        "path": "simulation/chapter1.html",
+        "category": "Simulation",
+        "raw_file": "chapter1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Conic Section Fsc",
+        "path": "chapters/chapter_6/conic_section_fsc.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "conic_section_fsc.html",
+        "thumb": ""
+    },
+    {
+        "title": "Conic Section Fsc",
+        "path": "chapters/chapter_6/conic_section_FSc.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "conic_section_FSc.html",
+        "thumb": ""
+    },
+    {
+        "title": "Continuty Eps Delta",
+        "path": "chapters/chapter_1/continuty_eps_delta.html",
+        "category": "Chapters - Chapter 1",
+        "raw_file": "continuty_eps_delta.html",
+        "thumb": ""
+    },
+    {
+        "title": "Curve",
+        "path": "chapters/chapter_7/curve.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "curve.html",
+        "thumb": ""
+    },
+    {
+        "title": "Curve1.",
+        "path": "chapters/chapter_7/curve1..html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "curve1..html",
+        "thumb": ""
+    },
+    {
+        "title": "Curve2",
+        "path": "chapters/chapter_7/curve2.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "curve2.html",
+        "thumb": ""
+    },
+    {
+        "title": "Curve3",
+        "path": "chapters/chapter_7/curve3.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "curve3.html",
+        "thumb": ""
+    },
+    {
+        "title": "Cycloid Simulation",
+        "path": "simulation/cycloid_simulation.html",
+        "category": "Simulation",
+        "raw_file": "cycloid_simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Differential Geometry Lab V3",
+        "path": "simulation/Differential_Geometry_Lab_V3.html",
+        "category": "Simulation",
+        "raw_file": "Differential_Geometry_Lab_V3.html",
+        "thumb": ""
+    },
+    {
+        "title": "Differential Geometry Lab V4",
+        "path": "simulation/Differential_Geometry_Lab_V4.html",
+        "category": "Simulation",
+        "raw_file": "Differential_Geometry_Lab_V4.html",
+        "thumb": ""
+    },
+    {
+        "title": "Differential Geometry Lab V5",
+        "path": "simulation/Differential_Geometry_Lab_V5.html",
+        "category": "Simulation",
+        "raw_file": "Differential_Geometry_Lab_V5.html",
+        "thumb": ""
+    },
+    {
+        "title": "Domain Range",
+        "path": "chapters/chapter_1/Domain_Range.html",
+        "category": "Chapters - Chapter 1",
+        "raw_file": "Domain_Range.html",
+        "thumb": ""
+    },
+    {
+        "title": "Domain Range",
+        "path": "chapters/chapter_1/Domain-Range.html",
+        "category": "Chapters - Chapter 1",
+        "raw_file": "Domain-Range.html",
+        "thumb": ""
+    },
+    {
+        "title": "Epicycloid Simulator",
+        "path": "simulation/epicycloid_simulator.html",
+        "category": "Simulation",
+        "raw_file": "epicycloid_simulator.html",
+        "thumb": ""
+    },
+    {
+        "title": "Euler",
+        "path": "simulation/Euler.html",
+        "category": "Simulation",
+        "raw_file": "Euler.html",
+        "thumb": ""
+    },
+    {
+        "title": "Evolute Explorer V1",
+        "path": "simulation/Evolute_Explorer_V1.html",
+        "category": "Simulation",
+        "raw_file": "Evolute_Explorer_V1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Evolute Explorer V2",
+        "path": "simulation/Evolute_Explorer_V2.html",
+        "category": "Simulation",
+        "raw_file": "Evolute_Explorer_V2.html",
+        "thumb": ""
+    },
+    {
+        "title": "Fixed Evolute Explorer",
+        "path": "simulation/Fixed_Evolute_Explorer.html",
+        "category": "Simulation",
+        "raw_file": "Fixed_Evolute_Explorer.html",
+        "thumb": ""
+    },
+    {
+        "title": "Four Vectors",
+        "path": "simulation/four-vectors.html",
+        "category": "Simulation",
+        "raw_file": "four-vectors.html",
+        "thumb": ""
+    },
+    {
+        "title": "Fourier Series Simulator",
+        "path": "simulation/fourier_series_simulator.html",
+        "category": "Simulation",
+        "raw_file": "fourier_series_simulator.html",
+        "thumb": ""
+    },
+    {
+        "title": "Fractional Differential Equations Simulation",
+        "path": "simulation/Fractional Differential Equations Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Fractional Differential Equations Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Frenet Serret",
+        "path": "simulation/frenet-serret.html",
+        "category": "Simulation",
+        "raw_file": "frenet-serret.html",
+        "thumb": ""
+    },
+    {
+        "title": "Function",
+        "path": "chapters/chapter_1/function.html",
+        "category": "Chapters - Chapter 1",
+        "raw_file": "function.html",
+        "thumb": ""
+    },
+    {
+        "title": "Game",
+        "path": "simulation/game.html",
+        "category": "Simulation",
+        "raw_file": "game.html",
+        "thumb": ""
+    },
+    {
+        "title": "Game1",
+        "path": "simulation/game1.html",
+        "category": "Simulation",
+        "raw_file": "game1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Gauss Weingarten Monge Patch",
+        "path": "simulation/gauss-weingarten-monge-patch.html",
+        "category": "Simulation",
+        "raw_file": "gauss-weingarten-monge-patch.html",
+        "thumb": ""
+    },
+    {
+        "title": "Gaussian Integral Viz",
+        "path": "simulation/gaussian_integral_viz.html",
+        "category": "Simulation",
+        "raw_file": "gaussian_integral_viz.html",
+        "thumb": ""
+    },
+    {
+        "title": "Greens Theorem 3D",
+        "path": "simulation/greens_theorem_3d.html",
+        "category": "Simulation",
+        "raw_file": "greens_theorem_3d.html",
+        "thumb": ""
+    },
+    {
+        "title": "Gyroscope Top Simulation",
+        "path": "simulation/gyroscope_top_simulation.html",
+        "category": "Simulation",
+        "raw_file": "gyroscope_top_simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Indetermanint",
+        "path": "chapters/chapter_3/indetermanint.html",
+        "category": "Chapters - Chapter 3",
+        "raw_file": "indetermanint.html",
+        "thumb": ""
+    },
+    {
+        "title": "Laplace",
+        "path": "simulation/Laplace.html",
+        "category": "Simulation",
+        "raw_file": "Laplace.html",
+        "thumb": ""
+    },
+    {
+        "title": "Laplace Transform",
+        "path": "laplace_transform.html",
+        "category": "Miscellaneous",
+        "raw_file": "laplace_transform.html",
+        "thumb": ""
+    },
+    {
+        "title": "Laplace Transform",
+        "path": "simulation/laplace_transform.html",
+        "category": "Simulation",
+        "raw_file": "laplace_transform.html",
+        "thumb": ""
+    },
+    {
+        "title": "Laplace Transform Sim",
+        "path": "simulation/laplace_transform_sim.html",
+        "category": "Simulation",
+        "raw_file": "laplace_transform_sim.html",
+        "thumb": ""
+    },
+    {
+        "title": "Laplace Transform Viz",
+        "path": "simulation/laplace_transform_viz.html",
+        "category": "Simulation",
+        "raw_file": "laplace_transform_viz.html",
+        "thumb": ""
+    },
+    {
+        "title": "Legendre Polynomials Interactive Simulation",
+        "path": "simulation/Legendre Polynomials Interactive Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Legendre Polynomials Interactive Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Limit E",
+        "path": "chapters/chapter_1/limit_e.html",
+        "category": "Chapters - Chapter 1",
+        "raw_file": "limit_e.html",
+        "thumb": ""
+    },
+    {
+        "title": "Maclaurin Simulator",
+        "path": "simulation/maclaurin_simulator.html",
+        "category": "Simulation",
+        "raw_file": "maclaurin_simulator.html",
+        "thumb": ""
+    },
+    {
+        "title": "Moving Sofa Problem Solver",
+        "path": "simulation/Moving Sofa Problem Solver.html",
+        "category": "Simulation",
+        "raw_file": "Moving Sofa Problem Solver.html",
+        "thumb": ""
+    },
+    {
+        "title": "Multiphase Flow Dynamics",
+        "path": "simulation/Multiphase Flow Dynamics.html",
+        "category": "Simulation",
+        "raw_file": "Multiphase Flow Dynamics.html",
+        "thumb": ""
+    },
+    {
+        "title": "Multiple Integrals",
+        "path": "chapters/chapter_10/multiple-integrals.html",
+        "category": "Chapters - Chapter 10",
+        "raw_file": "multiple-integrals.html",
+        "thumb": ""
+    },
+    {
+        "title": "Multiple Integrals",
+        "path": "chapters/chapter_10/multiple_integrals.html",
+        "category": "Chapters - Chapter 10",
+        "raw_file": "multiple_integrals.html",
+        "thumb": ""
+    },
+    {
+        "title": "Multiple Integrals Explorer",
+        "path": "chapters/chapter_10/multiple_integrals_explorer.html",
+        "category": "Chapters - Chapter 10",
+        "raw_file": "multiple_integrals_explorer.html",
+        "thumb": ""
+    },
+    {
+        "title": "Non Newtonian Fluid Secondary Flow Simulation",
+        "path": "simulation/Non-Newtonian Fluid Secondary Flow Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Non-Newtonian Fluid Secondary Flow Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Non Newtonian Liquid Flow Near A Stagnation Point",
+        "path": "simulation/Non-Newtonian Liquid Flow Near a Stagnation Point.html",
+        "category": "Simulation",
+        "raw_file": "Non-Newtonian Liquid Flow Near a Stagnation Point.html",
+        "thumb": ""
+    },
+    {
+        "title": "Oldroyd B Fluid Flow Simulation",
+        "path": "simulation/Oldroyd-B Fluid Flow Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Oldroyd-B Fluid Flow Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Oldroyd Fluid Flow Simulation",
+        "path": "simulation/Oldroyd Fluid Flow Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Oldroyd Fluid Flow Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Orthoscope",
+        "path": "simulation/ORTHOSCOPE\n.html",
+        "category": "Simulation",
+        "raw_file": "ORTHOSCOPE\n.html",
+        "thumb": ""
+    },
+    {
+        "title": "Partial Derivatives",
+        "path": "simulation/partial_derivatives.html",
+        "category": "Simulation",
+        "raw_file": "partial_derivatives.html",
+        "thumb": ""
+    },
+    {
+        "title": "Periodic Table 3D",
+        "path": "simulation/periodic-table-3d.html",
+        "category": "Simulation",
+        "raw_file": "periodic-table-3d.html",
+        "thumb": ""
+    },
+    {
+        "title": "Periodic Table 3D (1)",
+        "path": "simulation/periodic-table-3d (1).html",
+        "category": "Simulation",
+        "raw_file": "periodic-table-3d (1).html",
+        "thumb": ""
+    },
+    {
+        "title": "Plane Electromagnetic Wave Simulation",
+        "path": "simulation/Plane Electromagnetic Wave Simulation.html",
+        "category": "Simulation",
+        "raw_file": "Plane Electromagnetic Wave Simulation.html",
+        "thumb": ""
+    },
+    {
+        "title": "Platonic Solids",
+        "path": "simulation/platonic-solids.html",
+        "category": "Simulation",
+        "raw_file": "platonic-solids.html",
+        "thumb": ""
+    },
+    {
+        "title": "Polar",
+        "path": "chapters/chapter_6/Polar.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "Polar.html",
+        "thumb": ""
+    },
+    {
+        "title": "Polar",
+        "path": "chapters/chapter_6/polar.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "polar.html",
+        "thumb": ""
+    },
+    {
+        "title": "Polar Fix",
+        "path": "chapters/chapter_6/polar_fix.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "polar_fix.html",
+        "thumb": ""
+    },
+    {
+        "title": "Polar Plotter",
+        "path": "chapters/chapter_6/polar_plotter.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "polar_plotter.html",
+        "thumb": ""
+    },
+    {
+        "title": "Polar Solver",
+        "path": "chapters/chapter_6/polar_solver.html",
+        "category": "Chapters - Chapter 6",
+        "raw_file": "polar_solver.html",
+        "thumb": ""
+    },
+    {
+        "title": "Professional Envelope Explorer V1",
+        "path": "simulation/Professional_Envelope_Explorer_V1.html",
+        "category": "Simulation",
+        "raw_file": "Professional_Envelope_Explorer_V1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Professional Evolute Explorer V5A",
+        "path": "simulation/Professional_Evolute_Explorer_V5A.html",
+        "category": "Simulation",
+        "raw_file": "Professional_Evolute_Explorer_V5A.html",
+        "thumb": ""
+    },
+    {
+        "title": "Pythagorean Theorem Visual Proof",
+        "path": "simulation/Pythagorean Theorem Visual Proof.html",
+        "category": "Simulation",
+        "raw_file": "Pythagorean Theorem Visual Proof.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qibla",
+        "path": "simulation/qibla.html",
+        "category": "Simulation",
+        "raw_file": "qibla.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qibla Tutor",
+        "path": "simulation/qibla_tutor.html",
+        "category": "Simulation",
+        "raw_file": "qibla_tutor.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qibla1",
+        "path": "simulation/qibla1.html",
+        "category": "Simulation",
+        "raw_file": "qibla1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qibla2",
+        "path": "simulation/qibla2.html",
+        "category": "Simulation",
+        "raw_file": "qibla2.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qiblaglob",
+        "path": "simulation/qiblaglob.html",
+        "category": "Simulation",
+        "raw_file": "qiblaglob.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qiibla1",
+        "path": "simulation/Qiibla1.html",
+        "category": "Simulation",
+        "raw_file": "Qiibla1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qiibla1 (1)",
+        "path": "simulation/Qiibla1 (1).html",
+        "category": "Simulation",
+        "raw_file": "Qiibla1 (1).html",
+        "thumb": ""
+    },
+    {
+        "title": "Qiibla1 Updated",
+        "path": "simulation/Qiibla1_Updated.html",
+        "category": "Simulation",
+        "raw_file": "Qiibla1_Updated.html",
+        "thumb": ""
+    },
+    {
+        "title": "Quadrature Solver",
+        "path": "chapters/chapter_7/quadrature_solver.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "quadrature_solver.html",
+        "thumb": ""
+    },
+    {
+        "title": "Quadric Surfaces",
+        "path": "chapters/chapter_8/Quadric_surfaces.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "Quadric_surfaces.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qud",
+        "path": "chapters/chapter_7/Qud.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "Qud.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qud2",
+        "path": "chapters/chapter_7/Qud2.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "Qud2.html",
+        "thumb": ""
+    },
+    {
+        "title": "Qud3",
+        "path": "chapters/chapter_7/Qud3.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "Qud3.html",
+        "thumb": ""
+    },
+    {
+        "title": "Real",
+        "path": "chapters/chapter_1/real.html",
+        "category": "Chapters - Chapter 1",
+        "raw_file": "real.html",
+        "thumb": ""
+    },
+    {
+        "title": "Special Curves",
+        "path": "simulation/special_curves.html",
+        "category": "Simulation",
+        "raw_file": "special_curves.html",
+        "thumb": ""
+    },
+    {
+        "title": "Special Curves",
+        "path": "chapters/chapter_7/Special_curves.html",
+        "category": "Chapters - Chapter 7",
+        "raw_file": "Special_curves.html",
+        "thumb": ""
+    },
+    {
+        "title": "Spherical Trig",
+        "path": "chapters/chapter_8/spherical_trig.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "spherical_trig.html",
+        "thumb": ""
+    },
+    {
+        "title": "Surfaces",
+        "path": "chapters/chapter_8/Surfaces.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "Surfaces.html",
+        "thumb": ""
+    },
+    {
+        "title": "Surfaces",
+        "path": "chapters/chapter_8/surfaces.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "surfaces.html",
+        "thumb": ""
+    },
+    {
+        "title": "Surfaces1",
+        "path": "chapters/chapter_8/surfaces1.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "surfaces1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Taylor",
+        "path": "simulation/Taylor.html",
+        "category": "Simulation",
+        "raw_file": "Taylor.html",
+        "thumb": ""
+    },
+    {
+        "title": "Tensor Analysis",
+        "path": "Tensor_analysis.html",
+        "category": "Miscellaneous",
+        "raw_file": "Tensor_analysis.html",
+        "thumb": ""
+    },
+    {
+        "title": "Tensor Atlas",
+        "path": "simulation/tensor-atlas.html",
+        "category": "Simulation",
+        "raw_file": "tensor-atlas.html",
+        "thumb": ""
+    },
+    {
+        "title": "Tensors",
+        "path": "Tensors.html",
+        "category": "Miscellaneous",
+        "raw_file": "Tensors.html",
+        "thumb": ""
+    },
+    {
+        "title": "Tensors",
+        "path": "simulation/tensors.html",
+        "category": "Simulation",
+        "raw_file": "tensors.html",
+        "thumb": ""
+    },
+    {
+        "title": "Textbook Style Evolute App",
+        "path": "simulation/Textbook_Style_Evolute_App.html",
+        "category": "Simulation",
+        "raw_file": "Textbook_Style_Evolute_App.html",
+        "thumb": ""
+    },
+    {
+        "title": "The Gaussian Integral",
+        "path": "simulation/The Gaussian Integral.html",
+        "category": "Simulation",
+        "raw_file": "The Gaussian Integral.html",
+        "thumb": ""
+    },
+    {
+        "title": "Theorems",
+        "path": "chapters/chapter_3/theorems.html",
+        "category": "Chapters - Chapter 3",
+        "raw_file": "theorems.html",
+        "thumb": ""
+    },
+    {
+        "title": "Theorems1",
+        "path": "chapters/chapter_3/theorems1.html",
+        "category": "Chapters - Chapter 3",
+        "raw_file": "theorems1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Theorems3",
+        "path": "chapters/chapter_3/theorems3.html",
+        "category": "Chapters - Chapter 3",
+        "raw_file": "theorems3.html",
+        "thumb": ""
+    },
+    {
+        "title": "Tops And Gyroscopes",
+        "path": "simulation/tops-and-gyroscopes.html",
+        "category": "Simulation",
+        "raw_file": "tops-and-gyroscopes.html",
+        "thumb": ""
+    },
+    {
+        "title": "Transform Atlas",
+        "path": "simulation/transform-atlas.html",
+        "category": "Simulation",
+        "raw_file": "transform-atlas.html",
+        "thumb": ""
+    },
+    {
+        "title": "Visual Proof Of (A + B)³",
+        "path": "simulation/Visual Proof of (a + b)³.html",
+        "category": "Simulation",
+        "raw_file": "Visual Proof of (a + b)³.html",
+        "thumb": ""
+    },
+    {
+        "title": "Visual Proof Of (A+B)³",
+        "path": "simulation/Visual Proof of (a+b)³.html",
+        "category": "Simulation",
+        "raw_file": "Visual Proof of (a+b)³.html",
+        "thumb": ""
+    },
+    {
+        "title": "Visual Proof Of (A+B)³V1",
+        "path": "simulation/Visual Proof of (a+b)³v1.html",
+        "category": "Simulation",
+        "raw_file": "Visual Proof of (a+b)³v1.html",
+        "thumb": ""
+    },
+    {
+        "title": "Visual Proof Of (A+B)³V2",
+        "path": "simulation/Visual Proof of (a+b)³v2.html",
+        "category": "Simulation",
+        "raw_file": "Visual Proof of (a+b)³v2.html",
+        "thumb": ""
+    },
+    {
+        "title": "Volume",
+        "path": "chapters/chapter_9/volume.html",
+        "category": "Chapters - Chapter 9",
+        "raw_file": "volume.html",
+        "thumb": ""
+    },
+    {
+        "title": "Volumetrica",
+        "path": "chapters/chapter_10/volumetrica.html",
+        "category": "Chapters - Chapter 10",
+        "raw_file": "volumetrica.html",
+        "thumb": ""
+    }
+]
