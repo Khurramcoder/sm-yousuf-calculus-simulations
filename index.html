@@ -17,6 +17,40 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+  <style>
+    .subtopic-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    .subtopic-list::-webkit-scrollbar { width: 6px; }
+    .subtopic-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+    .subtopic-list::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.5); border-radius: 4px; }
+    .subtopic-list li a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .subtopic-list li a:hover {
+      background: rgba(124, 58, 237, 0.2);
+      border-color: var(--primary-accent);
+      transform: translateX(4px);
+    }
+  </style>
 </head>
 <body>
 
@@ -48,6 +82,7 @@
           <li><a href="#hero" class="nav-link active">Home</a></li>
           <li><a href="#chapters" class="nav-link">Chapters</a></li>
           <li><a href="#simulations" class="nav-link">Simulations</a></li>
+          <li><a href="#tensors" class="nav-link">Tensors</a></li>
           <li><a href="#visual-lab" class="nav-link">Visual Lab</a></li>
           <li><a href="#ai-tools" class="nav-link">AI Tools</a></li>
           <li><a href="#research" class="nav-link">Research</a></li>
@@ -145,201 +180,207 @@
           <div class="badge-pill">Textbook Curriculum</div>
           <h2 class="section-title">S.M. Yusuf Textbook <span class="text-gradient">Chapter Modules</span></h2>
           <p class="section-subtitle">
-            Comprehensive interactive chapters mapping directly to classic university course syllabi. Explore limits, derivatives, integration, vector calculus, and 3D space.
+            Comprehensive interactive chapters mapping directly to classic university course syllabi. Explore all subtopics and interactive labs for every chapter.
           </p>
         </div>
 
         <div class="chapters-grid">
-
-          <!-- Chapter 1 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-beginner">Beginner</span>
+                <span class="chapter-badge badge-advanced">6 Topics</span>
               </div>
               <div class="chapter-number">Chapter 1</div>
-              <h3 class="chapter-title">Functions & Limits</h3>
-              <p class="chapter-desc">
-                Epsilon-delta limit definitions, real number field properties, continuous mapping, and asymptotic behavior.
-              </p>
+              <h3 class="chapter-title">Chapter 1</h3>
+              <p class="chapter-desc">Epsilon-delta limit definitions, real number field properties, continuous mapping, and asymptotic behavior.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 45 mins learning</span>
-              <a href="chapters/chapter_1/continuty_eps_delta.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_1/continuty_eps_delta.html">Continuity (Epsilon-Delta) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_1/Domain-Range.html">Domain & Range (Dash) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_1/Domain_Range.html">Domain & Range (Underscore) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_1/function.html">Functions <span>↗</span></a></li>
+                <li><a href="chapters/chapter_1/limit_e.html">Limit e <span>↗</span></a></li>
+                <li><a href="chapters/chapter_1/real.html">Real Numbers <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 3 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-intermediate">Intermediate</span>
+                <span class="chapter-badge badge-advanced">6 Topics</span>
               </div>
               <div class="chapter-number">Chapter 3</div>
-              <h3 class="chapter-title">Mean Value Theorems</h3>
-              <p class="chapter-desc">
-                Rolle's Theorem, Lagrange Mean Value Theorem, Cauchy MVT, and L'Hôpital's Rule for indeterminate forms.
-              </p>
+              <h3 class="chapter-title">Chapter 3</h3>
+              <p class="chapter-desc">Rolle's Theorem, Lagrange Mean Value Theorem, Cauchy MVT, and L'Hôpital's Rule for indeterminate forms.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 60 mins learning</span>
-              <a href="chapters/chapter_3/theorems1.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_3/indetermanint.html">Indeterminate Forms (Typo) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_3/indeterminate_forms_lab.html">Indeterminate Forms Lab <span>↗</span></a></li>
+                <li><a href="chapters/chapter_3/indeterminate-forms-lhopital-lab.html">L'Hopital's Rule Lab <span>↗</span></a></li>
+                <li><a href="chapters/chapter_3/theorems1.html">Theorems I <span>↗</span></a></li>
+                <li><a href="chapters/chapter_3/theorems3.html">Theorems III <span>↗</span></a></li>
+                <li><a href="chapters/chapter_3/theorems.html">Theorems Main <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 5 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-intermediate">Intermediate</span>
+                <span class="chapter-badge badge-advanced">1 Topics</span>
               </div>
               <div class="chapter-number">Chapter 5</div>
-              <h3 class="chapter-title">Integral Calculus</h3>
-              <p class="chapter-desc">
-                Fundamental Theorem of Calculus, antiderivatives, substitution, integration by parts, and Riemann sum bounds.
-              </p>
+              <h3 class="chapter-title">Chapter 5</h3>
+              <p class="chapter-desc">Fundamental Theorem of Calculus, antiderivatives, substitution, integration by parts, and Riemann sum bounds.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 50 mins learning</span>
-              <a href="chapters/chapter_5/calculus.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_5/calculus.html">Integral Calculus <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 6 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-intermediate">Intermediate</span>
+                <span class="chapter-badge badge-advanced">11 Topics</span>
               </div>
               <div class="chapter-number">Chapter 6</div>
-              <h3 class="chapter-title">Polar Coordinates</h3>
-              <p class="chapter-desc">
-                Polar coordinate systems, plotting cardioids, limaçons, rose curves, and tangent line angles in polar form.
-              </p>
+              <h3 class="chapter-title">Chapter 6</h3>
+              <p class="chapter-desc">Polar coordinate systems, plotting cardioids, limaçons, rose curves, and tangent line angles in polar form.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 40 mins learning</span>
-              <a href="chapters/chapter_6/polar_plotter.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_6/Cardioid%20Simulation.html">Cardioid Simulation <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/conic_section_fsc.html">Conic Sections (FSc 1) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/conic_section_FSc.html">Conic Sections (FSc 2) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/cycloid_simulation.html">Cycloid Simulation <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/epicycloid_simulator.html">Epicycloid Simulator <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/polar_fix.html">Polar (Fix) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/polar.html">Polar (Lowercase) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/Polar.html">Polar (Capitalized) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/polar_plotter.html">Polar Plotter <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/polar_solver.html">Polar Solver <span>↗</span></a></li>
+                <li><a href="chapters/chapter_6/special_curves.html">Special Curves <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 7 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-advanced">Advanced</span>
+                <span class="chapter-badge badge-advanced">16 Topics</span>
               </div>
               <div class="chapter-number">Chapter 7</div>
-              <h3 class="chapter-title">Applications of Integration</h3>
-              <p class="chapter-desc">
-                Quadrature solvers, arc length, area bounded by curves, surface areas of revolution, and numerical Simpson rule.
-              </p>
+              <h3 class="chapter-title">Chapter 7</h3>
+              <p class="chapter-desc">Quadrature solvers, arc length, area bounded by curves, surface areas of revolution, and numerical Simpson rule.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 55 mins learning</span>
-              <a href="chapters/chapter_7/quadrature_solver.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_7/curve1..html">Curve I (Typo) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/curve2.html">Curve II <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/curve3.html">Curve III <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/curve.html">Curves Main <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Differential_Geometry_Lab_V3.html">Diff Geometry Lab V3 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Differential_Geometry_Lab_V4.html">Diff Geometry Lab V4 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Differential_Geometry_Lab_V5.html">Diff Geometry Lab V5 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Evolute_Explorer_V1.html">Evolute Explorer V1 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Evolute_Explorer_V2.html">Evolute Explorer V2 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Fixed_Evolute_Explorer.html">Fixed Evolute Explorer <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/quadrature_solver.html">Quadrature Solver <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Qud2.html">Quadrature II <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Qud3.html">Quadrature III <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Qud.html">Quadrature Main <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Special_curves.html">Special Curves <span>↗</span></a></li>
+                <li><a href="chapters/chapter_7/Textbook_Style_Evolute_App.html">Textbook Style Evolute <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 8 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-advanced">Advanced</span>
+                <span class="chapter-badge badge-advanced">15 Topics</span>
               </div>
               <div class="chapter-number">Chapter 8</div>
-              <h3 class="chapter-title">3D Analytic Geometry</h3>
-              <p class="chapter-desc">
-                Quadric surfaces atlas, planes, straight lines in 3D, cylinders, cones, ellipsoids, hyperboloids, and spherical trig.
-              </p>
+              <h3 class="chapter-title">Chapter 8</h3>
+              <p class="chapter-desc">Quadric surfaces atlas, planes, straight lines in 3D, cylinders, cones, ellipsoids, hyperboloids, and spherical trig.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 70 mins learning</span>
-              <a href="chapters/chapter_8/8-12-quadric-surfaces.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_8/8-12-quadric-surfaces.html">Quadric Surfaces (8-12) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/qibla1.html">Qibla Calculator 1 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/qibla2.html">Qibla Calculator 2 <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/qiblaglob.html">Qibla Globe <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/qibla.html">Qibla Main <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/qibla_tutor.html">Qibla Tutor <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/Qiibla1%20%281%29.html">Qibla 1 (Copy) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/Qiibla1.html">Qibla 1 (Alt Spelling) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/Qiibla1_Updated.html">Qibla 1 (Updated) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/Quadric_surfaces.html">Quadric Surfaces (Alt) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/spherical_trig.html">Spherical Trigonometry <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/Spherical%20Trigonometry%20Explorer.html">Spherical Trig Explorer <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/surfaces1.html">Surfaces I <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/surfaces.html">Surfaces Main <span>↗</span></a></li>
+                <li><a href="chapters/chapter_8/Surfaces.html">Surfaces (Capitalized) <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 9 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-advanced">Advanced</span>
+                <span class="chapter-badge badge-advanced">1 Topics</span>
               </div>
               <div class="chapter-number">Chapter 9</div>
-              <h3 class="chapter-title">Multiple Integrals</h3>
-              <p class="chapter-desc">
-                Double and triple integrals, Jacobians, transformation of variables, volume enclosed by 3D surfaces.
-              </p>
+              <h3 class="chapter-title">Chapter 9</h3>
+              <p class="chapter-desc">Double and triple integrals, Jacobians, transformation of variables, volume enclosed by 3D surfaces.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 65 mins learning</span>
-              <a href="chapters/chapter_9/volume.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_9/volume.html">Volume Calculations <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
-          <!-- Chapter 10 -->
-          <div class="glass-card chapter-card reveal-on-scroll">
+          <div class="glass-card chapter-card reveal-on-scroll" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
-                <span class="chapter-badge badge-advanced">Advanced</span>
+                <span class="chapter-badge badge-advanced">4 Topics</span>
               </div>
               <div class="chapter-number">Chapter 10</div>
-              <h3 class="chapter-title">Vector Calculus</h3>
-              <p class="chapter-desc">
-                Gradient, divergence, curl, line integrals, surface integrals, Green's Theorem, Stokes' Theorem, Divergence Theorem.
-              </p>
+              <h3 class="chapter-title">Chapter 10</h3>
+              <p class="chapter-desc">Gradient, divergence, curl, line integrals, surface integrals, Green's Theorem, Stokes' Theorem, Divergence Theorem.</p>
             </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 80 mins learning</span>
-              <a href="simulation/Vector-Calculus-Lab.html" class="chapter-link-btn">Explore ↗</a>
-            </div>
-          </div>
-
-          <!-- Tensors Chapter -->
-          <div class="glass-card chapter-card reveal-on-scroll">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
-                </div>
-                <span class="chapter-badge badge-advanced">Advanced</span>
-              </div>
-              <div class="chapter-number">Tensor Analysis</div>
-              <h3 class="chapter-title">Tensors & Curvilinear Coordinates</h3>
-              <p class="chapter-desc">
-                Tensor calculus, curvilinear coordinate transformations, R3 spaces, and continuum mechanics foundations.
-              </p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">⏱ 90 mins learning</span>
-              <a href="Tensors/tensor-atlas.html" class="chapter-link-btn">Explore ↗</a>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-direction: column;">
+              <ul class="subtopic-list">
+                <li><a href="chapters/chapter_10/multiple_integrals_explorer.html">Multiple Integrals Explorer <span>↗</span></a></li>
+                <li><a href="chapters/chapter_10/multiple-integrals.html">Multiple Integrals (Dash) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_10/multiple_integrals.html">Multiple Integrals (Underscore) <span>↗</span></a></li>
+                <li><a href="chapters/chapter_10/volumetrica.html">Volumetrica <span>↗</span></a></li>
+              </ul>
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -351,7 +392,7 @@
           <div class="badge-pill">Interactive Explorers</div>
           <h2 class="section-title">Featured Mathematics <span class="text-gradient">Simulations</span></h2>
           <p class="section-subtitle">
-            Browse 65+ interactive web laboratory applications covering single variable calculus, differential geometry, special functions, and fluid dynamics.
+            Browse our complete library of interactive web laboratory applications covering single variable calculus, differential geometry, special functions, and fluid dynamics.
           </p>
         </div>
 
@@ -374,190 +415,21 @@
         </div>
 
         <!-- Dynamic Card Grid -->
-        <div class="simulations-grid" id="simulations-grid">
-          
-          <!-- PHYSICS & MECHANICS -->
+        <div class="simulations-grid" id="simulations-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Advanced Moving Sofa Problem Solver</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Advanced kinematics and geometric probability solver.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Advanced Moving Sofa Problem Solver.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Advanced Moving Sofa Problem Solver.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/Advanced%20Moving%20Sofa%20Problem%20Solver.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Blood Flow</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Hemodynamics and fluid flow simulation in biological vessels.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/blood flow .html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Gyroscope Top Simulation</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Rigid body dynamics, precession, and nutation of gyroscopes.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/gyroscope_top_simulation.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Moving Sofa Problem Solver</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Geometric optimization of the moving sofa constant.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Moving Sofa Problem Solver.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Multiphase Flow Dynamics</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Interfacial dynamics of multi-phase fluid mixtures.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Multiphase Flow Dynamics.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Non-Newtonian Fluid Secondary Flow</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Secondary flow patterns in viscoelastic non-Newtonian fluids.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Non-Newtonian Fluid Secondary Flow Simulation.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Non-Newtonian Liquid Stagnation Point</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Stagnation point flow analysis for complex rheological fluids.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Non-Newtonian Liquid Flow Near a Stagnation Point.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Oldroyd-B Fluid Flow</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Upper-convected Maxwell and Oldroyd-B viscoelastic models.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Oldroyd-B Fluid Flow Simulation.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Oldroyd Fluid Flow</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">General Oldroyd fluid stress-strain rate simulation.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Oldroyd Fluid Flow Simulation.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚡</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Plane Electromagnetic Wave</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Maxwell's equations and propagating EM wave vectors.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Plane Electromagnetic Wave Simulation.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tops And Gyroscopes</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Classical mechanics of spinning tops and angular momentum.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/tops-and-gyroscopes.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⚙️</div>
-                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Orthoscope</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Optical ray tracing and orthoscopic projection visualizer.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/ORTHOSCOPE.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <!-- DIFFERENTIAL EQUATIONS -->
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
             <div>
               <div class="chapter-header">
@@ -565,29 +437,27 @@
                 <span class="chapter-badge badge-advanced">Differential Equations</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Bessel Functions</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive explorer for Bessel functions of the first and second kind.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Bessel Functions.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/Bessel_Functions.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Differential Equations</span>
               </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Bessel Functions (v1)</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Visualizing roots and oscillations of Bessel equations.</p>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Bessel Functions V1</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Bessel Functions V1.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/Bessel-Functionsv1.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
             <div>
               <div class="chapter-header">
@@ -595,14 +465,13 @@
                 <span class="chapter-badge badge-advanced">Differential Equations</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Bessel Legendre Sim</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Combined simulator for Bessel and Legendre special functions.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Bessel Legendre Sim.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/bessel_legendre_sim.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
             <div>
               <div class="chapter-header">
@@ -610,90 +479,97 @@
                 <span class="chapter-badge badge-advanced">Differential Equations</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Bessel's & Legendre's Equations</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Deep dive into orthogonal polynomials and boundary value problems.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Bessel's & Legendre's Equations.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Bessel's & Legendre's Equations.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/Bessel%27s%20%26%20Legendre%27s%20Equations.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∂</div>
-                <span class="chapter-badge badge-advanced">Differential Equations</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Fractional Differential Equations</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Explore non-integer order derivatives and anomalous diffusion.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Fractional Differential Equations Simulation.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
             <div>
               <div class="chapter-header">
                 <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
-                <span class="chapter-badge badge-advanced">Differential Equations</span>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
               </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Legendre Polynomials</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Orthogonal Legendre polynomials and spherical harmonics.</p>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Blood Flow</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Blood Flow.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Legendre Polynomials Interactive Simulation.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/blood%20flow%20.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
-                <span class="chapter-badge badge-advanced">Differential Equations</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Special Functions</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Atlas of Gamma, Beta, and Error special functions.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Special_Functions.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <!-- CALCULUS -->
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">e</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Euler</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Euler's formula, identity, and complex plane visualizations.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Euler.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/Euler.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∿</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Fourier Series Simulator</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Synthesize waveforms using Fourier series harmonics.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Fourier Series Simulator.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/fourier_series_simulator.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Four Vectors</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Four Vectors.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/four-vectors.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Differential Equations</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Fractional Differential Equations</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Fractional Differential Equations.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Fractional%20Differential%20Equations%20Simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Frenet Serret</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Frenet Serret.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/frenet-serret.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
@@ -701,119 +577,391 @@
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Gaussian Integral Viz</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Visual proof and numerical approximation of the Gaussian integral.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Gaussian Integral Viz.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/gaussian_integral_viz.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Gauss Weingarten Monge Patch</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Gauss Weingarten Monge Patch.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/gauss-weingarten-monge-patch.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Geodesic Lab</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Geodesic Lab.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/geodesic-lab.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Greens Theorem 3D</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Greens Theorem 3D.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/greens_theorem_3d.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Gyroscope Top Simulation</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Gyroscope Top Simulation.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/gyroscope_top_simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">L</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Laplace</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Laplace transform domain mapping and pole-zero analysis.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Laplace.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/Laplace.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">L</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Laplace Transform</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive s-domain to time-domain inverse transforms.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Laplace Transform.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/laplace_transform.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">L</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Laplace Transform Sim</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Step-by-step Laplace transform solver and visualizer.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Laplace Transform Sim.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/laplace_transform_sim.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">L</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Laplace Transform Viz</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Complex plane visualization of Laplace region of convergence.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Laplace Transform Viz.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/laplace_transform_viz.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Differential Equations</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Legendre Polynomials</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Legendre Polynomials.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Legendre%20Polynomials%20Interactive%20Simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∑</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Maclaurin Simulator</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Taylor and Maclaurin series expansion radius of convergence.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Maclaurin Simulator.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/maclaurin_simulator.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Moving Sofa Problem Solver</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Moving Sofa Problem Solver.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Moving%20Sofa%20Problem%20Solver.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Multiphase Flow Dynamics</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Multiphase Flow Dynamics.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Multiphase%20Flow%20Dynamics.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Non-Newtonian Fluid Secondary Flow</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Non-Newtonian Fluid Secondary Flow.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Non-Newtonian%20Fluid%20Secondary%20Flow%20Simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Non-Newtonian Liquid Stagnation Point</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Non-Newtonian Liquid Stagnation Point.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Non-Newtonian%20Liquid%20Flow%20Near%20a%20Stagnation%20Point.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Oldroyd-B Fluid Flow</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Oldroyd-B Fluid Flow.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Oldroyd-B%20Fluid%20Flow%20Simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Oldroyd Fluid Flow</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Oldroyd Fluid Flow.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Oldroyd%20Fluid%20Flow%20Simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Orthoscope</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Orthoscope.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/ORTHOSCOPE%5C012.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∂</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Partial Derivatives</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">3D tangent planes and partial derivative gradient fields.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Partial Derivatives.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/partial_derivatives.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Plane Electromagnetic Wave</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Plane Electromagnetic Wave.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Plane%20Electromagnetic%20Wave%20Simulation.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Platonic Solids</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Platonic Solids.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/platonic-solids.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Professional Envelope Explorer</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Professional Envelope Explorer.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Professional_Envelope_Explorer_V1.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Professional Evolute Explorer</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Professional Evolute Explorer.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Professional_Evolute_Explorer_V5A.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Visual Proofs" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Visual Proofs</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Pythagorean Theorem Visual Proof</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Pythagorean Theorem Visual Proof.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Pythagorean%20Theorem%20Visual%20Proof.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Differential Equations" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Differential Equations</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Special Functions</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Special Functions.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/Special_Functions.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∑</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Taylor</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Multivariable Taylor series approximation surfaces.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Taylor.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/Taylor.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">The Divergence Theorem Explorer</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for The Divergence Theorem Explorer.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/The-Divergence-Theorem-Explorer.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">The Divergence Theorem</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for The Divergence Theorem.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/The-Divergence-Theorem.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
@@ -821,271 +969,240 @@
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">The Gaussian Integral</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Polar coordinate derivation of the Gaussian integral.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for The Gaussian Integral.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/The Gaussian Integral.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/The%20Gaussian%20Integral.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Physics & Mechanics" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
+                <span class="chapter-badge badge-advanced">Physics & Mechanics</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tops And Gyroscopes</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Tops And Gyroscopes.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="simulation/tops-and-gyroscopes.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Calculus" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">L</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Calculus</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Transform Atlas</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Comprehensive atlas of integral transforms and kernels.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Transform Atlas.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/transform-atlas.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
-          <!-- ANALYTIC GEOMETRY -->
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">→</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Four Vectors</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Minkowski spacetime and relativistic four-vector operations.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/four-vectors.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">→</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Frenet Serret</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Frenet-Serret frames, curvature, and torsion of 3D space curves.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/frenet-serret.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∇</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Gauss Weingarten Monge Patch</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Differential geometry surface patches and curvature mappings.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/gauss-weingarten-monge-patch.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∇</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Geodesic Lab</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Shortest path geodesics on curved manifolds and surfaces.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/geodesic-lab.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∮</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Greens Theorem 3D</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">3D visualization of Green's Theorem and circulation.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/greens_theorem_3d.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">⬟</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Platonic Solids</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive 3D rotations and properties of Platonic solids.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/platonic-solids.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∇</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Professional Envelope Explorer</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Caustics and envelope curves of tangent families.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Professional_Envelope_Explorer_V1.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∇</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Professional Evolute Explorer</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Locus of centers of curvature and involute generation.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Professional_Evolute_Explorer_V5A.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∯</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">The Divergence Theorem Explorer</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Gauss's flux theorem and 3D vector field divergence.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/The-Divergence-Theorem-Explorer.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∯</div>
-                <span class="chapter-badge badge-advanced">Analytic Geometry</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">The Divergence Theorem</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive boundary surface flux integral calculator.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/The-Divergence-Theorem.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Analytic Geometry" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∇</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Analytic Geometry</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Vector Calculus Lab</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Gradient, curl, divergence, and Laplacian operator lab.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Vector Calculus Lab.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
               <a href="simulation/Vector-Calculus-Lab.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
-          <!-- VISUAL PROOFS -->
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Visual Proofs" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">Δ</div>
-                <span class="chapter-badge badge-advanced">Visual Proofs</span>
-              </div>
-              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Pythagorean Theorem Visual Proof</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Geometric dissection proof of the Pythagorean theorem.</p>
-            </div>
-            <div class="chapter-footer">
-              <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Pythagorean Theorem Visual Proof.html" class="chapter-link-btn">Launch ↗</a>
-            </div>
-          </div>
-
-          <div class="glass-card chapter-card reveal-on-scroll" data-category="Visual Proofs" style="min-height: auto;">
-            <div>
-              <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">Δ</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Visual Proofs</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Visual Proof Of (A + B)³</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">3D volumetric expansion of the binomial cube identity.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Visual Proof Of (A + B)³.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Visual Proof of (a + b)³.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/Visual%20Proof%20of%20%28a%20%2B%20b%29%C2%B3.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Visual Proofs" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">Δ</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Visual Proofs</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Visual Proof Of (A+B)³</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Algebraic geometry proof of cubic binomial expansion.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Visual Proof Of (A+B)³.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Visual Proof of (a+b)³.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/Visual%20Proof%20of%20%28a%2Bb%29%C2%B3.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Visual Proofs" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">Δ</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Visual Proofs</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Visual Proof Of (A+B)³ V1</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Step-by-step animated dissection of (a+b)³.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Visual Proof Of (A+B)³ V1.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Visual Proof of (a+b)³v1.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/Visual%20Proof%20of%20%28a%2Bb%29%C2%B3v1.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
-
           <div class="glass-card chapter-card reveal-on-scroll" data-category="Visual Proofs" style="min-height: auto;">
             <div>
               <div class="chapter-header">
-                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">Δ</div>
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">∫</div>
                 <span class="chapter-badge badge-advanced">Visual Proofs</span>
               </div>
               <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Visual Proof Of (A+B)³ V2</h3>
-              <p class="chapter-desc" style="font-size: 0.85rem;">Alternative geometric arrangement for cubic visual proofs.</p>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Interactive simulator for Visual Proof Of (A+B)³ V2.</p>
             </div>
             <div class="chapter-footer">
               <span class="chapter-meta">Interactive</span>
-              <a href="simulation/Visual Proof of (a+b)³v2.html" class="chapter-link-btn">Launch ↗</a>
+              <a href="simulation/Visual%20Proof%20of%20%28a%2Bb%29%C2%B3v2.html" class="chapter-link-btn">Launch ↗</a>
             </div>
           </div>
+        </div>
 
+      </div>
+    </section>
+
+    <!-- TENSORS SECTION -->
+    <section class="section-padding" id="tensors">
+      <div class="container">
+        <div class="section-header reveal-on-scroll">
+          <div class="badge-pill">Advanced Mathematics</div>
+          <h2 class="section-title">Tensor Analysis & <span class="text-gradient">Curvilinear Coordinates</span></h2>
+          <p class="section-subtitle">
+            Explore the complete suite of tensor analysis tools, curvilinear coordinate transformations, and R3 space simulations.
+          </p>
+        </div>
+
+        <div class="simulations-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Curvilinear Atlas</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/Curvilinear-Atlas.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Curvilinear</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/curvilinear.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tensor Analysis</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/Tensor_analysis.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tensor Atlas</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/tensor-atlas.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tensor R3</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/Tensor_R3.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tensors (Lowercase)</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/tensors.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tensors (Capitalized)</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/Tensors.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
+          <div class="glass-card chapter-card reveal-on-scroll" data-category="Tensors" style="min-height: auto;">
+            <div>
+              <div class="chapter-header">
+                <div class="chapter-icon" style="font-family: serif; font-size: 1.2rem;">T</div>
+                <span class="chapter-badge badge-advanced">Tensors</span>
+              </div>
+              <h3 class="chapter-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Tensors V1</h3>
+              <p class="chapter-desc" style="font-size: 0.85rem;">Tensor analysis and curvilinear coordinates.</p>
+            </div>
+            <div class="chapter-footer">
+              <span class="chapter-meta">Interactive</span>
+              <a href="Tensors/tensors_v1.html" class="chapter-link-btn">Launch ↗</a>
+            </div>
+          </div>
         </div>
 
       </div>
