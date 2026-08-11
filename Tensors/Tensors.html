@@ -823,16 +823,23 @@ const C={coral:0xff5d5d,teal:0x2dd4bf,amber:0xffb703,blue:0x5aa9ff,faint:0x35577
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const d2r=d=>d*Math.PI/180;
 const fmt=(x,n=2)=>(Math.abs(x)<1e-10?0:x).toFixed(n);
-function bindR(id,out,fn,fmtFn){const el=$(id),o=$(out);const f=fmtFn||(v=>fmt(v));const go=()=>{o.textContent=f(+el.value);fn(+el.value)};el.addEventListener('input',go);go();}
+/* FIXED: output chip auto-resolved as <id>v and null-guarded */
+function bindR(id,out,fn,fmtFn){
+  const el=$(id),o=out?$(out):$(id+'v');
+  const f=fmtFn||(v=>fmt(v));
+  const go=()=>{if(o)o.textContent=f(+el.value);fn(+el.value);};
+  el.addEventListener('input',go);go();
+}
+/* NEW: per-plate error guard so one failure can't kill the rest */
+function safe(f){try{f();}catch(e){console.error('plate init failed:',e);}}
 function sphVec(th,ph,r){const t=d2r(th),p=d2r(ph);return [r*Math.sin(t)*Math.cos(p), r*Math.cos(t), r*Math.sin(t)*Math.sin(p)];}
-function renderMat(el,M,cols){el.style.gridTemplateColumns=`repeat(${cols||M.length},auto)`;let h='';for(const row of M)for(const c of row)h+=`<span>${fmt(c)}</span>`;el.innerHTML=h;}
+function renderMat(el,M,cols){if(!el)return;el.style.gridTemplateColumns=`repeat(${cols||M.length},auto)`;let h='';for(const row of M)for(const c of row)h+=`<span>${fmt(c)}</span>`;el.innerHTML=h;}
 function vecStr(v){return `(${fmt(v[0])}, ${fmt(v[1])})`;}
-function inv2(M){const[[a,b],[c,d]]=M;const D=a*d-b*c;return [[d,-b],[-c,a]].map(r=>r.map(x=>x/(Math.abs(D)<1e-9?1e-9:D)));}
+function inv2(M){const[[a,b],[c,d]]=M;const D=a*d-b*c;const D2=Math.abs(D)<1e-9?1e-9:D;return [[d/D2,-b/D2],[-c/D2,a/D2]];}
 function mm2(A,B){return [[A[0][0]*B[0][0]+A[0][1]*B[1][0],A[0][0]*B[0][1]+A[0][1]*B[1][1]],[A[1][0]*B[0][0]+A[1][1]*B[1][0],A[1][0]*B[0][1]+A[1][1]*B[1][1]]];}
 function mv2(M,v){return [M[0][0]*v[0]+M[0][1]*v[1],M[1][0]*v[0]+M[1][1]*v[1]];}
-function det3(M){const m=M;return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);}
+function det3(m){return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);}
 
-/* Jacobi eigendecomposition of a symmetric 3x3 */
 function eigSym3(M){
   let a=[M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]].slice();
   let v=[1,0,0,0,1,0,0,0,1];
@@ -857,9 +864,9 @@ function eigSym3(M){
 }
 
 /* ---------- ambient background ---------- */
-(function(){
-  const cv=$('ambient'),cx=cv.getContext('2d');let W,H,t0=0;
-  function fit(){W=cv.width=innerWidth*0.5;H=cv.height=innerHeight*0.5;}
+safe(function(){
+  const cv=$('ambient'),cx=cv.getContext('2d');let W,H;
+  function fit(){W=cv.width=Math.max(2,innerWidth*0.5);H=cv.height=Math.max(2,innerHeight*0.5);}
   fit();addEventListener('resize',fit);
   function draw(t){
     cx.clearRect(0,0,W,H);cx.strokeStyle='rgba(96,150,200,0.12)';cx.lineWidth=1;
@@ -867,15 +874,14 @@ function eigSym3(M){
     for(let y=0;y<H;y+=st){cx.beginPath();for(let x=0;x<=W;x+=14){const o=5*Math.sin(x*0.012+t*0.00045+y*0.02)+3*Math.sin(y*0.02-t*0.0003);x?cx.lineTo(x,y+o):cx.moveTo(x,y+o);}cx.stroke();}
     for(let x=0;x<W;x+=st){cx.beginPath();for(let y=0;y<=H;y+=14){const o=5*Math.sin(y*0.011+t*0.0004+x*0.02)+3*Math.cos(x*0.017+t*0.00026);y?cx.lineTo(x+o,y):cx.moveTo(x+o,y);}cx.stroke();}
   }
-  if(RM){draw(0);}else{(function loop(t){draw(t);if(t-t0>33){t0=t;}requestAnimationFrame(loop);})(0);}
-})();
+  if(RM){draw(0);}else{(function loop(t){draw(t);requestAnimationFrame(loop);})(0);}
+});
 
 /* ---------- progress + nav + reveal ---------- */
 const prog=$('progress');
-addEventListener('scroll',()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';$('topnav').classList.toggle('scrolled',h.scrollTop>40);},{passive:true});
+addEventListener('scroll',()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)*100)+'%';$('topnav').classList.toggle('scrolled',h.scrollTop>40);},{passive:true});
 const secs=[...document.querySelectorAll('section.chapter')];
 const navLinks=[...document.querySelectorAll('.links a')];
-new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navLinks.forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'}).observe(secs[0]);
 secs.forEach(s=>new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){navLinks.forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+s.id));}})},{rootMargin:'-40% 0px -55% 0px'}).observe(s));
 const rev=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rev.unobserve(e.target);}})},{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>rev.observe(el));
@@ -887,7 +893,7 @@ document.querySelectorAll('.tabbar').forEach(bar=>{
     bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
     const plate=bar.closest('.plate');
     plate.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pane));
-    setTimeout(()=>{SCENES.forEach(s=>s.fit());PLATES2D.forEach(p=>p.redraw());},30);
+    setTimeout(()=>{SCENES.forEach(s=>s.fit());PLATES2D.forEach(p=>p.redraw());},40);
   });
 });
 
@@ -924,7 +930,12 @@ function V(a){return new THREE.Vector3(a[0],a[1],a[2]);}
 function arrow(parent,from,to,color,hl,hr){
   const f=V(from),t=V(to),d=t.clone().sub(f),len=d.length();if(len<1e-6)return null;
   const a=new THREE.ArrowHelper(d.normalize(),f,len,color,hl||Math.min(.22,len*.3),hr||.085);parent.add(a);return a;}
-function clearGroup(g){while(g.children.length){const c=g.children.pop();if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose&&c.material.dispose();}}
+function clearGroup(g){
+  g.traverse(o=>{if(o===g)return;
+    if(o.geometry)o.geometry.dispose();
+    if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose&&o.material.dispose();}});
+  g.children.length=0;
+}
 function label(text,color,sc){
   const c=document.createElement('canvas');c.width=192;c.height=96;const x=c.getContext('2d');
   x.font='600 58px Archivo, sans-serif';x.textAlign='center';x.textBaseline='middle';
@@ -942,7 +953,6 @@ function mappedCube(fill,edge,fop){
   g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge})));
   g.matrixAutoUpdate=false;return g;}
 
-/* main loop */
 let lastT=performance.now();
 (function tick(t){
   const dt=Math.min(.05,(t-lastT)/1000);lastT=t;
@@ -958,14 +968,14 @@ let lastT=performance.now();
 })(lastT);
 
 /* ================= FIG 0 — HERO ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-hero',8.4,1.7,.1);
   const solid=ellipsoidMesh(C.amber,.88);S.world.add(solid);
   const wire=ellipsoidMesh(C.ghost,.14,true);S.world.add(wire);
   const ghost=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.1}));S.world.add(ghost);
   const ax=new THREE.Group();S.world.add(ax);
   const N=260,pos=new Float32Array(N*3),pd=[];
-  for(let i=0;i<N;i++){const r=3+.9*Math.random(),a=Math.random()*Math.PI*2,h=(Math.random()-.5)*2.4;pd.push({r,a,h,s:.12+.3*Math.random()});pos.set([r*Math.cos(a),h,r*Math.sin(a)],i*3);}
+  for(let i=0;i<N;i++){const r=3+.9*Math.random(),a=Math.random()*Math.PI*2,h=(Math.random()-.5)*2.4;pd.push({r,a,s:.12+.3*Math.random()});pos.set([r*Math.cos(a),h,r*Math.sin(a)],i*3);}
   const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   S.world.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x9fd6ff,size:.045,transparent:true,opacity:.75})));
   S.step=(dt,t)=>{
@@ -976,20 +986,20 @@ if(HAS3D)(function(){
     const E=eigSym3(M);clearGroup(ax);
     E.vals.forEach((l,i)=>{const v=E.vecs[i],s=Math.sign(l)||1,e=v.map(x=>x*s*(Math.abs(l)*1.12+.08));
       arrow(ax,[0,0,0],e,l>=0?C.amber:C.coral);
-      const sp=label('λ',l>=0?'#ffd166':'#ff8f8f',.5);sp.position.set(e[0]*1.18,e[1]*1.18,e[2]*1.18);ax.add(sp);});
+      const sp=label('λ'+(i+1),l>=0?'#ffd166':'#ff8f8f',.5);sp.position.set(e[0]*1.18,e[1]*1.18,e[2]*1.18);ax.add(sp);});
     const p=pg.attributes.position.array;
     for(let i=0;i<N;i++){const d=pd[i];d.a+=dt*d.s;p[i*3]=d.r*Math.cos(d.a);p[i*3+2]=d.r*Math.sin(d.a);}
     pg.attributes.position.needsUpdate=true;
   };
-})();
+});
 
 /* ================= PLATE I — SYMMETRIC ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-sym',7.6,1.6);
   const ghost=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.12}));S.world.add(ghost);
   const solid=ellipsoidMesh(C.amber,.9);S.world.add(solid);
   const ax=new THREE.Group();S.world.add(ax);
-  const st={};
+  const st={a11:1.7,a22:1.1,a33:2.1,a12:.55,a13:.3,a23:-.4};
   function M(){return [[st.a11,st.a12,st.a13],[st.a12,st.a22,st.a23],[st.a13,st.a23,st.a33]];}
   function up(){
     const A=M();solid.matrix.copy(m4(A));
@@ -1003,10 +1013,10 @@ if(HAS3D)(function(){
   }
   [['sy11','a11'],['sy22','a22'],['sy33','a33'],['sy12','a12'],['sy13','a13'],['sy23','a23']].forEach(([id,k])=>{bindR(id,null,v=>{st[k]=v;up();});});
   up();
-})();
+});
 
 /* ================= PLATE II — SKEW ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-skew',7.6,1.6);
   const body=new THREE.Group();S.world.add(body);
   arrow(body,[0,0,0],[1.5,0,0],C.coral);arrow(body,[0,0,0],[0,1.5,0],C.teal);arrow(body,[0,0,0],[0,0,1.5],C.blue);
@@ -1022,73 +1032,70 @@ if(HAS3D)(function(){
     renderMat($('ro-skew-mat'),K);
     $('ro-skew-norm').textContent='|ω| = '+fmt(Math.hypot(w.x,w.y,w.z));
     clearGroup(wArr);const L=Math.hypot(w.x,w.y,w.z);
-    if(L>.02){arrow(wArr,[0,0,0],[w.x/L*L*1.15,w.y/L*L*1.15,w.z/L*L*1.15],C.amber,.24,.11);
-      const sp=label('ω','#ffd166',.6);sp.position.set(w.x/L*L*1.45,w.y/L*L*1.45,w.z/L*L*1.45);wArr.add(sp);
-      const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(w.x/L,w.y/L,w.z/L));
-      swirl.quaternion.copy(q);}
+    if(L>.02){
+      arrow(wArr,[0,0,0],[w.x*1.15,w.y*1.15,w.z*1.15],C.amber,.24,.11);
+      const sp=label('ω','#ffd166',.6);sp.position.set(w.x*1.45,w.y*1.45,w.z*1.45);wArr.add(sp);
+      swirl.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(w.x/L,w.y/L,w.z/L));
+    }
   }
   S.step=dt=>{const L=Math.hypot(w.x,w.y,w.z);if(L>.02){ang+=L*dt;body.quaternion.setFromAxisAngle(new THREE.Vector3(w.x/L,w.y/L,w.z/L),ang);}};
   bindR('sk1',null,v=>{w.x=v;up();});bindR('sk2',null,v=>{w.y=v;up();});bindR('sk3',null,v=>{w.z=v;up();});
   up();
-})();
+});
 
 /* ================= PLATE III — ADDITION ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-add',8,1.7);
   const eA=ellipsoidMesh(C.coral,.4,true),eB=ellipsoidMesh(C.teal,.4,true),eC=ellipsoidMesh(C.amber,.82);
   S.world.add(eA);S.world.add(eB);S.world.add(eC);
-  const st={mode:1};
+  const st={mode:1,a11:1.9,a22:1.2,a33:.9,a12:.5,a13:.2,a23:-.3,b11:.8,b22:1.6,b33:1.3,b12:-.45,b13:.3,b23:.15};
   document.querySelectorAll('input[name=addmode]').forEach(r=>r.addEventListener('change',()=>{st.mode=+document.querySelector('input[name=addmode]:checked').value;up();}));
-  function mats(){
+  function up(){
     const A=[[st.a11,st.a12,st.a13],[st.a12,st.a22,st.a23],[st.a13,st.a23,st.a33]];
     const B=[[st.b11,st.b12,st.b13],[st.b12,st.b22,st.b23],[st.b13,st.b23,st.b33]];
-    return [A,B];
-  }
-  function up(){
-    const [A,B]=mats(),m=st.mode;
-    const Cm=A.map((r,i)=>r.map((x,j)=>x+m*B[i][j]));
+    const m=st.mode,Cm=A.map((r,i)=>r.map((x,j)=>x+m*B[i][j]));
     eA.matrix.copy(m4(A));eB.matrix.copy(m4(B));eC.matrix.copy(m4(Cm));
     const tr=M=>M[0][0]+M[1][1]+M[2][2];
     $('trA').textContent='tr A = '+fmt(tr(A));
     $('trB').textContent='tr B = '+fmt(tr(B));
     $('trC').textContent=`tr(A${m>0?'+':'−'}B) = ${fmt(tr(Cm))}`;
-    $('detC').textContent=`det(A${m>0?'+':'−'}B) = ${fmt(det3(Cm))}  (≠ det A ${m>0?'+':'−'} det B = ${fmt(det3(A)+m*det3(B))})`;
+    $('detC').textContent=`det(A${m>0?'+':'−'}B) = ${fmt(det3(Cm))}  vs  det A ${m>0?'+':'−'} det B = ${fmt(det3(A)+m*det3(B))}`;
   }
   [['aa11','a11'],['aa22','a22'],['aa33','a33'],['aa12','a12'],['aa13','a13'],['aa23','a23'],
    ['bb11','b11'],['bb22','b22'],['bb33','b33'],['bb12','b12'],['bb13','b13'],['bb23','b23']]
    .forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();}));
   up();
-})();
+});
 
 /* ================= PLATE IV — OUTER PRODUCT ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-out',8,1.7);
   const pancake=ellipsoidMesh(C.amber,.55);S.world.add(pancake);
   const dyn=new THREE.Group();S.world.add(dyn);
-  const planeM=new THREE.Mesh(new THREE.PlaneGeometry(3.8,3.8),new THREE.MeshBasicMaterial({color:C.teal,transparent:true,opacity:.1,side:THREE.DoubleSide}));
-  const planeE=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.8,3.8)),new THREE.LineBasicMaterial({color:C.teal,transparent:true,opacity:.5}));
-  const planeG=new THREE.Group();planeG.add(planeM);planeG.add(planeE);S.world.add(planeG);
+  const planeG=new THREE.Group();
+  planeG.add(new THREE.Mesh(new THREE.PlaneGeometry(3.8,3.8),new THREE.MeshBasicMaterial({color:C.teal,transparent:true,opacity:.1,side:THREE.DoubleSide})));
+  planeG.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.8,3.8)),new THREE.LineBasicMaterial({color:C.teal,transparent:true,opacity:.5})));
+  S.world.add(planeG);
   const st={ath:55,aph:20,ar:1.3,bth:110,bph:200,br:1.1};
   function up(){
     const a=sphVec(st.ath,st.aph,st.ar),b=sphVec(st.bth,st.bph,st.br);
     const M=[[a[0]*b[0],a[0]*b[1],a[0]*b[2]],[a[1]*b[0],a[1]*b[1],a[1]*b[2]],[a[2]*b[0],a[2]*b[1],a[2]*b[2]]];
-    const Mr=M.map((r,i)=>r.map((x,j)=>x+(i===j?0.05:0)));
-    pancake.matrix.copy(m4(Mr));
+    pancake.matrix.copy(m4(M.map((r,i)=>r.map((x,j)=>x+(i===j?0.05:0)))));
     clearGroup(dyn);
     arrow(dyn,[0,0,0],a,C.coral);arrow(dyn,[0,0,0],b,C.blue);
     const la=label('a','#ff8f8f',.6);la.position.set(a[0]*1.25,a[1]*1.25,a[2]*1.25);dyn.add(la);
     const lb=label('b','#9cc8ff',.6);lb.position.set(b[0]*1.25,b[1]*1.25,b[2]*1.25);dyn.add(lb);
-    const bn=Math.hypot(b[0],b[1],b[2]);
+    const bn=Math.hypot(b[0],b[1],b[2])||1;
     planeG.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(b[0]/bn,b[1]/bn,b[2]/bn));
     renderMat($('ro-dyad'),M);
     $('ro-dotv').textContent='a·b = '+fmt(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
   }
   [['oath','ath'],['oaph','aph'],['oar','ar'],['obth','bth'],['obph','bph'],['obr','br']].forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();}));
   up();
-})();
+});
 
 /* ================= PLATE V — INNER PRODUCT ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-in',7.8,1.6);
   const dyn=new THREE.Group();S.world.add(dyn);
   const st={ath:60,aph:0,ar:1.5,bth:75,bph:95,br:1.2};
@@ -1096,84 +1103,77 @@ if(HAS3D)(function(){
     const a=sphVec(st.ath,st.aph,st.ar),b=sphVec(st.bth,st.bph,st.br);
     clearGroup(dyn);
     arrow(dyn,[0,0,0],a,C.coral);arrow(dyn,[0,0,0],b,C.teal);
-    const an=Math.hypot(...a);const au=a.map(x=>x/an);
+    const an=Math.hypot(a[0],a[1],a[2])||1,au=a.map(x=>x/an);
     const proj=au.map(x=>x*(b[0]*au[0]+b[1]*au[1]+b[2]*au[2]));
     const dash=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(b),V(proj)]),new THREE.LineDashedMaterial({color:C.amber,dashSize:.09,gapSize:.06}));
     dash.computeLineDistances();dyn.add(dash);
     arrow(dyn,au.map(x=>-x*2.2),au.map(x=>x*2.2),0x3a5876,.001,.001);
-    // arc between directions
-    const bn=Math.hypot(...b),bu=b.map(x=>x/bn),pts=[];
+    const bn=Math.hypot(b[0],b[1],b[2])||1,bu=b.map(x=>x/bn);
     const dot=clamp(au[0]*bu[0]+au[1]*bu[1]+au[2]*bu[2],-1,1),th=Math.acos(dot);
-    for(let i=0;i<=24;i++){const t=i/24;
-      const s=Math.sin(th);const w1=Math.sin((1-t)*th)/(s||1),w2=Math.sin(t*th)/(s||1);
+    const pts=[],s=Math.sin(th);
+    for(let i=0;i<=24;i++){const t=i/24,w1=Math.sin((1-t)*th)/(s||1),w2=Math.sin(t*th)/(s||1);
       pts.push(V([0,1,2].map(j=>(w1*au[j]+w2*bu[j])*.85)));}
     dyn.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:C.amber})));
     const la=label('a','#ff8f8f',.6);la.position.set(a[0]*1.2,a[1]*1.2,a[2]*1.2);dyn.add(la);
-    const lt=label('θ','#ffd166',.55);const mid=pts[12];lt.position.set(mid.x*1.35,mid.y*1.35,mid.z*1.35);dyn.add(lt);
-    const d=a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
-    $('ro-dot').textContent='a·b = aᵢbⁱ = '+fmt(d);
+    const lt=label('θ','#ffd166',.55),mid=pts[12];lt.position.set(mid.x*1.35,mid.y*1.35,mid.z*1.35);dyn.add(lt);
+    $('ro-dot').textContent='a·b = aᵢb = '+fmt(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
     $('ro-mags').textContent=`|a| = ${fmt(an)}, |b| = ${fmt(bn)}`;
     $('ro-ang').textContent=`θ = ${fmt(th*180/Math.PI,1)}° · |a||b|cosθ = ${fmt(an*bn*Math.cos(th))}`;
   }
   [['iath','ath'],['iaph','aph'],['iar','ar'],['ibth','bth'],['ibph','bph'],['ibr','br']].forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();}));
   up();
-})();
+});
 
 /* ================= PLATE VI — QUOTIENT (DOM) ================= */
-(function(){
-  const st={};
+safe(function(){
+  const st={q11:1.2,q12:-.7,q21:.4,q22:.9,qx1:1.1,qx2:.6,qang:37};
   function up(){
     const T=[[st.q11,st.q12],[st.q21,st.q22]],x=[st.qx1,st.qx2],a=d2r(st.qang);
     const R=[[Math.cos(a),-Math.sin(a)],[Math.sin(a),Math.cos(a)]];
-    const y=mv2(T,x);
-    const yR=mv2(R,y);                       // route 1: rotate the result
+    const y=mv2(T,x),yR=mv2(R,y);
     const Tp=mm2(mm2(R,T),[[R[0][0],R[1][0]],[R[0][1],R[1][1]]]);
-    const xp=mv2(R,x),yT=mv2(Tp,xp);         // route 2: rotate the objects
+    const xp=mv2(R,x),yT=mv2(Tp,xp);
     renderMat($('qy-r'),[yR],2);renderMat($('qy-t'),[yT],2);
     const err=Math.hypot(yR[0]-yT[0],yR[1]-yT[1]);
     $('qbadge').textContent=err<1e-9?'✓ equal — tensor law holds':'✗ mismatch';
     $('qerr').textContent='|Δ| ≈ '+err.toExponential(2);
   }
-  [['q11','q11'],['q12','q12'],['q21','q21'],['q22','q22'],['qx1','qx1'],['qx2','qx2'],['qang','qang']]
-   .forEach(([id,k])=>bindR(id,null,v=>{st[k]=v;up();},(v)=>id==='qang'?fmt(v,0)+'°':fmt(v)));
+  [['q11'],['q12'],['q21'],['q22'],['qx1'],['qx2']].forEach(([id])=>bindR(id,null,v=>{st[id]=v;up();}));
+  bindR('qang',null,v=>{st.qang=v;up();},v=>fmt(v,0)+'°');
   up();
-})();
+});
 
 /* ================= PLATE VII — COMPOSITION ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-comp',7.8,1.9);
-  const ghost=mappedCube(null,C.faint);S.world.add(ghost);
+  S.world.add(mappedCube(null,C.faint));
   const cAB=mappedCube(C.amber,C.amber,.4),cBA=mappedCube(C.blue,C.blue,.1);
   S.world.add(cAB);S.world.add(cBA);
-  function up(alpha,k){
-    const a=d2r(alpha),A=[[Math.cos(a),-Math.sin(a),0],[Math.sin(a),Math.cos(a),0],[0,0,1]];
-    const B=[[1,k,0],[0,1,0],[0,0,1]];
-    const AB=[[0,1,2].map(j=>A[0][0]*B[0][j]+A[0][1]*B[1][j]+A[0][2]*B[2][j]),
-              [0,1,2].map(j=>A[1][0]*B[0][j]+A[1][1]*B[1][j]+A[1][2]*B[2][j]),
-              [0,1,2].map(j=>A[2][0]*B[0][j]+A[2][1]*B[1][j]+A[2][2]*B[2][j])];
-    const BA=[[0,1,2].map(j=>B[0][0]*A[0][j]+B[0][1]*A[1][j]+B[0][2]*A[2][j]),
-              [0,1,2].map(j=>B[1][0]*A[0][j]+B[1][1]*A[1][j]+B[1][2]*A[2][j]),
-              [0,1,2].map(j=>B[2][0]*A[0][j]+B[2][1]*A[1][j]+B[2][2]*A[2][j])];
+  let al=48,kk=.7;
+  function up(){
+    const a=d2r(al),A=[[Math.cos(a),-Math.sin(a),0],[Math.sin(a),Math.cos(a),0],[0,0,1]],B=[[1,kk,0],[0,1,0],[0,0,1]];
+    const AB=A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+    const BA=B.map(r=>[0,1,2].map(j=>r[0]*A[0][j]+r[1]*A[1][j]+r[2]*A[2][j]));
     cAB.matrix.copy(m4(AB));cBA.matrix.copy(m4(BA));
     renderMat($('ro-AB'),AB);renderMat($('ro-BA'),BA);
     let diff=0;for(let i=0;i<3;i++)for(let j=0;j<3;j++)diff+=Math.abs(AB[i][j]-BA[i][j]);
     $('cpbadge').textContent=diff>.02?'AB ≠ BA':'AB = BA (degenerate case)';
     $('cpbadge').className=diff>.02?'badge-neq':'badge-eq';
   }
-  let al=48,kk=.7;
-  bindR('cpa',null,v=>{al=v;up(al,kk);},v=>fmt(v,0)+'°');
-  bindR('cpk',null,v=>{kk=v;up(al,kk);});
-  up(al,kk);
-})();
+  bindR('cpa',null,v=>{al=v;up();},v=>fmt(v,0)+'°');
+  bindR('cpk',null,v=>{kk=v;up();});
+  up();
+});
 
 /* ================= PLATE VIII — DETERMINANT ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-det',7.8,1.9);
-  const ghost=mappedCube(null,C.faint);S.world.add(ghost);
+  S.world.add(mappedCube(null,C.faint));
   const cube=mappedCube(C.amber,C.amber,.42);S.world.add(cube);
   const dyn=new THREE.Group();S.world.add(dyn);
-  function up(s1,s2,s3,k){
-    const M=[[s1,k,0],[0,s2,0],[0,0,s3]];
+  const s={s1:1.4,s2:.8,s3:1.15,k:.5};
+  function up(){
+    const M=[[s.s1,s.k,0],[0,s.s2,0],[0,0,s.s3]];
     cube.matrix.copy(m4(M));
     clearGroup(dyn);
     arrow(dyn,[0,0,0],[M[0][0],M[1][0],M[2][0]],C.coral);
@@ -1183,32 +1183,25 @@ if(HAS3D)(function(){
     $('detv').textContent='det M = '+fmt(d);
     $('volv').textContent='volume = |det M| = '+fmt(Math.abs(d));
   }
-  let s={s1:1.4,s2:.8,s3:1.15,k:.5};
-  const go=()=>up(s.s1,s.s2,s.s3,s.k);
-  bindR('ds1',null,v=>{s.s1=v;go();});bindR('ds2',null,v=>{s.s2=v;go();});
-  bindR('ds3',null,v=>{s.s3=v;go();});bindR('dk',null,v=>{s.k=v;go();});
-  go();
-})();
+  bindR('ds1',null,v=>{s.s1=v;up();});bindR('ds2',null,v=>{s.s2=v;up();});
+  bindR('ds3',null,v=>{s.s3=v;up();});bindR('dk',null,v=>{s.k=v;up();});
+  up();
+});
 
 /* ================= PLATE IX — SPHERE METRIC ================= */
-if(HAS3D)(function(){
+if(HAS3D)safe(function(){
   const S=make3D('cv-sph',4.7,1.1,.05);
-  const sph=new THREE.Mesh(new THREE.SphereGeometry(1,32,22),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.14}));
-  S.world.add(sph);
+  S.world.add(new THREE.Mesh(new THREE.SphereGeometry(1,32,22),new THREE.MeshBasicMaterial({color:C.ghost,wireframe:true,transparent:true,opacity:.14})));
   const dyn=new THREE.Group();S.world.add(dyn);
-  function P(th,ph){return [Math.sin(th)*Math.cos(ph),Math.cos(th),Math.sin(th)*Math.sin(ph)];}
+  const P=(th,ph)=>[Math.sin(th)*Math.cos(ph),Math.cos(th),Math.sin(th)*Math.sin(ph)];
   function up(thDeg){
     const th=d2r(thDeg),dphi=Math.PI/2;clearGroup(dyn);
-    // full latitude ring
     const ringPts=[];for(let i=0;i<=96;i++)ringPts.push(V(P(th,i/96*Math.PI*2)));
     dyn.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts),new THREE.LineBasicMaterial({color:0x7fa8c9,transparent:true,opacity:.5})));
-    // highlighted arc (tube)
     const arcPts=[];for(let i=0;i<=32;i++)arcPts.push(V(P(th,i/32*dphi)));
-    const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts),48,.02,8),new THREE.MeshBasicMaterial({color:C.amber}));
-    dyn.add(tube);
-    const p0=P(th,0);dyn.add(new THREE.Mesh(new THREE.SphereGeometry(.035,12,10),new THREE.MeshBasicMaterial({color:C.coral}))).children;
-    const marker=dyn.children[dyn.children.length-1];marker.position.set(p0[0],p0[1],p0[2]);
-    // tangent frame at arc midpoint
+    dyn.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts),48,.02,8),new THREE.MeshBasicMaterial({color:C.amber})));
+    const p0=P(th,0),marker=new THREE.Mesh(new THREE.SphereGeometry(.035,12,10),new THREE.MeshBasicMaterial({color:C.coral}));
+    marker.position.set(p0[0],p0[1],p0[2]);dyn.add(marker);
     const phm=dphi/2,pm=P(th,phm);
     const eth=[Math.cos(th)*Math.cos(phm),-Math.sin(th),Math.cos(th)*Math.sin(phm)];
     const eph=[-Math.sin(th)*Math.sin(phm),0,Math.sin(th)*Math.cos(phm)];
@@ -1216,13 +1209,13 @@ if(HAS3D)(function(){
     arrow(dyn,pm,pm.map((x,j)=>x+eph[j]),C.amber,.12,.05);
     const lt=label('e_θ','#9cc8ff',.5);lt.position.set(pm[0]+eth[0]*.75,pm[1]+eth[1]*.75,pm[2]+eth[2]*.75);dyn.add(lt);
     const lp=label('e_φ','#ffd166',.5);lp.position.set(pm[0]+eph[0]*1.3,pm[1]+eph[1]*1.3,pm[2]+eph[2]*1.3);dyn.add(lp);
-    const s=Math.sin(th);
-    $('sph-sin').textContent='sin θ = '+fmt(s);
-    $('sph-gpp').textContent='g_φφ = sin²θ = '+fmt(s*s);
-    $('sph-len').textContent='arc(Δφ = 90°) = sinθ·Δφ = '+fmt(s*dphi,3);
+    const sn=Math.sin(th);
+    $('sph-sin').textContent='sin θ = '+fmt(sn);
+    $('sph-gpp').textContent='g_φφ = sin²θ = '+fmt(sn*sn);
+    $('sph-len').textContent='arc(Δφ = 90°) = sinθ·Δφ = '+fmt(sn*dphi,3);
   }
   bindR('spth',null,up,v=>fmt(v,0)+'°');
-})();
+});
 
 /* ---------- 2-D canvas framework ---------- */
 function make2D(id){
@@ -1250,22 +1243,25 @@ function dragify(P,getTip,setPos){
 }
 
 /* ================= PLATE X — METRIC ON THE PLANE ================= */
-(function(){
+safe(function(){
   const P=make2D('cv-metric');const st={g11:1.5,g12:.55,g22:.9};let dx=[1.05,.55];
-  function G(){const det=st.g11*st.g22-st.g12*st.g12;let g12=st.g12;if(det<.08){g12=Math.sign(g12||1)*Math.sqrt(Math.max(0,st.g11*st.g22-.08));$('mg12').value=g12;st.g12=g12;return [[st.g11,g12],[g12,st.g22]];}return [[st.g11,st.g12],[st.g12,st.g22]];}
+  function G(){
+    let det=st.g11*st.g22-st.g12*st.g12;
+    if(det<.08){const g12=Math.sign(st.g12||1)*Math.sqrt(Math.max(0,st.g11*st.g22-.08));
+      $('mg12').value=g12;const o=$('mg12v');if(o)o.textContent=fmt(g12);st.g12=g12;}
+    return [[st.g11,st.g12],[st.g12,st.g22]];
+  }
   P.draw=function(){
     const w=P.cv.clientWidth,h=P.cv.clientHeight,cx0=w/2,cy0=h/2,sc=Math.min(w,h)/6.4;
-    const X=(p)=>[cx0+p[0]*sc,cy0-p[1]*sc];
+    const X=p=>[cx0+p[0]*sc,cy0-p[1]*sc];
     P.ctx.clearRect(0,0,w,h);
     P.ctx.strokeStyle='rgba(90,140,190,.14)';P.ctx.lineWidth=1;
     for(let i=-6;i<=6;i++){P.ctx.beginPath();P.ctx.moveTo(cx0+i*sc*.5,0);P.ctx.lineTo(cx0+i*sc*.5,h);P.ctx.stroke();
       P.ctx.beginPath();P.ctx.moveTo(0,cy0+i*sc*.5);P.ctx.lineTo(w,cy0+i*sc*.5);P.ctx.stroke();}
     const g=G();
-    // Euclidean unit circle
     P.ctx.setLineDash([5,5]);P.ctx.strokeStyle='rgba(160,180,200,.5)';P.ctx.beginPath();
     for(let i=0;i<=64;i++){const a=i/64*Math.PI*2,p=X([Math.cos(a),Math.sin(a)]);i?P.ctx.lineTo(p[0],p[1]):P.ctx.moveTo(p[0],p[1]);}
     P.ctx.stroke();P.ctx.setLineDash([]);
-    // metric unit ellipse via eigen
     const tr=g[0][0]+g[1][1],dd=Math.sqrt(Math.max(0,tr*tr/4-(g[0][0]*g[1][1]-g[0][1]*g[0][1])));
     const l1=tr/2+dd,l2=Math.max(1e-6,tr/2-dd),ph=.5*Math.atan2(2*g[0][1],g[0][0]-g[1][1]);
     P.ctx.strokeStyle='#ffb703';P.ctx.lineWidth=2.4;P.ctx.beginPath();
@@ -1278,10 +1274,10 @@ function dragify(P,getTip,setPos){
     const t2=X(dx);arrow2(P.ctx,cx0,cy0,t2[0],t2[1],'#ff5d5d',3,12);
     P.ctx.beginPath();P.ctx.arc(t2[0],t2[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
     txt2(P.ctx,'dx',t2[0]+12,t2[1]-10,'#ff8f8f',14);
-    txt2(P.ctx,'g-unit circle',X([0,0])[0]+8,h-14,'#7fa8c9',11);
+    txt2(P.ctx,'amber = metric unit circle · dashed = Euclidean',10,h-12,'#7fa8c9',11);
     const ds2=g[0][0]*dx[0]*dx[0]+2*g[0][1]*dx[0]*dx[1]+g[1][1]*dx[1]*dx[1];
     $('mdx').textContent='dx = ('+fmt(dx[0])+', '+fmt(dx[1])+')';
-    $('mds2').textContent='ds² = gᵢⱼdxⁱdxʲ = '+fmt(ds2);
+    $('mds2').textContent='ds² = gᵢⱼdxdxʲ = '+fmt(ds2);
     $('mds').textContent='ds = '+fmt(Math.sqrt(Math.max(0,ds2)));
     $('meu').textContent='‖dx‖ Euclid = '+fmt(Math.hypot(dx[0],dx[1]));
   };
@@ -1289,74 +1285,72 @@ function dragify(P,getTip,setPos){
     (x,y)=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/6.4;dx=[(x-w/2)/sc,(h/2-y)/sc];});
   const go=()=>{st.g11=+$('mg11').value;st.g12=+$('mg12').value;st.g22=+$('mg22').value;P.redraw();};
   bindR('mg11',null,go);bindR('mg12',null,go);bindR('mg22',null,go);
-  P.draw();
-})();
+  P.redraw();
+});
 
 /* ================= PLATE XI — RECIPROCAL BASIS ================= */
-(function(){
+safe(function(){
   const P=make2D('cv-recip');const st={ang:64,len:1.05};let v=[0.85,0.95];
-  function basis(){const a=d2r(st.ang);return [[1,0],[st.len*Math.cos(a),st.len*Math.sin(a)]];}
   P.draw=function(){
     const w=P.cv.clientWidth,h=P.cv.clientHeight,cx0=w/2-40,cy0=h/2+20,sc=Math.min(w,h)/4.6;
     const X=p=>[cx0+p[0]*sc,cy0-p[1]*sc];
     P.ctx.clearRect(0,0,w,h);
-    const [e1,e2]=basis();
-    const det=e1[0]*e2[1]-e1[1]*e2[0];
-    const iE=[[e2[1]/det,-e2[0]/det],[-e1[1]/det,e1[0]/det]];      // E^-1 (rows)
-    const r1=[iE[0][0],iE[0][1]],r2=[iE[1][0],iE[1][1]];           // reciprocal = rows of E^-1
-    // oblique grid
+    const a=d2r(st.ang),e1=[1,0],e2=[st.len*Math.cos(a),st.len*Math.sin(a)];
+    const det=e1[0]*e2[1]-e1[1]*e2[0]||1e-9;
+    const iE=[[e2[1]/det,-e2[0]/det],[-e1[1]/det,e1[0]/det]];
+    const r1=iE[0],r2=iE[1];
     P.ctx.strokeStyle='rgba(90,140,190,.13)';P.ctx.lineWidth=1;
     for(let i=-4;i<=4;i++){
       let p=X([e1[0]*i+e2[0]*-4,e1[1]*i+e2[1]*-4]),q=X([e1[0]*i+e2[0]*4,e1[1]*i+e2[1]*4]);
       P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
       p=X([e2[0]*i+e1[0]*-4,e2[1]*i+e1[1]*-4]);q=X([e2[0]*i+e1[0]*4,e2[1]*i+e1[1]*4]);
       P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();}
-    // contravariant construction (parallelogram)
-    const vc=[iE[0][0]*v[0]+iE[0][1]*v[1],iE[1][0]*v[0]+iE[1][1]*v[1]]; // v^i
+    const vc=[iE[0][0]*v[0]+iE[0][1]*v[1],iE[1][0]*v[0]+iE[1][1]*v[1]];
+    const tip=X(v);
     P.ctx.setLineDash([6,5]);P.ctx.strokeStyle='rgba(255,183,3,.55)';
-    let p=X(v),q=X([e1[0]*vc[0],e1[1]*vc[0]]);
-    P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
+    let q=X([e1[0]*vc[0],e1[1]*vc[0]]);
+    P.ctx.beginPath();P.ctx.moveTo(tip[0],tip[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
     q=X([e2[0]*vc[1],e2[1]*vc[1]]);
-    P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
-    // covariant feet
+    P.ctx.beginPath();P.ctx.moveTo(tip[0],tip[1]);P.ctx.lineTo(q[0],q[1]);P.ctx.stroke();
     if($('rcC').checked){
       P.ctx.strokeStyle='rgba(90,169,255,.6)';
-      const f=(e)=>{const d=v[0]*e[0]+v[1]*e[1];return [e[0]*d,e[1]*d];};
-      let fp=X(f(e1));P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(fp[0],fp[1]);P.ctx.stroke();
-      fp=X(f(e2));P.ctx.beginPath();P.ctx.moveTo(p[0],p[1]);P.ctx.lineTo(fp[0],fp[1]);P.ctx.stroke();}
+      const f=e=>{const d=v[0]*e[0]+v[1]*e[1];return [e[0]*d,e[1]*d];};
+      let fp=X(f(e1));P.ctx.beginPath();P.ctx.moveTo(tip[0],tip[1]);P.ctx.lineTo(fp[0],fp[1]);P.ctx.stroke();
+      fp=X(f(e2));P.ctx.beginPath();P.ctx.moveTo(tip[0],tip[1]);P.ctx.lineTo(fp[0],fp[1]);P.ctx.stroke();}
     P.ctx.setLineDash([]);
-    // basis + reciprocal arrows
     let t=X(e1);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ffb703',3,11);txt2(P.ctx,'e₁',t[0]+10,t[1]+8,'#ffd166',14);
     t=X(e2);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ffb703',3,11);txt2(P.ctx,'e₂',t[0]+10,t[1]-6,'#ffd166',14);
     if($('rcR').checked){
       t=X(r1);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#2dd4bf',2.4,10);txt2(P.ctx,'e¹',t[0]+10,t[1],'#7ff0dd',14);
       t=X(r2);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#2dd4bf',2.4,10);txt2(P.ctx,'e²',t[0]+10,t[1],'#7ff0dd',14);}
-    t=X(v);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ff5d5d',3,12);
-    P.ctx.beginPath();P.ctx.arc(t[0],t[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
-    txt2(P.ctx,'v',t[0]+12,t[1]-10,'#ff8f8f',15);
-    const vl=[e1[0]*v[0]+e1[1]*v[1],e2[0]*v[0]+e2[1]*v[1]]; // covariant v_i = E^T v
+    arrow2(P.ctx,cx0,cy0,tip[0],tip[1],'#ff5d5d',3,12);
+    P.ctx.beginPath();P.ctx.arc(tip[0],tip[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
+    txt2(P.ctx,'v',tip[0]+12,tip[1]-10,'#ff8f8f',15);
+    const vl=[e1[0]*v[0]+e1[1]*v[1],e2[0]*v[0]+e2[1]*v[1]];
     $('rvup').textContent='vⁱ = ('+fmt(vc[0])+', '+fmt(vc[1])+')';
     $('rvlo').textContent='vᵢ = ('+fmt(vl[0])+', '+fmt(vl[1])+')';
     $('rcheck').textContent='eⁱ·eⱼ = δⁱⱼ ✓ (err ≈ '+Math.abs(r1[0]*e2[0]+r1[1]*e2[1]).toExponential(1)+')';
     const g=[[e1[0]*e1[0]+e1[1]*e1[1],e1[0]*e2[0]+e1[1]*e2[1]],[e1[0]*e2[0]+e1[1]*e2[1],e2[0]*e2[0]+e2[1]*e2[1]]];
-    const gu=inv2(g);
-    renderMat($('rgd'),g);renderMat($('rgup'),gu);
+    renderMat($('rgd'),g);renderMat($('rgup'),inv2(g));
   };
   dragify(P,()=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/4.6;return [w/2-40+v[0]*sc,h/2+20-v[1]*sc];},
     (x,y)=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/4.6;v=[(x-(w/2-40))/sc,(h/2+20-y)/sc];});
   bindR('rcang',null,()=>{st.ang=+$('rcang').value;P.redraw();},v=>fmt(v,0)+'°');
   bindR('rclen',null,()=>{st.len=+$('rclen').value;P.redraw();});
-  $('rcR').addEventListener('change',P.redraw);$('rcC').addEventListener('change',P.redraw);
-  P.draw();
-})();
+  $('rcR').addEventListener('change',()=>P.redraw());$('rcC').addEventListener('change',()=>P.redraw());
+  P.redraw();
+});
 
 /* ================= PLATE XII — ASSOCIATED TENSORS ================= */
-(function(){
+safe(function(){
   const P=make2D('cv-assoc');const st={g11:2,g12:.4,g22:1};let v=[1.0,0.7];
   const Ac=[[2,1],[1,3]];
-  function G(){const det=st.g11*st.g22-st.g12*st.g12;let g12=st.g12;
-    if(det<.1){g12=Math.sign(g12||1)*Math.sqrt(Math.max(0,st.g11*st.g22-.1));$('as12').value=g12;st.g12=g12;}
-    return [[st.g11,st.g12],[st.g12,st.g22]];}
+  function G(){
+    let det=st.g11*st.g22-st.g12*st.g12;
+    if(det<.1){const g12=Math.sign(st.g12||1)*Math.sqrt(Math.max(0,st.g11*st.g22-.1));
+      $('as12').value=g12;const o=$('as12v');if(o)o.textContent=fmt(g12);st.g12=g12;}
+    return [[st.g11,st.g12],[st.g12,st.g22]];
+  }
   P.draw=function(){
     const w=P.cv.clientWidth,h=P.cv.clientHeight,cx0=w/2,cy0=h/2,sc=Math.min(w,h)/5.6;
     const X=p=>[cx0+p[0]*sc,cy0-p[1]*sc];
@@ -1364,29 +1358,27 @@ function dragify(P,getTip,setPos){
     P.ctx.strokeStyle='rgba(90,140,190,.13)';P.ctx.lineWidth=1;
     for(let i=-8;i<=8;i++){P.ctx.beginPath();P.ctx.moveTo(cx0+i*sc*.5,0);P.ctx.lineTo(cx0+i*sc*.5,h);P.ctx.stroke();
       P.ctx.beginPath();P.ctx.moveTo(0,cy0+i*sc*.5);P.ctx.lineTo(w,cy0+i*sc*.5);P.ctx.stroke();}
-    const g=G(),om=mv2(g,v);                        // ωᵢ = gᵢⱼ vʲ
+    const g=G(),om=mv2(g,v);
     const on=Math.hypot(om[0],om[1])||1e-9;
-    const dir=[-om[1]/on,om[0]/on],sp=1/on;         // level spacing in world units
+    const dir=[-om[1]/on,om[0]/on],sp=1/on;
     P.ctx.strokeStyle='rgba(45,212,191,.75)';P.ctx.lineWidth=1.6;
     const n=Math.ceil(4/sp);
     for(let k=-n;k<=n;k++){
-      const off=k*sp,p0=[dir[0]*(-4)+om[0]/on*off*on/on? 0:0];void p0;
-      const bx=dir[0]*-4+ (om[0]/on)*off, by=dir[1]*-4+(om[1]/on)*off;
+      const off=k*sp;
+      const bx=(om[0]/on)*off+dir[0]*-4, by=(om[1]/on)*off+dir[1]*-4;
       const p1=X([bx,by]),p2=X([bx+dir[0]*8,by+dir[1]*8]);
       P.ctx.globalAlpha=k===0?.95:.55;
       P.ctx.beginPath();P.ctx.moveTo(p1[0],p1[1]);P.ctx.lineTo(p2[0],p2[1]);P.ctx.stroke();}
     P.ctx.globalAlpha=1;
-    // ω arrow (blue)
     let t=X([om[0]*.55,om[1]*.55]);
     P.ctx.setLineDash([4,4]);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#5aa9ff',2,9);P.ctx.setLineDash([]);
     txt2(P.ctx,'ωᵢ = gᵢⱼvʲ',t[0]+10,t[1]+12,'#9cc8ff',12);
-    // v arrow
     t=X(v);arrow2(P.ctx,cx0,cy0,t[0],t[1],'#ff5d5d',3,12);
     P.ctx.beginPath();P.ctx.arc(t[0],t[1],9,0,7);P.ctx.fillStyle='rgba(255,93,93,.25)';P.ctx.fill();
     txt2(P.ctx,'vⁱ',t[0]+12,t[1]-10,'#ff8f8f',14);
     $('avup').textContent='vⁱ = '+vecStr(v);
     $('avlo').textContent='vᵢ = '+vecStr(om);
-    $('anorm').textContent='‖v‖²_g = vᵢvⁱ = '+fmt(om[0]*v[0]+om[1]*v[1]);
+    $('anorm').textContent='‖v‖²_g = vᵢv = '+fmt(om[0]*v[0]+om[1]*v[1]);
     renderMat($('roAc'),Ac);
     renderMat($('roAm'),mm2(inv2(g),Ac));
   };
@@ -1394,8 +1386,8 @@ function dragify(P,getTip,setPos){
     (x,y)=>{const w=P.cv.clientWidth,h=P.cv.clientHeight,sc=Math.min(w,h)/5.6;v=[(x-w/2)/sc,(h/2-y)/sc];});
   const go=()=>{st.g11=+$('as11').value;st.g12=+$('as12').value;st.g22=+$('as22').value;P.redraw();};
   bindR('as11',null,go);bindR('as12',null,go);bindR('as22',null,go);
-  P.draw();
-})();
+  P.redraw();
+});
 
 })();
 </script>

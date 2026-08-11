@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indeterminate Forms & L'Hôpital 3D Visual Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .math-panel { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+        .canvas-container { background: #0a0a0a; }
+        .badge-indeterminate { background: #dc2626; color: white; }
+        .badge-resolved { background: #16a34a; color: white; }
+        .badge-convergence { background: #eab308; color: #1a1a2e; }
+        .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; }
+        .slider-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #3b82f6; cursor: pointer; border-radius: 50%; }
+        .step-card { border-left: 3px solid #3b82f6; }
+        .step-card.active { border-left-color: #eab308; }
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .katex-display { margin: 0.5em 0; }
+        .control-group { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-xl font-bold">∂</div>
+            <div>
+                <h1 class="text-xl font-bold text-white">Indeterminate Forms & L'Hôpital 3D Visual Lab</h1>
+                <p class="text-xs text-gray-400">Interactive Mathematical Sandbox</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 flex-wrap">
+            <select id="moduleSelector" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">1. 0/0 Form & L'Hôpital's First Rule</option>
+                <option value="1">2. ∞/∞ Form & L'Hôpital's Second Rule</option>
+                <option value="2">3. Indeterminate Product (0 · ∞)</option>
+                <option value="3">4. Indeterminate Difference (∞ − ∞)</option>
+                <option value="4">5. Indeterminate Power (0⁰)</option>
+                <option value="5">6. Indeterminate Power (1^∞)</option>
+                <option value="6">7. Indeterminate Power (∞⁰)</option>
+            </select>
+            <select id="presetSelector" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="default">Default Example</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-0">
+        <!-- Left Panel: 3D Canvas -->
+        <div class="canvas-container relative flex flex-col">
+            <div id="canvas-wrapper" class="flex-1 relative min-h-[400px] lg:min-h-0">
+                <div id="loading-overlay"><div class="text-blue-400 text-lg font-semibold">Initializing 3D Engine...</div></div>
+            </div>
+            <!-- Canvas Controls Overlay -->
+            <div class="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-3 bg-gray-900/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700">
+                <button id="playBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">▶ Play</button>
+                <button id="pauseBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition hidden">⏸ Pause</button>
+                <button id="resetBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">↺ Reset</button>
+                <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <span class="text-xs text-gray-400 whitespace-nowrap">x → a</span>
+                    <input type="range" id="scrubSlider" min="0" max="1000" value="0" class="slider-thumb flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <span id="scrubValue" class="text-xs text-blue-400 font-mono w-16 text-right">0.000</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400">Speed</span>
+                    <input type="range" id="speedSlider" min="1" max="10" value="3" class="slider-thumb w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <button id="toggleGrid" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition">Grid</button>
+                <button id="toggleAxes" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition">Axes</button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Mathematical Explanation -->
+        <div class="math-panel overflow-y-auto p-6 space-y-6">
+            <!-- Current State -->
+            <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-semibold text-white">Current Limit</h2>
+                    <span id="indeterminateBadge" class="badge-indeterminate px-3 py-1 rounded-full text-xs font-bold">INDETERMINATE</span>
+                </div>
+                <div id="limitExpression" class="text-2xl text-center py-3"></div>
+                <div class="flex items-center justify-center gap-4 mt-3">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400 mb-1">Direct Substitution</div>
+                        <div id="directSub" class="text-red-400 font-mono text-lg"></div>
+                    </div>
+                    <div class="text-gray-600">→</div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400 mb-1">Limit Value</div>
+                        <div id="limitValue" class="text-yellow-400 font-mono text-lg font-bold"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transformation Step -->
+            <div id="transformationSection" class="step-card bg-gray-800/30 rounded-xl p-5 pl-6">
+                <h3 class="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3">Transformation</h3>
+                <div id="transformationContent" class="space-y-2"></div>
+            </div>
+
+            <!-- L'Hôpital Application -->
+            <div id="lhopitalSection" class="step-card bg-gray-800/30 rounded-xl p-5 pl-6">
+                <h3 class="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3">L'Hôpital's Rule</h3>
+                <div id="lhopitalContent" class="space-y-3"></div>
+            </div>
+
+            <!-- Step-by-Step Evaluation -->
+            <div class="step-card active bg-gray-800/30 rounded-xl p-5 pl-6">
+                <h3 class="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3">Step-by-Step Evaluation</h3>
+                <div id="stepsContent" class="space-y-3"></div>
+            </div>
+
+            <!-- Visual Legend -->
+            <div class="bg-gray-800/30 rounded-xl p-4 border border-gray-700">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Visual Legend</h3>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span> Original Function</div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span> Derivative / Tangent</div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Limit Convergence</div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Approach Path</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==================== GLOBAL STATE ====================
+        let currentModule = 0;
+        let isPlaying = false;
+        let animationId = null;
+        let scrubProgress = 0;
+        let animationSpeed = 3;
+        let showGrid = true;
+        let showAxes = true;
+        let scene, camera, renderer, controls;
+        let tracerParticle, limitPoint;
+        let currentSceneObjects = [];
+        let gridHelper, axesHelper;
+
+        // ==================== MODULE CONFIGURATIONS ====================
+        const modules = [
+            {
+                name: "0/0 Form & L'Hôpital's First Rule",
+                limit: "\\lim_{x \to 0} \frac{\sin x}{x}",
+                directSub: "\frac{\sin 0}{0} = \frac{0}{0}",
+                limitValue: "1",
+                transformation: [
+                    "Both \(f(x) = \sin x\) and \(g(x) = x\) approach 0.",
+                    "This is the indeterminate form \(\frac{0}{0}\).",
+                    "Apply L'Hôpital's Rule: take derivatives of numerator and denominator."
+                ],
+                lhopital: [
+                    "\(f'(x) = \cos x\)",
+                    "\(g'(x) = 1\)",
+                    "\(\lim_{x \to 0} \frac{\cos x}{1} = \frac{\cos 0}{1} = 1\)"
+                ],
+                steps: [
+                    "Step 1: Verify \(f(0) = g(0) = 0\) ✓",
+                    "Step 2: Check differentiability near 0 ✓",
+                    "Step 3: Apply L'Hôpital: \(\frac{f'(x)}{g'(x)} = \frac{\cos x}{1}\)",
+                    "Step 4: Evaluate: \(\cos(0) / 1 = 1\)"
+                ],
+                f: (x) => Math.sin(x),
+                g: (x) => x,
+                fp: (x) => Math.cos(x),
+                gp: (x) => 1,
+                ratio: (x) => x === 0 ? 1 : Math.sin(x) / x,
+                a: 0,
+                xRange: [-3, 3],
+                yRange: [-2, 2],
+                zRange: [-1, 3],
+                approach: 'both'
+            },
+            {
+                name: "∞/∞ Form & L'Hôpital's Second Rule",
+                limit: "\\lim_{x \to \infty} \frac{e^x}{x^2}",
+                directSub: "\frac{\infty}{\infty}",
+                limitValue: "\infty",
+                transformation: [
+                    "Both \(f(x) = e^x\) and \(g(x) = x^2\) diverge to \(\infty\).",
+                    "This is the indeterminate form \(\frac{\infty}{\infty}\).",
+                    "Exponential growth \(e^x\) dominates polynomial \(x^2\)."
+                ],
+                lhopital: [
+                    "\(f'(x) = e^x\)",
+                    "\(g'(x) = 2x\)",
+                    "\(\lim_{x \to \infty} \frac{e^x}{2x} = \infty\) — still \(\frac{\infty}{\infty}\)",
+                    "Apply again: \(\frac{e^x}{2} \to \infty\)"
+                ],
+                steps: [
+                    "Step 1: Verify both functions \to \infty ✓",
+                    "Step 2: First L'Hôpital: \(\frac{e^x}{2x}\)",
+                    "Step 3: Still \(\infty/\infty\), apply again",
+                    "Step 4: \(\frac{e^x}{2} \to \infty\) — exponential wins!"
+                ],
+                f: (x) => Math.exp(x),
+                g: (x) => x * x,
+                fp: (x) => Math.exp(x),
+                gp: (x) => 2 * x,
+                ratio: (x) => Math.exp(x) / (x * x),
+                a: Infinity,
+                xRange: [0.1, 5],
+                yRange: [0, 150],
+                zRange: [0, 50],
+                approach: 'right',
+                isInfinity: true
+            },
+            {
+                name: "Indeterminate Product (0 · ∞)",
+                limit: "\\lim_{x \to 0^+} x \ln(x)",
+                directSub: "0 \cdot (-\infty)",
+                limitValue: "0",
+                transformation: [
+                    "Rewrite as quotient: \(x \ln x = \frac{\ln x}{1/x}\)",
+                    "Now we have \(\frac{-\infty}{\infty}\), apply L'Hôpital.",
+                    "Or: \(\frac{x}{1/\ln x} = \frac{0}{0}\)"
+                ],
+                lhopital: [
+                    "Rewrite: \(\lim_{x \to 0^+} \frac{\ln x}{1/x}\)",
+                    "\(f'(x) = 1/x\)",
+                    "\(g'(x) = -1/x^2\)",
+                    "\(\frac{1/x}{-1/x^2} = -x \to 0\)"
+                ],
+                steps: [
+                    "Step 1: Identify form: \(0 \cdot (-\infty)\)",
+                    "Step 2: Transform to \(\frac{\ln x}{1/x}\)",
+                    "Step 3: Apply L'Hôpital: \(\frac{1/x}{-1/x^2} = -x\)",
+                    "Step 4: \(-0 = 0\)"
+                ],
+                f: (x) => x,
+                g: (x) => Math.log(x),
+                product: (x) => x * Math.log(x),
+                a: 0,
+                xRange: [0.01, 2],
+                yRange: [-3, 1],
+                zRange: [-2, 1],
+                approach: 'right',
+                isProduct: true
+            },
+            {
+                name: "Indeterminate Difference (∞ − ∞)",
+                limit: "\\lim_{x \to 0} \left( \frac{1}{\sin x} - \frac{1}{x} \right)",
+                directSub: "\infty - \infty",
+                limitValue: "0",
+                transformation: [
+                    "Combine fractions: \(\frac{x - \sin x}{x \sin x}\)",
+                    "Now we have \(\frac{0}{0}\) as \(x \to 0\).",
+                    "Apply L'Hôpital's Rule."
+                ],
+                lhopital: [
+                    "Numerator: \(x - \sin x \to 1 - \cos x\)",
+                    "Denominator: \(x \sin x \to \sin x + x \cos x\)",
+                    "Still \(\frac{0}{0}\), apply again...",
+                    "\(\frac{\sin x}{2\cos x - x\sin x} \to \frac{0}{2} = 0\)"
+                ],
+                steps: [
+                    "Step 1: Common denominator: \(\frac{x - \sin x}{x \sin x}\)",
+                    "Step 2: Verify \(\frac{0}{0}\) form ✓",
+                    "Step 3: First derivative: \(\frac{1 - \cos x}{\sin x + x \cos x}\)",
+                    "Step 4: Second derivative gives 0"
+                ],
+                f: (x) => 1 / Math.sin(x),
+                g: (x) => 1 / x,
+                diff: (x) => (1 / Math.sin(x)) - (1 / x),
+                a: 0,
+                xRange: [-1, 1],
+                yRange: [-10, 10],
+                zRange: [-5, 5],
+                approach: 'both',
+                isDifference: true
+            },
+            {
+                name: "Indeterminate Power (0⁰)",
+                limit: "\\lim_{x \to 0^+} x^x",
+                directSub: "0^0",
+                limitValue: "1",
+                transformation: [
+                    "Let \(y = x^x\), then \(\ln y = x \ln x\)",
+                    "We know \(\lim_{x \to 0^+} x \ln x = 0\)",
+                    "Therefore \(y = e^0 = 1\)"
+                ],
+                lhopital: [
+                    "\(\ln y = x \ln x = \frac{\ln x}{1/x}\)",
+                    "Apply L'Hôpital: \(\frac{1/x}{-1/x^2} = -x \to 0\)",
+                    "\(\ln y \to 0\), so \(y \to e^0 = 1\)"
+                ],
+                steps: [
+                    "Step 1: Let \(y = x^x\), take \(\ln\)",
+                    "Step 2: \(\ln y = x \ln x \to 0 \cdot (-\infty)\)",
+                    "Step 3: Transform to \(\frac{\ln x}{1/x}\)",
+                    "Step 4: L'Hôpital gives 0, so \(y = e^0 = 1\)"
+                ],
+                f: (x) => Math.pow(x, x),
+                a: 0,
+                xRange: [0.01, 1.5],
+                yRange: [0, 2],
+                zRange: [0, 2],
+                approach: 'right',
+                isPower: true,
+                powerType: '0^0'
+            },
+            {
+                name: "Indeterminate Power (1^∞)",
+                limit: "\\lim_{x \to \infty} \left(1 + \frac{2}{x}\right)^x",
+                directSub: "1^\infty",
+                limitValue: "e^2",
+                transformation: [
+                    "Let \(y = (1 + 2/x)^x\), then \(\ln y = x \ln(1 + 2/x)\)",
+                    "As \(x \to \infty\): \(\ln(1 + 2/x) \approx 2/x\)",
+                    "So \(x \cdot (2/x) = 2\), thus \(y = e^2\)"
+                ],
+                lhopital: [
+                    "\(\ln y = \frac{\ln(1 + 2/x)}{1/x}\)",
+                    "Derivative of num: \(\frac{-2/x^2}{1 + 2/x} = \frac{-2}{x^2 + 2x}\)",
+                    "Derivative of den: \(-1/x^2\)",
+                    "Ratio: \(\frac{2x^2}{x^2 + 2x} = \frac{2}{1 + 2/x} \to 2\)"
+                ],
+                steps: [
+                    "Step 1: Let \(y = (1 + 2/x)^x\), take \(\ln\)",
+                    "Step 2: \(\ln y = x \ln(1 + 2/x) = \frac{\ln(1+2/x)}{1/x}\)",
+                    "Step 3: Apply L'Hôpital's Rule",
+                    "Step 4: Limit of \(\ln y = 2\), so \(y = e^2\)"
+                ],
+                f: (x) => Math.pow(1 + 2/x, x),
+                a: Infinity,
+                xRange: [1, 50],
+                yRange: [0, 10],
+                zRange: [0, 10],
+                approach: 'right',
+                isPower: true,
+                powerType: '1^inf',
+                targetValue: Math.exp(2)
+            },
+            {
+                name: "Indeterminate Power (∞⁰)",
+                limit: "\\lim_{x \to \infty} x^{1/x}",
+                directSub: "\infty^0",
+                limitValue: "1",
+                transformation: [
+                    "Let \(y = x^{1/x}\), then \(\ln y = \frac{\ln x}{x}\)",
+                    "This is \(\frac{\infty}{\infty}\), apply L'Hôpital.",
+                    "\(\frac{1/x}{1} = \frac{1}{x} \to 0\), so \(y = e^0 = 1\)"
+                ],
+                lhopital: [
+                    "\(\ln y = \frac{\ln x}{x}\)",
+                    "\(f'(x) = 1/x\)",
+                    "\(g'(x) = 1\)",
+                    "\(\frac{1/x}{1} = \frac{1}{x} \to 0\)"
+                ],
+                steps: [
+                    "Step 1: Let \(y = x^{1/x}\), take \(\ln\)",
+                    "Step 2: \(\ln y = \frac{\ln x}{x} \to \frac{\infty}{\infty}\)",
+                    "Step 3: L'Hôpital: \(\frac{1/x}{1} = 1/x \to 0\)",
+                    "Step 4: \(y = e^0 = 1\)"
+                ],
+                f: (x) => Math.pow(x, 1/x),
+                a: Infinity,
+                xRange: [1, 50],
+                yRange: [0, 3],
+                zRange: [0, 3],
+                approach: 'right',
+                isPower: true,
+                powerType: 'inf^0'
+            }
+        ];
+
+        // ==================== THREE.JS SETUP ====================
+        function initThreeJS() {
+            const container = document.getElementById('canvas-wrapper');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+
+            camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+
+            // Grid and Axes
+            gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+            scene.add(gridHelper);
+
+            axesHelper = new THREE.AxesHelper(3);
+            scene.add(axesHelper);
+
+            // Tracer particle
+            const particleGeo = new THREE.SphereGeometry(0.08, 16, 16);
+            const particleMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
+            tracerParticle = new THREE.Mesh(particleGeo, particleMat);
+            scene.add(tracerParticle);
+
+            // Limit point marker
+            const limitGeo = new THREE.SphereGeometry(0.12, 16, 16);
+            const limitMat = new THREE.MeshBasicMaterial({ color: 0xeab308 });
+            limitPoint = new THREE.Mesh(limitGeo, limitMat);
+            scene.add(limitPoint);
+
+            document.getElementById('loading-overlay').style.display = 'none';
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-wrapper');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // ==================== SCENE BUILDERS ====================
+        function clearScene() {
+            currentSceneObjects.forEach(obj => scene.remove(obj));
+            currentSceneObjects = [];
+        }
+
+        function createCurve(points, color, linewidth = 2) {
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: color, linewidth: linewidth });
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            currentSceneObjects.push(line);
+            return line;
+        }
+
+        function createSurface(func, xRange, zRange, color, opacity = 0.3) {
+            const segments = 50;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const indices = [];
+
+            for (let i = 0; i <= segments; i++) {
+                for (let j = 0; j <= segments; j++) {
+                    const x = xRange[0] + (xRange[1] - xRange[0]) * (i / segments);
+                    const z = zRange[0] + (zRange[1] - zRange[0]) * (j / segments);
+                    const y = func(x, z);
+                    vertices.push(x, y, z);
+                }
+            }
+
+            for (let i = 0; i < segments; i++) {
+                for (let j = 0; j < segments; j++) {
+                    const a = i * (segments + 1) + j;
+                    const b = a + 1;
+                    const c = a + segments + 1;
+                    const d = c + 1;
+                    indices.push(a, b, c);
+                    indices.push(b, d, c);
+                }
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshPhongMaterial({
+                color: color,
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                wireframe: false
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            currentSceneObjects.push(mesh);
+            return mesh;
+        }
+
+        function createWireframeSurface(func, xRange, zRange, color) {
+            const segments = 30;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+
+            for (let i = 0; i <= segments; i++) {
+                for (let j = 0; j <= segments; j++) {
+                    const x = xRange[0] + (xRange[1] - xRange[0]) * (i / segments);
+                    const z = zRange[0] + (zRange[1] - zRange[0]) * (j / segments);
+                    const y = func(x, z);
+                    vertices.push(x, y, z);
+                }
+            }
+
+            const indices = [];
+            for (let i = 0; i < segments; i++) {
+                for (let j = 0; j < segments; j++) {
+                    const a = i * (segments + 1) + j;
+                    const b = a + 1;
+                    const c = a + segments + 1;
+                    const d = c + 1;
+                    indices.push(a, b, c, b, d, c);
+                }
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setIndex(indices);
+
+            const material = new THREE.MeshBasicMaterial({
+                color: color,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            currentSceneObjects.push(mesh);
+        }
+
+        function buildModule0() {
+            // 0/0: sin(x)/x
+            const mod = modules[0];
+            const pointsF = [];
+            const pointsG = [];
+            const pointsRatio = [];
+            const pointsTangentF = [];
+            const pointsTangentG = [];
+
+            for (let i = -50; i <= 50; i++) {
+                const x = i * 0.06;
+                pointsF.push(new THREE.Vector3(x, mod.f(x), 0));
+                pointsG.push(new THREE.Vector3(x, 0, mod.g(x)));
+                if (Math.abs(x) > 0.001) {
+                    pointsRatio.push(new THREE.Vector3(x, mod.ratio(x), 0));
+                }
+            }
+
+            // Tangent lines at x=0
+            for (let i = -30; i <= 30; i++) {
+                const x = i * 0.1;
+                pointsTangentF.push(new THREE.Vector3(x, mod.fp(0) * x, 0));
+                pointsTangentG.push(new THREE.Vector3(x, 0, mod.gp(0) * x));
+            }
+
+            createCurve(pointsF, 0xef4444);
+            createCurve(pointsG, 0x3b82f6);
+            createCurve(pointsRatio, 0xeab308);
+            createCurve(pointsTangentF, 0x22c55e);
+            createCurve(pointsTangentG, 0x22c55e);
+
+            // Surface z = f(x)/g(y)
+            createWireframeSurface((x, y) => {
+                if (Math.abs(y) < 0.01) return 1;
+                return Math.sin(x) / y;
+            }, [-2, 2], [-2, 2], 0x22c55e);
+
+            limitPoint.position.set(0, 1, 0);
+            camera.position.set(3, 3, 3);
+        }
+
+        function buildModule1() {
+            // ∞/∞: e^x / x^2
+            const mod = modules[1];
+            const pointsF = [];
+            const pointsG = [];
+            const pointsRatio = [];
+
+            for (let i = 1; i <= 100; i++) {
+                const x = i * 0.05;
+                const fx = mod.f(x);
+                const gx = mod.g(x);
+                pointsF.push(new THREE.Vector3(x, Math.min(fx / 10, 20), 0));
+                pointsG.push(new THREE.Vector3(x, Math.min(gx / 10, 20), 0));
+                pointsRatio.push(new THREE.Vector3(x, Math.min(fx / gx, 20), 0));
+            }
+
+            createCurve(pointsF, 0xef4444);
+            createCurve(pointsG, 0x3b82f6);
+            createCurve(pointsRatio, 0xeab308);
+
+            // Speed comparison vectors
+            for (let i = 10; i <= 80; i += 15) {
+                const x = i * 0.05;
+                const fp = mod.fp(x);
+                const gp = mod.gp(x);
+                const dir = new THREE.Vector3(0, (fp - gp) * 0.001, 0).normalize();
+                const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, mod.ratio(x) * 0.1, 0), 0.5, 0x22c55e);
+                scene.add(arrow);
+                currentSceneObjects.push(arrow);
+            }
+
+            limitPoint.position.set(5, 5, 0);
+            camera.position.set(5, 5, 5);
+        }
+
+        function buildModule2() {
+            // 0·∞: x·ln(x)
+            const mod = modules[2];
+            const pointsF = [];
+            const pointsG = [];
+            const pointsProduct = [];
+            const pointsTransformed = [];
+
+            for (let i = 1; i <= 100; i++) {
+                const x = 0.01 + i * 0.02;
+                pointsF.push(new THREE.Vector3(x, mod.f(x), 0));
+                pointsG.push(new THREE.Vector3(x, mod.g(x), 0));
+                pointsProduct.push(new THREE.Vector3(x, mod.product(x), 0));
+                // Transformed: ln(x) / (1/x)
+                pointsTransformed.push(new THREE.Vector3(x, mod.g(x) / (1/x), 0));
+            }
+
+            createCurve(pointsF, 0xef4444);
+            createCurve(pointsG, 0x3b82f6);
+            createCurve(pointsProduct, 0xeab308);
+            createCurve(pointsTransformed, 0x22c55e);
+
+            // Rectangle visualization at current x
+            const rectX = 0.5;
+            const rectH = mod.f(rectX);
+            const rectW = mod.g(rectX);
+            const rectPoints = [
+                new THREE.Vector3(rectX, 0, 0),
+                new THREE.Vector3(rectX, rectH, 0),
+                new THREE.Vector3(rectX, rectH, rectW),
+                new THREE.Vector3(rectX, 0, rectW),
+                new THREE.Vector3(rectX, 0, 0)
+            ];
+            createCurve(rectPoints, 0xa855f7);
+
+            limitPoint.position.set(0, 0, 0);
+            camera.position.set(2, 2, 2);
+        }
+
+        function buildModule3() {
+            // ∞-∞: 1/sin(x) - 1/x
+            const mod = modules[3];
+            const pointsF = [];
+            const pointsG = [];
+            const pointsDiff = [];
+            const pointsCombined = [];
+
+            for (let i = -80; i <= 80; i++) {
+                if (i === 0) continue;
+                const x = i * 0.0125;
+                pointsF.push(new THREE.Vector3(x, mod.f(x), 0));
+                pointsG.push(new THREE.Vector3(x, mod.g(x), 0));
+                const d = mod.diff(x);
+                if (Math.abs(d) < 10) {
+                    pointsDiff.push(new THREE.Vector3(x, d, 0));
+                }
+            }
+
+            createCurve(pointsF, 0xef4444);
+            createCurve(pointsG, 0x3b82f6);
+            createCurve(pointsDiff, 0xeab308);
+
+            // Surface z = f(x) - g(y)
+            createWireframeSurface((x, y) => {
+                if (Math.abs(x) < 0.01 || Math.abs(y) < 0.01) return 0;
+                return (1/Math.sin(x)) - (1/y);
+            }, [-1, 1], [-1, 1], 0x22c55e);
+
+            limitPoint.position.set(0, 0, 0);
+            camera.position.set(3, 3, 3);
+        }
+
+        function buildModule4() {
+            // 0^0: x^x
+            const mod = modules[4];
+            const pointsFunc = [];
+            const pointsLn = [];
+            const pointsExp = [];
+
+            for (let i = 1; i <= 100; i++) {
+                const x = 0.01 + i * 0.015;
+                const y = mod.f(x);
+                pointsFunc.push(new THREE.Vector3(x, y, 0));
+                pointsLn.push(new THREE.Vector3(x, Math.log(y), 0));
+                pointsExp.push(new THREE.Vector3(x, Math.exp(x * Math.log(x)), 0));
+            }
+
+            createCurve(pointsFunc, 0xef4444);
+            createCurve(pointsLn, 0x3b82f6);
+            createCurve(pointsExp, 0x22c55e);
+
+            // Surface z = x^y
+            createWireframeSurface((x, y) => {
+                if (x <= 0) return 0;
+                return Math.pow(x, y);
+            }, [0.01, 1.5], [-1, 1.5], 0xeab308);
+
+            // Path dependency lines
+            for (let k of [0.5, 1, 2]) {
+                const pathPoints = [];
+                for (let i = 1; i <= 50; i++) {
+                    const x = i * 0.02;
+                    const y = k * x;
+                    pathPoints.push(new THREE.Vector3(x, Math.pow(x, y), y));
+                }
+                createCurve(pathPoints, 0xa855f7);
+            }
+
+            limitPoint.position.set(0, 1, 0);
+            camera.position.set(2, 2, 2);
+        }
+
+        function buildModule5() {
+            // 1^∞: (1 + 2/x)^x
+            const mod = modules[5];
+            const pointsFunc = [];
+            const pointsLn = [];
+            const pointsTarget = [];
+
+            for (let i = 1; i <= 100; i++) {
+                const x = 1 + i * 0.5;
+                const y = mod.f(x);
+                pointsFunc.push(new THREE.Vector3(x, y, 0));
+                pointsLn.push(new THREE.Vector3(x, Math.log(y), 0));
+            }
+
+            // Target line at e^2
+            for (let i = 0; i <= 100; i++) {
+                pointsTarget.push(new THREE.Vector3(i * 0.5, Math.exp(2), 0));
+            }
+
+            createCurve(pointsFunc, 0xef4444);
+            createCurve(pointsLn, 0x3b82f6);
+            createCurve(pointsTarget, 0xeab308);
+
+            // Surface z = (1 + k/x)^x
+            createWireframeSurface((x, k) => {
+                if (x <= 0) return 0;
+                return Math.pow(1 + k/x, x);
+            }, [1, 20], [0.5, 3], 0x22c55e);
+
+            limitPoint.position.set(20, Math.exp(2), 0);
+            camera.position.set(15, 10, 10);
+        }
+
+        function buildModule6() {
+            // ∞^0: x^(1/x)
+            const mod = modules[6];
+            const pointsFunc = [];
+            const pointsLn = [];
+            const pointsTarget = [];
+
+            for (let i = 1; i <= 100; i++) {
+                const x = 1 + i * 0.5;
+                const y = mod.f(x);
+                pointsFunc.push(new THREE.Vector3(x, y, 0));
+                pointsLn.push(new THREE.Vector3(x, Math.log(y), 0));
+            }
+
+            for (let i = 0; i <= 100; i++) {
+                pointsTarget.push(new THREE.Vector3(i * 0.5, 1, 0));
+            }
+
+            createCurve(pointsFunc, 0xef4444);
+            createCurve(pointsLn, 0x3b82f6);
+            createCurve(pointsTarget, 0xeab308);
+
+            // Surface z = f(x)^g(y)
+            createWireframeSurface((x, y) => {
+                if (x <= 0) return 0;
+                return Math.pow(x, y);
+            }, [0.5, 10], [-0.5, 1], 0x22c55e);
+
+            limitPoint.position.set(20, 1, 0);
+            camera.position.set(15, 5, 10);
+        }
+
+        const builders = [buildModule0, buildModule1, buildModule2, buildModule3, buildModule4, buildModule5, buildModule6];
+
+        // ==================== UI UPDATES ====================
+        function updateMathPanel() {
+            const mod = modules[currentModule];
+
+            // Limit expression
+            katex.render(mod.limit, document.getElementById('limitExpression'), { throwOnError: false, displayMode: true });
+
+            // Direct substitution
+            katex.render(mod.directSub, document.getElementById('directSub'), { throwOnError: false });
+
+            // Limit value
+            katex.render(mod.limitValue, document.getElementById('limitValue'), { throwOnError: false });
+
+            // Badge
+            const badge = document.getElementById('indeterminateBadge');
+            badge.textContent = 'INDETERMINATE';
+            badge.className = 'badge-indeterminate px-3 py-1 rounded-full text-xs font-bold';
+
+            // Transformation
+            const transContent = document.getElementById('transformationContent');
+            transContent.innerHTML = mod.transformation.map(t => `<div class="text-sm text-gray-300">${t}</div>`).join('');
+            renderMathInElement(transContent, { throwOnError: false });
+
+            // L'Hôpital
+            const lhopContent = document.getElementById('lhopitalContent');
+            lhopContent.innerHTML = mod.lhopital.map(t => `<div class="text-sm text-gray-300">${t}</div>`).join('');
+            renderMathInElement(lhopContent, { throwOnError: false });
+
+            // Steps
+            const stepsContent = document.getElementById('stepsContent');
+            stepsContent.innerHTML = mod.steps.map((t, i) => `<div class="text-sm text-gray-300 p-2 bg-gray-800/50 rounded-lg">${t}</div>`).join('');
+            renderMathInElement(stepsContent, { throwOnError: false });
+        }
+
+        function loadModule(index) {
+            currentModule = index;
+            clearScene();
+            builders[index]();
+            updateMathPanel();
+            scrubProgress = 0;
+            document.getElementById('scrubSlider').value = 0;
+            updateTracer();
+        }
+
+        function updateTracer() {
+            const mod = modules[currentModule];
+            const slider = document.getElementById('scrubSlider');
+            const progress = slider.value / 1000;
+            scrubProgress = progress;
+
+            let x, y, z;
+            const [xMin, xMax] = mod.xRange;
+
+            if (mod.isInfinity) {
+                x = xMin + (xMax - xMin) * progress;
+                if (mod.isPower) {
+                    y = mod.f(x);
+                } else if (mod.isProduct) {
+                    y = mod.product(x);
+                } else if (mod.isDifference) {
+                    y = mod.diff(x);
+                } else {
+                    y = mod.ratio(x);
+                }
+                z = 0;
+            } else if (mod.approach === 'right') {
+                x = xMin + (xMax - xMin) * progress * 0.5;
+                if (mod.isPower) {
+                    y = mod.f(x);
+                } else if (mod.isProduct) {
+                    y = mod.product(x);
+                } else {
+                    y = mod.ratio ? mod.ratio(x) : mod.f(x);
+                }
+                z = 0;
+            } else {
+                // Approach from both sides
+                const t = progress * 2 - 1; // -1 to 1
+                x = mod.a + t * (xMax - xMin) * 0.5;
+                if (mod.isDifference) {
+                    y = mod.diff(x);
+                } else if (mod.ratio) {
+                    y = mod.ratio(x);
+                } else {
+                    y = mod.f(x);
+                }
+                z = 0;
+            }
+
+            // Clamp y for display
+            const [yMin, yMax] = mod.yRange;
+            if (y < yMin) y = yMin;
+            if (y > yMax) y = yMax;
+
+            tracerParticle.position.set(x, y, z);
+            document.getElementById('scrubValue').textContent = x.toFixed(3);
+        }
+
+        // ==================== ANIMATION ====================
+        function startAnimation() {
+            if (isPlaying) return;
+            isPlaying = true;
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+
+            function step() {
+                if (!isPlaying) return;
+                const slider = document.getElementById('scrubSlider');
+                let val = parseInt(slider.value);
+                val += animationSpeed;
+                if (val > 1000) {
+                    val = 1000;
+                    isPlaying = false;
+                    document.getElementById('playBtn').classList.remove('hidden');
+                    document.getElementById('pauseBtn').classList.add('hidden');
+                }
+                slider.value = val;
+                updateTracer();
+                if (isPlaying) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function pauseAnimation() {
+            isPlaying = false;
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+        }
+
+        function resetAnimation() {
+            pauseAnimation();
+            document.getElementById('scrubSlider').value = 0;
+            updateTracer();
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('moduleSelector').addEventListener('change', (e) => {
+            loadModule(parseInt(e.target.value));
+        });
+
+        document.getElementById('scrubSlider').addEventListener('input', updateTracer);
+
+        document.getElementById('playBtn').addEventListener('click', startAnimation);
+        document.getElementById('pauseBtn').addEventListener('click', pauseAnimation);
+        document.getElementById('resetBtn').addEventListener('click', resetAnimation);
+
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            animationSpeed = parseInt(e.target.value);
+        });
+
+        document.getElementById('toggleGrid').addEventListener('click', () => {
+            showGrid = !showGrid;
+            gridHelper.visible = showGrid;
+        });
+
+        document.getElementById('toggleAxes').addEventListener('click', () => {
+            showAxes = !showAxes;
+            axesHelper.visible = showAxes;
+        });
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('load', () => {
+            initThreeJS();
+            loadModule(0);
+        });
+    </script>
+</body>
+</html>

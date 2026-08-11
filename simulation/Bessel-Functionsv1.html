@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bessel Functions: Complete Interactive Mathematical Handbook &amp; 3D Visualizer</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: {
+  sans: ['Inter','ui-sans-serif','system-ui','sans-serif'],
+  mono: ['JetBrains Mono','ui-monospace','monospace'] } } } };
+</script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- MathJax 3 (SVG renderer) -->
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$']] },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- Three.js r128 + OrbitControls -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<style>
+:root{ color-scheme: dark; }
+html{ scroll-behavior:smooth; }
+body{ font-family:'Inter',ui-sans-serif,system-ui,sans-serif; background:#020617; }
+.mono{ font-family:'JetBrains Mono',ui-monospace,monospace; }
+
+/* ---------- glassmorphism ---------- */
+.glass{ background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09);
+        backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
+.glass-deep{ background:rgba(2,6,23,.6); border:1px solid rgba(255,255,255,.08);
+        backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); }
+.bg-blob{ position:fixed; border-radius:9999px; filter:blur(120px); pointer-events:none; z-index:0; }
+
+/* ---------- section transitions ---------- */
+main section:not(.hidden){ animation:rise .5s cubic-bezier(.22,.9,.35,1) both; }
+@keyframes rise{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;} }
+
+/* ---------- sidebar nav ---------- */
+.nav-btn{ display:flex; gap:.7rem; align-items:center; width:100%; text-align:left;
+  padding:.62rem .8rem; border-radius:.9rem; border:1px solid transparent;
+  color:#94a3b8; font-size:.85rem; line-height:1.15rem; transition:all .2s; flex-shrink:0; }
+.nav-btn:hover{ background:rgba(255,255,255,.05); color:#e2e8f0; }
+.nav-btn.active{ background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(167,139,250,.16));
+  border-color:rgba(34,211,238,.35); color:#e0f2fe;
+  box-shadow:0 0 24px -8px rgba(34,211,238,.55), inset 0 0 18px -12px rgba(34,211,238,.6); }
+.nav-num{ display:inline-flex; align-items:center; justify-content:center; width:1.7rem; height:1.7rem;
+  border-radius:.55rem; font-family:'JetBrains Mono',monospace; font-size:.68rem;
+  background:rgba(148,163,184,.12); color:#94a3b8; border:1px solid rgba(255,255,255,.08); flex-shrink:0; }
+.nav-btn.active .nav-num{ background:rgba(34,211,238,.2); color:#67e8f9; border-color:rgba(34,211,238,.4); }
+
+/* ---------- chips & controls ---------- */
+.chip{ padding:.32rem .8rem; border-radius:9999px; border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05); color:#cbd5e1; font-size:.78rem; cursor:pointer;
+  transition:all .15s; white-space:nowrap; user-select:none; }
+.chip:hover{ border-color:rgba(34,211,238,.45); color:#e2e8f0; }
+.chip.active{ background:rgba(34,211,238,.16); border-color:rgba(34,211,238,.6); color:#a5f3fc;
+  box-shadow:0 0 16px -6px rgba(34,211,238,.7); }
+
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:20px; background:transparent; cursor:pointer; }
+input[type=range]::-webkit-slider-runnable-track{ height:6px; border-radius:9999px;
+  background:linear-gradient(90deg,rgba(34,211,238,.5),rgba(167,139,250,.5)); }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+  background:#22d3ee; margin-top:-5px; border:2px solid #0f172a; box-shadow:0 0 12px rgba(34,211,238,.9); }
+input[type=range]::-moz-range-track{ height:6px; border-radius:9999px; background:rgba(148,163,184,.3); }
+input[type=range]::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background:#22d3ee; border:2px solid #0f172a; }
+
+/* ---------- formula cards ---------- */
+.fcard{ position:relative; overflow:hidden; }
+.fcard::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(180deg,#22d3ee,#a78bfa); opacity:.85; }
+mjx-container{ overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+mjx-container[display="true"]{ margin:.55em 0 !important; }
+
+/* ---------- misc ---------- */
+.viz{ position:relative; width:100%; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:rgba(148,163,184,.25); border-radius:8px; }
+::-webkit-scrollbar-thumb:hover{ background:rgba(148,163,184,.45); }
+.kbd{ font-family:'JetBrains Mono',monospace; font-size:.7rem; padding:.1rem .4rem;
+  border-radius:.35rem; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); }
+.eyebrow{ font-family:'JetBrains Mono',monospace; font-size:.68rem; letter-spacing:.22em;
+  text-transform:uppercase; color:#67e8f9; }
+</style>
+</head>
+
+<body class="min-h-screen text-slate-200 antialiased overflow-x-hidden">
+
+<!-- ambient background -->
+<div class="bg-blob" style="width:640px;height:640px;background:#0e7490;top:-180px;left:-140px;opacity:.28"></div>
+<div class="bg-blob" style="width:560px;height:560px;background:#6d28d9;bottom:-160px;right:-120px;opacity:.22"></div>
+<div class="bg-blob" style="width:420px;height:420px;background:#0ea5e9;top:40%;left:45%;opacity:.10"></div>
+
+<div class="flex flex-col lg:flex-row min-h-screen relative z-10">
+
+<!-- ================= SIDEBAR ================= -->
+<aside class="glass-deep z-40 lg:w-[290px] lg:fixed lg:inset-y-0 lg:left-0 flex flex-col">
+  <div class="p-5 border-b border-white/10 flex items-center gap-3">
+    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+      <span class="text-slate-950 font-bold text-lg mono">Jₙ</span>
+    </div>
+    <div>
+      <div class="font-bold text-slate-100 leading-tight">Bessel Functions</div>
+      <div class="text-[11px] text-slate-400">Interactive Handbook &amp; 3D Visualizer</div>
+    </div>
+  </div>
+
+  <nav id="nav" class="p-3 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden flex-1">
+    <button class="nav-btn" data-nav="overview"><span class="nav-num">00</span><span>Overview &amp; Roadmap</span></button>
+    <button class="nav-btn" data-nav="ordinary"><span class="nav-num">01</span><span>Ordinary Bessel \(J_n, Y_n\)</span></button>
+    <button class="nav-btn" data-nav="modified"><span class="nav-num">02</span><span>Modified \(I_n, K_n\)</span></button>
+    <button class="nav-btn" data-nav="half"><span class="nav-num">03</span><span>Half-Integer &amp; Hankel</span></button>
+    <button class="nav-btn" data-nav="kelvin"><span class="nav-num">04</span><span>Kelvin Functions</span></button>
+    <button class="nav-btn" data-nav="recurrence"><span class="nav-num">05</span><span>Recurrences &amp; Derivatives</span></button>
+    <button class="nav-btn" data-nav="generating"><span class="nav-num">06</span><span>Generating Functions &amp; Integrals</span></button>
+    <button class="nav-btn" data-nav="asymptotic"><span class="nav-num">07</span><span>Asymptotics &amp; Orthogonality</span></button>
+    <button class="nav-btn" data-nav="drumhead"><span class="nav-num">08</span><span>3D Drumhead Simulator</span></button>
+  </nav>
+
+  <div class="p-4 border-t border-white/10 hidden lg:block">
+    <div class="text-[10px] text-slate-500 leading-relaxed">
+      Companion to <span class="text-slate-400">Schaum's Outline · Ch. 24</span><br>
+      MathJax 3 · Three.js r128 · Chart.js 4 · Tailwind
+    </div>
+  </div>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<main class="flex-1 lg:ml-[290px] px-4 sm:px-8 py-6 lg:py-8 max-w-[1180px] w-full mx-auto">
+
+  <header class="mb-8">
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span class="chip cursor-default pointer-events-none">Schaum's Outline · Chapter 24</span>
+      <span class="chip cursor-default pointer-events-none">Cylinder-coordinate PDEs</span>
+      <span class="chip cursor-default pointer-events-none">17 interactive labs</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-50">
+      Bessel Functions <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-violet-400">Handbook</span>
+    </h1>
+    <p class="mt-2 text-slate-400 max-w-3xl text-sm sm:text-[15px] leading-relaxed">
+      Every core topic of Chapter 24 — ordinary, modified, half-integer, Hankel and Kelvin functions,
+      recurrences, generating functions, asymptotics and Fourier–Bessel series — rendered as live
+      LaTeX, interactive plots, and real-time WebGL membrane physics.
+    </p>
+  </header>
+
+  <!-- ============ 00 OVERVIEW ============ -->
+  <section id="sec-overview">
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 md:col-span-2 fcard">
+        <div class="eyebrow mb-2">Why Bessel?</div>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Separating the Laplace and Helmholtz equations in cylindrical (and spherical) coordinates produces
+          Bessel's differential equation. Its solutions describe vibrating drumheads, heat flow in cylinders,
+          electromagnetic waveguides, diffraction patterns (the Airy disk), signal modulation (FM radio),
+          and radial point-spread functions in optics.
+        </p>
+        <div class="mt-3 text-slate-100">$$y = A\,J_n(x) + B\,Y_n(x), \qquad x^2y'' + xy' + (x^2-n^2)y = 0$$</div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="eyebrow mb-2">Families covered</div>
+        <ul class="text-sm text-slate-300 space-y-1.5">
+          <li><span class="text-cyan-300 mono">Jₙ, Yₙ</span> — ordinary (oscillatory)</li>
+          <li><span class="text-violet-300 mono">Iₙ, Kₙ</span> — modified (growth / decay)</li>
+          <li><span class="text-pink-300 mono">Hₙ⁽¹⁾, Hₙ⁽²⁾</span> — Hankel (travelling waves)</li>
+          <li><span class="text-amber-300 mono">ber, bei, ker, kei</span> — Kelvin (eddy currents)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6" id="quicknav"></div>
+
+    <div class="glass rounded-2xl p-5">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <div class="eyebrow">Signature curves</div>
+        <span class="text-[11px] text-slate-500">\(J_0,J_1,J_2\) and \(Y_0\) on \([0,18]\)</span>
+      </div>
+      <div class="viz h-72"><canvas id="ovChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ============ 01 ORDINARY ============ -->
+  <section id="sec-ordinary" class="hidden">
+    <div class="eyebrow mb-1">Section 01 · Schaum §24.1–24.6</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Ordinary Bessel Functions \(J_n(x),\;Y_n(x)\)</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">Solutions of Bessel's equation of integer order \(n\): the oscillatory radial eigenfunctions of the cylinder.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.1 · The differential equation</div>
+        $$x^2 y'' + x y' + (x^2 - n^2) y = 0$$
+        <p class="text-sm text-slate-400 mt-2">For integer \(n\) the general solution on \((0,\infty)\) is
+        \(y = A J_n(x) + B Y_n(x)\). \(J_n\) is regular at the origin; \(Y_n\) (Neumann) is singular.</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.2 · Series, first kind</div>
+        $$J_n(x) = \sum_{k=0}^{\infty} \frac{(-1)^k\,(x/2)^{\,n+2k}}{k!\,(n+k)!}$$
+        <p class="text-sm text-slate-400 mt-2">Entire function of \(x\) (up to the factor \(x^n\));
+        \(J_n(0)=\delta_{n0}\), and \(J_n\) has infinitely many simple real zeros \(\alpha_{n,m}\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.3 · Special integer cases</div>
+        $$J_0(x)=1-\frac{x^2}{2^2}+\frac{x^4}{2^2\cdot4^2}-\frac{x^6}{2^2\cdot4^2\cdot6^2}+\cdots$$
+        $$J_1(x)=\frac{x}{2}\left(1-\frac{x^2}{2\cdot4}+\frac{x^4}{2\cdot4\cdot4\cdot6}-\cdots\right)$$
+        <p class="text-sm text-slate-400 mt-2">First zeros: \(\alpha_{0,1}=2.40483\), \(\alpha_{1,1}=3.83171\).
+        Derivative: \(J_0'(x)=-J_1(x)\) — visible in the plot below where the slope of \(J_0\) tracks \(-J_1\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.4 · Second kind (Neumann)</div>
+        $$Y_n(x)=\frac{2}{\pi}\Big(\ln\frac{x}{2}+\gamma\Big)J_n(x)
+        -\frac{1}{\pi}\sum_{k=0}^{n-1}\frac{(n-k-1)!}{k!}\Big(\frac{x}{2}\Big)^{2k-n}
+        -\frac{1}{\pi}\sum_{k=0}^{\infty}\frac{(-1)^k\,(H_k+H_{n+k})}{k!\,(n+k)!}\Big(\frac{x}{2}\Big)^{n+2k}$$
+        <p class="text-sm text-slate-400 mt-2">with Euler \(\gamma=0.57721\dots\), \(H_k\) harmonic numbers.
+        Wronskian: \(W\{J_n,Y_n\} = J_nY_n' - J_n'Y_n = \dfrac{2}{\pi x}\). Also \(J_{-n}(x)=(-1)^nJ_n(x)\).</p>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4 mb-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div class="eyebrow">First kind \(J_n(x)\)</div>
+          <div id="jOrders" class="flex gap-1.5 flex-wrap"></div>
+        </div>
+        <div class="viz h-72"><canvas id="jChart"></canvas></div>
+        <p class="text-[11px] text-slate-500 mt-2">Tap orders to toggle. Each \(J_n\) has \(n\) "wasted" small oscillations, then settles into period \(\approx 2\pi\) with envelope \(\sqrt{2/\pi x}\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="eyebrow">Second kind \(Y_n(x)\)</div>
+          <span class="text-[11px] text-slate-500">\(n=0,1,2,3\)</span>
+        </div>
+        <div class="viz h-72"><canvas id="yChart"></canvas></div>
+        <p class="text-[11px] text-slate-500 mt-2">Logarithmic / power singularities at the origin: \(Y_0(x)\sim\frac{2}{\pi}\ln\frac{x}{2}\), \(Y_n(x)\sim-\dfrac{(n-1)!}{\pi}\left(\dfrac{2}{x}\right)^n\).</p>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-5">
+      <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+        <div>
+          <div class="eyebrow">3-D Bessel landscape</div>
+          <p class="text-[12px] text-slate-500 mt-1">Radially symmetric surface \(z = J_n\!\left(\sqrt{x^2+y^2}\right)\) — drag to orbit.</p>
+        </div>
+        <div id="landChips" class="flex gap-1.5 flex-wrap"></div>
+      </div>
+      <div id="landStage" class="viz h-[380px] rounded-xl overflow-hidden border border-white/10 bg-slate-950/60"></div>
+    </div>
+  </section>
+
+  <!-- ============ 02 MODIFIED ============ -->
+  <section id="sec-modified" class="hidden">
+    <div class="eyebrow mb-1">Section 02 · Schaum §24.13–24.16</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Modified Bessel Functions \(I_n(x),\;K_n(x)\)</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">Bessel functions of imaginary argument — exponentially growing and decaying radial modes (heat conduction, skin effect, waveguide evanescent fields).</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.13 · Modified equation</div>
+        $$x^2 y'' + x y' - (x^2 + n^2) y = 0$$
+        <p class="text-sm text-slate-400 mt-2">Bessel's equation with \(x\to ix\). Solutions: \(I_n\) (finite at 0) and \(K_n\) (decaying at \(\infty\)).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.14 · First kind</div>
+        $$I_n(x) = i^{-n} J_n(ix) = \sum_{k=0}^{\infty}\frac{(x/2)^{n+2k}}{k!\,(n+k)!}$$
+        <p class="text-sm text-slate-400 mt-2">All terms positive ⇒ monotone exponential growth: \(I_n(x)\sim \dfrac{e^x}{\sqrt{2\pi x}}\). \(I_{-n}(x)=I_n(x)\), \(I_n(0)=\delta_{n0}\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.15 · Second kind (Macdonald)</div>
+        $$K_n(x)=\frac{\pi}{2}\,i^{\,n+1}H_n^{(1)}(ix)
+        =\lim_{\nu\to n}\frac{\pi}{2}\,\frac{I_{-\nu}(x)-I_\nu(x)}{\sin \nu\pi}$$
+        <p class="text-sm text-slate-400 mt-2">Singular at the origin: \(K_0(x)\sim -\ln(x/2)-\gamma\), \(K_n(x)\sim \tfrac12 (n-1)!\,(2/x)^n\);
+        decays as \(K_n(x)\sim\sqrt{\dfrac{\pi}{2x}}\,e^{-x}\). \(K_n=K_{-n}\), and \(W\{I_n,K_n\}=-\dfrac1x\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">Duality at a glance</div>
+        $$J_n(x)\;\xrightarrow{x\,\to\,ix}\; i^{\,n} I_n(x), \qquad
+        \tfrac{\pi}{2}i^{\,n+1}H_n^{(1)}(ix) = K_n(x)$$
+        <p class="text-sm text-slate-400 mt-2">Oscillation becomes exponential behaviour; the pair \((J_n,Y_n)\) maps to \((I_n,K_n)\).</p>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="eyebrow">Growth: \(I_n(x)\)</div><span class="text-[11px] text-slate-500">\(n=0,1,2,3\), \(x\in[0,6]\)</span>
+        </div>
+        <div class="viz h-72"><canvas id="iChart"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="eyebrow">Decay: \(K_n(x)\)</div><span class="text-[11px] text-slate-500">\(n=0,1,2,3\), \(x\in(0,8]\)</span>
+        </div>
+        <div class="viz h-72"><canvas id="kChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 HALF-INTEGER & HANKEL ============ -->
+  <section id="sec-half" class="hidden">
+    <div class="eyebrow mb-1">Section 03 · Schaum §24.10–24.12</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Half-Integer Order &amp; Hankel Functions</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">For half-integer order every Bessel function collapses to elementary trigonometry; Hankel functions package \(J_n\pm iY_n\) into outward/inward travelling cylindrical waves.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.10 · Half-integer orders</div>
+        $$J_{1/2}(x)=\sqrt{\frac{2}{\pi x}}\,\sin x, \qquad J_{-1/2}(x)=\sqrt{\frac{2}{\pi x}}\,\cos x$$
+        $$J_{3/2}(x)=\sqrt{\frac{2}{\pi x}}\left(\frac{\sin x}{x}-\cos x\right)$$
+        <p class="text-sm text-slate-400 mt-2">Higher half-integers follow from the recurrences of §05. These are the building blocks of spherical Bessel functions \(j_\ell(x)=\sqrt{\pi/2x}\,J_{\ell+1/2}(x)\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.11 · Hankel functions</div>
+        $$H_n^{(1)}(x)=J_n(x)+i\,Y_n(x), \qquad H_n^{(2)}(x)=J_n(x)-i\,Y_n(x)$$
+        $$H_n^{(1)}(x)\sim\sqrt{\frac{2}{\pi x}}\,e^{\,i(x-n\pi/2-\pi/4)},\qquad H_n^{(2)}=\overline{H_n^{(1)}}\;(x>0)$$
+        <p class="text-sm text-slate-400 mt-2">\(H^{(1)}\) encodes outgoing, \(H^{(2)}\) incoming cylindrical waves — the natural basis for radiation problems. \(H_n^{(2)}(x)=H_n^{(1)}(x e^{\mp i\pi})\) under analytic continuation.</p>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="eyebrow">Half-integer orders</div>
+          <span class="text-[11px] text-slate-500">damped sinusoids</span>
+        </div>
+        <div class="viz h-72"><canvas id="halfChart"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="eyebrow">Hankel anatomy, \(n=0\)</div>
+          <span class="text-[11px] text-slate-500">\(|H_0^{(1)}|=\sqrt{J_0^2+Y_0^2}\)</span>
+        </div>
+        <div class="viz h-72"><canvas id="hankChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 KELVIN ============ -->
+  <section id="sec-kelvin" class="hidden">
+    <div class="eyebrow mb-1">Section 04 · Schaum §24.17–24.19</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Kelvin Functions \(\operatorname{ber},\operatorname{bei},\operatorname{ker},\operatorname{kei}\)</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">Real and imaginary parts of Bessel functions evaluated on rotated rays in the complex plane — the canonical solutions for AC eddy currents in cylindrical conductors (order \(n=0\) shown).</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.17 · Definitions</div>
+        $$J_n\!\left(x\,e^{3\pi i/4}\right) = \operatorname{ber}_n x + i\,\operatorname{bei}_n x$$
+        $$e^{-n\pi i/2}K_n\!\left(x\,e^{\pi i/4}\right) = \operatorname{ker}_n x + i\,\operatorname{kei}_n x$$
+        <p class="text-sm text-slate-400 mt-2">Rotating the argument by \(3\pi/4\) turns Bessel oscillation into growing, chirping spirals.</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.18 · Series (order 0)</div>
+        $$\operatorname{ber} x = \sum_{j=0}^{\infty}\frac{(-1)^j (x/2)^{4j}}{[(2j)!]^2}, \qquad
+          \operatorname{bei} x = \sum_{j=0}^{\infty}\frac{(-1)^j (x/2)^{4j+2}}{[(2j+1)!]^2}$$
+        <p class="text-sm text-slate-400 mt-2">Endpoint values: \(\operatorname{ber}0=1,\ \operatorname{bei}0=0,\ \operatorname{kei}0=-\pi/4\), and \(\operatorname{ker}x\sim-\ln(x/2)-\gamma\) as \(x\to0^+\).</p>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="eyebrow mb-3">\(\operatorname{ber},\operatorname{bei}\) on \([0,10]\)</div>
+        <div class="viz h-64"><canvas id="berBeiChart"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="eyebrow mb-3">\(\operatorname{ker},\operatorname{kei}\) on \((0,8]\)</div>
+        <div class="viz h-64"><canvas id="kerKeiChart"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="eyebrow mb-3">Kelvin spiral: \((\operatorname{ber}x,\operatorname{bei}x)\)</div>
+        <div class="viz h-64"><canvas id="kelvinSpiral"></canvas></div>
+        <p class="text-[11px] text-slate-500 mt-2">The complex value \(J_0(x e^{3\pi i/4})\) traced as \(x:0\to12\) — exponentially growing oscillation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 RECURRENCE ============ -->
+  <section id="sec-recurrence" class="hidden">
+    <div class="eyebrow mb-1">Section 05 · Schaum §24.7–24.9</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Recurrence Formulas &amp; Differential Relations</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">The ladder identities that generate every order from \(J_0,J_1\) — verified numerically and visually below.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">For \(J_n\)</div>
+        <div class="text-slate-100 text-[15px] space-y-1">
+          $$J_{n-1}(x)+J_{n+1}(x)=\frac{2n}{x}J_n(x)$$
+          $$J_{n-1}(x)-J_{n+1}(x)=2J_n'(x)$$
+          $$J_n'(x)=J_{n-1}(x)-\frac{n}{x}J_n(x)=\frac{n}{x}J_n(x)-J_{n+1}(x)$$
+          $$\frac{d}{dx}\big[x^n J_n(x)\big]=x^n J_{n-1}(x),\qquad \frac{d}{dx}\big[x^{-n}J_n(x)\big]=-x^{-n}J_{n+1}(x)$$
+        </div>
+        <p class="text-sm text-slate-400 mt-2">In particular \(J_0'(x)=-J_1(x)\) and \(J_n'(0)=\tfrac12\delta_{n1}\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">For \(I_n\) and \(K_n\)</div>
+        <div class="text-slate-100 text-[15px] space-y-1">
+          $$I_{n-1}(x)-I_{n+1}(x)=\frac{2n}{x}I_n(x),\qquad I_{n-1}(x)+I_{n+1}(x)=2I_n'(x)$$
+          $$\frac{d}{dx}\big[x^n I_n(x)\big]=x^n I_{n-1}(x),\qquad \frac{d}{dx}\big[x^{-n}I_n(x)\big]=x^{-n}I_{n+1}(x)$$
+          $$K_n'(x)=-K_{n-1}(x)-\frac{n}{x}K_n(x)=-\tfrac12\big(K_{n-1}(x)+K_{n+1}(x)\big)$$
+        </div>
+        <p class="text-sm text-slate-400 mt-2">Note the sign flips relative to \(J_n\) — a direct consequence of \(x\to ix\).</p>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-5">
+      <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div class="eyebrow">Identity laboratory — both sides plotted, they must coincide</div>
+        <div class="flex gap-4 flex-wrap">
+          <div id="recIdentity" class="flex gap-1.5 flex-wrap"></div>
+          <div id="recN" class="flex gap-1.5 flex-wrap"></div>
+        </div>
+      </div>
+      <div class="viz h-80"><canvas id="recChart"></canvas></div>
+      <p class="text-[11px] text-slate-500 mt-2">Solid = left-hand side · dashed = right-hand side. The derivatives in identities B/D are computed numerically (central difference, \(h=10^{-3}\)).</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 GENERATING ============ -->
+  <section id="sec-generating" class="hidden">
+    <div class="eyebrow mb-1">Section 06 · Schaum §24.20–24.23</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Generating Functions &amp; Integral Representations</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">A single generating function encodes every \(J_n\); the Jacobi–Anger expansion decomposes plane waves into cylindrical ones.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.20 · Generating function</div>
+        $$e^{\frac{x}{2}\left(t-\frac{1}{t}\right)} = \sum_{n=-\infty}^{\infty} J_n(x)\,t^n$$
+        <p class="text-sm text-slate-400 mt-2">Setting \(t=1\) yields \(\sum_{n=-\infty}^{\infty}J_n(x)=1\) — verified live in the lab below.</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.21 · Jacobi–Anger</div>
+        $$e^{ix\cos\theta}=\sum_{n=-\infty}^{\infty} i^{\,n}J_n(x)e^{in\theta}$$
+        $$\cos(x\sin\theta)=J_0(x)+2\sum_{k=1}^{\infty}J_{2k}(x)\cos 2k\theta,\quad
+          \sin(x\sin\theta)=2\sum_{k=0}^{\infty}J_{2k+1}(x)\sin(2k+1)\theta$$
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.22 · Bessel's integral</div>
+        $$J_n(x)=\frac{1}{\pi}\int_0^{\pi}\cos\!\big(n\theta - x\sin\theta\big)\,d\theta \qquad (n\in\mathbb{Z})$$
+        <p class="text-sm text-slate-400 mt-2">Poisson's form (\(n>-\tfrac12\)):
+        \(J_n(x)=\dfrac{(x/2)^n}{\sqrt{\pi}\,\Gamma(n+\tfrac12)}\displaystyle\int_0^{\pi}\cos(x\cos\theta)\sin^{2n}\theta\,d\theta\).</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.23 · Laplace-type integrals</div>
+        $$\int_0^{\infty} e^{-at}J_0(bt)\,dt=\frac{1}{\sqrt{a^2+b^2}},\qquad
+          \int_0^{\infty} J_0(x)\,dx = 1$$
+        <p class="text-sm text-slate-400 mt-2">The Lipschitz integral — workhorse of potential theory and Hankel-transform computations.</p>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div class="eyebrow">\(\sum_{n=-N}^{N}J_n(x)\to 1\) (case \(t=1\))</div>
+          <div class="flex items-center gap-2 text-[12px]">
+            <span class="text-slate-400">\(N=\)</span><span id="genVal" class="mono text-cyan-300 w-6">4</span>
+            <input id="genN" type="range" min="1" max="12" value="4" class="w-32">
+          </div>
+        </div>
+        <div class="viz h-64"><canvas id="genChart"></canvas></div>
+        <p class="text-[11px] text-slate-500 mt-2">Odd orders cancel pairwise \((J_{-n}=(-1)^nJ_n)\); even orders pile up toward 1.</p>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div class="eyebrow">Jacobi–Anger: \(\cos(x\sin\theta)\)</div>
+          <div class="flex items-center gap-3 text-[12px]">
+            <span class="flex items-center gap-1"><span class="text-slate-400">\(x=\)</span><span id="jacXVal" class="mono text-cyan-300 w-5">6</span>
+            <input id="jacX" type="range" min="1" max="15" value="6" class="w-24"></span>
+            <span class="flex items-center gap-1"><span class="text-slate-400">\(K=\)</span><span id="jacKVal" class="mono text-cyan-300 w-5">3</span>
+            <input id="jacK" type="range" min="1" max="10" value="3" class="w-24"></span>
+          </div>
+        </div>
+        <div class="viz h-64"><canvas id="jacChart"></canvas></div>
+        <p class="text-[11px] text-slate-500 mt-2">Partial sum \(J_0(x)+2\sum_{k=1}^{K}J_{2k}(x)\cos 2k\theta\) (cyan) chasing the target (dashed). Increase \(K\) until the harmonics \(J_{2k}(x)\) have died out.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 ASYMPTOTICS ============ -->
+  <section id="sec-asymptotic" class="hidden">
+    <div class="eyebrow mb-1">Section 07 · Schaum §24.24–24.28</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">Asymptotic Expansions, Orthogonality &amp; Fourier–Bessel Series</h2>
+    <p class="text-sm text-slate-400 mb-6 max-w-3xl">Limiting forms for large argument and small argument, the orthogonality of Bessel eigenfunctions, and the resulting generalized Fourier series.</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.24 · Large \(x\)</div>
+        $$J_n(x)\sim\sqrt{\frac{2}{\pi x}}\cos\!\left(x-\frac{n\pi}{2}-\frac{\pi}{4}\right),\qquad
+          Y_n(x)\sim\sqrt{\frac{2}{\pi x}}\sin\!\left(x-\frac{n\pi}{2}-\frac{\pi}{4}\right)$$
+        $$I_n(x)\sim\frac{e^x}{\sqrt{2\pi x}},\qquad K_n(x)\sim\sqrt{\frac{\pi}{2x}}\,e^{-x}$$
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.25 · Small \(x\)</div>
+        $$J_n(x)\sim\frac{1}{n!}\Big(\frac{x}{2}\Big)^n,\quad Y_0(x)\sim\frac{2}{\pi}\ln\frac{x}{2},\quad
+          Y_n(x)\sim-\frac{(n-1)!}{\pi}\Big(\frac{2}{x}\Big)^n$$
+        $$I_n(x)\sim\frac{1}{n!}\Big(\frac{x}{2}\Big)^n,\quad K_0(x)\sim-\ln\frac{x}{2}-\gamma,\quad
+          K_n(x)\sim\frac{(n-1)!}{2}\Big(\frac{2}{x}\Big)^n$$
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.26 · Orthogonality</div>
+        $$\int_0^1 r\,J_n(\alpha_{n,m}r)J_n(\alpha_{n,k}r)\,dr =
+          \begin{cases} 0, & m\ne k\\[4pt] \tfrac12\big[J_{n+1}(\alpha_{n,m})\big]^2, & m=k \end{cases}$$
+        <p class="text-sm text-slate-400 mt-2">where \(\alpha_{n,m}\) is the \(m\)-th positive zero of \(J_n\). Probe it numerically in the lab.</p>
+      </div>
+      <div class="glass rounded-2xl p-5 fcard">
+        <div class="eyebrow mb-2">24.27 · Fourier–Bessel series</div>
+        $$f(r)=\sum_{m=1}^{\infty} c_m J_n(\alpha_{n,m}r),\qquad
+          c_m=\frac{2}{\big[J_{n+1}(\alpha_{n,m})\big]^2}\int_0^1 r\,f(r)J_n(\alpha_{n,m}r)\,dr$$
+        <p class="text-sm text-slate-400 mt-2">Any piecewise smooth \(f\) on \([0,1]\) expands in the radial eigenmodes — used below to rebuild classic test functions.</p>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="eyebrow">Asymptotics vs exact \(J_0(x)\)</div>
+        <span class="text-[11px] text-slate-500">leading term · + two correction terms</span>
+      </div>
+      <div class="viz h-72"><canvas id="asymChart"></canvas></div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="eyebrow mb-3">Orthogonality probe</div>
+        <div class="flex gap-4 flex-wrap mb-3 text-[12px]">
+          <div class="flex items-center gap-1.5"><span class="text-slate-400">\(n=\)</span><div id="orthN" class="flex gap-1.5"></div></div>
+          <div class="flex items-center gap-1.5"><span class="text-slate-400">\(m=\)</span><div id="orthM" class="flex gap-1.5"></div></div>
+          <div class="flex items-center gap-1.5"><span class="text-slate-400">\(k=\)</span><div id="orthK" class="flex gap-1.5"></div></div>
+        </div>
+        <div id="orthVal" class="mono text-sm text-cyan-200 bg-cyan-500/10 border border-cyan-400/20 rounded-xl px-4 py-3 mb-3 leading-relaxed"></div>
+        <div class="viz h-52"><canvas id="orthChart"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="eyebrow mb-3">Fourier–Bessel approximator (\(n=0\))</div>
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div id="fbFn" class="flex gap-1.5 flex-wrap"></div>
+          <div class="flex items-center gap-2 text-[12px]">
+            <span class="text-slate-400">terms \(N=\)</span><span id="fbVal" class="mono text-cyan-300 w-5">5</span>
+            <input id="fbN" type="range" min="1" max="10" value="5" class="w-28">
+          </div>
+        </div>
+        <div class="viz h-56"><canvas id="fbChart"></canvas></div>
+        <div id="fbCoefs" class="flex gap-1.5 flex-wrap mt-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 DRUMHEAD ============ -->
+  <section id="sec-drumhead" class="hidden">
+    <div class="eyebrow mb-1">Section 08 · Real-time WebGL membrane physics</div>
+    <h2 class="text-2xl font-bold text-slate-50 mb-1">3D Drumhead Simulator</h2>
+    <p class="text-sm text-slate-400 mb-5 max-w-3xl">Normal modes of a clamped circular membrane of radius \(R\) — the eigenvalue problem \(J_n(\alpha_{n,m})=0\) made visible. Drag to orbit, scroll to zoom.</p>
+
+    <div class="grid lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 glass rounded-2xl p-3">
+        <div id="drumStage" class="viz h-[460px] rounded-xl overflow-hidden border border-white/10 bg-slate-950/60"></div>
+        <div class="flex items-center justify-between px-2 pt-2">
+          <span class="text-[11px] text-slate-500">displacement scale</span>
+          <div class="flex items-center gap-2 text-[11px] mono text-slate-400">
+            <span>\(-A\)</span><div id="cbar" class="w-40 h-2 rounded-full"></div><span>\(+A\)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="glass rounded-2xl p-5">
+          <div class="eyebrow mb-3">Mode controls</div>
+          <div class="space-y-3 text-[12px]">
+            <div>
+              <div class="text-slate-400 mb-1.5">Angular order \(n\) (nodal diameters)</div>
+              <div id="drumN" class="flex gap-1.5 flex-wrap"></div>
+            </div>
+            <div>
+              <div class="text-slate-400 mb-1.5">Radial root \(m\) (nodal circles + 1)</div>
+              <div id="drumM" class="flex gap-1.5 flex-wrap"></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-400 mb-1">
+                <span>Frequency \(\omega\)</span><span id="dOmegaVal" class="mono text-cyan-300"></span>
+              </div>
+              <input id="dOmega" type="range" min="0.5" max="25" step="0.05" value="2.4048">
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-400 mb-1">
+                <span>Amplitude \(A\)</span><span id="dAmpVal" class="mono text-cyan-300"></span>
+              </div>
+              <input id="dAmp" type="range" min="0" max="1" step="0.01" value="0.55">
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <div class="flex gap-1.5"><button id="dPlay" class="chip">⏸ pause</button><button id="dReset" class="chip">⟳ view</button></div>
+            </div>
+            <div class="pt-1">
+              <div class="text-slate-400 mb-1.5">Render mode</div>
+              <div id="dView" class="flex gap-1.5 flex-wrap"></div>
+            </div>
+            <div>
+              <div class="text-slate-400 mb-1.5">Color map</div>
+              <div id="dCmap" class="flex gap-1.5 flex-wrap"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5">
+          <div class="eyebrow mb-2">Mode \((n,m)\)</div>
+          $$u_{n,m}(r,\theta,t)=A\,J_n\!\left(\alpha_{n,m}\frac{r}{R}\right)\cos(n\theta)\cos(\omega_{n,m}t),\quad
+            \omega_{n,m}=\frac{c\,\alpha_{n,m}}{R}$$
+          <div class="mono text-[12px] text-slate-300 space-y-1 mt-2">
+            <div>\(\alpha_{n,m}\) = <span id="dAlpha" class="text-cyan-300"></span></div>
+            <div id="dNodal" class="text-slate-400"></div>
+            <div class="text-slate-500">units: \(c=R=1\) · general motion = superposition of modes</div>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5">
+          <div class="eyebrow mb-2">Radial profile \(J_n(\alpha_{n,m} r)\)</div>
+          <div class="viz h-40"><canvas id="radialChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-10 pt-6 border-t border-white/10 text-[11px] text-slate-500 flex flex-wrap gap-x-4 gap-y-1 justify-between">
+    <span>Bessel Functions: Complete Interactive Mathematical Handbook &amp; 3D Visualizer</span>
+    <span>All numerics computed in-browser (series + Hankel asymptotics, Simpson quadrature)</span>
+  </footer>
+</main>
+</div>
+
+<script>
+'use strict';
+/* ================================================================
+   SPECIAL-FUNCTIONS LIBRARY  (integer-order Bessel family)
+   Methods: convergent power series (small/moderate x) + Hankel
+   asymptotic expansions (large x), cross-validated at run time.
+================================================================ */
+const SB = (() => {
+  const GAMMA = 0.5772156649015329;
+  const fact = [1]; for (let i=1;i<=60;i++) fact.push(fact[i-1]*i);
+  const harm = [0]; for (let i=1;i<=340;i++) harm.push(harm[i-1]+1/i);
+
+  // ---------- J_n : series ----------
+  function Jser(n,x){
+    if (x===0) return n===0?1:0;
+    const q=x*x/4;
+    let term=Math.pow(x/2,n)/fact[n], sum=term;
+    for (let k=1;k<340;k++){
+      term *= -q/(k*(n+k)); sum += term;
+      if (Math.abs(term) < 1e-16*Math.abs(sum)) break;
+    }
+    return sum;
+  }
+  // ---------- Hankel asymptotic (J and Y together) ----------
+  function JYasym(n,x){
+    const mu=4*n*n; let a=1, P=1, Q=0, invx=1, minT=Infinity;
+    for (let k=1;k<=90;k++){
+      a *= (mu-(2*k-1)*(2*k-1))/(8*k); invx/=x;
+      const t=a*invx, at=Math.abs(t);
+      if (at>minT || at<1e-17) break;
+      minT=at;
+      if (k%2===0) P += ((k/2)%2===0?1:-1)*t;
+      else         Q += (((k-1)/2)%2===0?1:-1)*t;
+    }
+    const chi=x-(0.5*n+0.25)*Math.PI, amp=Math.sqrt(2/(Math.PI*x));
+    return [ amp*(Math.cos(chi)*P - Math.sin(chi)*Q),
+             amp*(Math.sin(chi)*P + Math.cos(chi)*Q) ];
+  }
+  function J(n,x){
+    n=Math.abs(Math.round(n));
+    if (Math.abs(x)>24){ const j=JYasym(n,Math.abs(x))[0]; return (x<0&&n%2)?-j:j; }
+    return Jser(n,x);
+  }
+  // ---------- Y_n : small-x expansion ----------
+  function Y(n,x){
+    if (x<=0) return NaN;
+    n=Math.abs(Math.round(n));
+    if (x>24) return JYasym(n,x)[1];
+    const Jv=Jser(n,x);
+    let s1=0;
+    for (let k=0;k<n;k++) s1 += (fact[n-k-1]/fact[k])*Math.pow(x/2,2*k-n);
+    let s2=0, term=Math.pow(x/2,n)/fact[n];
+    for (let k=0;k<340;k++){
+      if (k>0) term *= -(x*x/4)/(k*(n+k));
+      s2 += term*(-2*GAMMA + harm[k] + harm[n+k]);
+      if (k>3 && Math.abs(term) < 1e-16*Math.max(1,Math.abs(s2))) break;
+    }
+    return (2/Math.PI)*Math.log(x/2)*Jv - s1/Math.PI - s2/Math.PI;
+  }
+  // ---------- modified I_n ----------
+  function I(n,x){
+    n=Math.abs(Math.round(n));
+    if (x===0) return n===0?1:0;
+    if (x>15) return Iasym(n,x);
+    const q=x*x/4;
+    let term=Math.pow(x/2,n)/fact[n], sum=term;
+    for (let k=1;k<340;k++){
+      term *= q/(k*(n+k)); sum+=term;
+      if (Math.abs(term) < 1e-16*Math.abs(sum)) break;
+    }
+    return sum;
+  }
+  function Iasym(n,x){
+    const mu=4*n*n; let a=1,s=1,invx=1,minT=Infinity;
+    for (let k=1;k<=90;k++){
+      a*=(mu-(2*k-1)*(2*k-1))/(8*k); invx/=x;
+      const t=a*invx, at=Math.abs(t);
+      if (at>minT||at<1e-17) break; minT=at;
+      s += (k%2? -t : t);
+    }
+    return Math.exp(x)/Math.sqrt(2*Math.PI*x)*s;
+  }
+  // ---------- Macdonald K_n ----------
+  function K(n,x){
+    n=Math.abs(Math.round(n));
+    if (x<=0) return NaN;
+    if (x>15) return Kasym(n,x);
+    let sA=0;
+    for (let k=0;k<n;k++) sA += Math.pow(-1,k)*(fact[n-k-1]/fact[k])*Math.pow(x/2,2*k-n);
+    const Iv=I(n,x);
+    const mid=Math.pow(-1,n+1)*Math.log(x/2)*Iv;
+    let sB=0, term=Math.pow(x/2,n)/fact[n];
+    for (let k=0;k<340;k++){
+      if (k>0) term *= (x*x/4)/(k*(n+k));
+      sB += term*(-2*GAMMA + harm[k] + harm[n+k]);
+      if (k>3 && Math.abs(term) < 1e-16*Math.max(1,Math.abs(sB))) break;
+    }
+    return 0.5*sA + mid + 0.5*Math.pow(-1,n)*sB;
+  }
+  function Kasym(n,x){
+    const mu=4*n*n; let a=1,s=1,invx=1,minT=Infinity;
+    for (let k=1;k<=90;k++){
+      a*=(mu-(2*k-1)*(2*k-1))/(8*k); invx/=x;
+      const t=a*invx, at=Math.abs(t);
+      if (at>minT||at<1e-17) break; minT=at;
+      s+=t;
+    }
+    return Math.sqrt(Math.PI/(2*x))*Math.exp(-x)*s;
+  }
+  // ---------- Kelvin (order 0), complex series ----------
+  function kelvinJ(x){ // ber, bei = J_0(x e^{3πi/4}) = Σ i^k (x²/4)^k/(k!)²
+    const q=x*x/4; let tr=1,ti=0,sr=1,si=0;
+    for (let k=1;k<300;k++){
+      const nr=-ti*q/(k*k), ni=tr*q/(k*k);
+      tr=nr; ti=ni; sr+=tr; si+=ti;
+      if (Math.abs(tr)+Math.abs(ti) < 1e-16*(Math.abs(sr)+Math.abs(si))) break;
+    }
+    return [sr,si];
+  }
+  function kelvinK(x){ // ker, kei = K_0(x e^{πi/4})
+    const q=x*x/4;
+    let tr=1,ti=0,ir=1,ii=0,br=0,bi=0,H=0;
+    for (let k=1;k<300;k++){
+      H+=1/k;
+      const nr=-ti*q/(k*k), ni=tr*q/(k*k);
+      tr=nr; ti=ni; ir+=tr; ii+=ti;
+      br+=H*tr; bi+=H*ti;
+      if (Math.abs(tr)+Math.abs(ti) < 1e-16*(Math.abs(ir)+Math.abs(ii))) break;
+    }
+    const cr=Math.log(x/2)+GAMMA, ci=Math.PI/4;
+    const pr=cr*ir-ci*ii, pi=cr*ii+ci*ir;
+    return [br-pr, bi-pi];
+  }
+  // ---------- zeros of J_n (scan + bisection) ----------
+  function roots(n,count){
+    const out=[]; let x=0.05, prev=J(n,x);
+    while (out.length<count && x<60){
+      x+=0.01; const cur=J(n,x);
+      if (prev*cur<0){
+        let a=x-0.01,b=x,fa=prev;
+        for (let i=0;i<70;i++){ const m=0.5*(a+b), fm=J(n,m);
+          if (fa*fm<=0) b=m; else { a=m; fa=fm; } }
+        out.push(0.5*(a+b));
+      }
+      prev=cur;
+    }
+    return out;
+  }
+  return {J,Y,I,K,kelvinJ,kelvinK,roots,GAMMA};
+})();
+const ROOTS = [0,1,2,3,4,5].map(n => SB.roots(n,5));   // α_{n,1..5}
+
+/* Simpson quadrature */
+function simpson(f,a,b,N){
+  N=Math.ceil(N/2)*2; const h=(b-a)/N; let s=f(a)+f(b);
+  for (let i=1;i<N;i++) s+=f(a+i*h)*(i%2?4:2);
+  return s*h/3;
+}
+const fmt=(x,d=4)=>Number(x).toFixed(d);
+
+/* ================================================================
+   COLORMAPS (256-entry LUTs)
+================================================================ */
+const CMAP_STOPS={
+  plasma:[[0,[13,8,135]],[.25,[126,3,168]],[.5,[204,71,120]],[.75,[248,149,64]],[1,[240,249,33]]],
+  viridis:[[0,[68,1,84]],[.25,[59,82,139]],[.5,[33,145,140]],[.75,[94,201,98]],[1,[253,231,37]]],
+  coolwarm:[[0,[59,76,192]],[.5,[221,221,221]],[1,[180,4,38]]],
+  ember:[[0,[15,23,42]],[.35,[51,65,85]],[.6,[234,88,12]],[.8,[251,191,36]],[1,[254,240,138]]]
+};
+const LUTS={};
+function getLUT(name){
+  if (LUTS[name]) return LUTS[name];
+  const st=CMAP_STOPS[name], L=[];
+  for (let i=0;i<256;i++){
+    const t=i/255; let s=1;
+    while (s<st.length-1 && t>st[s][0]) s++;
+    const [t0,c0]=st[s-1],[t1,c1]=st[s];
+    const u=Math.min(1,Math.max(0,(t-t0)/((t1-t0)||1)));
+    L.push([(c0[0]+(c1[0]-c0[0])*u)/255,(c0[1]+(c1[1]-c0[1])*u)/255,(c0[2]+(c1[2]-c0[2])*u)/255]);
+  }
+  return LUTS[name]=L;
+}
+const getCmap=(name,t)=>getLUT(name)[Math.round(Math.min(1,Math.max(0,t))*255)];
+function cbarCSS(name){
+  return 'linear-gradient(90deg,'+CMAP_STOPS[name].map(([t,c])=>`rgb(${c[0]},${c[1]},${c[2]}) ${t*100}%`).join(',')+')';
+}
+
+/* ================================================================
+   CHART.JS HELPERS
+================================================================ */
+Chart.defaults.color='#94a3b8';
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=11;
+const PALETTE=['#22d3ee','#a78bfa','#f472b6','#fbbf24','#34d399','#60a5fa','#fb7185','#a3e635','#f97316','#2dd4bf'];
+const CHARTS={};
+
+function sampleFn(fn,x0,x1,N=480,clamp=50){
+  const out=[], dx=(x1-x0)/N;
+  for (let i=0;i<=N;i++){
+    const x=x0+i*dx; let y=fn(x);
+    if (!isFinite(y) || Math.abs(y)>clamp) y=null;
+    out.push({x,y});
+  }
+  return out;
+}
+function ds(fn,x0,x1,label,color,extra={}){
+  return { label, data:sampleFn(fn,x0,x1,extra.N||480,extra.clamp??50),
+    borderColor:color, backgroundColor:color, borderWidth:extra.w??2,
+    pointRadius:0, pointHitRadius:6, tension:0, borderDash:extra.dash||[], spanGaps:false };
+}
+function newChart(id,datasets,opts={}){
+  const el=document.getElementById(id); if(!el) return null;
+  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+  const base={
+    responsive:true, maintainAspectRatio:false, animation:{duration:450},
+    interaction:{mode:'nearest',axis:'x',intersect:false},
+    plugins:{
+      legend:{labels:{color:'#cbd5e1',usePointStyle:true,pointStyle:'line',boxWidth:20,font:{size:11}}},
+      tooltip:{backgroundColor:'rgba(2,6,23,.92)',borderColor:'rgba(34,211,238,.35)',borderWidth:1,
+        titleColor:'#e2e8f0',bodyColor:'#a5f3fc',bodyFont:{family:"'JetBrains Mono',monospace",size:11}}
+    },
+    scales:{
+      x:{type:'linear',grid:{color:'rgba(148,163,184,.07)'},ticks:{color:'#64748b',font:{size:10}},border:{color:'rgba(148,163,184,.2)'}},
+      y:{grid:{color:'rgba(148,163,184,.07)'},ticks:{color:'#64748b',font:{size:10}},border:{color:'rgba(148,163,184,.2)'}}
+    }
+  };
+  const c=new Chart(el,{type:'line',data:{datasets},options:Object.assign(base,opts)});
+  return CHARTS[id]=c;
+}
+const noLegend={plugins:{legend:{display:false}}};
+
+/* generic chip-group wiring */
+function chips(containerId,items,onPick,initial=0){
+  const box=document.getElementById(containerId); box.innerHTML='';
+  items.forEach((it,i)=>{
+    const b=document.createElement('button');
+    b.className='chip'+(i===initial?' active':''); b.innerHTML=it.label;
+    b.onclick=()=>{ box.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      b.classList.add('active'); onPick(it.value,i); };
+    box.appendChild(b);
+  });
+}
+
+/* ================================================================
+   SECTION INITIALIZERS (lazy — run on first visit)
+================================================================ */
+const INIT={};
+
+/* ---------- 00 overview ---------- */
+INIT.overview=()=>{
+  const quick=[
+    ['ordinary','Jₙ · Yₙ','Ordinary Bessel functions & the defining ODE'],
+    ['modified','Iₙ · Kₙ','Modified: exponential growth & decay'],
+    ['half','J±½ · Hₙ','Half-integer & Hankel functions'],
+    ['kelvin','ber · bei','Kelvin functions of rotated argument'],
+    ['recurrence','↕ ladder','Recurrences & derivative identities'],
+    ['generating','Σ · ∫','Generating functions & integrals'],
+    ['asymptotic','x→∞','Asymptotics & Fourier–Bessel series'],
+    ['drumhead','3D ◉','Real-time vibrating membrane']
+  ];
+  const box=document.getElementById('quicknav');
+  box.innerHTML=quick.map(([id,t,s])=>`
+    <button onclick="show('${id}')" class="glass rounded-2xl p-4 text-left hover:border-cyan-400/40 hover:bg-cyan-400/5 transition group">
+      <div class="mono text-cyan-300 text-sm group-hover:text-cyan-200">${t}</div>
+      <div class="text-[11px] text-slate-500 mt-1 leading-snug">${s}</div>
+    </button>`).join('');
+  newChart('ovChart',[
+    ds(x=>SB.J(0,x),0.08,18,'J₀(x)',PALETTE[0]),
+    ds(x=>SB.J(1,x),0.08,18,'J₁(x)',PALETTE[1]),
+    ds(x=>SB.J(2,x),0.08,18,'J₂(x)',PALETTE[2]),
+    ds(x=>SB.Y(0,x),0.08,18,'Y₀(x)',PALETTE[3],{dash:[6,4]})
+  ],{plugins:{legend:{labels:{color:'#cbd5e1',usePointStyle:true,pointStyle:'line',boxWidth:20}}}});
+};
+
+/* ---------- 01 ordinary ---------- */
+INIT.ordinary=()=>{
+  // J_n family with toggle chips
+  const orders=[0,1,2,3,4,5,6];
+  const jch=newChart('jChart',orders.map(n=>ds(x=>SB.J(n,x),0,20,`J_${n}(x)`.replace(/_(\d+)/,'₍$1₎'),PALETTE[n%PALETTE.length])));
+  jch.setDatasetVisibility(3,false); jch.setDatasetVisibility(4,false);
+  jch.setDatasetVisibility(5,false); jch.setDatasetVisibility(6,false); jch.update();
+  const jb=document.getElementById('jOrders');
+  orders.forEach((n,i)=>{
+    const b=document.createElement('button');
+    b.className='chip'+(i<3?' active':''); b.textContent='J'+'₀₁₂₃₄₅₆'[n];
+    b.onclick=()=>{ b.classList.toggle('active');
+      jch.setDatasetVisibility(i,b.classList.contains('active')); jch.update(); };
+    jb.appendChild(b);
+  });
+  // Y_n
+  newChart('yChart',[
+    ds(x=>SB.Y(0,x),0.05,20,'Y₀(x)',PALETTE[0],{clamp:6}),
+    ds(x=>SB.Y(1,x),0.05,20,'Y₁(x)',PALETTE[1],{clamp:6}),
+    ds(x=>SB.Y(2,x),0.05,20,'Y₂(x)',PALETTE[2],{clamp:6}),
+    ds(x=>SB.Y(3,x),0.05,20,'Y₃(x)',PALETTE[3],{clamp:6})
+  ]);
+  initLandscape();
+};
+
+/* ---------- 3-D landscape (z = J_n(√(x²+y²))) ---------- */
+let land={ready:false};
+function initLandscape(){
+  if (land.ready) return; land.ready=true;
+  const wrap=document.getElementById('landStage');
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,wrap.clientWidth/Math.max(1,wrap.clientHeight),0.1,200);
+  camera.position.set(11,9,13);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+  wrap.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0x94a3b8,.6));
+  const dl=new THREE.DirectionalLight(0xffffff,.85); dl.position.set(8,14,6);
+  const dl2=new THREE.DirectionalLight(0x38bdf8,.3); dl2.position.set(-10,6,-8);
+  scene.add(dl,dl2);
+  const G=130, EXT=11, HS=1.5;
+  const pos=new Float32Array((G+1)*(G+1)*3), col=new Float32Array((G+1)*(G+1)*3), idx=[];
+  for (let i=0;i<=G;i++) for (let j=0;j<=G;j++){
+    const p=i*(G+1)+j;
+    pos[p*3]=-EXT+2*EXT*i/G; pos[p*3+1]=0; pos[p*3+2]=-EXT+2*EXT*j/G;
+  }
+  for (let i=0;i<G;i++) for (let j=0;j<G;j++){
+    const a=i*(G+1)+j,b=a+1,c=a+G+1,d=c+1; idx.push(a,c,b,b,c,d);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  geo.setIndex(idx);
+  const mesh=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:40,specular:0x1a2740}));
+  scene.add(mesh);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=.08;
+  controls.autoRotate=true; controls.autoRotateSpeed=.7;
+  land={scene,camera,renderer,geo,controls,wrap,G,EXT,HS};
+  rebuildLandscape(0);
+  chips('landChips',[0,1,2,3,4,5,6].map(n=>({label:'n='+n,value:n})),rebuildLandscape,0);
+}
+function rebuildLandscape(n){
+  const {geo,G,EXT,HS}=land;
+  const P=geo.attributes.position.array, C=geo.attributes.color.array;
+  const vals=new Float64Array((G+1)*(G+1)); let mx=0;
+  for (let i=0;i<=G;i++) for (let j=0;j<=G;j++){
+    const x=-EXT+2*EXT*i/G, y=-EXT+2*EXT*j/G;
+    const v=SB.J(n,Math.hypot(x,y)); vals[i*(G+1)+j]=v;
+    if (Math.abs(v)>mx) mx=Math.abs(v);
+  }
+  for (let p=0;p<vals.length;p++){
+    P[p*3+1]=HS*vals[p];
+    const c=getCmap('viridis',(vals[p]/(mx||1)+1)/2);
+    C[p*3]=c[0]; C[p*3+1]=c[1]; C[p*3+2]=c[2];
+  }
+  geo.attributes.position.needsUpdate=true;
+  geo.attributes.color.needsUpdate=true;
+  geo.computeVertexNormals();
+}
+function landFrame(){ land.controls.update(); land.renderer.render(land.scene,land.camera); }
+
+/* ---------- 02 modified ---------- */
+INIT.modified=()=>{
+  newChart('iChart',[0,1,2,3].map(n=>ds(x=>SB.I(n,x),0,6,'I_'+n+'(x)',PALETTE[n],{clamp:120})));
+  newChart('kChart',[0,1,2,3].map(n=>ds(x=>SB.K(n,x),0.05,8,'K_'+n+'(x)',PALETTE[n],{clamp:12})));
+};
+
+/* ---------- 03 half-integer & Hankel ---------- */
+INIT.half=()=>{
+  newChart('halfChart',[
+    ds(x=>Math.sqrt(2/(Math.PI*x))*Math.sin(x),0.05,25,'J_{1/2}(x)',PALETTE[0],{clamp:3}),
+    ds(x=>Math.sqrt(2/(Math.PI*x))*Math.cos(x),0.05,25,'J_{-1/2}(x)',PALETTE[1],{clamp:3}),
+    ds(x=>Math.sqrt(2/(Math.PI*x))*(Math.sin(x)/x-Math.cos(x)),0.05,25,'J_{3/2}(x)',PALETTE[2],{clamp:3})
+  ]);
+  newChart('hankChart',[
+    ds(x=>SB.J(0,x),0.08,25,'J₀ = Re H₀⁽¹⁾',PALETTE[0],{clamp:8}),
+    ds(x=>SB.Y(0,x),0.08,25,'Y₀ = Im H₀⁽¹⁾',PALETTE[1],{clamp:8}),
+    ds(x=>Math.hypot(SB.J(0,x),SB.Y(0,x)),0.08,25,'|H₀⁽¹⁾|',PALETTE[3],{dash:[6,4],clamp:8})
+  ]);
+};
+
+/* ---------- 04 Kelvin ---------- */
+INIT.kelvin=()=>{
+  newChart('berBeiChart',[
+    ds(x=>SB.kelvinJ(x)[0],0,10,'ber x',PALETTE[0],{clamp:25}),
+    ds(x=>SB.kelvinJ(x)[1],0,10,'bei x',PALETTE[1],{clamp:25})
+  ],noLegend);
+  newChart('kerKeiChart',[
+    ds(x=>SB.kelvinK(x)[0],0.05,8,'ker x',PALETTE[2],{clamp:4}),
+    ds(x=>SB.kelvinK(x)[1],0.05,8,'kei x',PALETTE[3],{clamp:4})
+  ],noLegend);
+  const spiral=[];
+  for (let i=0;i<=600;i++){ const x=12*i/600, [a,b]=SB.kelvinJ(x); spiral.push({x:a,y:b}); }
+  newChart('kelvinSpiral',[{label:'x: 0→12',data:spiral,borderColor:PALETTE[0],backgroundColor:PALETTE[0],borderWidth:1.6,pointRadius:0,tension:.1}],
+    {plugins:{legend:{display:false}},
+     scales:{x:{title:{display:true,text:'ber x',color:'#64748b'}},
+             y:{title:{display:true,text:'bei x',color:'#64748b'}}}});
+};
+
+/* ---------- 05 recurrence lab ---------- */
+INIT.recurrence=()=>{
+  let cur={id:'A',n:1};
+  const dJ=(n,x)=>(SB.J(n,x+1e-3)-SB.J(n,x-1e-3))/2e-3;
+  const IDENT={
+    A:{tex:'J_{n-1}+J_{n+1} = (2n/x)J_n', x0:.4,x1:20,clamp:8,
+       lhs:n=>x=>SB.J(n-1,x)+SB.J(n+1,x), rhs:n=>x=>2*n/x*SB.J(n,x)},
+    B:{tex:'J_{n-1}-J_{n+1} = 2J_n′', x0:.4,x1:20,clamp:8,
+       lhs:n=>x=>SB.J(n-1,x)-SB.J(n+1,x), rhs:n=>x=>2*dJ(n,x)},
+    C:{tex:'I_{n-1}-I_{n+1} = (2n/x)I_n', x0:.4,x1:8,clamp:600,
+       lhs:n=>x=>SB.I(n-1,x)-SB.I(n+1,x), rhs:n=>x=>2*n/x*SB.I(n,x)},
+    D:{tex:'I_{n-1}+I_{n+1} = 2I_n′', x0:.4,x1:8,clamp:600,
+       lhs:n=>x=>SB.I(n-1,x)+SB.I(n+1,x), rhs:n=>x=>2*(SB.I(n,x+1e-3)-SB.I(n,x-1e-3))/2e-3}
+  };
+  function build(){
+    const id=IDENT[cur.id], n=cur.n;
+    newChart('recChart',[
+      ds(id.lhs(n),id.x0,id.x1,'LHS  '+id.tex.split('=')[0].trim(),PALETTE[0],{clamp:id.clamp}),
+      ds(id.rhs(n),id.x0,id.x1,'RHS  '+id.tex.split('=')[1].trim(),PALETTE[3],{dash:[7,5],clamp:id.clamp})
+    ]);
+  }
+  chips('recIdentity',['A','B','C','D'].map(v=>({label:v,value:v})),v=>{cur.id=v;build();},0);
+  chips('recN',[1,2,3,4].map(v=>({label:'n='+v,value:v})),v=>{cur.n=v;build();},0);
+  build();
+};
+
+/* ---------- 06 generating functions ---------- */
+INIT.generating=()=>{
+  // (a) Σ J_n(x) → 1
+  const genChart=newChart('genChart',[
+    ds(x=>1,0,20,'1 (target)','#94a3b8',{dash:[6,5]}),
+    ds(x=>{let s=SB.J(0,x);const N=+document.getElementById('genN').value;
+      for (let k=2;k<=N;k+=2)s+=2*SB.J(k,x);return s;},0,20,'partial sum',PALETTE[0])
+  ]);
+  const genN=document.getElementById('genN');
+  genN.addEventListener('input',()=>{
+    document.getElementById('genVal').textContent=genN.value;
+    const N=+genN.value;
+    genChart.data.datasets[1].data=sampleFn(x=>{
+      let s=SB.J(0,x); for (let k=2;k<=N;k+=2)s+=2*SB.J(k,x); return s;},0,20,480,50);
+    genChart.update('none');
+  });
+  // (b) Jacobi–Anger
+  const jacX=document.getElementById('jacX'), jacK=document.getElementById('jacK');
+  const jacChart=newChart('jacChart',[
+    ds(th=>Math.cos(+jacX.value*Math.sin(th)),-Math.PI,Math.PI,'cos(x sinθ)','#94a3b8',{dash:[6,5],N:400}),
+    ds(th=>{const x=+jacX.value,K=+jacK.value;let s=SB.J(0,x);
+      for (let k=1;k<=K;k++)s+=2*SB.J(2*k,x)*Math.cos(2*k*th);return s;},
+      -Math.PI,Math.PI,'partial sum K',PALETTE[0],{N:400})
+  ]);
+  function jacUpdate(){
+    document.getElementById('jacXVal').textContent=jacX.value;
+    document.getElementById('jacKVal').textContent=jacK.value;
+    const x=+jacX.value,K=+jacK.value;
+    jacChart.data.datasets[0].data=sampleFn(th=>Math.cos(x*Math.sin(th)),-Math.PI,Math.PI,400,50);
+    jacChart.data.datasets[1].data=sampleFn(th=>{let s=SB.J(0,x);
+      for (let k=1;k<=K;k++)s+=2*SB.J(2*k,x)*Math.cos(2*k*th);return s;},-Math.PI,Math.PI,400,50);
+    jacChart.update('none');
+  }
+  jacX.addEventListener('input',jacUpdate); jacK.addEventListener('input',jacUpdate);
+};
+
+/* ---------- 07 asymptotics / orthogonality / Fourier–Bessel ---------- */
+INIT.asymptotic=()=>{
+  // (a) asymptotic comparison
+  const asy1=x=>Math.sqrt(2/(Math.PI*x))*Math.cos(x-Math.PI/4);
+  const asy2=x=>{const P=1-9/(128*x*x),Q=-1/(8*x),chi=x-Math.PI/4;
+    return Math.sqrt(2/(Math.PI*x))*(Math.cos(chi)*P-Math.sin(chi)*Q);};
+  newChart('asymChart',[
+    ds(x=>SB.J(0,x),0.6,50,'exact J₀',PALETTE[0],{w:2.4,N:700}),
+    ds(asy1,0.6,50,'√(2/πx) cos(x−π/4)',PALETTE[1],{dash:[7,5],N:700}),
+    ds(asy2,0.6,50,'+ O(x⁻²) corrections',PALETTE[3],{dash:[2,4],N:700})
+  ]);
+  // (b) orthogonality probe
+  let ort={n:0,m:1,k:2};
+  function orthUpdate(){
+    const {n,m,k}=ort, am=ROOTS[n][m-1], ak=ROOTS[n][k-1];
+    const I=simpson(r=>r*SB.J(n,am*r)*SB.J(n,ak*r),0,1,600);
+    const box=document.getElementById('orthVal');
+    if (m===k){
+      const pred=0.5*Math.pow(SB.J(n+1,am),2);
+      box.innerHTML=`∫₀¹ r J_${n}(α r)² dr = <span class="text-cyan-300">${fmt(I,6)}</span><br>
+        analytic ½[J_{${n+1}}(α)]² = <span class="text-emerald-300">${fmt(pred,6)}</span> &nbsp;(Δ = ${Math.abs(I-pred).toExponential(1)})`;
+    } else {
+      box.innerHTML=`∫₀¹ r J_${n}(α_{${n},${m}} r) J_${n}(α_{${n},${k}} r) dr = <span class="text-cyan-300">${I.toExponential(3)}</span><br>
+        <span class="text-slate-400">expected 0 — orthogonality holds to numeric precision</span>`;
+    }
+    newChart('orthChart',[
+      ds(r=>r*SB.J(n,am*r)*SB.J(n,ak*r),0,1,'integrand r·J·J',m===k?PALETTE[4]:PALETTE[0],{clamp:2,N:400})
+    ],{plugins:{legend:{display:false}}});
+  }
+  chips('orthN',[0,1,2,3].map(v=>({label:v,value:v})),v=>{ort.n=v;orthUpdate();},0);
+  chips('orthM',[1,2,3,4].map(v=>({label:v,value:v})),v=>{ort.m=v;orthUpdate();},0);
+  chips('orthK',[1,2,3,4].map(v=>({label:v,value:v})),v=>{ort.k=v;orthUpdate();},1);
+  orthUpdate();
+  // (c) Fourier–Bessel series (n = 0)
+  const FNS=[
+    {label:'f(r)=1−r²', f:r=>1-r*r},
+    {label:'step 𝟙(r<½)', f:r=>r<0.5?1:0},
+    {label:'f(r)=1', f:r=>1}
+  ];
+  let fb={fi:0,N:5,coefs:null};
+  const AL=ROOTS[0];
+  function computeCoefs(f){
+    const c=[];
+    for (let m=0;m<10;m++){
+      const a=AL[m];
+      const num=simpson(r=>r*f(r)*SB.J(0,a*r),0,1,900);
+      c.push(2*num/Math.pow(SB.J(1,a),2));
+    }
+    return c;
+  }
+  const partial=(N)=>r=>{let s=0;for (let m=0;m<N;m++)s+=fb.coefs[m]*SB.J(0,AL[m]*r);return s;};
+  const fbChart=newChart('fbChart',[
+    ds(FNS[0].f,0,1,'target f(r)','#e2e8f0',{dash:[6,5],N:240}),
+    ds(partial(5),0,1,'Fourier–Bessel sum',PALETTE[0],{N:240})
+  ]);
+  function fbUpdate(){
+    fb.coefs=computeCoefs(FNS[fb.fi].f);
+    fbChart.data.datasets[0].data=sampleFn(FNS[fb.fi].f,0,1,240,50);
+    fbChart.data.datasets[1].data=sampleFn(partial(fb.N),0,1,240,50);
+    fbChart.update();
+    document.getElementById('fbCoefs').innerHTML=
+      fb.coefs.slice(0,6).map((c,i)=>`<span class="chip cursor-default mono" style="font-size:.68rem">c${i+1}=${fmt(c,3)}</span>`).join('');
+  }
+  const fbN=document.getElementById('fbN');
+  fbN.addEventListener('input',()=>{
+    fb.N=+fbN.value; document.getElementById('fbVal').textContent=fb.N;
+    fbChart.data.datasets[1].data=sampleFn(partial(fb.N),0,1,240,50);
+    fbChart.update();
+  });
+  chips('fbFn',FNS.map((f,i)=>({label:f.label,value:i})),v=>{fb.fi=v;fbUpdate();},0);
+  fbUpdate();
+};
+
+/* ================================================================
+   08 — THREE.JS DRUMHEAD SIMULATOR
+================================================================ */
+let drum={ready:false};
+function initDrumhead(){
+  if (drum.ready) return; drum.ready=true;
+  const wrap=document.getElementById('drumStage');
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,wrap.clientWidth/Math.max(1,wrap.clientHeight),0.1,100);
+  camera.position.set(3.1,2.3,3.1);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+  wrap.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0x94a3b8,.55));
+  const d1=new THREE.DirectionalLight(0xffffff,.85); d1.position.set(4,6,3);
+  const d2=new THREE.DirectionalLight(0x38bdf8,.35); d2.position.set(-5,3,-4);
+  scene.add(d1,d2);
+  const RSEG=72, ASEG=150, RAD=1.7;
+  const NV=(RSEG+1)*(ASEG+1);
+  const pos=new Float32Array(NV*3), col=new Float32Array(NV*3), idx=[];
+  let p=0;
+  for (let i=0;i<=RSEG;i++){ const r=i/RSEG*RAD;
+    for (let j=0;j<=ASEG;j++){ const th=j/ASEG*2*Math.PI;
+      pos[p*3]=r*Math.cos(th); pos[p*3+1]=0; pos[p*3+2]=r*Math.sin(th); p++; } }
+  for (let i=0;i<RSEG;i++) for (let j=0;j<ASEG;j++){
+    const a=i*(ASEG+1)+j,b=a+1,c=a+(ASEG+1),d=c+1; idx.push(a,c,b,b,c,d); }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  geo.setIndex(idx);
+  const phong=new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:70,specular:new THREE.Color(0x223349)});
+  const wire=new THREE.MeshBasicMaterial({vertexColors:true,wireframe:true,transparent:true,opacity:.9});
+  const mesh=new THREE.Mesh(geo,phong); scene.add(mesh);
+  const overlay=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({wireframe:true,color:0x67e8f9,transparent:true,opacity:.16}));
+  scene.add(overlay);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(RAD,.03,12,220),
+    new THREE.MeshPhongMaterial({color:0x22d3ee,emissive:0x0e7490,shininess:90}));
+  rim.rotation.x=Math.PI/2; scene.add(rim);
+  const grid=new THREE.PolarGridHelper(2.6,16,6,80,0x1e3a5f,0x122036);
+  grid.position.y=-1.35; scene.add(grid);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=.08;
+  controls.minDistance=2; controls.maxDistance=11;
+
+  drum={ready:true,scene,camera,renderer,geo,mesh,overlay,phong,wire,controls,wrap,
+    RSEG,ASEG,n:0,m:1,omega:ROOTS[0][0],amp:0.55,t:0,playing:true,mode:'both',cmap:'plasma',
+    radial:null,cosN:null,norm:1};
+
+  function buildMode(){
+    const a=ROOTS[drum.n][drum.m-1];
+    drum.omega=a;
+    document.getElementById('dOmega').value=a;
+    document.getElementById('dOmegaVal').textContent=fmt(a,3);
+    const rad=new Float64Array(drum.RSEG+1); let mx=0;
+    for (let i=0;i<=drum.RSEG;i++){
+      const v=SB.J(drum.n,a*i/drum.RSEG); rad[i]=v;
+      if (Math.abs(v)>mx) mx=Math.abs(v);
+    }
+    drum.radial=rad; drum.norm=1/(mx||1);
+    const cn=new Float64Array(drum.ASEG+1);
+    for (let j=0;j<=drum.ASEG;j++) cn[j]=Math.cos(drum.n*j/drum.ASEG*2*Math.PI);
+    drum.cosN=cn;
+    document.getElementById('dAlpha').textContent=fmt(a,5);
+    document.getElementById('dNodal').innerHTML=
+      `nodal diameters: <span class="text-cyan-300">${drum.n}</span> · nodal circles: <span class="text-cyan-300">${drum.m-1}</span> (+ rim)`;
+    newChart('radialChart',[
+      ds(r=>SB.J(drum.n,a*r),0,1,'J_'+drum.n+'(α r)',PALETTE[0],{N:240,clamp:2})
+    ],{plugins:{legend:{display:false}}});
+  }
+
+  // UI wiring
+  chips('drumN',[0,1,2,3,4,5].map(v=>({label:v,value:v})),v=>{drum.n=v;buildMode();},0);
+  chips('drumM',[1,2,3,4].map(v=>({label:'m='+v,value:v})),v=>{drum.m=v;buildMode();},0);
+  chips('dView',[{label:'surface',value:'surface'},{label:'wireframe',value:'wire'},{label:'both',value:'both'}],
+    v=>{ drum.mode=v;
+      if (v==='surface'){ drum.mesh.material=drum.phong; drum.overlay.visible=false; }
+      if (v==='wire'){ drum.mesh.material=drum.wire; drum.overlay.visible=false; }
+      if (v==='both'){ drum.mesh.material=drum.phong; drum.overlay.visible=true; }
+    },2);
+  chips('dCmap',Object.keys(CMAP_STOPS).map(v=>({label:v,value:v})),v=>{
+    drum.cmap=v; document.getElementById('cbar').style.background=cbarCSS(v);
+  },0);
+  document.getElementById('cbar').style.background=cbarCSS('plasma');
+
+  const om=document.getElementById('dOmega');
+  om.addEventListener('input',()=>{ drum.omega=+om.value;
+    document.getElementById('dOmegaVal').textContent=fmt(drum.omega,3); });
+  const amp=document.getElementById('dAmp');
+  amp.addEventListener('input',()=>{ drum.amp=+amp.value;
+    document.getElementById('dAmpVal').textContent=fmt(drum.amp,2); });
+  document.getElementById('dAmpVal').textContent=fmt(drum.amp,2);
+  document.getElementById('dPlay').onclick=function(){
+    drum.playing=!drum.playing; this.textContent=drum.playing?'⏸ pause':'▶ play'; };
+  document.getElementById('dReset').onclick=()=>{
+    camera.position.set(3.1,2.3,3.1); controls.target.set(0,0,0); };
+
+  buildMode();
+}
+function drumFrame(dt){
+  if (drum.playing) drum.t+=dt;
+  const phase=Math.cos(drum.omega*drum.t);
+  const A=drum.amp*0.95;
+  const P=drum.geo.attributes.position.array, C=drum.geo.attributes.color.array;
+  const lut=getLUT(drum.cmap);
+  let k=0;
+  for (let i=0;i<=drum.RSEG;i++){
+    const rv=drum.radial[i]*drum.norm*phase;
+    for (let j=0;j<=drum.ASEG;j++){
+      const v=rv*drum.cosN[j];
+      P[k*3+1]=A*v;
+      const ci=Math.round((Math.min(1,Math.max(0,(v+1)/2)))*255), c=lut[ci];
+      C[k*3]=c[0]; C[k*3+1]=c[1]; C[k*3+2]=c[2];
+      k++;
+    }
+  }
+  drum.geo.attributes.position.needsUpdate=true;
+  drum.geo.attributes.color.needsUpdate=true;
+  drum.controls.update();
+  drum.renderer.render(drum.scene,drum.camera);
+}
+
+/* ================================================================
+   NAVIGATION + GLOBAL LOOP
+================================================================ */
+const SECTIONS=['overview','ordinary','modified','half','kelvin','recurrence','generating','asymptotic','drumhead'];
+let active='overview'; const done={};
+function show(id){
+  if (!SECTIONS.includes(id)) id='overview';
+  active=id;
+  SECTIONS.forEach(s=>document.getElementById('sec-'+s).classList.toggle('hidden',s!==id));
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id));
+  if (!done[id]){ (INIT[id]||(()=>{}))(); done[id]=true; }
+  requestAnimationFrame(()=>Object.values(CHARTS).forEach(c=>c.resize()));
+  if ((id==='ordinary'&&land.ready)||(id==='drumhead'&&drum.ready))
+    requestAnimationFrame(resizeScenes);
+  history.replaceState(null,'','#'+id);
+}
+document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.nav)));
+window.show=show;
+
+function resizeScenes(){
+  if (land.ready && active==='ordinary'){
+    const w=land.wrap.clientWidth,h=land.wrap.clientHeight;
+    land.renderer.setSize(w,h); land.camera.aspect=w/Math.max(1,h); land.camera.updateProjectionMatrix();
+  }
+  if (drum.ready && active==='drumhead'){
+    const w=drum.wrap.clientWidth,h=drum.wrap.clientHeight;
+    drum.renderer.setSize(w,h); drum.camera.aspect=w/Math.max(1,h); drum.camera.updateProjectionMatrix();
+  }
+}
+window.addEventListener('resize',resizeScenes);
+
+/* master animation loop — renders only the active WebGL scene */
+let last=performance.now();
+function tick(t){
+  requestAnimationFrame(tick);
+  const dt=Math.min(0.05,(t-last)/1000); last=t;
+  if (active==='drumhead' && drum.ready) drumFrame(dt);
+  else if (active==='ordinary' && land.ready) landFrame();
+}
+requestAnimationFrame(tick);
+
+/* boot */
+show(location.hash.slice(1)||'overview');
+
+/* run-time self-test of the numerics (console) */
+console.assert(Math.abs(SB.J(0,2.4048)<1e-3),'J0 root');
+console.assert(Math.abs(SB.Y(0,1)-0.0882569642)<1e-5,'Y0(1)');
+console.assert(Math.abs(SB.K(1,1)-0.60190723)<1e-5,'K1(1)');
+console.assert(Math.abs(SB.kelvinK(0.001)[1]+Math.PI/4)<1e-3,'kei(0)=-π/4');
+console.log('%cBessel Handbook numerics online ✓','color:#22d3ee',
+  'α₀,₁='+fmt(ROOTS[0][0],5),'α₅,₄='+fmt(ROOTS[5][3],5));
+</script>
+</body>
+</html>

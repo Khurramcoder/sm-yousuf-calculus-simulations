@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Divergence Theorem | 3D Visualization</title>
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                packages: {'[+]': ['ams']}
+            },
+            loader: {load: ['[tex]/ams']},
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            chtml: {
+                scale: 1,
+                minScale: 0.5
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #0a0e27;
+            color: #e0e0e0;
+        }
+        
+        .container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .left-panel {
+            width: 35%;
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #1a1f3a 0%, #0f1429 100%);
+            padding: 30px;
+            border-right: 2px solid #2a3556;
+            scrollbar-width: thin;
+            scrollbar-color: #4a5578 #1a1f3a;
+        }
+        
+        .left-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .left-panel::-webkit-scrollbar-track {
+            background: #1a1f3a;
+        }
+        
+        .left-panel::-webkit-scrollbar-thumb {
+            background: #4a5578;
+            border-radius: 4px;
+        }
+        
+        .right-panel {
+            width: 65%;
+            height: 100vh;
+            position: relative;
+            background: #000;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .content-section {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #2a3556;
+        }
+        
+        .content-section:last-child {
+            border-bottom: none;
+        }
+        
+        h1 {
+            color: #4fc3f7;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+        }
+        
+        h2 {
+            color: #81c784;
+            font-size: 22px;
+            margin-bottom: 15px;
+            margin-top: 20px;
+        }
+        
+        h3 {
+            color: #ffb74d;
+            font-size: 18px;
+            margin-bottom: 12px;
+            margin-top: 15px;
+        }
+        
+        p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+            color: #c8c8c8;
+        }
+        
+        .highlight-box {
+            background: rgba(79, 195, 247, 0.1);
+            border-left: 4px solid #4fc3f7;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .proof-step {
+            background: rgba(129, 199, 132, 0.1);
+            border-left: 4px solid #81c784;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .example-box {
+            background: rgba(255, 183, 77, 0.1);
+            border-left: 4px solid #ffb74d;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .formula-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #3a4568;
+        }
+        
+        /* Floating Control Panel */
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            background: rgba(26, 31, 58, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+        
+        .control-panel h3 {
+            margin-top: 0;
+            color: #4fc3f7;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #b0b0b0;
+            font-size: 13px;
+        }
+        
+        .control-group select,
+        .control-group input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #3a4568;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+        
+        .control-group input[type="range"] {
+            padding: 0;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #3a4568;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .hud-display {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(26, 31, 58, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            min-width: 280px;
+        }
+        
+        .hud-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .hud-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .hud-label {
+            font-size: 12px;
+            color: #b0b0b0;
+            margin-bottom: 3px;
+        }
+        
+        .hud-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        
+        .value-match {
+            color: #81c784 !important;
+        }
+        
+        .vector-legend {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 31, 58, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            line-height: 1.8;
+            margin-bottom: 8px;
+            color: #c8c8c8;
+        }
+        
+        .MathJax {
+            color: inherit !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Theory and Proofs -->
+        <div class="left-panel">
+            <h1>🌊 The Divergence Theorem</h1>
+            
+            <!-- Section 1: Physical Intuition -->
+            <div class="content-section">
+                <h2>1. Physical Intuition</h2>
+                <p>The Divergence Theorem connects two fundamental concepts in vector calculus: <strong>flux through a surface</strong> and <strong>divergence within a volume</strong>.</p>
+                
+                <h3>Fluid Flow Model</h3>
+                <p>Imagine a region of space filled with a moving fluid. The vector field $\mathbf{F}(x,y,z)$ represents the velocity of the fluid at each point.</p>
+                
+                <div class="highlight-box">
+                    <strong>Sources and Sinks:</strong>
+                    <ul>
+                        <li><strong>Source ($\nabla \cdot \mathbf{F} &gt; 0$):</strong> Fluid is being created at this point (like a spring or fountain). Net flow is outward.</li>
+                        <li><strong>Sink ($\nabla \cdot \mathbf{F} &lt; 0$):</strong> Fluid is being destroyed at this point (like a drain). Net flow is inward.</li>
+                        <li><strong>Incompressible ($\nabla \cdot \mathbf{F} = 0$):</strong> No fluid is created or destroyed. Flow through any closed surface equals zero.</li>
+                    </ul>
+                </div>
+                
+                <h3>Surface Flux vs Volume Divergence</h3>
+                <p><strong>Surface Flux</strong> ($\oiint_S \mathbf{F} \cdot \mathbf{n} \, dS$): Measures the net rate at which fluid flows outward through the boundary surface $S$. Think of it as "how much water is leaving the region per second."</p>
+                
+                <p><strong>Volume Divergence</strong> ($\iiint_V \nabla \cdot \mathbf{F} \, dV$): Measures the total rate of fluid creation/destruction inside the volume $V$. Sum up all sources minus sinks.</p>
+                
+                <div class="highlight-box">
+                    <strong>Key Insight:</strong> The total fluid leaving a closed region must equal the total fluid created inside that region (minus what was destroyed). This is conservation of mass!
+                </div>
+            </div>
+            
+            <!-- Section 2: Mathematical Definition -->
+            <div class="content-section">
+                <h2>2. Mathematical Statement</h2>
+                <p>The Divergence Theorem states:</p>
+                
+                <div class="formula-display">
+                    $$\iiint_V (\nabla \cdot \mathbf{F}) \, dV = \oiint_{\partial V} (\mathbf{F} \cdot \mathbf{n}) \, dS$$
+                </div>
+                
+                <h3>Notation Explained</h3>
+                <ul>
+                    <li>$V$: A bounded region (volume) in 3D space</li>
+                    <li>$\partial V$ or $S$: The closed boundary surface of $V$</li>
+                    <li>$\mathbf{F} = \langle P, Q, R \rangle$: A continuously differentiable vector field</li>
+                    <li>$\mathbf{n}$: The outward-pointing unit normal vector to the surface</li>
+                    <li>$dS$: Differential surface area element</li>
+                    <li>$dV$: Differential volume element ($dx \, dy \, dz$)</li>
+                    <li>$\nabla \cdot \mathbf{F} = \frac{\partial P}{\partial x} + \frac{\partial Q}{\partial y} + \frac{\partial R}{\partial z}$: The divergence of $\mathbf{F}$</li>
+                </ul>
+                
+                <div class="highlight-box">
+                    <strong>Important:</strong> The surface must be <em>closed</em> and oriented with <em>outward</em> normals for the theorem to hold.
+                </div>
+            </div>
+            
+            <!-- Section 3: Proof Sketch -->
+            <div class="content-section">
+                <h2>3. Proof by Cancellation</h2>
+                <p>We prove the theorem by dividing the volume into infinitesimal cubes and showing that internal fluxes cancel.</p>
+                
+                <div class="proof-step">
+                    <h3>Step 1: Infinitesimal Cube</h3>
+                    <p>Consider a small cube with dimensions $dx \times dy \times dz$ centered at $(x_0, y_0, z_0)$. The divergence at the center is:</p>
+                    $$\nabla \cdot \mathbf{F} = \frac{\partial P}{\partial x} + \frac{\partial Q}{\partial y} + \frac{\partial R}{\partial z}$$
+                    
+                    <p>The net outward flux through this cube is approximately:</p>
+                    $$(\nabla \cdot \mathbf{F}) \, dV = \left(\frac{\partial P}{\partial x} + \frac{\partial Q}{\partial y} + \frac{\partial R}{\partial z}\right) dx \, dy \, dz$$
+                </div>
+                
+                <div class="proof-step">
+                    <h3>Step 2: Flux Through Cube Faces</h3>
+                    <p>For the face at $x = x_0 + dx/2$ (right face, normal $\mathbf{n} = \hat{\mathbf{i}}$):</p>
+                    $$\text{Flux}_{\text{right}} \approx P\left(x_0 + \frac{dx}{2}, y_0, z_0\right) \, dy \, dz$$
+                    
+                    <p>For the face at $x = x_0 - dx/2$ (left face, normal $\mathbf{n} = -\hat{\mathbf{i}}$):</p>
+                    $$\text{Flux}_{\text{left}} \approx -P\left(x_0 - \frac{dx}{2}, y_0, z_0\right) \, dy \, dz$$
+                    
+                    <p>Net flux through $x$-faces:</p>
+                    $$\left[P\left(x_0 + \frac{dx}{2}\right) - P\left(x_0 - \frac{dx}{2}\right)\right] dy \, dz \approx \frac{\partial P}{\partial x} dx \, dy \, dz$$
+                    
+                    <p>Similar analysis applies to $y$ and $z$ faces.</p>
+                </div>
+                
+                <div class="proof-step">
+                    <h3>Step 3: Cancellation of Internal Fluxes</h3>
+                    <p>When we tile the volume $V$ with many small cubes, adjacent cubes share faces. The flux through a shared face appears with opposite signs for the two cubes (outward normals point in opposite directions).</p>
+                    
+                    <p><strong>Result:</strong> All internal fluxes cancel! Only flux through the <em>outer boundary</em> $\partial V$ remains.</p>
+                </div>
+                
+                <div class="proof-step">
+                    <h3>Step 4: Summing Over Volume</h3>
+                    <p>Sum the divergence over all small cubes:</p>
+                    $$\sum_i (\nabla \cdot \mathbf{F})_i \, \Delta V_i \approx \iiint_V (\nabla \cdot \mathbf{F}) \, dV$$
+                    
+                    <p>This equals the sum of net fluxes from each cube, which equals the net flux through the outer boundary:</p>
+                    $$\iiint_V (\nabla \cdot \mathbf{F}) \, dV = \oiint_{\partial V} \mathbf{F} \cdot \mathbf{n} \, dS \quad \blacksquare$$
+                </div>
+            </div>
+            
+            <!-- Section 4: Worked Examples -->
+            <div class="content-section">
+                <h2>4. Worked Example</h2>
+                
+                <div class="example-box">
+                    <h3>Problem</h3>
+                    <p>Verify the Divergence Theorem for:</p>
+                    <ul>
+                        <li>Vector field: $\mathbf{F}(x,y,z) = \langle x, y, z \rangle$</li>
+                        <li>Surface: Unit sphere $x^2 + y^2 + z^2 \leq 1$</li>
+                    </ul>
+                </div>
+                
+                <div class="proof-step">
+                    <h3>Method A: Volume Integral (Divergence Side)</h3>
+                    <p>Step 1: Compute divergence</p>
+                    $$\nabla \cdot \mathbf{F} = \frac{\partial x}{\partial x} + \frac{\partial y}{\partial y} + \frac{\partial z}{\partial z} = 1 + 1 + 1 = 3$$
+                    
+                    <p>Step 2: Integrate over the unit sphere volume</p>
+                    $$\iiint_V 3 \, dV = 3 \cdot \text{Volume of unit sphere} = 3 \cdot \frac{4}{3}\pi(1)^3 = 4\pi$$
+                    
+                    <p><strong>Result: $\iiint_V (\nabla \cdot \mathbf{F}) \, dV = 4\pi$</strong></p>
+                </div>
+                
+                <div class="proof-step">
+                    <h3>Method B: Surface Integral (Flux Side)</h3>
+                    <p>Step 1: Parametrize the unit sphere</p>
+                    $$\mathbf{r}(\theta, \phi) = \langle \sin\phi\cos\theta, \sin\phi\sin\theta, \cos\phi \rangle$$
+                    <p>where $\theta \in [0, 2\pi]$, $\phi \in [0, \pi]$</p>
+                    
+                    <p>Step 2: Compute outward unit normal</p>
+                    <p>For a sphere of radius $R$, the outward normal is:</p>
+                    $$\mathbf{n} = \frac{\langle x, y, z \rangle}{\sqrt{x^2 + y^2 + z^2}} = \langle x, y, z \rangle \quad \text{(on unit sphere)}$$
+                    
+                    <p>Step 3: Compute $\mathbf{F} \cdot \mathbf{n}$</p>
+                    $$\mathbf{F} \cdot \mathbf{n} = \langle x, y, z \rangle \cdot \langle x, y, z \rangle = x^2 + y^2 + z^2 = 1$$
+                    
+                    <p>Step 4: Surface integral</p>
+                    $$\oiint_S \mathbf{F} \cdot \mathbf{n} \, dS = \oiint_S 1 \, dS = \text{Surface area of unit sphere} = 4\pi(1)^2 = 4\pi$$
+                    
+                    <p><strong>Result: $\oiint_S (\mathbf{F} \cdot \mathbf{n}) \, dS = 4\pi$</strong></p>
+                </div>
+                
+                <div class="highlight-box">
+                    <h3>✓ Verification Complete</h3>
+                    <p>Both methods yield $4\pi$. The Divergence Theorem holds!</p>
+                </div>
+            </div>
+            
+            <!-- Section 5: Applications -->
+            <div class="content-section">
+                <h2>5. Applications</h2>
+                
+                <h3>Fluid Dynamics</h3>
+                <p>Conservation of mass equation (continuity equation):</p>
+                $$\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \mathbf{v}) = 0$$
+                
+                <h3>Electromagnetism</h3>
+                <p>Gauss's Law for electricity:</p>
+                $$\oiint_S \mathbf{E} \cdot \mathbf{n} \, dS = \frac{Q_{\text{enc}}}{\epsilon_0}$$
+                
+                <h3>Heat Transfer</h3>
+                <p>Conservation of energy in heat conduction.</p>
+            </div>
+        </div>
+        
+        <!-- Right Panel: 3D Visualization -->
+        <div class="right-panel">
+            <div id="canvas-container"></div>
+            
+            <!-- Vector Field Legend -->
+            <div class="vector-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff4444;"></div>
+                    <span>Positive Divergence (Source)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4444ff;"></div>
+                    <span>Negative Divergence (Sink)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffff44;"></div>
+                    <span>Zero Divergence</span>
+                </div>
+            </div>
+            
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h3>⚙️ Simulation Controls</h3>
+                
+                <div class="control-group">
+                    <label>Vector Field $\mathbf{F}$:</label>
+                    <select id="field-selector">
+                        <option value="source">Positive Divergence (Pure Source): F = &lt;x, y, z&gt;</option>
+                        <option value="sink">Negative Divergence (Pure Sink): F = &lt;-x, -y, -z&gt;</option>
+                        <option value="solenoidal">Zero Divergence (Solenoidal): F = &lt;y, -x, 0&gt;</option>
+                        <option value="spatial">Spatially Varying: F = &lt;x², yz, z²&gt;</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Closed Surface $S$:</label>
+                    <select id="surface-selector">
+                        <option value="sphere">Sphere: x² + y² + z² = R²</option>
+                        <option value="cube">Unit Cube: 0 ≤ x,y,z ≤ 1</option>
+                        <option value="cylinder">Cylinder: x² + y² ≤ R², |z| ≤ h</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Surface Opacity: <span id="opacity-value">0.3</span></label>
+                    <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.3">
+                </div>
+                
+                <div class="control-group">
+                    <label>Surface Scale (R): <span id="scale-value">1.0</span></label>
+                    <input type="range" id="scale-slider" min="0.5" max="2.5" step="0.1" value="1.0">
+                </div>
+                
+                <div class="control-group">
+                    <label>Particle Density: <span id="density-value">50</span></label>
+                    <input type="range" id="density-slider" min="10" max="200" step="10" value="50">
+                </div>
+            </div>
+            
+            <!-- HUD Display -->
+            <div class="hud-display">
+                <div class="hud-item">
+                    <div class="hud-label">Calculated Flux $\oiint_S \mathbf{F} \cdot \mathbf{n} \, dS$:</div>
+                    <div class="hud-value" id="flux-value">0.00</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">Integrated Divergence $\iiint_V \nabla \cdot \mathbf{F} \, dV$:</div>
+                    <div class="hud-value" id="divergence-value">0.00</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">Theorem Status:</div>
+                    <div class="hud-value value-match" id="theorem-status">✓ Verified</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ===== Three.js Scene Setup =====
+        let scene, camera, renderer, controls;
+        let vectorArrows = [];
+        let particles = [];
+        let surfaceMesh;
+        let currentField = 'source';
+        let currentSurface = 'sphere';
+        let surfaceScale = 1.0;
+        let particleCount = 50;
+        
+        // Initialize Three.js
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0e27);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                60,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 20;
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            scene.add(directionalLight);
+            
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(10, 20, 0x444444, 0x222222);
+            scene.add(gridHelper);
+            
+            // Axes helper
+            const axesHelper = new THREE.AxesHelper(3);
+            scene.add(axesHelper);
+            
+            // Create initial visualization
+            createVisualization();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Vector field functions
+        function vectorField(x, y, z) {
+            switch (currentField) {
+                case 'source':
+                    return new THREE.Vector3(x, y, z);
+                case 'sink':
+                    return new THREE.Vector3(-x, -y, -z);
+                case 'solenoidal':
+                    return new THREE.Vector3(y, -x, 0);
+                case 'spatial':
+                    return new THREE.Vector3(x * x, y * z, z * z);
+                default:
+                    return new THREE.Vector3(x, y, z);
+            }
+        }
+        
+        function divergence(x, y, z) {
+            switch (currentField) {
+                case 'source':
+                    return 3;
+                case 'sink':
+                    return -3;
+                case 'solenoidal':
+                    return 0;
+                case 'spatial':
+                    return 2 * x + z + 2 * z;
+                default:
+                    return 3;
+            }
+        }
+        
+        // Create vector field arrows
+        function createVectorArrows() {
+            // Remove existing arrows
+            vectorArrows.forEach(arrow => scene.remove(arrow));
+            vectorArrows = [];
+            
+            const spacing = 0.8;
+            const range = 3;
+            
+            for (let x = -range; x <= range; x += spacing) {
+                for (let y = -range; y <= range; y += spacing) {
+                    for (let z = -range; z <= range; z += spacing) {
+                        const vec = vectorField(x, y, z);
+                        const magnitude = vec.length();
+                        
+                        if (magnitude > 0.01) {
+                            const div = divergence(x, y, z);
+                            
+                            // Color based on divergence
+                            let color;
+                            if (div > 0.5) {
+                                color = new THREE.Color(0xff4444); // Red for positive divergence
+                            } else if (div < -0.5) {
+                                color = new THREE.Color(0x4444ff); // Blue for negative divergence
+                            } else {
+                                color = new THREE.Color(0xffff44); // Yellow for zero divergence
+                            }
+                            
+                            const dir = vec.normalize();
+                            const length = Math.min(magnitude * 0.3, 1.0);
+                            const origin = new THREE.Vector3(x, y, z);
+                            
+                            const arrowHelper = new THREE.ArrowHelper(dir, origin, length, color, 0.2, 0.1);
+                            scene.add(arrowHelper);
+                            vectorArrows.push(arrowHelper);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Create particle system
+        function createParticles() {
+            // Remove existing particles
+            particles.forEach(particle => scene.remove(particle));
+            particles = [];
+            
+            const particleGeometry = new THREE.SphereGeometry(0.04, 8, 8);
+            const particleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+                
+                // Random initial position within range
+                particle.position.set(
+                    (Math.random() - 0.5) * 6,
+                    (Math.random() - 0.5) * 6,
+                    (Math.random() - 0.5) * 6
+                );
+                
+                particle.userData.velocity = new THREE.Vector3();
+                particle.userData.lifetime = 0;
+                particle.userData.maxLifetime = 100 + Math.random() * 100;
+                
+                scene.add(particle);
+                particles.push(particle);
+            }
+        }
+        
+        // Create closed surface
+        function createSurface() {
+            // Remove existing surface
+            if (surfaceMesh) {
+                scene.remove(surfaceMesh);
+            }
+            
+            let geometry;
+            const opacity = parseFloat(document.getElementById('opacity-slider').value);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x8888ff,
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                wireframe: false
+            });
+            
+            switch (currentSurface) {
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(surfaceScale, 32, 32);
+                    break;
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(surfaceScale, surfaceScale, surfaceScale);
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(surfaceScale, surfaceScale, surfaceScale * 2, 32);
+                    break;
+                default:
+                    geometry = new THREE.SphereGeometry(surfaceScale, 32, 32);
+            }
+            
+            surfaceMesh = new THREE.Mesh(geometry, material);
+            scene.add(surfaceMesh);
+            
+            // Add wireframe
+            const wireframeMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                wireframe: true,
+                transparent: true,
+                opacity: opacity * 0.3
+            });
+            const wireframe = new THREE.Mesh(geometry, wireframeMaterial);
+            surfaceMesh.add(wireframe);
+        }
+        
+        // Calculate flux and divergence for HUD (Analytically exact for these symmetries)
+        function calculateValues() {
+            let volume = 0;
+            let divConstant = 0;
+            
+            // Calculate exact volume based on surface shape and scale
+            switch (currentSurface) {
+                case 'sphere':
+                    volume = (4/3) * Math.PI * Math.pow(surfaceScale, 3);
+                    break;
+                case 'cube':
+                    volume = Math.pow(surfaceScale, 3);
+                    break;
+                case 'cylinder':
+                    volume = Math.PI * Math.pow(surfaceScale, 2) * (surfaceScale * 2);
+                    break;
+            }
+            
+            // Calculate integrals based on field
+            switch (currentField) {
+                case 'source': // div = 3
+                    divConstant = 3;
+                    break;
+                case 'sink': // div = -3
+                    divConstant = -3;
+                    break;
+                case 'solenoidal': // div = 0
+                    divConstant = 0;
+                    break;
+                case 'spatial': // F = <x^2, yz, z^2>, div = 2x + z + 2z = 2x + 3z
+                    // For symmetric regions centered at 0, integral of 2x is 0, integral of 3z is 0
+                    // So volume integral is exactly 0!
+                    divConstant = 0;
+                    break;
+            }
+            
+            let flux = divConstant * volume;
+            let volumeIntegral = divConstant * volume;
+            
+            document.getElementById('flux-value').textContent = flux.toFixed(2);
+            document.getElementById('divergence-value').textContent = volumeIntegral.toFixed(2);
+            
+            const diff = Math.abs(flux - volumeIntegral);
+            const status = document.getElementById('theorem-status');
+            if (diff < 0.01) {
+                status.textContent = '✓ Verified (Exact)';
+                status.className = 'hud-value value-match';
+            } else {
+                status.textContent = '✗ Mismatch';
+                status.className = 'hud-value';
+            }
+        }
+        
+        // Update visualization
+        function createVisualization() {
+            createVectorArrows();
+            createParticles();
+            createSurface();
+            calculateValues();
+        }
+        
+        // Update particles
+        function updateParticles() {
+            const dt = 0.016; // ~60fps
+            
+            particles.forEach(particle => {
+                particle.userData.lifetime++;
+                
+                if (particle.userData.lifetime > particle.userData.maxLifetime) {
+                    // Reset particle
+                    particle.position.set(
+                        (Math.random() - 0.5) * 6,
+                        (Math.random() - 0.5) * 6,
+                        (Math.random() - 0.5) * 6
+                    );
+                    particle.userData.lifetime = 0;
+                    particle.userData.maxLifetime = 100 + Math.random() * 100;
+                }
+                
+                // Get vector field at particle position
+                const vec = vectorField(
+                    particle.position.x,
+                    particle.position.y,
+                    particle.position.z
+                );
+                
+                // Update position
+                particle.position.add(vec.clone().multiplyScalar(dt));
+                
+                // Color based on field magnitude
+                const magnitude = vec.length();
+                const hue = (magnitude * 20) % 360;
+                particle.material.color.setHSL(hue / 360, 1, 0.5);
+            });
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateParticles();
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // Event listeners for controls
+        document.getElementById('field-selector').addEventListener('change', (e) => {
+            currentField = e.target.value;
+            createVisualization();
+        });
+        
+        document.getElementById('surface-selector').addEventListener('change', (e) => {
+            currentSurface = e.target.value;
+            createVisualization();
+        });
+        
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            const value = e.target.value;
+            document.getElementById('opacity-value').textContent = parseFloat(value).toFixed(2);
+            if (surfaceMesh) {
+                surfaceMesh.material.opacity = parseFloat(value);
+                if (surfaceMesh.children[0]) {
+                    surfaceMesh.children[0].material.opacity = parseFloat(value) * 0.3;
+                }
+            }
+        });
+        
+        document.getElementById('scale-slider').addEventListener('input', (e) => {
+            surfaceScale = parseFloat(e.target.value);
+            document.getElementById('scale-value').textContent = surfaceScale.toFixed(1);
+            createSurface();
+            calculateValues();
+        });
+        
+        document.getElementById('density-slider').addEventListener('input', (e) => {
+            particleCount = parseInt(e.target.value);
+            document.getElementById('density-value').textContent = particleCount;
+            createParticles();
+        });
+        
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

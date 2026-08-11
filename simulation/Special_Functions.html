@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Special Functions &amp; Orthogonal Polynomials Studio</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','ui-sans-serif','system-ui'],mono:['JetBrains Mono','ui-monospace']}}}}</script>
+<style>
+:root{--bg:#020617;--panel:rgba(15,23,42,.62);--panel2:rgba(30,41,59,.5);--border:rgba(148,163,184,.14);--text:#e2e8f0;--muted:#94a3b8;--shadow:0 12px 44px rgba(2,6,23,.65)}
+html.light{--bg:#eef2f7;--panel:rgba(255,255,255,.8);--panel2:rgba(241,245,249,.9);--border:rgba(51,65,85,.15);--text:#0f172a;--muted:#475569;--shadow:0 12px 34px rgba(15,23,42,.12)}
+*{scrollbar-width:thin;scrollbar-color:rgba(100,116,139,.45) transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(100,116,139,.4);border-radius:8px}
+body{background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui}
+.blob{position:fixed;border-radius:9999px;filter:blur(95px);opacity:.26;pointer-events:none;z-index:0}
+.card{background:var(--panel);border:1px solid var(--border);backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+.card-hover:hover{border-color:rgba(34,211,238,.45);box-shadow:0 0 0 1px rgba(34,211,238,.22),0 14px 44px rgba(2,6,23,.55);transform:translateY(-1px)}
+.fcard{transition:transform .2s,box-shadow .2s,border-color .2s}
+.navbtn{display:flex;align-items:center;gap:.65rem;width:100%;padding:.62rem .8rem;border-radius:.7rem;font-size:.8rem;color:var(--muted);border:1px solid transparent;transition:all .18s;text-align:left}
+.navbtn:hover{background:var(--panel2);color:var(--text)}
+.navbtn.nav-on{background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(99,102,241,.16));border-color:rgba(34,211,238,.35);color:var(--text);box-shadow:inset 0 0 26px rgba(34,211,238,.06)}
+.navbtn .nico{width:30px;height:30px;border-radius:.55rem;display:flex;align-items:center;justify-content:center;background:var(--panel2);border:1px solid var(--border);flex:none}
+.navbtn svg{width:15px;height:15px}
+.chip{background:var(--panel2);border:1px solid var(--border);border-radius:.45rem;padding:.14rem .48rem;color:#67e8f9}
+html.light .chip{color:#0e7490}
+.iconbtn{padding:.32rem;border-radius:.5rem;color:var(--muted);border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center}
+.iconbtn:hover{color:#22d3ee;background:var(--panel2);border-color:var(--border)}
+.iconbtn svg{width:15px;height:15px}
+.tbtn{display:inline-flex;align-items:center;gap:.35rem;font-size:11px;font-weight:600;padding:.36rem .6rem;border-radius:.55rem;border:1px solid var(--border);color:var(--muted);background:var(--panel2);transition:all .15s}
+.tbtn:hover{color:var(--text);border-color:rgba(34,211,238,.4)}
+.tbtn svg{width:13px;height:13px}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:.6rem;padding:2px;gap:2px}
+.seg button{font-size:11px;font-weight:600;padding:.3rem .7rem;border-radius:.45rem;color:var(--muted);display:flex;gap:.35rem;align-items:center}
+.seg button.seg-on{background:linear-gradient(135deg,#0891b2,#4f46e5);color:#fff}
+.seg button svg{width:12px;height:12px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:4px;background:linear-gradient(90deg,rgba(34,211,238,.5),rgba(99,102,241,.5));outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#22d3ee;border:2px solid #0e7490;box-shadow:0 0 12px rgba(34,211,238,.85);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#22d3ee;border:2px solid #0e7490;cursor:pointer}
+.dot{width:7px;height:7px;border-radius:99px;background:linear-gradient(135deg,#22d3ee,#818cf8);flex:none;margin-top:4px}
+.ktx .katex{font-size:1.02em}
+.codebox{background:#0b1220;border:1px solid rgba(148,163,184,.14);border-radius:.6rem;padding:.7rem .8rem;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.55;color:#a5f3fc;overflow-x:auto;white-space:pre}
+html.light .codebox{background:#0f172a}
+.acc-body{overflow:hidden}
+.textin{background:var(--panel2);border:1px solid var(--border);border-radius:.55rem;padding:.4rem .6rem;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);width:100%}
+.textin:focus{outline:none;border-color:rgba(34,211,238,.55)}
+.pchip{font-size:10.5px;font-weight:600;padding:.28rem .55rem;border-radius:.5rem;border:1px solid var(--border);background:var(--panel2);color:var(--muted);transition:all .15s}
+.pchip:hover{color:#22d3ee;border-color:rgba(34,211,238,.45)}
+.legend-chip{display:inline-flex;align-items:center;gap:.35rem;font-size:10px;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:.4rem;padding:.15rem .45rem}
+.legend-chip i{width:8px;height:8px;border-radius:99px;display:inline-block}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(18px);opacity:0;background:linear-gradient(135deg,rgba(8,145,178,.95),rgba(79,70,229,.95));color:#fff;padding:.55rem 1.05rem;border-radius:.7rem;font-size:12.5px;font-weight:600;z-index:120;pointer-events:none;box-shadow:0 10px 30px rgba(2,6,23,.5)}
+.viz-wrap{position:relative;height:400px;border-radius:.8rem;overflow:hidden;border:1px solid var(--border);background:radial-gradient(1200px 500px at 70% -10%,rgba(34,211,238,.06),transparent),var(--panel2)}
+.three-wrap{position:absolute;inset:0}
+.eval-chip{font-family:'JetBrains Mono',monospace;font-size:11px;color:#67e8f9;background:var(--panel2);border:1px solid var(--border);border-radius:.5rem;padding:.2rem .55rem}
+html.light .eval-chip{color:#0e7490}
+.katex-display{margin:.35em 0}
+</style>
+</head>
+<body class="overflow-hidden">
+<div class="blob w-[520px] h-[520px] -top-40 -left-40" style="background:#0e7490"></div>
+<div class="blob w-[460px] h-[460px] bottom-[-160px] right-[-120px]" style="background:#4f46e5"></div>
+
+<div id="app" class="relative z-10 flex h-screen">
+  <!-- ================= SIDEBAR ================= -->
+  <aside id="sidebar" class="w-72 max-lg:w-[64px] flex-none flex flex-col border-r p-3 gap-1.5" style="border-color:var(--border);background:var(--panel)">
+    <div class="flex items-center gap-3 px-2 py-3">
+      <div class="w-10 h-10 flex-none rounded-xl flex items-center justify-center text-white font-extrabold text-lg" style="background:linear-gradient(135deg,#06b6d4,#6366f1);box-shadow:0 0 24px rgba(34,211,238,.4)">∑</div>
+      <div class="max-lg:hidden">
+        <div class="text-[13px] font-bold leading-tight">Special Functions</div>
+        <div class="text-[10px] tracking-[0.2em] uppercase" style="color:var(--muted)">Orthogonal Poly Studio</div>
+      </div>
+    </div>
+    <div class="max-lg:hidden text-[10px] uppercase tracking-[0.18em] px-2 pt-2 pb-1" style="color:var(--muted)">Modules</div>
+    <button class="navbtn nav-on" data-tab="hermite"><span class="nico"><i data-lucide="activity"></i></span><span class="max-lg:hidden flex-1">Hermite <span class="knav block opacity-70"></span></span></button>
+    <button class="navbtn" data-tab="laguerre"><span class="nico"><i data-lucide="atom"></i></span><span class="max-lg:hidden flex-1">Laguerre <span class="knav block opacity-70"></span></span></button>
+    <button class="navbtn" data-tab="chebyshev"><span class="nico"><i data-lucide="waves"></i></span><span class="max-lg:hidden flex-1">Chebyshev <span class="knav block opacity-70"></span></span></button>
+    <button class="navbtn" data-tab="hyper"><span class="nico"><i data-lucide="infinity"></i></span><span class="max-lg:hidden flex-1">Hypergeometric <span class="knav block opacity-70"></span></span></button>
+    <button class="navbtn" data-tab="ode"><span class="nico"><i data-lucide="settings-2"></i></span><span class="max-lg:hidden flex-1">ODE Solver <span class="knav block opacity-70"></span></span></button>
+    <div class="mt-auto max-lg:hidden px-2 py-2 text-[10px] leading-relaxed" style="color:var(--muted)">
+      Three.js r128 · Chart.js 4 · KaTeX · GSAP<br>Textbook-accurate recurrences, Rodrigues forms, generating functions &amp; orthogonality.
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="flex items-center gap-2 px-4 py-2.5 border-b flex-none" style="border-color:var(--border);background:var(--panel)">
+      <div class="relative flex-1 max-w-md">
+        <i data-lucide="search" class="absolute left-2.5 top-2.5 w-4 h-4" style="color:var(--muted)"></i>
+        <input id="search" class="textin pl-8" style="font-family:Inter" placeholder="Search formulas… (Rodrigues, orthogonality, Tₙ …)">
+      </div>
+      <span id="search-count" class="text-[11px] hidden max-md:hidden" style="color:var(--muted)"></span>
+      <a class="tbtn" href="https://github.com/" target="_blank" rel="noopener" title="GitHub repository"><i data-lucide="github"></i><span class="max-md:hidden">Repo</span></a>
+      <button id="btn-theme" class="tbtn" title="Toggle theme"><i data-lucide="sun" id="ic-sun" class="hidden"></i><i data-lucide="moon" id="ic-moon"></i></button>
+      <button id="btn-quick" class="tbtn" title="Quick parameters"><i data-lucide="sliders-horizontal"></i><span class="max-md:hidden">Params</span></button>
+    </header>
+    <div id="quickbar" class="hidden border-b px-4 py-3 flex-none" style="border-color:var(--border);background:var(--panel2)">
+      <div id="quick-grid" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-x-5 gap-y-3"></div>
+    </div>
+
+    <main id="content" class="flex-1 overflow-y-auto px-4 md:px-6 py-6">
+
+      <!-- ================= TAB: HERMITE ================= -->
+      <section id="tab-hermite" class="tab">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+          <div>
+            <h1 class="text-xl font-extrabold">Hermite Polynomials <span class="khdr align-middle"></span></h1>
+            <p class="text-[12px] mt-0.5" style="color:var(--muted)">Physicists' convention · quantum harmonic oscillator eigenstates</p>
+          </div>
+          <div class="ml-auto flex items-center gap-2"><span class="text-[10px] uppercase tracking-widest" style="color:var(--muted)">eval</span><span class="eval-chip" id="h-eval"></span></div>
+        </div>
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-12 xl:col-span-5 space-y-3" id="cards-hermite"></div>
+          <div class="col-span-12 xl:col-span-7">
+            <div class="card rounded-2xl p-4">
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="seg"><button class="seg-on" data-view="2d"><i data-lucide="line-chart"></i>2D</button><button data-view="3d"><i data-lucide="box"></i>3D</button></div>
+                <button class="tbtn" data-play><i data-lucide="play" class="ic-play"></i><i data-lucide="pause" class="ic-pause hidden"></i><span class="max-sm:hidden">Animate t</span></button>
+                <label class="tbtn cursor-pointer"><input type="checkbox" id="h-gen" class="accent-cyan-400 mr-1">Generating fn</label>
+                <div class="ml-auto flex gap-2">
+                  <button class="tbtn" data-png><i data-lucide="image"></i>PNG</button>
+                  <button class="tbtn" data-svg><i data-lucide="file-code"></i>SVG</button>
+                  <button class="tbtn" data-tex><i data-lucide="copy"></i>LaTeX</button>
+                </div>
+              </div>
+              <div class="viz-wrap">
+                <div class="absolute inset-0 p-2"><canvas id="h-chart"></canvas></div>
+                <div class="three-wrap hidden" id="h-3d"></div>
+                <div class="absolute bottom-2 left-2 flex gap-1.5 hidden" id="h-legend">
+                  <span class="legend-chip"><i style="background:#22d3ee"></i>|Ψ|² density cloud</span>
+                  <span class="legend-chip">drag · orbit / wheel · zoom</span>
+                </div>
+              </div>
+              <div id="h-ctrl" class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: LAGUERRE ================= -->
+      <section id="tab-laguerre" class="tab hidden">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+          <div>
+            <h1 class="text-xl font-extrabold">Laguerre &amp; Associated Laguerre <span class="khdr align-middle"></span></h1>
+            <p class="text-[12px] mt-0.5" style="color:var(--muted)">Book convention L<sub>n</sub><sup>m</sup> = d<sup>m</sup>L<sub>n</sub>/dx<sup>m</sup> · hydrogen radial functions</p>
+          </div>
+          <div class="ml-auto flex items-center gap-2"><span class="text-[10px] uppercase tracking-widest" style="color:var(--muted)">eval</span><span class="eval-chip" id="l-eval"></span></div>
+        </div>
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-12 xl:col-span-5 space-y-3" id="cards-laguerre"></div>
+          <div class="col-span-12 xl:col-span-7">
+            <div class="card rounded-2xl p-4">
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="seg"><button class="seg-on" data-view="2d"><i data-lucide="line-chart"></i>2D</button><button data-view="3d"><i data-lucide="box"></i>3D</button></div>
+                <button class="tbtn" data-play><i data-lucide="play" class="ic-play"></i><i data-lucide="pause" class="ic-pause hidden"></i><span class="max-sm:hidden">Animate t</span></button>
+                <label class="tbtn cursor-pointer"><input type="checkbox" id="l-gen" class="accent-cyan-400 mr-1">Generating fn</label>
+                <div class="ml-auto flex gap-2">
+                  <button class="tbtn" data-png><i data-lucide="image"></i>PNG</button>
+                  <button class="tbtn" data-svg><i data-lucide="file-code"></i>SVG</button>
+                  <button class="tbtn" data-tex><i data-lucide="copy"></i>LaTeX</button>
+                </div>
+              </div>
+              <div class="viz-wrap">
+                <div class="absolute inset-0 p-2"><canvas id="l-chart"></canvas></div>
+                <div class="three-wrap hidden" id="l-3d"></div>
+                <div class="absolute bottom-2 left-2 flex gap-1.5 hidden" id="l-legend">
+                  <span class="legend-chip"><i style="background:#34d399"></i>electron cloud ρ(r,θ,φ)</span>
+                  <span class="legend-chip">R ∝ e<sup>−r/n</sup>ρ<sup>l</sup>L<sub>n−l−1</sub><sup>2l+1</sup></sup></span>
+                </div>
+              </div>
+              <div id="l-ctrl" class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: CHEBYSHEV ================= -->
+      <section id="tab-chebyshev" class="tab hidden">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+          <div>
+            <h1 class="text-xl font-extrabold">Chebyshev Polynomials <span class="khdr align-middle"></span></h1>
+            <p class="text-[12px] mt-0.5" style="color:var(--muted)">T<sub>n</sub>(x) = cos(n·arccos x) · U<sub>n</sub>(x) = sin((n+1)θ)/sin θ · cosine projections on a cylinder</p>
+          </div>
+          <div class="ml-auto flex items-center gap-2"><span class="text-[10px] uppercase tracking-widest" style="color:var(--muted)">eval</span><span class="eval-chip" id="c-eval"></span></div>
+        </div>
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-12 xl:col-span-5 space-y-3" id="cards-chebyshev"></div>
+          <div class="col-span-12 xl:col-span-7">
+            <div class="card rounded-2xl p-4">
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="seg"><button class="seg-on" data-view="2d"><i data-lucide="line-chart"></i>2D</button><button data-view="3d"><i data-lucide="box"></i>3D</button></div>
+                <button class="tbtn" data-play><i data-lucide="play" class="ic-play"></i><i data-lucide="pause" class="ic-pause hidden"></i><span class="max-sm:hidden">Animate t</span></button>
+                <label class="tbtn cursor-pointer"><input type="checkbox" id="c-gen" class="accent-cyan-400 mr-1">Generating fn</label>
+                <div class="ml-auto flex gap-2">
+                  <button class="tbtn" data-png><i data-lucide="image"></i>PNG</button>
+                  <button class="tbtn" data-svg><i data-lucide="file-code"></i>SVG</button>
+                  <button class="tbtn" data-tex><i data-lucide="copy"></i>LaTeX</button>
+                </div>
+              </div>
+              <div class="viz-wrap">
+                <div class="absolute inset-0 p-2"><canvas id="c-chart"></canvas></div>
+                <div class="three-wrap hidden" id="c-3d"></div>
+                <div class="absolute bottom-2 left-2 flex gap-1.5 hidden" id="c-legend">
+                  <span class="legend-chip"><i style="background:#22d3ee"></i>curve on cylinder</span>
+                  <span class="legend-chip"><i style="background:#fbbf24"></i>planar projection = Tₙ(x)</span>
+                </div>
+              </div>
+              <div id="c-ctrl" class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: HYPERGEOMETRIC ================= -->
+      <section id="tab-hyper" class="tab hidden">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+          <div>
+            <h1 class="text-xl font-extrabold">Hypergeometric Functions <span class="khdr align-middle"></span></h1>
+            <p class="text-[12px] mt-0.5" style="color:var(--muted)">Gauss ₂F₁ — the master function: Laguerre, Chebyshev &amp; Legendre all reduce to it</p>
+          </div>
+          <div class="ml-auto flex items-center gap-2"><span class="text-[10px] uppercase tracking-widest" style="color:var(--muted)">eval</span><span class="eval-chip" id="g-eval"></span></div>
+        </div>
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-12 xl:col-span-5 space-y-3" id="cards-hyper"></div>
+          <div class="col-span-12 xl:col-span-7">
+            <div class="card rounded-2xl p-4">
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="seg"><button class="seg-on" data-view="2d"><i data-lucide="line-chart"></i>2D</button><button data-view="3d"><i data-lucide="box"></i>3D</button></div>
+                <button class="tbtn" data-play><i data-lucide="play" class="ic-play"></i><i data-lucide="pause" class="ic-pause hidden"></i><span class="max-sm:hidden">Animate x</span></button>
+                <div class="ml-auto flex gap-2">
+                  <button class="tbtn" data-png><i data-lucide="image"></i>PNG</button>
+                  <button class="tbtn" data-svg><i data-lucide="file-code"></i>SVG</button>
+                  <button class="tbtn" data-tex><i data-lucide="copy"></i>LaTeX</button>
+                </div>
+              </div>
+              <div class="viz-wrap">
+                <div class="absolute inset-0 p-2"><canvas id="g-chart"></canvas></div>
+                <div class="three-wrap hidden" id="g-3d"></div>
+                <div class="absolute bottom-2 left-2 flex flex-wrap gap-1.5 hidden" id="g-legend">
+                  <span class="legend-chip"><i style="background:#fbbf24"></i>|z| = 1 convergence radius</span>
+                  <span class="legend-chip"><i style="background:#f87171"></i>singularity z = 1 + branch cut</span>
+                  <span class="legend-chip">height = Re F</span>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-1.5 mt-3" id="g-presets"></div>
+              <div id="g-ctrl" class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 mt-3"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: ODE ================= -->
+      <section id="tab-ode" class="tab hidden">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+          <div>
+            <h1 class="text-xl font-extrabold">Universal ODE Solver &amp; Inspector</h1>
+            <p class="text-[12px] mt-0.5" style="color:var(--muted)">RK4 integration of y″ + p(x)·y′ + q(x)·y = 0 with a safe expression parser (x, n, m, a, b, c, t, pi, e)</p>
+          </div>
+          <div class="ml-auto flex items-center gap-2"><span class="text-[10px] uppercase tracking-widest" style="color:var(--muted)">probe</span><span class="eval-chip" id="o-eval"></span></div>
+        </div>
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-12 xl:col-span-5 space-y-3" id="cards-ode"></div>
+          <div class="col-span-12 xl:col-span-7">
+            <div class="card rounded-2xl p-4">
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="seg" style="cursor:default"><button class="seg-on"><i data-lucide="line-chart"></i>Phase / Solution</button></span>
+                <button class="tbtn" data-play><i data-lucide="play" class="ic-play"></i><i data-lucide="pause" class="ic-pause hidden"></i><span class="max-sm:hidden">Sweep v₀</span></button>
+                <label class="tbtn cursor-pointer"><input type="checkbox" id="o-deriv" class="accent-cyan-400 mr-1">show y′</label>
+                <div class="ml-auto flex gap-2">
+                  <button class="tbtn" data-png><i data-lucide="image"></i>PNG</button>
+                  <button class="tbtn" data-svg><i data-lucide="file-code"></i>SVG</button>
+                </div>
+              </div>
+              <div class="viz-wrap" style="height:360px"><div class="absolute inset-0 p-2"><canvas id="o-chart"></canvas></div></div>
+              <div class="grid md:grid-cols-2 gap-3 mt-4">
+                <div><label class="text-[10px] uppercase tracking-[0.14em]" style="color:var(--muted)">p(x) — coefficient of y′</label><input id="o-p" class="textin mt-1" value="-2*x"></div>
+                <div><label class="text-[10px] uppercase tracking-[0.14em]" style="color:var(--muted)">q(x) — coefficient of y</label><input id="o-q" class="textin mt-1" value="2*n"></div>
+              </div>
+              <div class="flex flex-wrap gap-1.5 mt-3" id="o-presets"></div>
+              <div class="card rounded-xl px-3 py-2 mt-3 text-center ktx" id="o-eq" style="background:var(--panel2)"></div>
+              <div id="o-ctrl" class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3 mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 mb-4 text-center text-[11px]" style="color:var(--muted)">
+        Special Functions &amp; Orthogonal Polynomials Studio — Hermite · Laguerre · Chebyshev · ₂F₁ · RK4 &nbsp;|&nbsp; Built with Three.js, Chart.js, KaTeX, GSAP &amp; Tailwind
+      </footer>
+    </main>
+  </div>
+</div>
+
+<!-- ================= DRAWER ================= -->
+<div id="drawer-backdrop" class="fixed inset-0 bg-black/55 backdrop-blur-sm z-40 hidden"></div>
+<aside id="drawer" class="fixed top-0 right-0 h-full w-full sm:w-[470px] z-50 border-l flex flex-col" style="background:var(--bg);border-color:var(--border);transform:translateX(105%)">
+  <div class="flex items-center gap-2 px-4 py-3 border-b flex-none" style="border-color:var(--border)">
+    <i data-lucide="flask-conical" class="w-4 h-4 text-cyan-400"></i>
+    <h3 id="drawer-title" class="font-bold text-[15px] flex-1 truncate">Formula Inspector</h3>
+    <button id="drawer-close" class="iconbtn"><i data-lucide="x"></i></button>
+  </div>
+  <div id="drawer-body" class="flex-1 overflow-y-auto px-4 py-4 space-y-3"></div>
+</aside>
+<div id="toast">Copied!</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   0. TINY HELPERS
+============================================================ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(v,d=3)=>{if(v==null||!isFinite(v))return"—";if(Math.abs(v)<1e-11)v=0;const a=Math.abs(v);let s;
+  if(a>=1e5||a<1e-4)s=v.toExponential(2);else s=(+v.toFixed(d)).toString();return s.replace("-","−");};
+const linspace=(a,b,n)=>{const r=new Array(n);for(let i=0;i<n;i++)r[i]=a+(b-a)*i/(n-1);return r;};
+function toast(msg){const t=$("#toast");t.textContent=msg;if(window.gsap){gsap.killTweensOf(t);gsap.fromTo(t,{opacity:0,y:16},{opacity:1,y:0,duration:.25});gsap.to(t,{opacity:0,delay:1.6,duration:.4});}else{t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1500);}}
+async function copyText(txt,msg){try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}toast(msg||"Copied to clipboard");}
+function download(href,name){const a=document.createElement("a");a.href=href;a.download=name;document.body.appendChild(a);a.click();a.remove();}
+function downloadBlob(blob,name){const u=URL.createObjectURL(blob);download(u,name);setTimeout(()=>URL.revokeObjectURL(u),4000);}
+function refreshIcons(){try{window.lucide&&lucide.createIcons();}catch(e){}}
+function K(el,tex,disp){if(!el)return;try{katex.render(tex,el,{displayMode:!!disp,throwOnError:false,strict:false});}catch(e){el.textContent=tex;}}
+const PALETTE=["#22d3ee","#818cf8","#34d399","#fbbf24","#f472b6","#a78bfa","#38bdf8","#a3e635"];
+function heat(t){t=clamp(t,0,1);return new THREE.Color().setHSL(0.66*(1-t),0.9,0.25+0.45*t);}
+
+/* ============================================================
+   1. MATH CORE — exact textbook recurrences
+============================================================ */
+const M={
+  fact(n){let r=1;for(let i=2;i<=n;i++)r*=i;return r;},
+  // --- Hermite (physicists') : H_{n+1}=2xH_n-2nH_{n-1}
+  hermite(n,x){if(n<=0)return 1;if(n===1)return 2*x;let h0=1,h1=2*x;for(let k=1;k<n;k++){const h2=2*x*h1-2*k*h0;h0=h1;h1=h2;}return h1;},
+  psi2(k,x){const h=M.hermite(k,x);return h*h*Math.exp(-x*x)/(Math.pow(2,k)*M.fact(k)*Math.sqrt(Math.PI));},
+  // --- Laguerre (book convention: L_n = n! * standard). Build standard coefs, low→high.
+  lagStd:[[1],[-1,1]],
+  ensureLag(N){while(this.lagStd.length<=N){const k=this.lagStd.length-1,Lk=this.lagStd[k],Lp=this.lagStd[k-1];
+    const A=Lk.map(c=>c*(2*k+1)),B=[0,...Lk].map(c=>-c),C=Lp.map(c=>-k*c);
+    const sum=new Array(Math.max(A.length,B.length,C.length)).fill(0);
+    [A,B,C].forEach(p=>p.forEach((c,i)=>sum[i]+=c));
+    this.lagStd.push(sum.map(c=>c/(k+1)));}},
+  evalPoly(c,x){let s=0;for(let i=c.length-1;i>=0;i--)s=s*x+c[i];return s;},
+  derivPoly(c){if(c.length<=1)return[0];return c.slice(1).map((v,i)=>v*(i+1));},
+  laguerre(n,x){this.ensureLag(n);return this.fact(n)*this.evalPoly(this.lagStd[n],x);},
+  assocLaguerre(n,m,x){if(m<0||m>n)return 0;this.ensureLag(n);let c=this.lagStd[n];for(let i=0;i<m;i++)c=this.derivPoly(c);return this.fact(n)*this.evalPoly(c,x);},
+  // generalized L_k^(α) — any real α (needed for hydrogen: α=2l+1 may exceed k)
+  genLag(k,al,x){if(k===0)return 1;if(k===1)return 1+al-x;let l0=1,l1=1+al-x;for(let j=1;j<k;j++){const l2=((2*j+al+1-x)*l1-(j+al)*l0)/(j+1);l0=l1;l1=l2;}return l1;},
+  // --- Chebyshev recurrences (valid for all real x)
+  chebT(n,x){if(n===0)return 1;if(n===1)return x;let t0=1,t1=x;for(let k=1;k<n;k++){const t2=2*x*t1-t0;t0=t1;t1=t2;}return t1;},
+  chebU(n,x){if(n===0)return 1;if(n===1)return 2*x;let u0=1,u1=2*x;for(let k=1;k<n;k++){const u2=2*x*u1-u0;u0=u1;u1=u2;}return u1;},
+  // --- associated Legendre (Condon–Shortley)
+  assocLegendre(l,m,x){let pmm=1;if(m>0){const s=Math.sqrt(Math.max(0,(1-x)*(1+x)));let f=1;for(let i=1;i<=m;i++){pmm*=-f*s;f+=2;}}
+    if(l===m)return pmm;let pm1=x*(2*m+1)*pmm;if(l===m+1)return pm1;let pll=0;
+    for(let ll=m+2;ll<=l;ll++){pll=((2*ll-1)*x*pm1-(ll+m-1)*pmm)/(ll-m);pmm=pm1;pm1=pll;}return pll;},
+};
+// --- Gauss hypergeometric (real)
+function hyp2f1(a,b,c,x,miter=450){
+  if(Number.isInteger(c)&&c<=0)return NaN;
+  let term=1,sum=1;
+  for(let k=0;k<miter;k++){
+    term*=((a+k)*(b+k))/((c+k)*(k+1))*x;
+    if(!isFinite(term))return NaN;
+    sum+=term;
+    if(k>6&&Math.abs(term)<1e-15*(Math.abs(sum)+1e-300))break;
+  }return sum;
+}
+// --- Gauss hypergeometric (complex argument z = re+i·im)
+function hyp2f1c(a,b,c,re,im,miter=520){
+  if(Number.isInteger(c)&&c<=0)return null;
+  let tr=1,ti=0,sr=1,si=0;
+  for(let k=0;k<miter;k++){
+    const s=((a+k)*(b+k))/((c+k)*(k+1));
+    const nr=s*(tr*re-ti*im),ni=s*(tr*im+ti*re);tr=nr;ti=ni;sr+=tr;si+=ti;
+    if(!isFinite(sr)||!isFinite(si))return null;
+    if(k>6&&(tr*tr+ti*ti)<1e-26*(sr*sr+si*si+1e-300))break;
+  }return{re:sr,im:si};
+}
+
+/* ============================================================
+   2. SAFE EXPRESSION PARSER (for the ODE tab)
+============================================================ */
+const FNS={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,exp:Math.exp,ln:Math.log,log:Math.log,sqrt:Math.sqrt,abs:Math.abs,sign:Math.sign,floor:Math.floor,ceil:Math.ceil};
+const CONSTS={pi:Math.PI,e:Math.E};
+function compileExpr(src){
+  const s=String(src).replace(/\s+/g,"");if(!s)throw new Error("empty");
+  const raw=[];let i=0;
+  while(i<s.length){const ch=s[i];
+    if(/[0-9.]/.test(ch)){let j=i;while(j<s.length&&/[0-9.]/.test(s[j]))j++;const v=parseFloat(s.slice(i,j));if(isNaN(v))throw new Error("bad number");raw.push({t:"num",v});i=j;continue;}
+    if(/[a-zA-Z_]/.test(ch)){let j=i;while(j<s.length&&/[a-zA-Z_0-9]/.test(s[j]))j++;raw.push({t:"id",v:s.slice(i,j).toLowerCase()});i=j;continue;}
+    if("+-*/^(),".includes(ch)){raw.push({t:ch});i++;continue;}
+    throw new Error("bad character '"+ch+"'");
+  }
+  // implicit multiplication
+  const isVal=t=>t.t==="num"||(t.t==="id"&&!FNS[t.v]);
+  const toks=[];
+  for(let k=0;k<raw.length;k++){const t=raw[k],p=toks[toks.length-1];
+    if(p&&((isVal(p)&&p.t!=="id")||p.t===")"||(p.t==="id"&&!FNS[p.v]))){
+      if(t.t==="num"||t.t==="("||(t.t==="id")){
+        if(!(p.t==="id"&&FNS[p.v])&&!(t.t==="id"&&false)){
+          if(!((p.t==="id"&&FNS[p.v]))){ if(!(t.t==="id"&&k>0&&false)) { /* fallthrough insert */ toks.push({t:"*"}); } }
+        }
+      }
+    }
+    toks.push(t);
+  }
+  const out=[],op=[];const prec={"+":1,"-":1,"*":2,"/":2,"u-":3,"^":4};
+  let prev=null;
+  for(const tk of toks){
+    if(tk.t==="num")out.push(tk);
+    else if(tk.t==="id"){
+      if(FNS[tk.v])op.push({t:"fn",v:tk.v});
+      else if(tk.v==="x"||CONSTS[tk.v]!==undefined||["n","m","a","b","c","t"].includes(tk.v))out.push({t:"var",v:tk.v});
+      else throw new Error("unknown symbol '"+tk.v+"'");
+    }
+    else if(tk.t===","){while(op.length&&op[op.length-1].t!=="(")out.push(op.pop());}
+    else if(tk.t==="(")op.push(tk);
+    else if(tk.t===")"){while(op.length&&op[op.length-1].t!=="(")out.push(op.pop());if(!op.length)throw new Error("parenthesis mismatch");op.pop();if(op.length&&op[op.length-1].t==="fn")out.push(op.pop());}
+    else{
+      let o=tk.t;
+      const pv=prev&&prev.t;
+      if(o==="-"&&(!pv||pv==="op"||pv==="("||pv===","||pv==="fn"))o="u-";
+      while(op.length){const top=op[op.length-1];
+        if(top.t==="fn"){out.push(op.pop());continue;}
+        const tp=prec[top.t];if(tp===undefined)break;
+        if(tp>prec[o]||(tp===prec[o]&&o!=="^"))out.push(op.pop());else break;}
+      op.push({t:o});
+    }
+    prev={t:(tk.t==="num"||tk.t==="id")?"val":(tk.t==="fn"?"fn":(tk.t==="u-"?"op":tk.t))};
+  }
+  while(op.length){const o=op.pop();if(o.t==="(")throw new Error("parenthesis mismatch");out.push(o);}
+  return scope=>{const st=[];
+    for(const tk of out){
+      if(tk.t==="num")st.push(tk.v);
+      else if(tk.t==="var"){const w=tk.v;if(w==="x")st.push(scope.x);else if(CONSTS[w]!==undefined)st.push(CONSTS[w]);else st.push(scope[w]??0);}
+      else if(tk.t==="fn"){if(!st.length)throw new Error("stack");st.push(FNS[tk.v](st.pop()));}
+      else if(tk.t==="u-")st.push(-st.pop());
+      else{const b=st.pop(),a=st.pop();switch(tk.t){case"+":st.push(a+b);break;case"-":st.push(a-b);break;case"*":st.push(a*b);break;case"/":st.push(a/b);break;case"^":st.push(Math.pow(a,b));break;}}
+    }
+    if(st.length!==1)throw new Error("malformed expression");
+    return st[0];};
+}
+
+/* RK4 solver for  y'' + p(x) y' + q(x) y = 0 */
+function odeSolve(pf,qf,x0,y0,v0,xmin,xmax){
+  const h=Math.max(1e-4,(xmax-xmin)/1400);
+  const f=(x,y,v)=>[v,-pf(x)*v-qf(x)*y];
+  function march(x,y,v,dx,out){
+    const steps=Math.ceil(Math.abs((dx>0?xmax:xmin)-x)/Math.abs(dx));
+    for(let i=0;i<steps;i++){
+      try{
+        const k1=f(x,y,v),k2=f(x+dx/2,y+dx/2*k1[0],v+dx/2*k1[1]),
+              k3=f(x+dx/2,y+dx/2*k2[0],v+dx/2*k2[1]),k4=f(x+dx,y+dx*k3[0],v+dx*k3[1]);
+        y+=dx/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]);
+        v+=dx/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]);
+      }catch(e){break;}
+      x+=dx;
+      if(!isFinite(y)||!isFinite(v)||Math.abs(y)>1e5||Math.abs(v)>1e5)break;
+      out.push({x,y,v});
+    }
+  }
+  const R=[{x:x0,y:y0,v:v0}],L=[];
+  march(x0,y0,v0,h,R);march(x0,y0,v0,-h,L);
+  return L.reverse().concat(R);
+}
+
+/* ============================================================
+   3. GLOBAL STATE + QUICK SLIDERS
+============================================================ */
+const S={n:2,m:1,a:0.5,b:0.5,c:1.5,x:0.5,t:0.35};
+function mkSlider(parent,{label,min,max,step=1,val=0,fmtFn,onInput}){
+  const wrap=document.createElement("div");
+  wrap.innerHTML=`<div class="flex items-center justify-between mb-1">
+    <span class="text-[10px] font-semibold uppercase tracking-[0.14em]" style="color:var(--muted)">${label}</span>
+    <span class="chip font-mono text-[11px]"></span></div>`;
+  const inp=document.createElement("input");inp.type="range";inp.min=min;inp.max=max;inp.step=step;inp.value=val;
+  wrap.appendChild(inp);
+  const chip=wrap.querySelector(".chip");const f=v=>fmtFn?fmtFn(+v):String(+v);
+  chip.textContent=f(val);let guard=false;
+  inp.addEventListener("input",()=>{if(guard)return;chip.textContent=f(inp.value);onInput&&onInput(+inp.value);});
+  parent.appendChild(wrap);
+  return{set(v){guard=true;inp.value=v;chip.textContent=f(v);guard=false;},get:()=>+inp.value,el:wrap};
+}
+const quick={};
+function buildQuick(){
+  const grid=$("#quick-grid");
+  const defs=[["n",0,7,1],["m",0,7,1],["a",-3,3,0.1],["b",-3,3,0.1],["c",-3,3,0.1],["x",-5,5,0.1],["t",-1,1,0.01]];
+  defs.forEach(([k,mn,mx,st])=>{
+    const d=document.createElement("div");grid.appendChild(d);
+    quick[k]=mkSlider(d,{label:"param "+k,min:mn,max:mx,step:st,val:S[k],fmtFn:v=>(+v.toFixed(2)),
+      onInput:v=>{S[k]=v;Mods[active]&&Mods[active].syncParam&&Mods[active].syncParam(k,v);}});
+  });
+}
+
+/* ============================================================
+   4. FORMULA CARD DATA (strict textbook content)
+============================================================ */
+const r=String.raw;
+const CARDS={
+hermite:[
+ {key:"h-de",title:"Differential Equation",tex:r`y''-2xy'+2ny=0`,sub:"Hermite's equation — polynomial solutions for n = 0,1,2,…"},
+ {key:"h-rod",title:"Rodrigues' Formula",tex:r`H_n(x)=(-1)^n e^{x^2}\frac{d^n}{dx^n}\left(e^{-x^2}\right)`,sub:"Click to see the generating-function derivation."},
+ {key:"h-exp",title:"Explicit Polynomials (n = 0…7)",tex:r`\begin{aligned}H_0(x)&=1\\ H_1(x)&=2x\\ H_2(x)&=4x^2-2\\ H_3(x)&=8x^3-12x\\ H_4(x)&=16x^4-48x^2+12\\ H_5(x)&=32x^5-160x^3+120x\\ H_6(x)&=64x^6-480x^4+720x^2-120\\ H_7(x)&=128x^7-1344x^5+3360x^3-1680x\end{aligned}`},
+ {key:"h-gen",title:"Generating Function",tex:r`e^{2tx-t^2}=\sum_{n=0}^{\infty}\frac{H_n(x)\,t^n}{n!}`,sub:"Press ▶ Animate to sweep t and compare partial sums with the closed form."},
+ {key:"h-rec",title:"Recurrence Relations",tex:r`\begin{aligned}H_{n+1}(x)&=2x\,H_n(x)-2n\,H_{n-1}(x)\\ H_n'(x)&=2n\,H_{n-1}(x)\end{aligned}`},
+ {key:"h-orth",title:"Orthogonality Integral",tex:r`\int_{-\infty}^{\infty}e^{-x^2}H_m(x)H_n(x)\,dx=2^n n!\sqrt{\pi}\,\delta_{mn}`,sub:"Weight function w(x) = e^{−x²} (dashed emerald curve in the plot)."},
+ {key:"h-sv",title:"Special Values at x = 0",tex:r`H_{2n-1}(0)=0,\qquad H_{2n}(0)=(-1)^n\,2^{2n}\,1\cdot3\cdots(2n-1)`},
+],
+laguerre:[
+ {key:"l-de",title:"Differential Equations",tex:r`\begin{aligned}\text{Laguerre:}\quad&xy''+(1-x)y'+ny=0\\ \text{Associated:}\quad&xy''+(m+1-x)y'+(n-m)y=0\end{aligned}`},
+ {key:"l-def",title:"Definitions (Rodrigues)",tex:r`\begin{aligned}L_n(x)&=e^x\frac{d^n}{dx^n}\left(x^ne^{-x}\right)\\ L_n^m(x)&=\frac{d^m}{dx^m}L_n(x)\qquad(m\le n)\end{aligned}`,sub:"Book convention — no 1/n! prefactor, no (−1)^m in the associated form."},
+ {key:"l-exp",title:"Explicit Laguerre Polynomials",tex:r`\begin{aligned}L_0&=1\\ L_1&=-x+1\\ L_2&=x^2-4x+2\\ L_3&=-x^3+9x^2-18x+6\\ L_4&=x^4-16x^3+72x^2-96x+24\end{aligned}`},
+ {key:"l-aexp",title:"Explicit Associated Polynomials",tex:r`\begin{aligned}L_1^1&=-1\\ L_2^1&=2x-4,&L_2^2&=2\\ L_3^1&=-3x^2+18x-18,&L_3^2&=-6x+18\\ L_3^3&=-6\\ L_4^1&=4x^3-48x^2+144x-96\\ L_4^2&=12x^2-96x+144\\ L_4^3&=24x-96,&L_4^4&=24\end{aligned}`},
+ {key:"l-gen",title:"Generating Functions",tex:r`\begin{aligned}\frac{e^{-xt/(1-t)}}{1-t}&=\sum_{n=0}^{\infty}\frac{L_n(x)}{n!}t^n\\ \frac{(-1)^m t^m}{(1-t)^{m+1}}e^{-xt/(1-t)}&=\sum_{n=m}^{\infty}\frac{L_n^m(x)}{n!}t^n\end{aligned}`},
+ {key:"l-orth",title:"Orthogonality (Associated)",tex:r`\int_0^{\infty}x^m e^{-x}L_n^m(x)L_p^m(x)\,dx=\frac{(n!)^3}{(n-m)!}\,\delta_{np}`,sub:"Verified live: try n = 2, m = 1 → ∫ = 8 = (2!)³/(1!)."},
+],
+chebyshev:[
+ {key:"c-de",title:"Differential Equation",tex:r`(1-x^2)y''-xy'+n^2y=0`},
+ {key:"c-tdef",title:"First Kind — Definition",tex:r`T_n(x)=\cos\!\left(n\arccos x\right)`,sub:"The 3D cylinder view shows exactly this: cos(nθ) wrapped around θ."},
+ {key:"c-texp",title:"Explicit Tₙ (n = 0…7)",tex:r`\begin{aligned}T_0&=1&T_1&=x\\ T_2&=2x^2-1&T_3&=4x^3-3x\\ T_4&=8x^4-8x^2+1&T_5&=16x^5-20x^3+5x\\ T_6&=32x^6-48x^4+18x^2-1\\ T_7&=64x^7-112x^5+56x^3-7x\end{aligned}`},
+ {key:"c-tgen",title:"Generating Function (Tₙ)",tex:r`\frac{1-tx}{1-2tx+t^2}=\sum_{n=0}^{\infty}T_n(x)t^n`},
+ {key:"c-udef",title:"Second Kind — Definition",tex:r`U_n(x)=\frac{\sin\!\left((n+1)\arccos x\right)}{\sin(\arccos x)}`},
+ {key:"c-uexp",title:"Explicit Uₙ (n = 0…7)",tex:r`\begin{aligned}U_0&=1&U_1&=2x\\ U_2&=4x^2-1&U_3&=8x^3-4x\\ U_4&=16x^4-12x^2+1&U_5&=32x^5-32x^3+6x\\ U_6&=64x^6-80x^4+24x^2-1\\ U_7&=128x^7-192x^5+80x^3-8x\end{aligned}`},
+ {key:"c-ugen",title:"Generating Function (Uₙ)",tex:r`\frac{1}{1-2tx+t^2}=\sum_{n=0}^{\infty}U_n(x)t^n`},
+ {key:"c-urec",title:"Recurrence (Uₙ)",tex:r`U_{n+1}(x)-2x\,U_n(x)+U_{n-1}(x)=0`},
+ {key:"c-rel",title:"Inter-relationship T ↔ U",tex:r`\begin{aligned}T_n(x)&=U_n(x)-x\,U_{n-1}(x)\\ (1-x^2)U_{n-1}(x)&=x\,T_n(x)-T_{n+1}(x)\end{aligned}`},
+],
+hyper:[
+ {key:"g-de",title:"Hypergeometric Equation",tex:r`x(1-x)y''+\bigl[c-(a+b+1)x\bigr]y'-ab\,y=0`,sub:"Regular singular points at x = 0, 1, ∞."},
+ {key:"g-series",title:"Series Expansion",tex:r`F(a,b;c;x)=1+\frac{a\,b}{1\cdot c}x+\frac{a(a+1)\,b(b+1)}{1\cdot2\cdot c(c+1)}x^2+\cdots`,sub:"Converges for |x| < 1 (and at x = 1 when c − a − b > −1)."},
+ {key:"g-red1",title:"Elementary Reductions I",tex:r`\begin{aligned}F(-p,1;1;-x)&=(1+x)^p\\ F(1,1;2;-x)&=\frac{\ln(1+x)}{x}\\ \lim_{n\to\infty}F(1,n;1;x/n)&=e^x\\ F\!\left(\tfrac12,-\tfrac12;\tfrac12;\sin^2x\right)&=\cos x\end{aligned}`},
+ {key:"g-red2",title:"Reductions II — Classical Connections",tex:r`\begin{aligned}F\!\left(\tfrac12,\tfrac12;\tfrac32;x^2\right)&=\frac{\sin^{-1}x}{x}\\ F(1,p;p;x)&=\frac{1}{1-x}\\ T_n(x)&=F\!\left(n,-n;\tfrac12;\tfrac{1-x}{2}\right)\\ P_n(x)&=F\!\left(n+1,-n;1;\tfrac{1-x}{2}\right)\end{aligned}`,sub:"Try the preset chips under the plot to verify each identity numerically."},
+ {key:"g-int",title:"Euler Integral Representation",tex:r`F(a,b;c;x)=\frac{\Gamma(c)}{\Gamma(b)\Gamma(c-b)}\int_0^1u^{b-1}(1-u)^{c-b-1}(1-ux)^{-a}\,du`,sub:"Valid for Re c > Re b > 0."},
+],
+ode:[
+ {key:"o-form",title:"General Second-Order Linear ODE",tex:r`y''+p(x)\,y'+q(x)\,y=0,\qquad y(x_0)=y_0,\;y'(x_0)=v_0`,sub:"All four textbook families are one preset away — Hermite, Laguerre, Chebyshev, hypergeometric."},
+ {key:"o-rk4",title:"Runge–Kutta 4 Scheme",tex:r`\begin{aligned}k_1&=h\,f(x_i,y_i)\\ k_2&=h\,f(x_i+\tfrac h2,y_i+\tfrac{k_1}{2})\\ k_3&=h\,f(x_i+\tfrac h2,y_i+\tfrac{k_2}{2})\\ k_4&=h\,f(x_i+h,y_i+k_3)\\ y_{i+1}&=y_i+\tfrac16(k_1+2k_2+2k_3+k_4)\end{aligned}`,sub:"Applied to the first-order system y′ = v, v′ = −p v − q y."},
+]};
+
+/* ============================================================
+   5. DERIVATION / SNIPPET LIBRARY (Formula Inspector)
+============================================================ */
+const SNIP={
+hermite_js:`// Physicists' Hermite — stable 3-term recurrence, O(n)
+function hermite(n, x){
+  let h0 = 1, h1 = 2*x;
+  if (n === 0) return h0;
+  for (let k = 1; k < n; k++)
+    [h0, h1] = [h1, 2*x*h1 - 2*k*h0];  // H_{k+1} = 2x H_k − 2k H_{k−1}
+  return h1;
+}`,
+hermite_py:`import numpy as np
+from scipy.special import eval_hermite
+x = np.linspace(-3, 3, 400)
+y = eval_hermite(5, x)          # H_5(x) = 32x^5 − 160x^3 + 120x`,
+orth_h_py:`# Verify  ∫ e^{−x²} H_n² dx = 2^n n! √π
+import numpy as np
+from scipy.integrate import quad
+from scipy.special import eval_hermite
+n = 3
+I, _ = quad(lambda x: np.exp(-x**2)*eval_hermite(n, x)**2,
+            -np.inf, np.inf)
+print(I, 2**n*np.math.factorial(n)*np.sqrt(np.pi))   # 48√π ≈ 85.10`,
+lag_js:`// Book convention: L_n = e^x d^n(x^n e^{−x})/dx^n  (= n! × standard)
+// Associated: L_n^m = d^m L_n / dx^m  via coefficient arrays
+function laguerreCoefs(n){ /* recurrence on polynomials */ }
+function assocLag(n, m, x){
+  let c = laguerreCoefs(n);
+  for (let i = 0; i < m; i++)
+    c = c.slice(1).map((v, j) => v*(j+1));   // differentiate
+  return c.reduce((s, ci, i) => s + ci*x**i, 0);
+}`,
+lag_py:`from math import factorial
+from scipy.special import eval_genlaguerre
+def L_book(n, m, x):
+    # book: L_n^m = d^m/dx^m L_n ; standard identity
+    # d^m L_n^std/dx^m = (−1)^m L_{n−m}^{(m), std}
+    return factorial(n)*(-1)**m*eval_genlaguerre(n-m, m, x)
+print(L_book(2, 1, x))     # 2x − 4  ✓`,
+orth_l_py:`# Verify ∫₀^∞ x^m e^{−x} (L_n^m)² dx = (n!)³/(n−m)!
+from scipy.integrate import quad
+import numpy as np
+n, m = 2, 1
+I, _ = quad(lambda x: x**m*np.exp(-x)*L_book(n, m, x)**2, 0, np.inf)
+print(I, factorial(n)**3//factorial(n-m))   # 8  8 ✓`,
+cheb_js:`// T_n(x) = cos(n·arccos x) — use recurrence outside [−1,1]
+function chebT(n, x){
+  if (Math.abs(x) <= 1) return Math.cos(n*Math.acos(x));
+  let t0 = 1, t1 = x;
+  for (let k = 1; k < n; k++) [t0, t1] = [t1, 2*x*t1 - t0];
+  return t1;
+}`,
+cheb_py:`import numpy as np
+from numpy.polynomial import chebyshev as C
+x = np.linspace(-1, 1, 400)
+T4 = C.chebval(x, [0, 0, 0, 0, 1])    # T_4 = 8x⁴ − 8x² + 1
+roots = np.cos((2*np.arange(1, 5)-1)*np.pi/8)`,
+hyp_js:`// Gauss ₂F₁ by the defining series (|x| < 1)
+function hyp2f1(a, b, c, x){
+  let term = 1, sum = 1;
+  for (let k = 0; k < 400; k++){
+    term *= (a+k)*(b+k)/((c+k)*(k+1))*x;
+    sum  += term;
+    if (Math.abs(term) < 1e-14*Math.abs(sum)) break;
+  }
+  return sum;
+}`,
+hyp_py:`from scipy.special import hyp2f1
+import numpy as np
+print(hyp2f1(1, 1, 2, -0.5))        # ln(1.5)/0.5 ≈ 0.81093
+print(hyp2f1(2, -2, 0.5, (1-x)/2))  # = T_2(x) = 2x²−1`,
+ode_js:`// RK4 for the system y' = v,  v' = −p(x)v − q(x)y
+function rk4Step(x, y, v, h, p, q){
+  const f = (x, y, v) => [v, -p(x)*v - q(x)*y];
+  const k1 = f(x, y, v),
+        k2 = f(x+h/2, y+h/2*k1[0], v+h/2*k1[1]),
+        k3 = f(x+h/2, y+h/2*k2[0], v+h/2*k2[1]),
+        k4 = f(x+h,   y+h*k3[0],   v+h*k3[1]);
+  return [y + h/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+          v + h/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1])];
+}`,
+ode_py:`from scipy.integrate import solve_ivp
+def system(x, Y, p, q):
+    y, v = Y
+    return [v, -p(x)*v - q(x)*y]
+sol = solve_ivp(system, [-3, 3], [1, 0],
+                args=(lambda x: -2*x, lambda x: 6),
+                max_step=0.01)   # Hermite n=3 seed`,
+};
+const DERIV={
+"h-de":{t:"Hermite's Differential Equation",steps:[r`y=\sum_{k=0}^{\infty}a_kx^k\;\Rightarrow\;(k+2)(k+1)a_{k+2}-2ka_k+2na_k=0`,r`a_{k+2}=\frac{2(k-n)}{(k+1)(k+2)}\,a_k`,r`For integer n the chain terminates at k=n \Rightarrow polynomial solution H_n(x)`,r`The other (infinite) solution diverges like e^{x^2} and is discarded`],js:SNIP.hermite_js,py:SNIP.hermite_py},
+"h-rod":{t:"Rodrigues' Formula",steps:[r`e^{2tx-t^2}=e^{x^2}\,e^{-(x-t)^2}`,r`Taylor-shift the Gaussian: e^{-(x-t)^2}=\sum_{n=0}^{\infty}\frac{(-t)^n}{n!}\frac{d^n}{dx^n}e^{-x^2}`,r`\Rightarrow e^{2tx-t^2}=\sum_{n=0}^{\infty}\frac{t^n}{n!}\left[(-1)^ne^{x^2}\frac{d^n}{dx^n}e^{-x^2}\right]`,r`Compare with the defining series \sum H_n(x)t^n/n! \Rightarrow H_n(x)=(-1)^ne^{x^2}\tfrac{d^n}{dx^n}e^{-x^2}`],js:SNIP.hermite_js,py:SNIP.hermite_py},
+"h-exp":{t:"Explicit Polynomials",steps:[r`Seed H_0=1,\;H_1=2x`,r`Apply H_{n+1}=2xH_n-2nH_{n-1} repeatedly`,r`H_2=2x(2x)-2(1)=4x^2-2`,r`H_3=2x(4x^2-2)-4(2x)=8x^3-12x`,r`Parity: H_n(-x)=(-1)^nH_n(x) follows from the recurrence`],js:SNIP.hermite_js,py:SNIP.hermite_py},
+"h-gen":{t:"Generating Function",steps:[r`\sum_{n=0}^{\infty}\frac{H_n(x)t^n}{n!}=e^{x^2}\sum_{n=0}^{\infty}\frac{(-t)^n}{n!}\frac{d^n}{dx^n}e^{-x^2}`,r`The sum is the Taylor series of e^{-x^2} shifted by t`,r`=e^{x^2}\,e^{-(x-t)^2}=e^{2tx-t^2}`],js:SNIP.hermite_js,py:SNIP.hermite_py},
+"h-rec":{t:"Recurrence Relations",steps:[r`\partial_t:\;(2x-2t)e^{2tx-t^2}=\sum_{n=0}^{\infty}\frac{H_{n+1}(x)t^n}{n!}`,r`Also (2x-2t)\sum H_nt^n/n! = same series`,r`Compare t^n coefficients: H_{n+1}=2xH_n-2nH_{n-1}`,r`\partial_x:\;2t\,e^{2tx-t^2}=\sum H_n'(x)t^n/n! \Rightarrow H_{n+1}'=2(n+1)H_n`,r`Shift index: H_n'(x)=2nH_{n-1}(x)`],js:SNIP.hermite_js,py:SNIP.hermite_py},
+"h-orth":{t:"Orthogonality Integral",steps:[r`Multiply generating functions with parameters t, s and integrate: \int_{-\infty}^{\infty}e^{-x^2}e^{2tx-t^2}e^{2sx-s^2}dx`,r`Complete the square: =e^{-t^2-s^2}\int e^{-(x-t-s)^2+(t+s)^2}dx=\sqrt{\pi}\,e^{2ts}`,r`Expand: \sqrt{\pi}\,e^{2ts}=\sqrt{\pi}\sum_{k=0}^{\infty}\frac{(2ts)^k}{k!}`,r`LHS double series \sum\sum \frac{t^ms^n}{m!n!}\int e^{-x^2}H_mH_n\,dx`,r`Match coefficients of t^ns^n: only m=n survives, \int e^{-x^2}H_n^2dx=2^nn!\sqrt{\pi}`],js:SNIP.hermite_js,py:SNIP.orth_h_py},
+"h-sv":{t:"Special Values at the Origin",steps:[r`Odd parity \Rightarrow H_{2n-1}(0)=0`,r`Set x=0 in the generating function: e^{-t^2}=\sum H_n(0)t^n/n!`,r`e^{-t^2}=\sum_{k}\frac{(-1)^kt^{2k}}{k!}\Rightarrow H_{2k}(0)=\frac{(-1)^k(2k)!}{k!}`,r`\frac{(2k)!}{k!}=2^{2k}\cdot1\cdot3\cdots(2k-1) \;\blacksquare`],js:SNIP.hermite_js,py:SNIP.hermite_py},
+"l-de":{t:"Laguerre Equations",steps:[r`x=0 is a regular singular point; Frobenius y=\sum a_kx^k`,r`Coefficient recurrence: a_{k+1}=-\frac{n-k}{(k+1)^2}a_k`,r`Integer n truncates the series \Rightarrow polynomial L_n`,r`The associated equation follows by differentiating Laguerre's equation m times (set y=L_n', then iterate)`],js:SNIP.lag_js,py:SNIP.lag_py},
+"l-def":{t:"Rodrigues Definitions",steps:[r`L_n(x)=e^x\frac{d^n}{dx^n}(x^ne^{-x}) — check n=1: e^x(e^{-x}(1-x))=1-x\;\checkmark`,r`Leibniz rule shows this is a degree-n polynomial with leading term (-1)^nx^n`,r`Associated form defined by differentiation: L_n^m=\frac{d^m}{dx^m}L_n`,r`Check: L_2=x^2-4x+2 \Rightarrow L_2^1=2x-4,\;L_2^2=2\;\checkmark`,r`Relation to standard convention: L_n^{here}=n!\,L_n^{std},\;L_n^m=n!(-1)^mL_{n-m}^{(m),std}`],js:SNIP.lag_js,py:SNIP.lag_py},
+"l-exp":{t:"Explicit Laguerre Polynomials",steps:[r`From Rodrigues / recurrence with L_0=1, L_1=1-x`,r`(k+1)L_{k+1}=(2k+1-x)L_k-kL_{k-1}\;\;(book scaling absorbed)`,r`L_2=(3-x)(1-x)-1=x^2-4x+2`,r`Leading term (-1)^nx^n, constant term n!`],js:SNIP.lag_js,py:SNIP.lag_py},
+"l-aexp":{t:"Explicit Associated Polynomials",steps:[r`L_n^m=d^mL_n/dx^m — just differentiate the L_n list`,r`L_3=-x^3+9x^2-18x+6 \Rightarrow L_3^1=-3x^2+18x-18`,r`L_3^2=-6x+18,\quad L_3^3=-6`,r`In general L_n^n=(-1)^nn!\;? No — here L_n^n=(-1)^nn!\cdot 1 holds: L_4^4=24=4!\;\checkmark`],js:SNIP.lag_js,py:SNIP.lag_py},
+"l-gen":{t:"Generating Functions",steps:[r`\Phi(x,t)=\frac{1}{1-t}\exp\!\left(\frac{-xt}{1-t}\right)`,r`Expand in t: \Phi=1+(1-x)t+\frac{x^2-4x+2}{2}t^2+\cdots`,r`Coefficient of t^n is L_n(x)/n! under the book scaling`,r`Associated version: differentiate \Phi m times w.r.t. x and multiply by t^m factor — matches \frac{(-1)^mt^m}{(1-t)^{m+1}}e^{-xt/(1-t)}`],js:SNIP.lag_js,py:SNIP.lag_py},
+"l-orth":{t:"Associated Orthogonality",steps:[r`Insert Rodrigues forms for L_n^m and L_p^m`,r`Integrate by parts n times — boundary terms vanish because of e^{-x}x^m at 0 and \infty`,r`The surviving integral collapses to factorials`,r`Result in book normalization: \frac{(n!)^3}{(n-m)!}\delta_{np}`,r`Numeric check n=2,m=1:\;\int_0^\infty xe^{-x}(2x-4)^2dx=24-32+16=8=\frac{(2!)^3}{1!}\;\checkmark`],js:SNIP.lag_js,py:SNIP.orth_l_py},
+"c-de":{t:"Chebyshev's Equation",steps:[r`Substitute x=\cos\theta,\;y(\theta)=\cos n\theta`,r`\frac{dy}{dx}=\frac{-n\sin n\theta}{-\sin\theta}=\frac{n\sin n\theta}{\sin\theta}`,r`One more chain-rule derivative gives (1-x^2)y''-xy'=-n^2\cos n\theta`,r`Hence (1-x^2)y''-xy'+n^2y=0\;\blacksquare`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-tdef":{t:"Tₙ = cos(n·arccos x)",steps:[r`For x\in[-1,1] write x=\cos\theta,\;\theta=\arccos x`,r`Define T_n(x)=\cos(n\theta) — a polynomial in \cos\theta by de Moivre`,r`T_2=2\cos^2\theta-1=2x^2-1,\;T_3=4x^3-3x\ldots`,r`The cylinder 3D demo plots height \cos(n\theta) around angle \theta — the polynomial is its shadow`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-texp":{t:"Explicit Tₙ",steps:[r`Cosine addition: \cos((n+1)\theta)=2\cos\theta\cos(n\theta)-\cos((n-1)\theta)`,r`\Rightarrow T_{n+1}=2xT_n-T_{n-1},\;T_0=1,T_1=x`,r`Iterate to reach T_7=64x^7-112x^5+56x^3-7x`,r`Roots: x_k=\cos\frac{(2k-1)\pi}{2n} — marked on the 2D plot`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-tgen":{t:"Generating Function of Tₙ",steps:[r`T_n(\cos\theta)=\cos n\theta=\operatorname{Re}e^{in\theta}`,r`\sum_{n=0}^{\infty}T_nt^n=\operatorname{Re}\frac{1}{1-te^{i\theta}}`,r`Rationalize: \operatorname{Re}\frac{1-te^{-i\theta}}{1-2t\cos\theta+t^2}=\frac{1-t\cos\theta}{1-2t\cos\theta+t^2}`,r`With x=\cos\theta:\;\frac{1-tx}{1-2tx+t^2}\;\blacksquare`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-udef":{t:"Uₙ Definition",steps:[r`U_n(\cos\theta)=\frac{\sin((n+1)\theta)}{\sin\theta}`,r`Ratio of sines is a polynomial in \cos\theta of degree n`,r`U_1=\frac{\sin2\theta}{\sin\theta}=2\cos\theta=2x\;\checkmark`,r`U_n(\pm1)=(\pm1)^n(n+1) by l'Hôpital`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-uexp":{t:"Explicit Uₙ",steps:[r`Sine addition: \sin((n+2)\theta)=2\cos\theta\sin((n+1)\theta)-\sin(n\theta)`,r`\Rightarrow U_{n+1}=2xU_n-U_{n-1},\;U_0=1,U_1=2x`,r`Iterate to U_7=128x^7-192x^5+80x^3-8x`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-ugen":{t:"Generating Function of Uₙ",steps:[r`\sum_{n=0}^{\infty}\sin((n+1)\theta)t^n=\operatorname{Im}\frac{e^{i\theta}}{1-te^{i\theta}}`,r`=\operatorname{Im}\frac{e^{i\theta}-t}{1-2t\cos\theta+t^2}=\frac{\sin\theta}{1-2t\cos\theta+t^2}`,r`Divide by \sin\theta:\;\frac{1}{1-2tx+t^2}\;\blacksquare`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-urec":{t:"Uₙ Recurrence",steps:[r`\sin((n+1)\theta)+\sin((n-1)\theta)=2\cos\theta\sin(n\theta)`,r`Divide by \sin\theta:\;U_n+U_{n-2}=2xU_{n-1}`,r`Shift index: U_{n+1}-2xU_n+U_{n-1}=0\;\blacksquare`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"c-rel":{t:"T ↔ U Inter-relationship",steps:[r`U_n-xU_{n-1}=\frac{\sin((n+1)\theta)-\cos\theta\sin(n\theta)}{\sin\theta}`,r`Expand \sin((n+1)\theta)=\sin n\theta\cos\theta+\cos n\theta\sin\theta`,r`Numerator collapses to \cos n\theta\sin\theta \Rightarrow U_n-xU_{n-1}=\cos n\theta=T_n\;\checkmark`,r`Second identity: xT_n-T_{n+1}=\cos\theta\cos n\theta-\cos((n+1)\theta)=\sin\theta\sin n\theta=(1-x^2)U_{n-1}\;\blacksquare`],js:SNIP.cheb_js,py:SNIP.cheb_py},
+"g-de":{t:"The Hypergeometric Equation",steps:[r`x(1-x)y''+[c-(a+b+1)x]y'-aby=0`,r`Regular singular points at 0, 1, \infty (Riemann P-equation)`,r`Around x=0 the analytic solution with y(0)=1 is exactly F(a,b;c;x)`,r`Indicial exponents at 0: 0 and 1-c`],js:SNIP.hyp_js,py:SNIP.hyp_py},
+"g-series":{t:"Series & Convergence",steps:[r`F(a,b;c;x)=\sum_{k=0}^{\infty}\frac{(a)_k(b)_k}{(c)_k\,k!}x^k,\quad(a)_k=a(a+1)\cdots(a+k-1)`,r`Ratio test: \left|\frac{t_{k+1}}{t_k}\right|=\left|\frac{(a+k)(b+k)}{(c+k)(k+1)}x\right|\to|x|`,r`Absolute convergence for |x|<1; divergence for |x|>1`,r`At x=1: Gauss' theorem — converges when c-a-b>0 (app continues to −1 boundary per book's c-a-b>-1 window)`],js:SNIP.hyp_js,py:SNIP.hyp_py},
+"g-red1":{t:"Elementary Reductions",steps:[r`F(1,1;2;-x):\;term_k=\frac{(1)_k(1)_k}{(2)_kk!}(-x)^k=\frac{(-x)^k}{k+1}`,r`\sum_{k=0}^{\infty}\frac{(-x)^k}{k+1}=\frac{\ln(1+x)}{x}\;\checkmark`,r`F(-p,1;1;-x): (1)_k/(1)_k cancels \Rightarrow \sum\binom{p}{k}x^k=(1+x)^p`,r`F(1,n;1;x/n)\to\sum x^k/k!=e^x termwise as n\to\infty`],js:SNIP.hyp_js,py:SNIP.hyp_py},
+"g-red2":{t:"Classical Connections",steps:[r`F(a,b;b;x)=\sum\frac{(a)_k}{k!}x^k=(1-x)^{-a} (binomial theorem) \Rightarrow F(1,p;p;x)=\frac1{1-x}`,r`F(\tfrac12,-\tfrac12;\tfrac12;u)=(1-u)^{1/2}; with u=\sin^2x gives \cos x`,r`F(\tfrac12,\tfrac12;\tfrac32;x^2)=\frac{\arcsin x}{x} — integrate the binomial series of (1-u)^{-1/2}`,r`T_n(x)=F(n,-n;\tfrac12;\tfrac{1-x}{2}) — series terminates at k=n`,r`P_n(x)=F(n+1,-n;1;\tfrac{1-x}{2}) (Legendre)`],js:SNIP.hyp_js,py:SNIP.hyp_py},
+"g-int":{t:"Euler Integral Representation",steps:[r`Binomial expansion: (1-ux)^{-a}=\sum_k\frac{(a)_k}{k!}u^kx^k`,r`Integrate termwise (Re c>Re b>0): \int_0^1u^{b+k-1}(1-u)^{c-b-1}du=\frac{\Gamma(b+k)\Gamma(c-b)}{\Gamma(c+k)}`,r`Multiply by \frac{\Gamma(c)}{\Gamma(b)\Gamma(c-b)} and use \Gamma(b+k)=\Gamma(b)(b)_k`,r`Term k becomes \frac{(a)_k(b)_k}{(c)_kk!}x^k — summing recovers F(a,b;c;x)\;\blacksquare`],js:SNIP.hyp_js,py:SNIP.hyp_py},
+"o-form":{t:"Second-Order Linear ODEs",steps:[r`Every family in this studio solves y''+p(x)y'+q(x)y=0 for specific p,q`,r`Hermite: p=-2x,\;q=2n\qquad Laguerre: p=\frac{1-x}{x},\;q=\frac{n}{x}`,r`Chebyshev: p=\frac{-x}{1-x^2},\;q=\frac{n^2}{1-x^2}\qquad Hypergeometric: p=\frac{c-(a+b+1)x}{x(1-x)},\;q=\frac{-ab}{x(1-x)}`,r`Polynomial eigen-solutions appear only for quantized n — try it`],js:SNIP.ode_js,py:SNIP.ode_py},
+"o-rk4":{t:"Runge–Kutta 4",steps:[r`Reduce order: y'=v,\;v'=-p(x)v-q(x)y`,r`Four slopes sample the vector field across each step`,r`y_{i+1}=y_i+\frac16(k_1+2k_2+2k_3+k_4) — matches the Taylor series to O(h^5) local error`,r`Singular points (x=0, ±1…) terminate the march automatically — watch Laguerre/Chebyshev stop cleanly`],js:SNIP.ode_js,py:SNIP.ode_py},
+};
+
+/* ============================================================
+   6. UI BUILDERS — cards, chart factory, drawer
+============================================================ */
+function buildCards(tab,list){
+  const box=$("#cards-"+tab);
+  list.forEach(c=>{
+    const el=document.createElement("div");
+    el.className="fcard card card-hover rounded-xl p-4 cursor-pointer";
+    el.dataset.search=(c.title+" "+c.tex).toLowerCase();
+    el.innerHTML=`<div class="flex items-start justify-between gap-2">
+      <h4 class="text-[13px] font-semibold flex items-start gap-2"><span class="dot"></span><span>${c.title}</span></h4>
+      <div class="flex gap-1 flex-none">
+        <button class="iconbtn" data-copy title="Copy LaTeX"><i data-lucide="copy"></i></button>
+        <button class="iconbtn" data-open title="Inspect derivation"><i data-lucide="flask-conical"></i></button>
+      </div></div>
+      <div class="mt-2 overflow-x-auto ktx"></div>
+      ${c.sub?`<p class="mt-2 text-[11px] leading-relaxed" style="color:var(--muted)">${c.sub}</p>`:""}`;
+    K(el.querySelector(".ktx"),c.tex,true);
+    el.querySelector("[data-copy]").addEventListener("click",ev=>{ev.stopPropagation();copyText(c.tex,"LaTeX copied");});
+    el.querySelector("[data-open]").addEventListener("click",ev=>{ev.stopPropagation();openDrawer(c);});
+    el.addEventListener("click",()=>openDrawer(c));
+    box.appendChild(el);
+  });
+}
+function mkChart(canvas){
+  return new Chart(canvas,{type:"line",data:{datasets:[]},options:{
+    animation:false,responsive:true,maintainAspectRatio:false,normalized:true,
+    interaction:{mode:"nearest",intersect:false},
+    scales:{x:{type:"linear",grid:{color:"rgba(148,163,184,.09)"},ticks:{color:"#94a3b8",font:{size:10}}},
+            y:{grid:{color:"rgba(148,163,184,.09)"},ticks:{color:"#94a3b8",font:{size:10}},grace:"6%"}},
+    plugins:{legend:{labels:{usePointStyle:true,pointStyle:"line",boxWidth:18,color:"#94a3b8",font:{size:10.5}}},
+      tooltip:{backgroundColor:"rgba(2,6,23,.92)",borderColor:"rgba(34,211,238,.4)",borderWidth:1,
+        title:i=>"x = "+fmt(i[0].parsed.x),labelPadding:4}}
+  }});
+}
+function exportSVG(mod){
+  const ch=mod.chart;if(!ch||!ch.chartArea)return toast("Nothing to export");
+  const W=960,H=540,P=56,xs=ch.scales.x,ys=ch.scales.y;
+  const mx=v=>P+(v-xs.min)/(xs.max-xs.min)*(W-2*P),my=v=>H-P-(v-ys.min)/(ys.max-ys.min)*(H-2*P);
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="Inter,sans-serif"><rect width="${W}" height="${H}" fill="#0f172a"/>`;
+  (xs.ticks||[]).forEach(t=>{s+=`<line x1="${mx(t.value)}" y1="${P}" x2="${mx(t.value)}" y2="${H-P}" stroke="#1e293b"/><text x="${mx(t.value)}" y="${H-P+18}" fill="#94a3b8" font-size="11" text-anchor="middle">${t.label}</text>`;});
+  (ys.ticks||[]).forEach(t=>{s+=`<line x1="${P}" y1="${my(t.value)}" x2="${W-P}" y2="${my(t.value)}" stroke="#1e293b"/><text x="${P-8}" y="${my(t.value)+4}" fill="#94a3b8" font-size="11" text-anchor="end">${t.label}</text>`;});
+  s+=`<rect x="${P}" y="${P}" width="${W-2*P}" height="${H-2*P}" fill="none" stroke="#334155"/>`;
+  ch.data.datasets.forEach(ds=>{const pts=(ds.data||[]).filter(p=>p&&isFinite(p.x)&&isFinite(p.y));if(!pts.length)return;
+    const d=pts.map((p,i)=>(i?"L":"M")+mx(p.x).toFixed(2)+" "+my(clamp(p.y,ys.min,ys.max)).toFixed(2)).join(" ");
+    const dash=ds.borderDash?` stroke-dasharray="${ds.borderDash.join(',')}"`:"";
+    s+=`<path d="${d}" fill="none" stroke="${ds.borderColor}" stroke-width="${ds.borderWidth||2}"${dash}/>`;});
+  s+="</svg>";
+  downloadBlob(new Blob([s],{type:"image/svg+xml"}),mod.key+"-plot.svg");toast("SVG exported");
+}
+function exportPNG(mod){
+  let cv=null;
+  if(mod.state.view==="3d"&&mod.three){mod.three.renderer.render(mod.three.scene,mod.three.camera);cv=mod.three.renderer.domElement;}
+  else if(mod.chart)cv=mod.chart.canvas;
+  if(!cv)return toast("Nothing to export");
+  download(cv.toDataURL("image/png"),mod.key+"-plot.png");toast("PNG exported");
+}
+/* --- drawer --- */
+let drawerOpen=false;
+function acc(head,body){head.addEventListener("click",()=>{
+  const open=body.dataset.open==="1";const ic=head.querySelector(".acc-ic");
+  if(open){gsap.to(body,{height:0,opacity:0,duration:.28,onComplete:()=>body.dataset.open="0"});}
+  else{gsap.set(body,{height:"auto"});gsap.from(body,{height:0,opacity:0,duration:.32});body.dataset.open="1";}
+  ic&&ic.classList.toggle("rotate-90",!open);});}
+function openDrawer(card){
+  const d=DERIV[card.key]||{t:card.title,steps:[],js:null,py:null};
+  $("#drawer-title").textContent=d.t;
+  const body=$("#drawer-body");body.innerHTML="";
+  const main=document.createElement("div");main.className="card rounded-xl p-3";
+  main.innerHTML=`<div class="text-[10px] uppercase tracking-[0.16em] mb-1" style="color:var(--muted)">Statement</div><div class="overflow-x-auto kmain"></div>`;
+  K(main.querySelector(".kmain"),card.tex,true);body.appendChild(main);
+  if(d.steps&&d.steps.length){
+    const sec=document.createElement("div");sec.className="card rounded-xl overflow-hidden";
+    sec.innerHTML=`<button class="w-full flex items-center gap-2 px-3 py-2.5 text-[12px] font-bold"><i data-lucide="chevron-right" class="acc-ic w-4 h-4 text-cyan-400 transition-transform rotate-90"></i>Step-by-step derivation <span class="ml-auto text-[10px] font-normal" style="color:var(--muted)">${d.steps.length} steps</span></button><div class="acc-body px-3 pb-3 space-y-2" data-open="1"></div>`;
+    const bb=sec.querySelector(".acc-body");
+    d.steps.forEach((s,i)=>{const st=document.createElement("div");st.className="flex gap-2";
+      st.innerHTML=`<span class="chip font-mono text-[10px] flex-none mt-1">${i+1}</span><div class="overflow-x-auto kstep flex-1"></div>`;
+      K(st.querySelector(".kstep"),s,false);bb.appendChild(st);});
+    body.appendChild(sec);acc(sec.querySelector("button"),bb);refreshIcons();
+  }
+  const snippets=[["JavaScript",d.js],["Python / SciPy",d.py]];
+  snippets.forEach(([lab,code])=>{if(!code)return;
+    const sec=document.createElement("div");sec.className="card rounded-xl overflow-hidden";
+    sec.innerHTML=`<button class="w-full flex items-center gap-2 px-3 py-2.5 text-[12px] font-bold"><i data-lucide="chevron-right" class="acc-ic w-4 h-4 text-emerald-400 transition-transform"></i>${lab} implementation <span class="ml-auto iconbtn" data-cp title="Copy code"><i data-lucide="copy"></i></span></button><div class="acc-body px-3 pb-3" data-open="0" style="height:0;opacity:0"><div class="codebox"></div></div>`;
+    sec.querySelector(".codebox").textContent=code;
+    const bb=sec.querySelector(".acc-body");
+    sec.querySelector("button").addEventListener("click",ev=>{if(ev.target.closest("[data-cp]")){ev.stopPropagation();copyText(code,lab+" copied");return;}});
+    body.appendChild(sec);acc(sec.querySelector("button"),bb);refreshIcons();});
+  refreshIcons();
+  $("#drawer-backdrop").classList.remove("hidden");
+  gsap.to("#drawer",{x:0,duration:.38,ease:"power3.out",onStart:()=>{$("#drawer").style.transform="";}});
+  gsap.fromTo("#drawer",{xPercent:105},{xPercent:0,duration:.4,ease:"power3.out"});
+  drawerOpen=true;
+}
+function closeDrawer(){if(!drawerOpen)return;gsap.to("#drawer",{xPercent:105,duration:.32,ease:"power2.in"});$("#drawer-backdrop").classList.add("hidden");drawerOpen=false;}
+
+/* ============================================================
+   7. THREE.JS HELPERS
+============================================================ */
+function initThree(wrap,camDist=8){
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,1,0.1,400);
+  camera.position.set(camDist*0.72,camDist*0.52,camDist*0.88);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  wrap.appendChild(renderer.domElement);
+  const controls=THREE.OrbitControls?new THREE.OrbitControls(camera,renderer.domElement):null;
+  if(controls){controls.enableDamping=true;controls.dampingFactor=.08;controls.autoRotate=true;controls.autoRotateSpeed=.9;}
+  scene.add(new THREE.HemisphereLight(0xbfe3ff,0x0b1020,0.85));
+  const dl=new THREE.DirectionalLight(0xffffff,0.9);dl.position.set(6,10,7);scene.add(dl);
+  function size(){const w=wrap.clientWidth||400,h=wrap.clientHeight||380;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+  size();
+  return{scene,camera,renderer,controls,size};
+}
+function disposeGroup(g){while(g.children.length){const o=g.children.pop();o.geometry&&o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}}}
+function gridAt(scene,y,span){const g=new THREE.GridHelper(span,Math.round(span*1.6),0x334155,0x1e293b);g.position.y=y;g.material.transparent=true;g.material.opacity=.5;scene.add(g);return g;}
+
+/* ============================================================
+   8. MODULE DEFINITIONS
+============================================================ */
+let active="hermite";
+const Mods={};
+
+/* ---------------- HERMITE ---------------- */
+Mods.hermite={key:"hermite",state:{n:2,t:0.35,view:"2d",anim:false,dom:2.5,nx:1,ny:0,nz:0,pts:14000},three:null,chart:null,sliders:{},phase:0,
+ init(){
+  buildCards("hermite",CARDS.hermite);
+  const box=$("#h-ctrl");
+  this.sliders.n=mkSlider(box,{label:"degree n",min:0,max:7,step:1,val:2,onInput:v=>{S.n=v;quick.n.set(v);this.req();}});
+  this.sliders.dom=mkSlider(box,{label:"plot domain ±d",min:1,max:5,step:.25,val:2.5,onInput:()=>this.req()});
+  this.sliders.t=mkSlider(box,{label:"gen. fn parameter t",min:-1,max:1,step:.01,val:.35,onInput:v=>{S.t=v;quick.t.set(v);this.req();}});
+  this.sliders.nx=mkSlider(box,{label:"3D axis nₓ",min:0,max:4,step:1,val:1,onInput:()=>this.rebuild3DDebounced()});
+  this.sliders.ny=mkSlider(box,{label:"3D axis n_y",min:0,max:4,step:1,val:0,onInput:()=>this.rebuild3DDebounced()});
+  this.sliders.nz=mkSlider(box,{label:"3D axis n_z",min:0,max:4,step:1,val:0,onInput:()=>this.rebuild3DDebounced()});
+  $("#h-gen").addEventListener("change",()=>this.req());
+  this.chart=mkChart($("#h-chart"));
+ },
+ syncParam(k,v){if(k==="n")this.sliders.n.set(v);if(k==="t")this.sliders.t.set(v);if(k==="x")this.req();},
+ refresh(){
+  const n=this.sliders.n.get(),d=this.sliders.dom.get(),t=this.sliders.t.get();
+  const xs=linspace(-d,d,240),ds=[];
+  for(let k=0;k<=n;k++)ds.push({label:"H_"+k,data:xs.map(x=>({x,y:M.hermite(k,x)})),borderColor:PALETTE[k%8],borderWidth:k===n?2.6:1.1,pointRadius:0,tension:0});
+  ds.push({label:"w(x)=e^{−x²}",data:xs.map(x=>({x,y:Math.exp(-x*x)})),borderColor:"#34d399",borderDash:[6,4],borderWidth:1.4,pointRadius:0});
+  if($("#h-gen").checked){const N=Math.max(n,4);
+    ds.push({label:"Σ Hₖtᵏ/k! (N="+N+")",data:xs.map(x=>{let s=0,f=1;for(let k=0;k<=N;k++){if(k>0)f*=k;s+=M.hermite(k,x)*Math.pow(t,k)/f;}return{x,y:s};}),borderColor:"#f472b6",borderWidth:2,pointRadius:0});
+    ds.push({label:"e^{2tx−t²}",data:xs.map(x=>({x,y:Math.exp(2*t*x-t*t)})),borderColor:"#fbbf24",borderDash:[3,3],borderWidth:1.6,pointRadius:0});}
+  this.chart.data.datasets=ds;this.chart.update("none");
+  $("#h-eval").textContent=`H_${n}(${fmt(S.x,2)}) = ${fmt(M.hermite(n,S.x))}`;
+  this.chart.options.plugins.title={display:true,text:`t = ${fmt(t,2)}`,color:"#67e8f9",font:{size:11,family:"JetBrains Mono"}};
+  this.chart.update("none");
+ },
+ build3D(T){
+  gridAt(T.scene,-3.2,9);
+  T.scene.add(new THREE.AxesHelper(3.4));
+  this.cloud=new THREE.Group();T.scene.add(this.cloud);
+  this.buildCloud();
+ },
+ buildCloud(){
+  if(!this.three)return;
+  const nx=this.sliders.nx.get(),ny=this.sliders.ny.get(),nz=this.sliders.nz.get();
+  disposeGroup(this.cloud);
+  const B=Math.sqrt(2*Math.max(nx,ny,nz)+1)+1.4;
+  const mx=[0,0,0],ks=[nx,ny,nz];
+  for(let a=0;a<3;a++){let best=0;for(let i=0;i<=160;i++){const x=-B+2*B*i/160;best=Math.max(best,M.psi2(ks[a],x));}mx[a]=best||1;}
+  const rhoMax=mx[0]*mx[1]*mx[2];
+  const pos=[],col=[];let acc=0,budget=520000;
+  while(acc<this.state.pts&&budget-->0){
+    const x=(Math.random()*2-1)*B,y=(Math.random()*2-1)*B,z=(Math.random()*2-1)*B;
+    const rho=M.psi2(nx,x)*M.psi2(ny,y)*M.psi2(nz,z);
+    if(Math.random()*rhoMax<rho){
+      pos.push(x,y,z);const tt=Math.pow(rho/rhoMax,.55),c=heat(tt);col.push(c.r,c.g,c.b);acc++;}
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute("color",new THREE.Float32BufferAttribute(col,3));
+  const m=new THREE.PointsMaterial({size:.06,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
+  this.cloud.add(new THREE.Points(g,m));
+ },
+ rebuild3DDebounced(){clearTimeout(this._t);this._t=setTimeout(()=>this.buildCloud(),140);},
+ animStep(dt){this.phase+=dt*.9;const t=.9*Math.sin(this.phase);this.sliders.t.set(+t.toFixed(2));S.t=t;quick.t.set(+t.toFixed(2));this.req();},
+ animFrame(){if(this.three&&this.three.controls)this.three.controls.autoRotate=this.state.anim||true;},
+ onShow(){this.req();}
+};
+
+/* ---------------- LAGUERRE ---------------- */
+Mods.laguerre={key:"laguerre",state:{n:2,m:1,t:.5,view:"2d",anim:false,dom:10,hy:{n:2,l:1,m:1}},three:null,chart:null,sliders:{},phase:0,
+ init(){
+  buildCards("laguerre",CARDS.laguerre);
+  const box=$("#l-ctrl");
+  this.sliders.n=mkSlider(box,{label:"degree n",min:0,max:7,step:1,val:2,onInput:v=>{S.n=v;quick.n.set(v);this.req();}});
+  this.sliders.m=mkSlider(box,{label:"order m ≤ n",min:0,max:7,step:1,val:1,onInput:v=>{S.m=v;quick.m.set(v);this.req();}});
+  this.sliders.dom=mkSlider(box,{label:"plot domain [0, d]",min:2,max:20,step:.5,val:10,onInput:()=>this.req()});
+  this.sliders.t=mkSlider(box,{label:"gen. fn parameter t",min:-.8,max:.85,step:.01,val:.5,onInput:v=>{S.t=v;quick.t.set(v);this.req();}});
+  this.sliders.hn=mkSlider(box,{label:"orbital n (1…4)",min:1,max:4,step:1,val:2,onInput:()=>this.rebuild3DDebounced()});
+  this.sliders.hl=mkSlider(box,{label:"orbital l (0…n−1)",min:0,max:3,step:1,val:1,onInput:()=>this.rebuild3DDebounced()});
+  this.sliders.hm=mkSlider(box,{label:"orbital m (0…l)",min:0,max:3,step:1,val:1,onInput:()=>this.rebuild3DDebounced()});
+  $("#l-gen").addEventListener("change",()=>this.req());
+  this.chart=mkChart($("#l-chart"));
+ },
+ syncParam(k,v){if(k==="n")this.sliders.n.set(v);if(k==="m")this.sliders.m.set(Math.min(v,this.sliders.n.get()));if(k==="x")this.req();},
+ refresh(){
+  const n=this.sliders.n.get(),m=Math.min(this.sliders.m.get(),n),d=this.sliders.dom.get(),t=this.sliders.t.get();
+  const xs=linspace(0,d,260),ds=[];
+  for(let k=0;k<=n;k++)ds.push({label:"L_"+k,data:xs.map(x=>({x,y:M.laguerre(k,x)})),borderColor:PALETTE[k%8],borderWidth:k===n?2.4:1,pointRadius:0});
+  if(m>0)ds.push({label:`L_${n}^${m}`,data:xs.map(x=>({x,y:M.assocLaguerre(n,m,x)})),borderColor:"#fbbf24",borderWidth:2.6,pointRadius:0});
+  ds.push({label:"w(x)=xᵐe^{−x}",data:xs.map(x=>({x,y:Math.pow(x,m)*Math.exp(-x)*M.fact(Math.max(1,n))})),borderColor:"#34d399",borderDash:[6,4],borderWidth:1.4,pointRadius:0});
+  if($("#l-gen").checked){const N=Math.max(n,4);
+    ds.push({label:"Σ Lₖtᵏ/k!",data:xs.map(x=>{let s=0,f=1;for(let k=0;k<=N;k++){if(k>0)f*=k;s+=M.laguerre(k,x)*Math.pow(t,k)/f;}return{x,y:s};}),borderColor:"#f472b6",borderWidth:2,pointRadius:0});
+    ds.push({label:"closed form",data:xs.map(x=>({x,y:Math.exp(-x*t/(1-t))/(1-t)})),borderColor:"#fbbf24",borderDash:[3,3],borderWidth:1.6,pointRadius:0});}
+  this.chart.data.datasets=ds;this.chart.update("none");
+  $("#l-eval").textContent=`L_${n}^${m}(${fmt(S.x,2)}) = ${fmt(S.x<0?NaN:M.assocLaguerre(n,m,Math.max(0,S.x)))}`;
+ },
+ build3D(T){
+  T.camera.position.set(16,11,20);T.controls&&(T.controls.target.set(0,0,0));
+  gridAt(T.scene,-8,36);
+  this.cloud=new THREE.Group();T.scene.add(this.cloud);
+  this.buildHydrogen();
+ },
+ density(r,th,ph,n,l,m){
+  const rho=2*r/n;
+  const R=Math.exp(-r/n)*Math.pow(rho,l)*M.genLag(n-l-1,2*l+1,rho);
+  const A=M.assocLegendre(l,m,Math.cos(th))*Math.cos(m*ph);
+  return R*R*A*A;
+ },
+ buildHydrogen(){
+  if(!this.three)return;
+  disposeGroup(this.cloud);
+  const n=this.sliders.hn.get();
+  let l=Math.min(this.sliders.hl.get(),n-1);this.sliders.hl.set(l);
+  const m=Math.min(this.sliders.hm.get(),l);this.sliders.hm.set(m);
+  const sig=1.15*n*n+1.2,B=3.6*n*n+6;
+  let rhoMax=0;
+  for(let i=1;i<=90;i++){const r=B*i/90;for(let j=0;j<=18;j++){const th=Math.PI*j/18;rhoMax=Math.max(rhoMax,this.density(r,th,0,n,l,m));}}
+  if(!isFinite(rhoMax)||rhoMax<=0)rhoMax=1;
+  function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const pos=[],col=[];let acc=0,budget=420000;
+  while(acc<15000&&budget-->0){
+    const x=gauss()*sig,y=gauss()*sig,z=gauss()*sig;
+    if(Math.abs(x)>B||Math.abs(y)>B||Math.abs(z)>B)continue;
+    const r=Math.sqrt(x*x+y*y+z*z)||1e-6,th=Math.acos(clamp(z/r,-1,1)),ph=Math.atan2(y,x);
+    const rho=this.density(r,th,ph,n,l,m);
+    if(Math.random()*rhoMax<rho){pos.push(x,y,z);const c=heat(Math.pow(rho/rhoMax,.55));col.push(c.r,c.g,c.b);acc++;}
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute("color",new THREE.Float32BufferAttribute(col,3));
+  this.cloud.add(new THREE.Points(g,new THREE.PointsMaterial({size:.06*n,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending})));
+ },
+ rebuild3DDebounced(){clearTimeout(this._t);this._t=setTimeout(()=>this.buildHydrogen(),160);},
+ animStep(dt){this.phase+=dt*.8;const t=.05+.75*(0.5+0.5*Math.sin(this.phase));this.sliders.t.set(+t.toFixed(2));S.t=t;quick.t.set(+t.toFixed(2));this.req();},
+ onShow(){this.req();}
+};
+
+/* ---------------- CHEBYSHEV ---------------- */
+Mods.chebyshev={key:"chebyshev",state:{n:4,t:.6,view:"2d",anim:false,kind:"T"},three:null,chart:null,sliders:{},group:null,phase:0,
+ init(){
+  buildCards("chebyshev",CARDS.chebyshev);
+  const box=$("#c-ctrl");
+  this.sliders.n=mkSlider(box,{label:"degree n",min:0,max:7,step:1,val:4,onInput:v=>{S.n=v;quick.n.set(v);this.req();this.rebuild3DDebounced();}});
+  this.sliders.t=mkSlider(box,{label:"gen. fn parameter t",min:-.9,max:.9,step:.01,val:.6,onInput:v=>{S.t=v;quick.t.set(v);this.req();}});
+  const kd=document.createElement("div");
+  kd.innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-[10px] font-semibold uppercase tracking-[0.14em]" style="color:var(--muted)">3D curve kind</span></div>`;
+  const seg=document.createElement("div");seg.className="seg w-full";
+  seg.innerHTML=`<button class="seg-on flex-1 justify-center">Tₙ cylinder</button><button class="flex-1 justify-center">Uₙ scaled</button>`;
+  kd.appendChild(seg);box.appendChild(kd);
+  [...seg.children].forEach((b,i)=>b.addEventListener("click",()=>{this.state.kind=i?"U":"T";[...seg.children].forEach((x,j)=>x.classList.toggle("seg-on",j===i));this.rebuild3DDebounced();}));
+  $("#c-gen").addEventListener("change",()=>this.req());
+  this.chart=mkChart($("#c-chart"));
+ },
+ syncParam(k,v){if(k==="n")this.sliders.n.set(v);if(k==="t")this.sliders.t.set(v);if(k==="x")this.req();},
+ refresh(){
+  const n=this.sliders.n.get(),t=this.sliders.t.get();
+  const xs=linspace(-1.15,1.15,300),ds=[];
+  ds.push({label:"T_"+n,data:xs.map(x=>({x,y:M.chebT(n,x)})),borderColor:"#22d3ee",borderWidth:2.6,pointRadius:0});
+  ds.push({label:"U_"+n,data:xs.map(x=>({x,y:M.chebU(n,x)})),borderColor:"#818cf8",borderWidth:1.8,pointRadius:0});
+  if(n>0){const roots=[];for(let k=1;k<=n;k++){const xk=Math.cos((2*k-1)*Math.PI/(2*n));roots.push({x:xk,y:0});}
+    ds.push({label:"roots of Tₙ",data:roots,borderColor:"#fbbf24",backgroundColor:"#fbbf24",showLine:false,pointRadius:4.5,pointStyle:"rectRot"});}
+  if($("#c-gen").checked){const N=Math.max(n,5);
+    ds.push({label:"Σ Tₖtᵏ",data:xs.map(x=>{let s=0;for(let k=0;k<=N;k++)s+=M.chebT(k,x)*Math.pow(t,k);return{x,y:s};}),borderColor:"#f472b6",borderWidth:1.8,pointRadius:0});
+    ds.push({label:"(1−tx)/(1−2tx+t²)",data:xs.map(x=>({x,y:(1-t*x)/(1-2*t*x+t*t)})),borderColor:"#fbbf24",borderDash:[3,3],borderWidth:1.6,pointRadius:0});}
+  this.chart.data.datasets=ds;this.chart.update("none");
+  $("#c-eval").textContent=`T_${n}(${fmt(S.x,2)}) = ${fmt(M.chebT(n,S.x))} · U_${n} = ${fmt(M.chebU(n,S.x))}`;
+ },
+ build3D(T){
+  T.camera.position.set(4.4,3,5.6);
+  this.group=new THREE.Group();T.scene.add(this.group);
+  this.rebuildCheb();
+ },
+ rebuildCheb(){
+  if(!this.three)return;
+  disposeGroup(this.group);
+  const n=Math.max(1,this.sliders.n.get()),U=this.state.kind==="U";
+  const cyl=new THREE.Mesh(new THREE.CylinderGeometry(1,1,2.6,48,1,true),
+    new THREE.MeshStandardMaterial({color:0x38bdf8,transparent:true,opacity:.07,side:THREE.DoubleSide,roughness:.6}));
+  this.group.add(cyl);
+  [1.3,-1.3].forEach(y=>{const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.012,8,72),new THREE.MeshBasicMaterial({color:0x334155}));ring.rotation.x=Math.PI/2;ring.position.y=y;this.group.add(ring);});
+  const f=th=>U?M.chebU(n,Math.cos(th))/(n+1):Math.cos(n*th);
+  const N=700,pts=[],proj=[],links=[];
+  for(let i=0;i<=N;i++){const th=i/N*2*Math.PI,y=f(th)*1.15;
+    pts.push(Math.cos(th),y,Math.sin(th));proj.push(Math.cos(th),y,-1.55);
+    if(i%25===0)links.push(Math.cos(th),y,Math.sin(th),Math.cos(th),y,-1.55);}
+  const mk=(arr,col,w,op)=>{const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));return new THREE.Line(g,new THREE.LineBasicMaterial({color:col,linewidth:w,transparent:true,opacity:op}));};
+  this.group.add(mk(pts,0x22d3ee,2,1));
+  this.group.add(mk(proj,0xfbbf24,2,.95));
+  this.group.add(mk(links,0x94a3b8,1,.18));
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(2.7,2.9),new THREE.MeshBasicMaterial({color:0x818cf8,transparent:true,opacity:.05,side:THREE.DoubleSide}));
+  plane.position.set(0,0,-1.56);this.group.add(plane);
+ },
+ rebuild3DDebounced(){clearTimeout(this._t);this._t=setTimeout(()=>this.rebuildCheb(),120);},
+ animStep(dt){this.phase+=dt*.85;const t=.85*Math.sin(this.phase);this.sliders.t.set(+t.toFixed(2));S.t=t;quick.t.set(+t.toFixed(2));this.req();},
+ animFrame(){if(this.group)this.group.rotation.y+=0.0035;},
+ onShow(){this.req();}
+};
+
+/* ---------------- HYPERGEOMETRIC ---------------- */
+Mods.hyper={key:"hyper",state:{a:.5,b:.5,c:1.5,view:"2d",anim:false,preset:null},three:null,chart:null,sliders:{},phase:0,surface:null,
+ init(){
+  buildCards("hyper",CARDS.hyper);
+  const box=$("#g-ctrl");
+  this.sliders.a=mkSlider(box,{label:"parameter a",min:-3,max:3,step:.1,val:.5,onInput:v=>{S.a=v;quick.a.set(v);this.req();this.rebuild3DDebounced();}});
+  this.sliders.b=mkSlider(box,{label:"parameter b",min:-3,max:3,step:.1,val:.5,onInput:v=>{S.b=v;quick.b.set(v);this.req();this.rebuild3DDebounced();}});
+  this.sliders.c=mkSlider(box,{label:"parameter c",min:-3,max:3,step:.1,val:1.5,onInput:v=>{S.c=v;quick.c.set(v);this.req();this.rebuild3DDebounced();}});
+  const presets=[
+   ["(1−u)²",[-2,1,1],u=>Math.pow(1-u,2)],
+   ["−ln(1−u)/u",[1,1,2],u=>Math.abs(u)<1e-9?1:-Math.log(1-u)/u],
+   ["1/(1−u)",[1,2,2],u=>1/(1-u)],
+   ["√(1−u)",[.5,-.5,.5],u=>u<=1?Math.sqrt(Math.max(0,1-u)):NaN],
+   ["arcsin(u)/u",[.5,.5,1.5],u=>Math.abs(u)<1e-9?1:Math.asin(clamp(u,-.9999,.9999))/u,"u²-arg"],
+   ["e^u limit",[1,50,1],u=>Math.exp(u),"x/50-arg"],
+   ["T₂ via ₂F₁",[2,-2,.5],u=>M.chebT(2,u),"(1−u)/2-arg"],
+  ];
+  const row=$("#g-presets");
+  const base=document.createElement("button");base.className="pchip";base.textContent="raw F(a,b;c;u)";
+  base.addEventListener("click",()=>{this.state.preset=null;this.req();});row.appendChild(base);
+  presets.forEach(([lab,[a,b,c],closed,argmode])=>{
+    const btn=document.createElement("button");btn.className="pchip";btn.textContent=lab;
+    btn.addEventListener("click",()=>{this.state.preset={closed,argmode,label:lab};
+      this.sliders.a.set(a);this.sliders.b.set(b);this.sliders.c.set(c);
+      S.a=a;S.b=b;S.c=c;quick.a.set(a);quick.b.set(b);quick.c.set(c);
+      this.req();this.rebuild3DDebounced();});
+    row.appendChild(btn);});
+  this.chart=mkChart($("#g-chart"));
+ },
+ syncParam(k,v){if(["a","b","c"].includes(k)){this.sliders[k].set(v);this.state.preset=null;}if(k==="x")this.req();},
+ refresh(){
+  const a=this.sliders.a.get(),b=this.sliders.b.get(),c=this.sliders.c.get();
+  const xs=linspace(-1,0.999,300),ds=[];
+  const arg=u=>{const p=this.state.preset;if(!p)return u;
+    if(p.argmode==="u²-arg")return u*u;if(p.argmode==="x/50-arg")return u/50;if(p.argmode==="(1−u)/2-arg")return (1-u)/2;return u;};
+  const badC=Number.isInteger(c)&&c<=0;
+  ds.push({label:badC?"c singular!":"F(a,b;c;u)",data:xs.map(u=>{if(badC)return{x:u,y:null};const z=arg(u);if(Math.abs(z)>=1)return{x:u,y:null};
+    let y=hyp2f1(a,b,c,z);if(!isFinite(y)||Math.abs(y)>40)y=null;return{x:u,y};}),borderColor:"#22d3ee",borderWidth:2.6,pointRadius:0,spanGaps:false});
+  if(this.state.preset){const cl=this.state.preset.closed;
+    ds.push({label:"exact: "+this.state.preset.label,data:xs.map(u=>{let y=cl(u);if(!isFinite(y)||Math.abs(y)>40)y=null;return{x:u,y};}),borderColor:"#34d399",borderDash:[5,4],borderWidth:1.8,pointRadius:0});}
+  this.chart.data.datasets=ds;this.chart.update("none");
+  const xv=clamp(S.x,-0.999,0.999);
+  $("#g-eval").textContent=badC?"c ∈ {0,−1,…} singular":`F(${fmt(a,1)},${fmt(b,1)};${fmt(c,1)};${fmt(xv,2)}) = ${fmt(hyp2f1(a,b,c,xv))}`;
+ },
+ build3D(T){
+  T.camera.position.set(3.4,3.1,4.2);T.controls&&(T.controls.target.set(0,.2,0));
+  const circ=[];for(let i=0;i<=128;i++){const th=i/128*2*Math.PI;circ.push(Math.cos(th),0,Math.sin(th));}
+  const cg=new THREE.BufferGeometry();cg.setAttribute("position",new THREE.Float32BufferAttribute(circ,3));
+  T.scene.add(new THREE.Line(cg,new THREE.LineBasicMaterial({color:0xfbbf24})));
+  const pole=new THREE.Mesh(new THREE.SphereGeometry(.07,16,16),new THREE.MeshBasicMaterial({color:0xf87171}));
+  pole.position.set(1,0,0);T.scene.add(pole);
+  const cut=new THREE.Mesh(new THREE.PlaneGeometry(2.4,.5),new THREE.MeshBasicMaterial({color:0xef4444,transparent:true,opacity:.14,side:THREE.DoubleSide}));
+  cut.rotation.x=-Math.PI/2;cut.position.set(2.2,0,0);T.scene.add(cut);
+  this.surfGroup=new THREE.Group();T.scene.add(this.surfGroup);
+  this.buildSurface();
+ },
+ buildSurface(){
+  if(!this.three)return;
+  disposeGroup(this.surfGroup);
+  const a=this.sliders.a.get(),b=this.sliders.b.get(),c=this.sliders.c.get();
+  const RR=40,SS=96,pos=[],col=[],idx=[];
+  const hts=[];let vmax=1e-9;
+  for(let i=0;i<=RR;i++){const rad=.985*i/RR;
+    for(let j=0;j<SS;j++){const th=j/SS*2*Math.PI,re=rad*Math.cos(th),im=rad*Math.sin(th);
+      let hh=0,mg=0;
+      if(!(Number.isInteger(c)&&c<=0)){const F=hyp2f1c(a,b,c,re,im);if(F){hh=clamp(F.re*.42,-2.6,2.6);mg=Math.sqrt(F.re*F.re+F.im*F.im);}}
+      hts.push(mg);vmax=Math.max(vmax,mg);pos.push(re,hh,im);}}
+  for(let k=0;k<hts.length;k++){const tt=Math.pow(hts[k]/vmax,.45),cc=heat(tt);col.push(cc.r,cc.g,cc.b);}
+  for(let i=0;i<RR;i++)for(let j=0;j<SS;j++){const A=i*SS+j,B=i*SS+(j+1)%SS,C2=(i+1)*SS+j,D=(i+1)*SS+(j+1)%SS;idx.push(A,B,C2,B,D,C2);}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute("color",new THREE.Float32BufferAttribute(col,3));
+  g.setIndex(idx);g.computeVertexNormals();
+  this.surfGroup.add(new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:.45,metalness:.15})));
+ },
+ rebuild3DDebounced(){clearTimeout(this._t);this._t=setTimeout(()=>this.buildSurface(),180);},
+ animStep(dt){this.phase+=dt*.7;const x=clamp(.99*Math.sin(this.phase),-0.999,0.999);S.x=+x.toFixed(2);quick.x.set(S.x);this.req();},
+ onShow(){this.req();}
+};
+
+/* ---------------- ODE SOLVER ---------------- */
+Mods.ode={key:"ode",state:{view:"2d",anim:false,x0:0,y0:1,v0:0,dom:3,p:"-2*x",q:"2*n"},chart:null,sliders:{},phase:0,sol:[],
+ init(){
+  buildCards("ode",CARDS.ode);
+  const box=$("#o-ctrl");
+  this.sliders.x0=mkSlider(box,{label:"x₀",min:-3,max:3,step:.05,val:0,onInput:v=>{this.state.x0=v;this.req();}});
+  this.sliders.y0=mkSlider(box,{label:"y(x₀)",min:-2,max:2,step:.05,val:1,onInput:v=>{this.state.y0=v;this.req();}});
+  this.sliders.v0=mkSlider(box,{label:"y′(x₀)",min:-2,max:2,step:.05,val:0,onInput:v=>{this.state.v0=v;this.req();}});
+  this.sliders.dom=mkSlider(box,{label:"span ±d",min:1,max:6,step:.25,val:3,onInput:v=>{this.state.dom=v;this.req();}});
+  const presets=[
+   ["Hermite",["-2*x","2*n"],0,1,0,3],
+   ["Laguerre",["(1-x)/x","n/x"],0.6,1,0,3],
+   ["Chebyshev",["-x/(1-x^2)","n^2/(1-x^2)"],0.2,1,0,0.9],
+   ["Hypergeom.",["(c-(a+b+1)*x)/(x*(1-x))","-a*b/(x*(1-x))"],0.25,1,0,0.7],
+   ["Airy",["0","-x"],0,1,0,5],
+  ];
+  const row=$("#o-presets");
+  presets.forEach(([lab,[p,q],x0,y0,v0,d])=>{
+    const btn=document.createElement("button");btn.className="pchip";btn.textContent=lab;
+    btn.addEventListener("click",()=>{$("#o-p").value=p;$("#o-q").value=q;this.state.p=p;this.state.q=q;
+      this.state.x0=x0;this.state.y0=y0;this.state.v0=v0;this.state.dom=d;
+      this.sliders.x0.set(x0);this.sliders.y0.set(y0);this.sliders.v0.set(v0);this.sliders.dom.set(d);this.req();});
+    row.appendChild(btn);});
+  ["o-p","o-q"].forEach(id=>$( "#"+id).addEventListener("input",()=>{this.state.p=$("#o-p").value;this.state.q=$("#o-q").value;this.req();}));
+  $("#o-deriv").addEventListener("change",()=>this.req());
+  this.chart=mkChart($("#o-chart"));
+ },
+ syncParam(k){if(["n","m","a","b","c"].includes(k))this.req();},
+ refresh(){
+  let pf,qf,err=null;
+  try{pf=compileExpr(this.state.p);}catch(e){err="p(x): "+e.message;pf=()=>0;}
+  try{qf=compileExpr(this.state.q);}catch(e){err=err||"q(x): "+e.message;qf=()=>0;}
+  const scopeBase={n:S.n,m:S.m,a:S.a,b:S.b,c:S.c,t:S.t};
+  const P=x=>{try{const v=pf({x,...scopeBase});return isFinite(v)?v:NaN;}catch(e){return NaN;}};
+  const Q=x=>{try{const v=qf({x,...scopeBase});return isFinite(v)?v:NaN;}catch(e){return NaN;}};
+  const d=this.state.dom;
+  this.sol=odeSolve(P,Q,this.state.x0,this.state.y0,this.state.v0,this.state.x0-d,this.state.x0+d);
+  const ds=[{label:"y(x)",data:this.sol.map(p=>({x:p.x,y:Math.abs(p.y)>50?null:p.y})),borderColor:"#22d3ee",borderWidth:2.6,pointRadius:0,spanGaps:false}];
+  if($("#o-deriv").checked)ds.push({label:"y′(x)",data:this.sol.map(p=>({x:p.x,y:Math.abs(p.v)>50?null:p.v})),borderColor:"#34d399",borderDash:[5,4],borderWidth:1.6,pointRadius:0,spanGaps:false});
+  this.chart.data.datasets=ds;this.chart.update("none");
+  try{K($("#o-eq"),r`y''+\left(${this.state.p}\right)y'+\left(${this.state.q}\right)y=0`,false);}catch(e){}
+  let probe="—";
+  if(S.x>=this.state.x0-d&&S.x<=this.state.x0+d){
+    let best=null;for(const p of this.sol){if(!best||Math.abs(p.x-S.x)<Math.abs(best.x-S.x))best=p;}
+    if(best)probe=fmt(best.y);
+  }
+  $("#o-eval").textContent=err?("⚠ "+err):`y(${fmt(S.x,2)}) = ${probe}`;
+ },
+ animStep(dt){this.phase+=dt*1.4;const v=2*Math.sin(this.phase);this.state.v0=+v.toFixed(2);this.sliders.v0.set(this.state.v0);this.req();},
+ onShow(){this.req();}
+};
+
+/* ============================================================
+   9. THROTTLED REFRESH / VIEW / TABS
+============================================================ */
+Object.values(Mods).forEach(mod=>{mod.req=function(){if(this._rq)return;this._rq=true;requestAnimationFrame(()=>{this._rq=false;this.refresh&&this.refresh();});};});
+function sizeThree(mod){if(mod.three)mod.three.size();}
+function ensure3D(mod){
+  if(mod.three)return mod.three;
+  const wrap=$("#"+mod.key.charAt(0)+"-3d");
+  const T=initThree(wrap,mod.key==="laguerre"?24:8);
+  mod.three=T;mod.build3D&&mod.build3D(T);
+  return T;
+}
+function setView(mod,view){
+  mod.state.view=view;
+  const sec=$("#tab-"+mod.key);
+  const two=sec.querySelector("canvas").parentElement;
+  const three=$("#"+mod.key.charAt(0)+"-3d");
+  const legend=$("#"+mod.key.charAt(0)+"-legend");
+  sec.querySelectorAll(".seg button[data-view]").forEach(b=>b.classList.toggle("seg-on",b.dataset.view===view));
+  if(view==="3d"){
+    two.classList.add("hidden");three.classList.remove("hidden");legend&&legend.classList.remove("hidden");
+    ensure3D(mod);sizeThree(mod);
+  }else{
+    three.classList.add("hidden");two.classList.remove("hidden");legend&&legend.classList.add("hidden");
+    mod.chart&&setTimeout(()=>mod.chart.resize(),30);
+  }
+}
+function animateCards(tab){
+  if(!window.gsap)return;
+  gsap.fromTo("#tab-"+tab+" .fcard",{y:14,opacity:0},{y:0,opacity:1,duration:.4,stagger:.045,ease:"power2.out",clearProps:"transform"});
+}
+function switchTab(key){
+  if(active===key)return;
+  const old=$("#tab-"+active),neu=$("#tab-"+key);
+  active=key;
+  $$(".navbtn").forEach(b=>b.classList.toggle("nav-on",b.dataset.tab===key));
+  const finish=()=>{old.classList.add("hidden");neu.classList.remove("hidden");
+    if(window.gsap)gsap.fromTo(neu,{opacity:0,y:8},{opacity:1,y:0,duration:.25});
+    Mods[key].onShow&&Mods[key].onShow();animateCards(key);
+    if(Mods[key].state.view==="3d"){ensure3D(Mods[key]);sizeThree(Mods[key]);}};
+  if(window.gsap)gsap.to(old,{opacity:0,duration:.14,onComplete:()=>{old.style.opacity="";finish();}});
+  else finish();
+}
+function setPlay(mod,on){
+  mod.state.anim=on;
+  const sec=$("#tab-"+mod.key);
+  sec.querySelector(".ic-play").classList.toggle("hidden",on);
+  sec.querySelector(".ic-pause").classList.toggle("hidden",!on);
+}
+
+/* ============================================================
+   10. MASTER RENDER LOOP
+============================================================ */
+let lastT=performance.now();
+function tick(now){
+  const dt=Math.min(.05,(now-lastT)/1000);lastT=now;
+  const mod=Mods[active];
+  if(mod&&!document.hidden){
+    if(mod.state.anim&&mod.animStep)mod.animStep(dt);
+    if(mod.state.view==="3d"&&mod.three){
+      mod.animFrame&&mod.animFrame(dt);
+      mod.three.controls&&mod.three.controls.update();
+      mod.three.renderer.render(mod.three.scene,mod.three.camera);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ============================================================
+   11. INIT
+============================================================ */
+window.addEventListener("load",()=>{
+  try{
+    buildQuick();
+    Object.values(Mods).forEach(m=>m.init());
+    // header mini-formulas
+    const navTex={hermite:"H_n(x)",laguerre:"L_n^{\\,m}(x)",chebyshev:"T_n,\\,U_n",hyper:"F(a,b;c;x)",ode:"y''+py'+qy=0"};
+    $$(".navbtn").forEach(b=>{const s=b.querySelector(".knav");s&&K(s,navTex[b.dataset.tab],false);});
+    K($("#tab-hermite .khdr"),"H_n(x)",false);
+    K($("#tab-laguerre .khdr"),"L_n(x),\\;L_n^m(x)",false);
+    K($("#tab-chebyshev .khdr"),"T_n(x),\\;U_n(x)",false);
+    K($("#tab-hyper .khdr"),"F(a,b;c;x)",false);
+    refreshIcons();
+    // events
+    $$(".navbtn").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+    $$(".seg button[data-view]").forEach(b=>b.addEventListener("click",()=>setView(Mods[active],b.dataset.view)));
+    $$("[data-play]").forEach(b=>b.addEventListener("click",()=>{const m=Mods[active];setPlay(m,!m.state.anim);}));
+    $$("[data-png]").forEach(b=>b.addEventListener("click",()=>exportPNG(Mods[active])));
+    $$("[data-svg]").forEach(b=>b.addEventListener("click",()=>exportSVG(Mods[active])));
+    $$("[data-tex]").forEach(b=>b.addEventListener("click",()=>{const c=CARDS[active][1]||CARDS[active][0];copyText(c.tex,"LaTeX copied");}));
+    $("#btn-quick").addEventListener("click",()=>{const q=$("#quickbar");q.classList.toggle("hidden");
+      if(!q.classList.contains("hidden")&&window.gsap)gsap.fromTo(q,{opacity:0,y:-6},{opacity:1,y:0,duration:.3});});
+    $("#btn-theme").addEventListener("click",()=>{document.documentElement.classList.toggle("light");
+      const light=document.documentElement.classList.contains("light");
+      $("#ic-sun").classList.toggle("hidden",!light);$("#ic-moon").classList.toggle("hidden",light);refreshIcons();});
+    $("#drawer-close").addEventListener("click",closeDrawer);
+    $("#drawer-backdrop").addEventListener("click",closeDrawer);
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer();});
+    // search
+    $("#search").addEventListener("input",()=>{
+      const q=$("#search").value.trim().toLowerCase();
+      let vis=0,tot=0;
+      $$("#tab-"+active+" .fcard").forEach(c=>{tot++;
+        const hit=!q||c.dataset.search.includes(q);
+        c.classList.toggle("hidden",!hit);if(hit)vis++;});
+      const cnt=$("#search-count");
+      if(q){cnt.classList.remove("hidden");cnt.textContent=vis+"/"+tot+" formulas";}
+      else cnt.classList.add("hidden");
+    });
+    window.addEventListener("resize",()=>{const m=Mods[active];m&&m.state.view==="3d"&&sizeThree(m);});
+    // background drift
+    if(window.gsap){gsap.to(".blob",{x:40,y:30,duration:9,yoyo:true,repeat:-1,ease:"sine.inOut",stagger:1.2});
+      gsap.from("#sidebar",{x:-16,opacity:0,duration:.5});gsap.from("header",{y:-10,opacity:0,duration:.5,delay:.1});}
+    // first paint
+    Mods.hermite.onShow();animateCards("hermite");
+    requestAnimationFrame(tick);
+  }catch(err){
+    console.error(err);
+    document.body.insertAdjacentHTML("beforeend",`<div style="position:fixed;inset:auto 12px 12px auto;z-index:200;background:#7f1d1d;color:#fecaca;padding:10px 14px;border-radius:10px;font-size:12px;max-width:420px">Init error: ${err.message}</div>`);
+  }
+});
+</script>
+</body>
+</html>

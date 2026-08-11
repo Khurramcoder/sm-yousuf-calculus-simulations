@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spherical Trigonometry &amp; Analytic Geometry 3D Explorer — S.M. Yusuf Edition</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0B1220;
+    --bg-2: #08101d;
+    --surface: #101a2e;
+    --surface-2: #16233d;
+    --surface-3: #1c2c4a;
+    --border: #22345a;
+    --text: #E7ECF5;
+    --text-muted: #90A0C0;
+    --text-faint: #5c6f96;
+    --cyan: #22D3EE;
+    --cyan-dim: #0e7490;
+    --amber: #F5B23B;
+    --amber-dim: #92620f;
+    --emerald: #34D399;
+    --emerald-dim: #0d6b4f;
+    --rose: #FB7185;
+    --rose-dim: #9f2c44;
+    --ring-a: 220 60% 60%;
+  }
+  html.light{
+    --bg: #EEF1F7;
+    --bg-2: #E4E9F2;
+    --surface: #FFFFFF;
+    --surface-2: #F3F6FB;
+    --surface-3: #E8EDF6;
+    --border: #D3DAE8;
+    --text: #0F1A2E;
+    --text-muted: #4A587A;
+    --text-faint: #8592AC;
+    --cyan: #0891B2;
+    --amber: #B4740E;
+    --emerald: #0F9D6E;
+    --rose: #C2364F;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    background: radial-gradient(1200px 800px at 15% -10%, var(--bg-2), var(--bg) 60%);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display{ font-family: 'Fraunces', serif; }
+  .font-mono{ font-family: 'JetBrains Mono', monospace; }
+
+  ::-webkit-scrollbar{ width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track{ background: transparent; }
+  ::-webkit-scrollbar-thumb{ background: var(--border); border-radius: 8px; }
+
+  .surface{ background: var(--surface); border: 1px solid var(--border); }
+  .surface-2{ background: var(--surface-2); border: 1px solid var(--border); }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding: .45rem .75rem; border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: .8rem; font-weight: 500;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  .btn:hover{ background: var(--surface-3); border-color: var(--text-faint); }
+  .btn:focus-visible{ outline: 2px solid var(--cyan); outline-offset: 2px; }
+  .btn-active{ background: var(--cyan-dim); border-color: var(--cyan); color: #eafcff; }
+  .btn-primary{ background: var(--cyan); color: #04222b; border-color: var(--cyan); font-weight:600; }
+  .btn-primary:hover{ filter: brightness(1.08); }
+  .btn-icon{ padding:.45rem; }
+
+  .tab-btn{
+    padding: .6rem .9rem; font-size:.82rem; font-weight:600;
+    color: var(--text-muted); border-bottom: 2px solid transparent;
+    cursor:pointer; white-space:nowrap;
+  }
+  .tab-btn.active{ color: var(--text); border-color: var(--cyan); }
+
+  .badge{ display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .5rem; border-radius:99px; font-size:.68rem; font-weight:700; letter-spacing:.02em; }
+  .badge-cyan{ color: var(--cyan); background: color-mix(in srgb, var(--cyan) 15%, transparent); border:1px solid color-mix(in srgb, var(--cyan) 40%, transparent); }
+  .badge-amber{ color: var(--amber); background: color-mix(in srgb, var(--amber) 15%, transparent); border:1px solid color-mix(in srgb, var(--amber) 40%, transparent); }
+  .badge-emerald{ color: var(--emerald); background: color-mix(in srgb, var(--emerald) 15%, transparent); border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); }
+  .badge-rose{ color: var(--rose); background: color-mix(in srgb, var(--rose) 15%, transparent); border:1px solid color-mix(in srgb, var(--rose) 40%, transparent); }
+
+  input[type=range]{ -webkit-appearance:none; width:100%; height:4px; border-radius:99px; background: var(--surface-3); }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background: var(--cyan); border:2px solid var(--bg); cursor:pointer; margin-top:-5px; }
+  input[type=range]::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background: var(--cyan); border:2px solid var(--bg); cursor:pointer; }
+
+  input[type=number], input[type=text], select{
+    background: var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:.35rem .5rem; font-size:.78rem; font-family:'JetBrains Mono', monospace;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible{ outline:2px solid var(--cyan); outline-offset:1px; }
+
+  .readout{ font-family:'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+  #viewport-wrap{ position:relative; border-radius:16px; overflow:hidden; border:1px solid var(--border); background: radial-gradient(circle at 30% 20%, #0e1b33, #060b16 75%); }
+  html.light #viewport-wrap{ background: radial-gradient(circle at 30% 20%, #f7faff, #dbe4f3 75%); }
+
+  /* Signature element: astrolabe ring animating around the viewport corner */
+  .astrolabe-ring{
+    position:absolute; top:-70px; right:-70px; width:170px; height:170px;
+    border-radius:50%;
+    border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+    pointer-events:none;
+    opacity:.55;
+  }
+  .astrolabe-ring::before{
+    content:''; position:absolute; inset:14px; border-radius:50%;
+    border: 1px dashed color-mix(in srgb, var(--cyan) 30%, transparent);
+    animation: spin-slow 40s linear infinite;
+  }
+  .astrolabe-ring::after{
+    content:''; position:absolute; top:50%; left:50%; width:6px; height:6px; margin:-3px;
+    background: var(--amber); border-radius:50%; box-shadow:0 0 8px var(--amber);
+    animation: orbit 40s linear infinite;
+  }
+  @keyframes spin-slow{ to{ transform: rotate(360deg); } }
+  @keyframes orbit{ from{ transform: rotate(0deg) translateX(56px) rotate(0deg);} to{ transform: rotate(360deg) translateX(56px) rotate(-360deg);} }
+  @media (prefers-reduced-motion: reduce){
+    .astrolabe-ring::before, .astrolabe-ring::after{ animation: none; }
+  }
+
+  .vert-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .katex-display{ margin: .4rem 0 !important; overflow-x:auto; overflow-y:hidden; }
+  .formula-card{ border-left:3px solid var(--cyan); padding:.6rem .8rem; background: var(--surface-2); border-radius:0 10px 10px 0; }
+
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:.5rem .7rem; border-radius:9px; border:1px solid var(--border); background:var(--surface-2); font-size:.82rem; margin-bottom:.4rem; cursor:pointer; }
+  .quiz-opt:hover{ border-color: var(--text-faint); }
+  .quiz-opt.correct{ border-color: var(--emerald); background: color-mix(in srgb, var(--emerald) 12%, var(--surface-2)); }
+  .quiz-opt.wrong{ border-color: var(--rose); background: color-mix(in srgb, var(--rose) 12%, var(--surface-2)); }
+
+  .scrollpane{ max-height: calc(100vh - 210px); overflow-y:auto; }
+
+  .err-banner{ display:none; }
+  .err-banner.show{ display:flex; }
+
+  .lucide-16{ width:16px; height:16px; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-40 border-b" style="background: color-mix(in srgb, var(--bg) 88%, transparent); border-color: var(--border); backdrop-filter: blur(10px);">
+  <div class="max-w-[1700px] mx-auto px-4 py-2.5 flex items-center gap-4 flex-wrap">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--cyan), var(--amber));">
+        <i data-lucide="globe-2" class="w-4.5 h-4.5" style="color:#04222b"></i>
+      </div>
+      <div class="leading-tight">
+        <h1 class="font-display text-[15px] font-semibold tracking-tight">Spherical Trigonometry &amp; Analytic Geometry <span style="color:var(--cyan)">3D Explorer</span></h1>
+        <p class="text-[10.5px] uppercase tracking-[.12em]" style="color:var(--text-faint)">S.M. Yusuf Edition · Calculus &amp; Analytic Geometry</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1 ml-2 p-1 rounded-lg" style="background:var(--surface-2); border:1px solid var(--border)">
+      <button id="mode-triangle-btn" class="btn btn-active !py-1.5" onclick="setMode('triangle')">
+        <i data-lucide="triangle" class="lucide-16"></i> Spherical Triangles
+      </button>
+      <button id="mode-coord-btn" class="btn !py-1.5" onclick="setMode('coordinate')">
+        <i data-lucide="orbit" class="lucide-16"></i> Coordinates &amp; Surfaces
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2 ml-auto">
+      <select id="preset-select" class="!text-[11px]" onchange="applyPreset(this.value)">
+        <option value="">Presets…</option>
+        <option value="octant">Octant (90-90-90)</option>
+        <option value="equilateral">Equilateral (60° sides)</option>
+        <option value="napier">Napier right triangle (C=90°)</option>
+        <option value="scalene">Scalene example</option>
+        <option value="polar">Polar-triangle demo</option>
+      </select>
+      <button class="btn btn-icon" title="Toggle theme" onclick="toggleTheme()">
+        <i data-lucide="sun-moon" class="lucide-16" id="theme-icon"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="max-w-[1700px] mx-auto p-4 grid grid-cols-1 lg:grid-cols-[60%_40%] gap-4">
+
+  <!-- LEFT: 3D ENGINE -->
+  <section class="flex flex-col gap-3">
+
+    <div id="viewport-wrap" class="w-full" style="height: 58vh; min-height:420px;">
+      <div class="astrolabe-ring"></div>
+      <div id="canvas-host" class="w-full h-full"></div>
+
+      <!-- floating viewport controls -->
+      <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+        <button class="btn btn-icon" title="Toggle wireframe" onclick="toggleViz('wireframe')"><i data-lucide="hexagon" class="lucide-16"></i></button>
+        <button class="btn btn-icon" title="Toggle labels" onclick="toggleViz('labels')"><i data-lucide="tag" class="lucide-16"></i></button>
+        <button class="btn btn-icon btn-active" id="grid-toggle-btn" title="Toggle gridlines" onclick="toggleViz('grid')"><i data-lucide="grid-3x3" class="lucide-16"></i></button>
+        <button class="btn btn-icon" title="Reset camera" onclick="resetCamera()"><i data-lucide="refresh-ccw" class="lucide-16"></i></button>
+      </div>
+
+      <div class="absolute top-3 right-3 w-40 surface rounded-lg p-2 text-[10.5px]" style="background: color-mix(in srgb, var(--surface) 85%, transparent)">
+        <label class="flex items-center justify-between mb-1" style="color:var(--text-muted)">Sphere opacity <span id="opacity-val" class="readout">0.22</span></label>
+        <input type="range" id="opacity-slider" min="0" max="0.8" step="0.02" value="0.22" oninput="setOpacity(this.value)">
+      </div>
+
+      <div class="absolute bottom-3 left-3 right-3 flex items-center gap-2 text-[10.5px] flex-wrap">
+        <span class="badge badge-cyan">sides a,b,c</span>
+        <span class="badge badge-amber">angles A,B,C</span>
+        <span class="badge badge-emerald">excess E</span>
+        <span class="badge badge-rose">polar △</span>
+      </div>
+    </div>
+
+    <!-- error banner -->
+    <div id="triangle-error" class="err-banner card p-3 items-center gap-2" style="border-color: var(--rose)">
+      <i data-lucide="alert-triangle" class="lucide-16" style="color:var(--rose)"></i>
+      <span class="text-[12px]" id="triangle-error-text" style="color:var(--rose)"></span>
+    </div>
+
+    <!-- TRIANGLE MODE controls -->
+    <div id="triangle-controls" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="card p-3" id="vertex-card-A">
+        <div class="flex items-center gap-2 mb-2"><span class="vert-dot" style="background:var(--cyan)"></span><span class="font-semibold text-[13px]">Vertex A</span></div>
+        <label class="text-[10.5px]" style="color:var(--text-muted)">Latitude <span class="readout" id="A-lat-val">40°</span></label>
+        <input type="range" min="-90" max="90" value="40" step="1" id="A-lat" oninput="onVertexSlider('A')">
+        <label class="text-[10.5px]" style="color:var(--text-muted)">Longitude <span class="readout" id="A-lon-val">-20°</span></label>
+        <input type="range" min="-180" max="180" value="-20" step="1" id="A-lon" oninput="onVertexSlider('A')">
+      </div>
+      <div class="card p-3" id="vertex-card-B">
+        <div class="flex items-center gap-2 mb-2"><span class="vert-dot" style="background:var(--amber)"></span><span class="font-semibold text-[13px]">Vertex B</span></div>
+        <label class="text-[10.5px]" style="color:var(--text-muted)">Latitude <span class="readout" id="B-lat-val">10°</span></label>
+        <input type="range" min="-90" max="90" value="10" step="1" id="B-lat" oninput="onVertexSlider('B')">
+        <label class="text-[10.5px]" style="color:var(--text-muted)">Longitude <span class="readout" id="B-lon-val">55°</span></label>
+        <input type="range" min="-180" max="180" value="55" step="1" id="B-lon" oninput="onVertexSlider('B')">
+      </div>
+      <div class="card p-3" id="vertex-card-C">
+        <div class="flex items-center gap-2 mb-2"><span class="vert-dot" style="background:var(--emerald)"></span><span class="font-semibold text-[13px]">Vertex C</span></div>
+        <label class="text-[10.5px]" style="color:var(--text-muted)">Latitude <span class="readout" id="C-lat-val">65°</span></label>
+        <input type="range" min="-90" max="90" value="65" step="1" id="C-lat" oninput="onVertexSlider('C')">
+        <label class="text-[10.5px]" style="color:var(--text-muted)">Longitude <span class="readout" id="C-lon-val">130°</span></label>
+        <input type="range" min="-180" max="180" value="130" step="1" id="C-lon" oninput="onVertexSlider('C')">
+      </div>
+    </div>
+
+    <div id="triangle-readouts" class="card p-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
+      <div><div style="color:var(--cyan)" class="font-semibold">a (BC)</div><div class="readout" id="out-a">–</div></div>
+      <div><div style="color:var(--cyan)" class="font-semibold">b (AC)</div><div class="readout" id="out-b">–</div></div>
+      <div><div style="color:var(--cyan)" class="font-semibold">c (AB)</div><div class="readout" id="out-c">–</div></div>
+      <div><div style="color:var(--amber)" class="font-semibold">A</div><div class="readout" id="out-A">–</div></div>
+      <div><div style="color:var(--amber)" class="font-semibold">B</div><div class="readout" id="out-B">–</div></div>
+      <div><div style="color:var(--amber)" class="font-semibold">C</div><div class="readout" id="out-C">–</div></div>
+      <div><div style="color:var(--emerald)" class="font-semibold">Excess E</div><div class="readout" id="out-E">–</div></div>
+      <div><div style="color:var(--emerald)" class="font-semibold">Area (R²·E)</div><div class="readout" id="out-area">–</div></div>
+    </div>
+
+    <!-- COORDINATE MODE controls -->
+    <div id="coord-controls" class="hidden flex-col gap-3">
+      <div class="card p-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="text-[10.5px]" style="color:var(--text-muted)">ρ (radial) <span class="readout" id="rho-val">1.00</span></label>
+          <input type="range" min="0.2" max="1.6" step="0.02" value="1" id="rho-slider" oninput="onCoordSlider()">
+        </div>
+        <div>
+          <label class="text-[10.5px]" style="color:var(--text-muted)">φ from +z axis <span class="readout" id="phi-val">60°</span></label>
+          <input type="range" min="0" max="180" step="1" value="60" id="phi-slider" oninput="onCoordSlider()">
+        </div>
+        <div>
+          <label class="text-[10.5px]" style="color:var(--text-muted)">θ azimuth (xy) <span class="readout" id="theta-val">40°</span></label>
+          <input type="range" min="-180" max="180" step="1" value="40" id="theta-slider" oninput="onCoordSlider()">
+        </div>
+      </div>
+      <div class="card p-3 text-[12px] grid grid-cols-3 gap-2">
+        <div><div style="color:var(--text-muted)">x = ρ sinφ cosθ</div><div class="readout" id="out-x">–</div></div>
+        <div><div style="color:var(--text-muted)">y = ρ sinφ sinθ</div><div class="readout" id="out-y">–</div></div>
+        <div><div style="color:var(--text-muted)">z = ρ cosφ</div><div class="readout" id="out-z">–</div></div>
+      </div>
+      <div class="card p-3">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <span class="text-[12px] font-semibold" style="color:var(--text-muted)">Surface</span>
+          <select id="surface-select" onchange="onSurfaceChange()" class="!text-[11px]">
+            <option value="sphere">Sphere x²+y²+z²=R²</option>
+            <option value="plane">Plane section (small/great circle)</option>
+            <option value="cap">Spherical cap</option>
+          </select>
+        </div>
+        <div id="plane-controls" class="hidden grid grid-cols-3 gap-2">
+          <div><label class="text-[10px]" style="color:var(--text-muted)">Normal φₙ</label><input type="range" min="0" max="180" value="30" id="plane-phi" oninput="onCoordSlider()"></div>
+          <div><label class="text-[10px]" style="color:var(--text-muted)">Normal θₙ</label><input type="range" min="-180" max="180" value="0" id="plane-theta" oninput="onCoordSlider()"></div>
+          <div><label class="text-[10px]" style="color:var(--text-muted)">Distance d</label><input type="range" min="-0.95" max="0.95" step="0.02" value="0.3" id="plane-d" oninput="onCoordSlider()"></div>
+        </div>
+        <div id="cap-controls" class="hidden">
+          <label class="text-[10px]" style="color:var(--text-muted)">Cap half-angle <span class="readout" id="cap-angle-val">45°</span></label>
+          <input type="range" min="5" max="175" value="45" id="cap-angle" oninput="onCoordSlider()">
+        </div>
+        <div id="surface-readout" class="text-[11px] mt-2 readout" style="color:var(--text-muted)"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: EDUCATIONAL HUB -->
+  <section class="card flex flex-col overflow-hidden">
+    <div class="flex border-b overflow-x-auto" style="border-color:var(--border)">
+      <div class="tab-btn active" data-tab="principles" onclick="setTab('principles')">1 · Principles</div>
+      <div class="tab-btn" data-tab="solver" onclick="setTab('solver')">2 · S.M. Yusuf Solver</div>
+      <div class="tab-btn" data-tab="calc" onclick="setTab('calc')">3 · Calculator &amp; Quiz</div>
+    </div>
+
+    <div class="p-4 scrollpane">
+
+      <!-- TAB 1 -->
+      <div class="tab-panel active" id="tab-principles">
+        <h2 class="font-display text-lg font-semibold mb-1">Planar vs. Spherical Geometry</h2>
+        <p class="text-[12px] mb-3" style="color:var(--text-muted)">On the unit sphere $S^2$, "straight lines" become <em>great circles</em> — intersections of the sphere with planes through its centre. This single change overturns familiar Euclidean facts.</p>
+        <div class="grid grid-cols-2 gap-2 text-[11.5px] mb-4">
+          <div class="surface-2 rounded-lg p-2.5">
+            <div class="font-semibold mb-1" style="color:var(--text-muted)">Euclidean plane</div>
+            <ul class="list-disc pl-4 space-y-1" style="color:var(--text-muted)">
+              <li>Angle sum of a triangle $=180°$</li>
+              <li>Parallel lines exist (never meet)</li>
+              <li>Similar triangles of any size exist</li>
+              <li>Area is independent of angles</li>
+            </ul>
+          </div>
+          <div class="surface-2 rounded-lg p-2.5" style="border-color: color-mix(in srgb, var(--cyan) 40%, var(--border))">
+            <div class="font-semibold mb-1" style="color:var(--cyan)">Spherical surface</div>
+            <ul class="list-disc pl-4 space-y-1" style="color:var(--text-muted)">
+              <li>Angle sum $> 180°$ always (spherical excess)</li>
+              <li>Any two great circles intersect — no parallels</li>
+              <li>Triangle shape fixes its size (area ∝ excess)</li>
+              <li>Area is <em>determined</em> by the angles</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 class="font-display font-semibold text-[14px] mb-2 mt-4">Core formulas</h3>
+        <div class="space-y-3">
+          <div class="formula-card">
+            <div class="text-[11px] font-semibold mb-1" style="color:var(--cyan)">Law of Sines</div>
+            <div>\[ \frac{\sin a}{\sin A} = \frac{\sin b}{\sin B} = \frac{\sin c}{\sin C} \]</div>
+            <p class="text-[11px]" style="color:var(--text-muted)">Ratio of the sine of a side to the sine of its opposite angle is constant for a given triangle.</p>
+          </div>
+          <div class="formula-card" style="border-color:var(--amber)">
+            <div class="text-[11px] font-semibold mb-1" style="color:var(--amber)">Cosine Rule — Sides</div>
+            <div>\[ \cos a = \cos b \cos c + \sin b \sin c \cos A \]</div>
+            <p class="text-[11px]" style="color:var(--text-muted)">Finds a side from the other two sides and their included angle (SAS).</p>
+          </div>
+          <div class="formula-card" style="border-color:var(--rose)">
+            <div class="text-[11px] font-semibold mb-1" style="color:var(--rose)">Cosine Rule — Angles (dual/polar form)</div>
+            <div>\[ \cos A = -\cos B \cos C + \sin B \sin C \cos a \]</div>
+            <p class="text-[11px]" style="color:var(--text-muted)">The polar-triangle dual of the side rule; finds an angle from the other two angles and their included side (ASA).</p>
+          </div>
+          <div class="formula-card" style="border-color:var(--emerald)">
+            <div class="text-[11px] font-semibold mb-1" style="color:var(--emerald)">Girard's Theorem — Area &amp; Excess</div>
+            <div>\[ \text{Area} = R^2(A+B+C-\pi) = R^2 E \]</div>
+            <p class="text-[11px]" style="color:var(--text-muted)">The spherical excess $E$ measures how far the angle sum exceeds $\pi$; area grows linearly with it.</p>
+          </div>
+          <div class="formula-card">
+            <div class="text-[11px] font-semibold mb-1" style="color:var(--cyan)">Napier's Rules ($C=90°$)</div>
+            <div>\[ \sin a = \sin c \sin A, \qquad \tan a = \tan c \cos B, \qquad \cos c = \cos a \cos b \]</div>
+            <p class="text-[11px]" style="color:var(--text-muted)">Memorised via Napier's circular diagram of five parts for right-angled spherical triangles.</p>
+          </div>
+          <div class="formula-card" style="border-color:var(--rose)">
+            <div class="text-[11px] font-semibold mb-1" style="color:var(--rose)">Polar Triangle Duality</div>
+            <div>\[ A' = \pi - a,\quad B'=\pi-b,\quad C'=\pi-c,\qquad a'=\pi-A,\; b'=\pi-B,\; c'=\pi-C \]</div>
+            <p class="text-[11px]" style="color:var(--text-muted)">Each vertex of the polar triangle $\triangle A'B'C'$ is the pole of the opposite side of $\triangle ABC$.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2 -->
+      <div class="tab-panel" id="tab-solver">
+        <h2 class="font-display text-lg font-semibold mb-1">S.M. Yusuf — Analytic Geometry of Three Dimensions</h2>
+        <p class="text-[12px] mb-4" style="color:var(--text-muted)">Worked problem types from the Sphere &amp; Spherical Coordinates chapter. Enter values, solve, then push the geometry onto the 3D engine.</p>
+
+        <!-- Problem A -->
+        <div class="card p-3 mb-3">
+          <div class="font-semibold text-[13px] mb-1">A · Sphere: centre &amp; radius from general equation</div>
+          <div class="text-[11.5px] mb-2" style="color:var(--text-muted)">\[ x^2+y^2+z^2+2gx+2fy+2dz+c=0 \]</div>
+          <div class="grid grid-cols-4 gap-2 mb-2">
+            <input type="number" id="sph-g" value="-2" placeholder="g"><input type="number" id="sph-f" value="1" placeholder="f"><input type="number" id="sph-d" value="-3" placeholder="d"><input type="number" id="sph-c" value="5" placeholder="c">
+          </div>
+          <div class="flex gap-2 mb-2"><button class="btn btn-primary" onclick="solveSphere()">Solve</button><button class="btn" onclick="plotSphere()"><i data-lucide="send" class="lucide-16"></i> Plot in 3D</button></div>
+          <div id="sphere-solution" class="text-[11.5px] surface-2 rounded-lg p-2"></div>
+        </div>
+
+        <!-- Problem B -->
+        <div class="card p-3 mb-3">
+          <div class="font-semibold text-[13px] mb-1">B · Plane section of a sphere</div>
+          <div class="text-[11.5px] mb-2" style="color:var(--text-muted)">\[ d=\frac{|ax_0+by_0+cz_0+k|}{\sqrt{a^2+b^2+c^2}} \]</div>
+          <div class="grid grid-cols-4 gap-2 mb-2 text-[10px]">
+            <input type="number" id="pl-a" value="1" placeholder="a"><input type="number" id="pl-b" value="1" placeholder="b"><input type="number" id="pl-c" value="1" placeholder="c"><input type="number" id="pl-k" value="0.6" placeholder="k">
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-2 text-[10px]">
+            <input type="number" id="pl-R" value="1" placeholder="Sphere radius R" step="0.1">
+            <span class="text-[10.5px] self-center" style="color:var(--text-faint)">centre at origin</span>
+          </div>
+          <div class="flex gap-2 mb-2"><button class="btn btn-primary" onclick="solvePlane()">Solve</button><button class="btn" onclick="plotPlane()"><i data-lucide="send" class="lucide-16"></i> Plot in 3D</button></div>
+          <div id="plane-solution" class="text-[11.5px] surface-2 rounded-lg p-2"></div>
+        </div>
+
+        <!-- Problem C -->
+        <div class="card p-3 mb-3">
+          <div class="font-semibold text-[13px] mb-1">C · Spherical ⇄ Cartesian coordinates</div>
+          <div class="text-[11.5px] mb-2" style="color:var(--text-muted)">\[ x=\rho\sin\phi\cos\theta,\; y=\rho\sin\phi\sin\theta,\; z=\rho\cos\phi \]</div>
+          <div class="grid grid-cols-3 gap-2 mb-2 text-[10px]">
+            <input type="number" id="conv-rho" value="2" placeholder="ρ"><input type="number" id="conv-phi" value="60" placeholder="φ (°)"><input type="number" id="conv-theta" value="45" placeholder="θ (°)">
+          </div>
+          <div class="flex gap-2 mb-2"><button class="btn btn-primary" onclick="solveConv()">Convert</button><button class="btn" onclick="plotConv()"><i data-lucide="send" class="lucide-16"></i> Plot in 3D</button></div>
+          <div id="conv-solution" class="text-[11.5px] surface-2 rounded-lg p-2"></div>
+        </div>
+
+        <!-- Problem D -->
+        <div class="card p-3">
+          <div class="font-semibold text-[13px] mb-1">D · Spherical cap area &amp; sector volume</div>
+          <div class="text-[11.5px] mb-2" style="color:var(--text-muted)">\[ \text{Cap area}=2\pi R h, \qquad \text{Sector volume}=\tfrac{2}{3}\pi R^2 h \]</div>
+          <div class="grid grid-cols-2 gap-2 mb-2 text-[10px]">
+            <input type="number" id="cap-R" value="1" placeholder="R" step="0.1"><input type="number" id="cap-h" value="0.4" placeholder="cap height h" step="0.05">
+          </div>
+          <div class="flex gap-2 mb-2"><button class="btn btn-primary" onclick="solveCap()">Solve</button><button class="btn" onclick="plotCap()"><i data-lucide="send" class="lucide-16"></i> Plot in 3D</button></div>
+          <div id="cap-solution" class="text-[11.5px] surface-2 rounded-lg p-2"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3 -->
+      <div class="tab-panel" id="tab-calc">
+        <h2 class="font-display text-lg font-semibold mb-1">Spherical Triangle Calculator</h2>
+        <p class="text-[12px] mb-3" style="color:var(--text-muted)">Choose which three elements you know (all values in degrees, radius $R=1$), then solve.</p>
+
+        <div class="card p-3 mb-4">
+          <select id="calc-case" onchange="renderCalcInputs()" class="w-full mb-2 !text-[12px]">
+            <option value="SSS">SSS — three sides a, b, c</option>
+            <option value="AAA">AAA — three angles A, B, C</option>
+            <option value="SAS">SAS — two sides + included angle</option>
+            <option value="ASA">ASA — two angles + included side</option>
+          </select>
+          <div id="calc-inputs" class="grid grid-cols-3 gap-2 mb-2"></div>
+          <div class="flex gap-2 mb-2 flex-wrap">
+            <button class="btn btn-primary" onclick="runCalculator()">Solve triangle</button>
+            <button class="btn" onclick="plotCalcTriangle()"><i data-lucide="send" class="lucide-16"></i> Plot in 3D</button>
+          </div>
+          <div id="calc-error" class="text-[11.5px] mb-2" style="color:var(--rose)"></div>
+          <div id="calc-solution" class="text-[11.5px] surface-2 rounded-lg p-2 space-y-1"></div>
+        </div>
+
+        <h3 class="font-display font-semibold text-[14px] mb-2">Quick self-assessment</h3>
+        <div id="quiz-host" class="space-y-4"></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="max-w-[1700px] mx-auto px-4 pb-6 pt-1 text-[10.5px]" style="color:var(--text-faint)">
+  Educational reference tool inspired by S.M. Yusuf's <em>Calculus &amp; Analytic Geometry</em>. Rendered client-side with Three.js and KaTeX — no data leaves your browser.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+/* ============================= STATE ============================= */
+const state = {
+  mode: 'triangle',
+  vertices: {
+    A: {lat: 40, lon: -20},
+    B: {lat: 10, lon: 55},
+    C: {lat: 65, lon: 130},
+  },
+  viz: { wireframe:false, labels:true, grid:true, opacity:0.22 },
+  coord: { rho:1, phi:60, theta:40, surface:'sphere', capAngle:45, planePhi:30, planeTheta:0, planeD:0.3 },
+};
+
+const COLORS = { cyan:0x22D3EE, amber:0xF5B23B, emerald:0x34D399, rose:0xFB7185, faint:0x5c6f96 };
+
+/* ============================= THREE.JS SCENE ============================= */
+let scene, camera, renderer, controls, host;
+let sphereMesh, gridLines, axesGroup;
+let triGroup, coordGroup;
+
+function initScene(){
+  host = document.getElementById('canvas-host');
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, host.clientWidth/host.clientHeight, 0.05, 100);
+  camera.position.set(2.3, 1.6, 2.6);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(host.clientWidth, host.clientHeight);
+  host.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 1.2;
+  controls.maxDistance = 8;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.6);
+  dl.position.set(3,4,2); scene.add(dl);
+
+  // base unit sphere
+  const sphGeo = new THREE.SphereGeometry(1, 48, 32);
+  const sphMat = new THREE.MeshPhongMaterial({color:0x3d5a8a, transparent:true, opacity:state.viz.opacity, shininess:20});
+  sphereMesh = new THREE.Mesh(sphGeo, sphMat);
+  scene.add(sphereMesh);
+
+  // gridlines (lat/long) via wireframe sphere
+  const gridGeo = new THREE.SphereGeometry(1.001, 24, 16);
+  gridLines = new THREE.LineSegments(new THREE.WireframeGeometry(gridGeo), new THREE.LineBasicMaterial({color:0x4a6fa5, transparent:true, opacity:0.35}));
+  scene.add(gridLines);
+
+  axesGroup = new THREE.Group();
+  const axLen = 1.5;
+  [[axLen,0,0,0xff6666],[0,axLen,0,0x66ff88],[0,0,axLen,0x66aaff]].forEach(([x,y,z,c])=>{
+    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(x,y,z)]);
+    axesGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({color:c, transparent:true, opacity:0.5})));
+  });
+  scene.add(axesGroup);
+
+  triGroup = new THREE.Group(); scene.add(triGroup);
+  coordGroup = new THREE.Group(); scene.add(coordGroup);
+
+  window.addEventListener('resize', onResize);
+  animate();
+}
+function onResize(){
+  camera.aspect = host.clientWidth/host.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(host.clientWidth, host.clientHeight);
+}
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+function resetCamera(){
+  camera.position.set(2.3,1.6,2.6);
+  controls.target.set(0,0,0);
+}
+
+/* ============================= MATH HELPERS ============================= */
+const D2R = Math.PI/180, R2D = 180/Math.PI;
+
+function latLonToVec(lat, lon){
+  const phi = (90-lat)*D2R; // colatitude
+  const th = lon*D2R;
+  return new THREE.Vector3(Math.sin(phi)*Math.cos(th), Math.sin(phi)*Math.sin(th), Math.cos(phi));
+}
+function sphToVec(rho, phiDeg, thetaDeg){
+  const phi = phiDeg*D2R, th = thetaDeg*D2R;
+  return new THREE.Vector3(rho*Math.sin(phi)*Math.cos(th), rho*Math.sin(phi)*Math.sin(th), rho*Math.cos(phi));
+}
+function slerp(a,b,t){
+  const dot = THREE.MathUtils.clamp(a.dot(b), -1, 1);
+  const theta = Math.acos(dot);
+  // near-parallel: linear lerp is a fine approximation and avoids 0/0
+  if (theta < 1e-5) return a.clone();
+  // near-antipodal: sin(theta) ~ 0 causes a divide-by-zero; pick an
+  // arbitrary perpendicular axis to route the arc through instead
+  if (Math.PI - theta < 1e-3){
+    let helper = Math.abs(a.x) < 0.9 ? new THREE.Vector3(1,0,0) : new THREE.Vector3(0,1,0);
+    const mid = new THREE.Vector3().crossVectors(a, helper).normalize();
+    return t < 0.5 ? slerpSafe(a, mid, t*2) : slerpSafe(mid, b, (t-0.5)*2);
+  }
+  const s = Math.sin(theta);
+  const w1 = Math.sin((1-t)*theta)/s, w2 = Math.sin(t*theta)/s;
+  return new THREE.Vector3().addScaledVector(a,w1).addScaledVector(b,w2).normalize();
+}
+function slerpSafe(a,b,t){
+  const dot = THREE.MathUtils.clamp(a.dot(b), -1, 1);
+  const theta = Math.acos(dot);
+  if (theta < 1e-5) return a.clone();
+  const s = Math.sin(theta);
+  const w1 = Math.sin((1-t)*theta)/s, w2 = Math.sin(t*theta)/s;
+  return new THREE.Vector3().addScaledVector(a,w1).addScaledVector(b,w2).normalize();
+}
+function greatCircleArc(a,b,segments=48){
+  const pts=[];
+  for(let i=0;i<=segments;i++) pts.push(slerp(a,b,i/segments));
+  return pts;
+}
+function angleBetween(a,b){ return Math.acos(THREE.MathUtils.clamp(a.dot(b), -1, 1)); }
+
+function makeTextSprite(text, colorHex){
+  const canvas = document.createElement('canvas');
+  canvas.width=128; canvas.height=64;
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 44px Inter, sans-serif';
+  ctx.fillStyle = colorHex;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text, 64, 32);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false});
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(0.22,0.11,1);
+  return spr;
+}
+
+/* Recursive barycentric subdivision to fill a spherical triangle */
+function sphericalTriangleFillGeometry(A,B,C, n=10){
+  const positions = [];
+  const grid = [];
+  for(let i=0;i<=n;i++){
+    grid.push([]);
+    for(let j=0;j<=n-i;j++){
+      const k = n-i-j;
+      const v = new THREE.Vector3().addScaledVector(A,i).addScaledVector(B,j).addScaledVector(C,k).normalize();
+      grid[i].push(v);
+    }
+  }
+  for(let i=0;i<n;i++){
+    for(let j=0;j<n-i;j++){
+      const v00 = grid[i][j], v01 = grid[i][j+1], v10 = grid[i+1][j];
+      positions.push(v00.x,v00.y,v00.z, v10.x,v10.y,v10.z, v01.x,v01.y,v01.z);
+      if (j < n-i-1){
+        const v11 = grid[i+1][j+1];
+        positions.push(v10.x,v10.y,v10.z, v11.x,v11.y,v11.z, v01.x,v01.y,v01.z);
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/* ============================= TRIANGLE MODE RENDER ============================= */
+function computeTriangle(){
+  const A = latLonToVec(state.vertices.A.lat, state.vertices.A.lon);
+  const B = latLonToVec(state.vertices.B.lat, state.vertices.B.lon);
+  const C = latLonToVec(state.vertices.C.lat, state.vertices.C.lon);
+  const a = angleBetween(B,C), b = angleBetween(A,C), c = angleBetween(A,B);
+  let valid = true, msg = '';
+  if (a<1e-4 || b<1e-4 || c<1e-4){ valid=false; msg='Two or more vertices coincide — choose distinct points.'; }
+  else if (a+b+c > 2*Math.PI - 1e-4){ valid=false; msg='a + b + c ≥ 360° — not a valid spherical triangle.'; }
+  else if (a > b+c+1e-6 || b > a+c+1e-6 || c > a+b+1e-6){ valid=false; msg='Triangle inequality violated on the sphere (one side ≥ sum of the other two).'; }
+
+  let Ang=[NaN,NaN,NaN], E=NaN, area=NaN;
+  if (valid){
+    const cosA = (Math.cos(a)-Math.cos(b)*Math.cos(c))/(Math.sin(b)*Math.sin(c));
+    const cosB = (Math.cos(b)-Math.cos(a)*Math.cos(c))/(Math.sin(a)*Math.sin(c));
+    const cosC = (Math.cos(c)-Math.cos(a)*Math.cos(b))/(Math.sin(a)*Math.sin(b));
+    Ang = [Math.acos(THREE.MathUtils.clamp(cosA,-1,1)), Math.acos(THREE.MathUtils.clamp(cosB,-1,1)), Math.acos(THREE.MathUtils.clamp(cosC,-1,1))];
+    E = Ang[0]+Ang[1]+Ang[2]-Math.PI;
+    area = E; // R=1
+  }
+  return {A,B,C,a,b,c,Ang,E,area,valid,msg};
+}
+
+function renderTriangle(){
+  triGroup.clear();
+  const t = computeTriangle();
+  const errBox = document.getElementById('triangle-error');
+  if (!t.valid){
+    errBox.classList.add('show');
+    document.getElementById('triangle-error-text').textContent = t.msg;
+  } else {
+    errBox.classList.remove('show');
+  }
+
+  // vertex markers
+  [['A',t.A,COLORS.cyan],['B',t.B,COLORS.amber],['C',t.C,COLORS.emerald]].forEach(([name,v,col])=>{
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.02,16,16), new THREE.MeshBasicMaterial({color:col}));
+    dot.position.copy(v);
+    triGroup.add(dot);
+    if (state.viz.labels){
+      const label = makeTextSprite(name, '#'+col.toString(16).padStart(6,'0'));
+      label.position.copy(v.clone().multiplyScalar(1.14));
+      triGroup.add(label);
+    }
+  });
+
+  if (t.valid){
+    // great circle arcs (sides)
+    [[t.B,t.C],[t.A,t.C],[t.A,t.B]].forEach(([p,q])=>{
+      const pts = greatCircleArc(p,q);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      triGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({color:COLORS.cyan, linewidth:2})));
+    });
+
+    // fill
+    const fillGeo = sphericalTriangleFillGeometry(t.A,t.B,t.C, 10);
+    const fillMat = new THREE.MeshBasicMaterial({color:COLORS.emerald, transparent:true, opacity:0.28, side:THREE.DoubleSide});
+    triGroup.add(new THREE.Mesh(fillGeo, fillMat));
+
+    // angle arc markers (tangent indicators)
+    const eps = 0.18;
+    const markers = [
+      [t.A, t.B, t.C, t.c, t.b],
+      [t.B, t.A, t.C, t.c, t.a],
+      [t.C, t.A, t.B, t.b, t.a],
+    ];
+    markers.forEach(([V, P1, P2, d1, d2])=>{
+      const t1 = Math.min(eps/Math.max(d1,1e-3), 0.9);
+      const t2 = Math.min(eps/Math.max(d2,1e-3), 0.9);
+      const s1 = slerp(V,P1,t1), s2 = slerp(V,P2,t2);
+      const pts = greatCircleArc(s1,s2,16);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      triGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({color:COLORS.amber})));
+    });
+  }
+
+  document.getElementById('out-a').textContent = t.valid ? (t.a*R2D).toFixed(2)+'°  ('+t.a.toFixed(3)+' rad)' : '–';
+  document.getElementById('out-b').textContent = t.valid ? (t.b*R2D).toFixed(2)+'°  ('+t.b.toFixed(3)+' rad)' : '–';
+  document.getElementById('out-c').textContent = t.valid ? (t.c*R2D).toFixed(2)+'°  ('+t.c.toFixed(3)+' rad)' : '–';
+  document.getElementById('out-A').textContent = t.valid ? (t.Ang[0]*R2D).toFixed(2)+'°' : '–';
+  document.getElementById('out-B').textContent = t.valid ? (t.Ang[1]*R2D).toFixed(2)+'°' : '–';
+  document.getElementById('out-C').textContent = t.valid ? (t.Ang[2]*R2D).toFixed(2)+'°' : '–';
+  document.getElementById('out-E').textContent = t.valid ? (t.E*R2D).toFixed(2)+'°' : '–';
+  document.getElementById('out-area').textContent = t.valid ? t.area.toFixed(4)+' · R²' : '–';
+}
+
+function onVertexSlider(name){
+  const lat = +document.getElementById(name+'-lat').value;
+  const lon = +document.getElementById(name+'-lon').value;
+  state.vertices[name] = {lat,lon};
+  document.getElementById(name+'-lat-val').textContent = lat+'°';
+  document.getElementById(name+'-lon-val').textContent = lon+'°';
+  renderTriangle();
+}
+
+/* ============================= COORDINATE MODE RENDER ============================= */
+function renderCoord(){
+  coordGroup.clear();
+  const {rho,phi,theta,surface} = state.coord;
+  const p = sphToVec(rho, phi, theta);
+
+  // radial vector
+  const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), p]);
+  coordGroup.add(new THREE.Line(lineGeo, new THREE.LineBasicMaterial({color:COLORS.cyan})));
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.025,16,16), new THREE.MeshBasicMaterial({color:COLORS.amber}));
+  dot.position.copy(p); coordGroup.add(dot);
+  const label = makeTextSprite('P', '#F5B23B');
+  label.position.copy(p.clone().multiplyScalar(1.12));
+  coordGroup.add(label);
+
+  // phi arc (from +z axis, in the plane containing z-axis and P)
+  const zAxis = new THREE.Vector3(0,0,1);
+  const phiPts = greatCircleArc(zAxis, p.clone().normalize(), 24).map(v=>v.multiplyScalar(0.4));
+  coordGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(phiPts), new THREE.LineBasicMaterial({color:COLORS.rose})));
+
+  // theta arc (in xy plane from +x axis to projection of P)
+  const projXY = new THREE.Vector3(p.x, p.y, 0);
+  if (projXY.length() > 1e-4){
+    const xAxis = new THREE.Vector3(1,0,0);
+    projXY.normalize();
+    const thetaPts = [];
+    const ang = Math.atan2(projXY.y, projXY.x);
+    const steps=24;
+    for(let i=0;i<=steps;i++){
+      const a = ang*(i/steps);
+      thetaPts.push(new THREE.Vector3(Math.cos(a),Math.sin(a),0).multiplyScalar(0.3));
+    }
+    coordGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(thetaPts), new THREE.LineBasicMaterial({color:COLORS.emerald})));
+  }
+
+  document.getElementById('out-x').textContent = p.x.toFixed(3);
+  document.getElementById('out-y').textContent = p.y.toFixed(3);
+  document.getElementById('out-z').textContent = p.z.toFixed(3);
+
+  // clear previous surface mesh
+  if (coordGroup.userData.surfaceMesh){ coordGroup.remove(coordGroup.userData.surfaceMesh); }
+  if (coordGroup.userData.surfaceExtra){ coordGroup.userData.surfaceExtra.forEach(o=>coordGroup.remove(o)); }
+  coordGroup.userData.surfaceExtra = [];
+
+  const readoutEl = document.getElementById('surface-readout');
+
+  if (surface === 'sphere'){
+    readoutEl.textContent = 'x² + y² + z² = 1  (unit sphere, R = 1)';
+  } else if (surface === 'plane'){
+    const n = sphToVec(1, state.coord.planePhi, state.coord.planeTheta).normalize();
+    const d = state.coord.planeD;
+    const planeGeo = new THREE.PlaneGeometry(2.4,2.4);
+    const planeMat = new THREE.MeshBasicMaterial({color:COLORS.rose, transparent:true, opacity:0.18, side:THREE.DoubleSide});
+    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+    planeMesh.lookAt(n);
+    planeMesh.position.copy(n.clone().multiplyScalar(d));
+    coordGroup.add(planeMesh); coordGroup.userData.surfaceExtra.push(planeMesh);
+
+    const absD = Math.abs(d);
+    if (absD < 1){
+      const r = Math.sqrt(1-d*d);
+      // basis vectors in plane
+      const arbitrary = Math.abs(n.z) < 0.9 ? new THREE.Vector3(0,0,1) : new THREE.Vector3(1,0,0);
+      const u = new THREE.Vector3().crossVectors(n, arbitrary).normalize();
+      const v = new THREE.Vector3().crossVectors(n, u).normalize();
+      const center = n.clone().multiplyScalar(d);
+      const pts=[];
+      for(let i=0;i<=64;i++){
+        const a = i/64*Math.PI*2;
+        pts.push(center.clone().addScaledVector(u, r*Math.cos(a)).addScaledVector(v, r*Math.sin(a)));
+      }
+      const circleColor = absD < 0.02 ? COLORS.cyan : COLORS.amber;
+      const circle = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:circleColor}));
+      coordGroup.add(circle); coordGroup.userData.surfaceExtra.push(circle);
+      readoutEl.textContent = (absD<0.02?'Great circle':'Small circle') + ` — |d|=${absD.toFixed(2)}, section radius r=√(1−d²)=${r.toFixed(3)}`;
+    } else {
+      readoutEl.textContent = 'Plane misses the sphere entirely (|d| > R).';
+    }
+  } else if (surface === 'cap'){
+    const capAngRad = state.coord.capAngle*D2R;
+    const capGeo = new THREE.SphereGeometry(1.002, 40, 24, 0, Math.PI*2, 0, capAngRad);
+    const capMesh = new THREE.Mesh(capGeo, new THREE.MeshBasicMaterial({color:COLORS.emerald, transparent:true, opacity:0.45, side:THREE.DoubleSide}));
+    coordGroup.add(capMesh); coordGroup.userData.surfaceExtra.push(capMesh);
+    const h = 1-Math.cos(capAngRad);
+    readoutEl.textContent = `Cap half-angle ${state.coord.capAngle}° → height h=1−cosφ=${h.toFixed(3)}, area=2πRh=${(2*Math.PI*h).toFixed(3)}`;
+  }
+}
+
+function onCoordSlider(){
+  state.coord.rho = +document.getElementById('rho-slider').value;
+  state.coord.phi = +document.getElementById('phi-slider').value;
+  state.coord.theta = +document.getElementById('theta-slider').value;
+  state.coord.planePhi = +document.getElementById('plane-phi').value;
+  state.coord.planeTheta = +document.getElementById('plane-theta').value;
+  state.coord.planeD = +document.getElementById('plane-d').value;
+  state.coord.capAngle = +document.getElementById('cap-angle').value;
+  document.getElementById('rho-val').textContent = state.coord.rho.toFixed(2);
+  document.getElementById('phi-val').textContent = state.coord.phi+'°';
+  document.getElementById('theta-val').textContent = state.coord.theta+'°';
+  document.getElementById('cap-angle-val').textContent = state.coord.capAngle+'°';
+  renderCoord();
+}
+function onSurfaceChange(){
+  state.coord.surface = document.getElementById('surface-select').value;
+  document.getElementById('plane-controls').classList.toggle('hidden', state.coord.surface!=='plane');
+  document.getElementById('cap-controls').classList.toggle('hidden', state.coord.surface!=='cap');
+  renderCoord();
+}
+
+/* ============================= MODE / VIZ / THEME ============================= */
+function setMode(mode){
+  state.mode = mode;
+  document.getElementById('mode-triangle-btn').classList.toggle('btn-active', mode==='triangle');
+  document.getElementById('mode-coord-btn').classList.toggle('btn-active', mode==='coordinate');
+  document.getElementById('triangle-controls').classList.toggle('hidden', mode!=='triangle');
+  document.getElementById('triangle-readouts').classList.toggle('hidden', mode!=='triangle');
+  document.getElementById('coord-controls').classList.toggle('hidden', mode!=='coordinate');
+  document.getElementById('coord-controls').classList.toggle('flex', mode==='coordinate');
+  document.getElementById('triangle-error').classList.toggle('show', mode==='triangle' && !computeTriangle().valid);
+  triGroup.visible = (mode==='triangle');
+  coordGroup.visible = (mode==='coordinate');
+}
+function toggleViz(key){
+  if (key==='wireframe'){
+    state.viz.wireframe = !state.viz.wireframe;
+    sphereMesh.material.wireframe = state.viz.wireframe;
+  } else if (key==='labels'){
+    state.viz.labels = !state.viz.labels;
+    renderTriangle();
+  } else if (key==='grid'){
+    state.viz.grid = !state.viz.grid;
+    gridLines.visible = state.viz.grid;
+    document.getElementById('grid-toggle-btn').classList.toggle('btn-active', state.viz.grid);
+  }
+}
+function setOpacity(v){
+  state.viz.opacity = +v;
+  sphereMesh.material.opacity = +v;
+  document.getElementById('opacity-val').textContent = (+v).toFixed(2);
+}
+function toggleTheme(){
+  document.documentElement.classList.toggle('light');
+  const icon = document.documentElement.classList.contains('light');
+  lucide.createIcons();
+}
+
+/* ============================= TABS ============================= */
+function setTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+/* ============================= PRESETS ============================= */
+const PRESETS = {
+  octant: {A:{lat:0,lon:0}, B:{lat:0,lon:90}, C:{lat:90,lon:0}},
+  equilateral: {A:{lat:60,lon:0}, B:{lat:-10,lon:-45}, C:{lat:-10,lon:45}},
+  napier: {A:{lat:0,lon:0}, B:{lat:0,lon:60}, C:{lat:50,lon:0}},
+  scalene: {A:{lat:20,lon:-60}, B:{lat:55,lon:10}, C:{lat:-15,lon:70}},
+  polar: {A:{lat:70,lon:-10}, B:{lat:65,lon:20}, C:{lat:75,lon:60}},
+};
+function applyPreset(name){
+  if (!name || !PRESETS[name]) return;
+  setMode('triangle');
+  Object.entries(PRESETS[name]).forEach(([k,v])=>{
+    state.vertices[k]=v;
+    document.getElementById(k+'-lat').value=v.lat;
+    document.getElementById(k+'-lon').value=v.lon;
+    document.getElementById(k+'-lat-val').textContent=v.lat+'°';
+    document.getElementById(k+'-lon-val').textContent=v.lon+'°';
+  });
+  renderTriangle();
+  document.getElementById('preset-select').value='';
+}
+
+/* ============================= TAB 2: SOLVER PROBLEMS ============================= */
+function solveSphere(){
+  const g=+val('sph-g'), f=+val('sph-f'), d=+val('sph-d'), c=+val('sph-c');
+  const r2 = g*g+f*f+d*d-c;
+  const out = document.getElementById('sphere-solution');
+  if (r2 < 0){
+    out.innerHTML = `<span style="color:var(--rose)">g²+f²+d²−c = ${r2.toFixed(3)} &lt; 0 — no real sphere.</span>`;
+  } else {
+    const R = Math.sqrt(r2);
+    out.innerHTML = `Centre = (${(-g).toFixed(2)}, ${(-f).toFixed(2)}, ${(-d).toFixed(2)}) &nbsp;|&nbsp; R = √(g²+f²+d²−c) = ${R.toFixed(3)}`;
+  }
+  renderKatex();
+}
+function plotSphere(){
+  const g=+val('sph-g'), f=+val('sph-f'), d=+val('sph-d'), c=+val('sph-c');
+  const r2 = g*g+f*f+d*d-c;
+  if (r2<0) return;
+  setMode('coordinate'); document.getElementById('surface-select').value='sphere'; onSurfaceChange();
+  document.getElementById('surface-readout').textContent = `Centre (${(-g).toFixed(2)},${(-f).toFixed(2)},${(-d).toFixed(2)}), R=${Math.sqrt(r2).toFixed(3)} — shown normalised to unit sphere for reference.`;
+}
+function solvePlane(){
+  const a=+val('pl-a'), b=+val('pl-b'), c=+val('pl-c'), k=+val('pl-k'), R=+val('pl-R');
+  const dist = Math.abs(k)/Math.sqrt(a*a+b*b+c*c);
+  const out = document.getElementById('plane-solution');
+  let msg;
+  if (dist > R) msg = `d = ${dist.toFixed(3)} &gt; R — plane does not meet the sphere.`;
+  else if (Math.abs(dist) < 1e-6) msg = `d ≈ 0 → plane passes through centre → <b style="color:var(--cyan)">great circle</b>, radius = R = ${R.toFixed(3)}.`;
+  else { const r=Math.sqrt(R*R-dist*dist); msg = `d = ${dist.toFixed(3)} &lt; R → <b style="color:var(--amber)">small circle</b>, radius r = √(R²−d²) = ${r.toFixed(3)}.`; }
+  out.innerHTML = msg;
+}
+function plotPlane(){
+  const a=+val('pl-a'), b=+val('pl-b'), c=+val('pl-c'), k=+val('pl-k'), R=+val('pl-R');
+  const n = new THREE.Vector3(a,b,c).normalize();
+  const phi = Math.acos(THREE.MathUtils.clamp(n.z,-1,1))*R2D;
+  const theta = Math.atan2(n.y,n.x)*R2D;
+  const dist = (k/Math.sqrt(a*a+b*b+c*c))/R;
+  setMode('coordinate');
+  document.getElementById('surface-select').value='plane'; onSurfaceChange();
+  document.getElementById('plane-phi').value = phi.toFixed(0);
+  document.getElementById('plane-theta').value = theta.toFixed(0);
+  document.getElementById('plane-d').value = THREE.MathUtils.clamp(dist,-0.95,0.95).toFixed(2);
+  onCoordSlider();
+}
+function solveConv(){
+  const rho=+val('conv-rho'), phi=+val('conv-phi'), theta=+val('conv-theta');
+  const p = sphToVec(rho,phi,theta);
+  document.getElementById('conv-solution').innerHTML = `x = ${p.x.toFixed(3)}, &nbsp; y = ${p.y.toFixed(3)}, &nbsp; z = ${p.z.toFixed(3)}`;
+}
+function plotConv(){
+  const rho=+val('conv-rho'), phi=+val('conv-phi'), theta=+val('conv-theta');
+  setMode('coordinate');
+  document.getElementById('rho-slider').value = Math.min(rho,1.6);
+  document.getElementById('phi-slider').value = phi;
+  document.getElementById('theta-slider').value = theta;
+  onCoordSlider();
+}
+function solveCap(){
+  const R=+val('cap-R'), h=+val('cap-h');
+  const area = 2*Math.PI*R*h, vol = (2/3)*Math.PI*R*R*h;
+  document.getElementById('cap-solution').innerHTML = `Cap area = 2πRh = ${area.toFixed(4)} &nbsp;|&nbsp; Sector volume = ⅔πR²h = ${vol.toFixed(4)}`;
+}
+function plotCap(){
+  const R=+val('cap-R'), h=+val('cap-h');
+  const ratio = THREE.MathUtils.clamp(1-h/R, -1, 1);
+  const angle = Math.acos(ratio)*R2D;
+  setMode('coordinate');
+  document.getElementById('surface-select').value='cap'; onSurfaceChange();
+  document.getElementById('cap-angle').value = angle.toFixed(0);
+  onCoordSlider();
+}
+function val(id){ return document.getElementById(id).value; }
+
+/* ============================= TAB 3: CALCULATOR ============================= */
+const CALC_FIELDS = {
+  SSS: [['a','side a'],['b','side b'],['c','side c']],
+  AAA: [['A','angle A'],['B','angle B'],['C','angle C']],
+  SAS: [['a','side a'],['C','included angle C'],['b','side b']],
+  ASA: [['A','angle A'],['c','included side c'],['B','angle B']],
+};
+function renderCalcInputs(){
+  const kase = document.getElementById('calc-case').value;
+  const host = document.getElementById('calc-inputs');
+  host.innerHTML='';
+  CALC_FIELDS[kase].forEach(([key,label])=>{
+    host.innerHTML += `<div><label class="text-[10px] block mb-0.5" style="color:var(--text-muted)">${label} (°)</label><input type="number" id="calc-${key}" value="60" class="w-full"></div>`;
+  });
+}
+let lastCalcResult = null;
+function runCalculator(){
+  const kase = document.getElementById('calc-case').value;
+  const errEl = document.getElementById('calc-error');
+  const outEl = document.getElementById('calc-solution');
+  errEl.textContent=''; outEl.innerHTML=''; lastCalcResult=null;
+
+  const rd = id => (+document.getElementById(id).value)*D2R;
+
+  try{
+    let a,b,c,A,B,C;
+    if (kase==='SSS'){
+      a=rd('calc-a'); b=rd('calc-b'); c=rd('calc-c');
+      checkSides(a,b,c);
+      A = solveAngleFromSides(a,b,c); B = solveAngleFromSides(b,a,c); C = solveAngleFromSides(c,a,b);
+    } else if (kase==='AAA'){
+      A=rd('calc-A'); B=rd('calc-B'); C=rd('calc-C');
+      checkAngles(A,B,C);
+      a = solveSideFromAngles(A,B,C); b = solveSideFromAngles(B,A,C); c = solveSideFromAngles(C,A,B);
+    } else if (kase==='SAS'){
+      a=rd('calc-a'); C=rd('calc-C'); b=rd('calc-b');
+      if (a<=0||b<=0||C<=0||C>=Math.PI) throw 'Sides must be >0 and included angle strictly between 0° and 180°.';
+      c = Math.acos(THREE.MathUtils.clamp(Math.cos(a)*Math.cos(b)+Math.sin(a)*Math.sin(b)*Math.cos(C), -1, 1));
+      checkSides(a,b,c);
+      A = solveAngleFromSides(a,b,c); B = solveAngleFromSides(b,a,c);
+    } else if (kase==='ASA'){
+      A=rd('calc-A'); c=rd('calc-c'); B=rd('calc-B');
+      if (A<=0||B<=0||c<=0||A>=Math.PI||B>=Math.PI) throw 'Angles must be strictly between 0° and 180°, side > 0.';
+      C = Math.acos(THREE.MathUtils.clamp(-Math.cos(A)*Math.cos(B)+Math.sin(A)*Math.sin(B)*Math.cos(c), -1, 1));
+      checkAngles(A,B,C);
+      a = solveSideFromAngles(A,B,C); b = solveSideFromAngles(B,A,C);
+    }
+    const E = A+B+C-Math.PI;
+    lastCalcResult = {a,b,c,A,B,C,E};
+    outEl.innerHTML = `
+      <div>a = ${(a*R2D).toFixed(2)}°, b = ${(b*R2D).toFixed(2)}°, c = ${(c*R2D).toFixed(2)}°</div>
+      <div>A = ${(A*R2D).toFixed(2)}°, B = ${(B*R2D).toFixed(2)}°, C = ${(C*R2D).toFixed(2)}°</div>
+      <div style="color:var(--emerald)">Spherical excess E = ${(E*R2D).toFixed(2)}° &nbsp; → Area = R²·E(rad) = ${E.toFixed(4)}</div>`;
+  } catch(e){
+    errEl.textContent = typeof e==='string' ? e : 'Could not solve — check inputs.';
+  }
+}
+function checkSides(a,b,c){
+  if (a<=0||b<=0||c<=0) throw 'Sides must be positive.';
+  if (a+b+c >= 2*Math.PI) throw 'a + b + c must be less than 360°.';
+  if (a>=b+c || b>=a+c || c>=a+b) throw 'Each side must be less than the sum of the other two (spherical triangle inequality).';
+}
+function checkAngles(A,B,C){
+  if (A<=0||B<=0||C<=0) throw 'Angles must be positive.';
+  const sum=A+B+C;
+  if (sum<=Math.PI || sum>=3*Math.PI) throw 'Angle sum must be strictly between 180° and 540°.';
+}
+function solveAngleFromSides(x,y,z){ // angle opposite x
+  const cosX = (Math.cos(x)-Math.cos(y)*Math.cos(z))/(Math.sin(y)*Math.sin(z));
+  return Math.acos(THREE.MathUtils.clamp(cosX,-1,1));
+}
+function solveSideFromAngles(X,Y,Z){ // side opposite X (dual)
+  const cosX = (Math.cos(X)+Math.cos(Y)*Math.cos(Z))/(Math.sin(Y)*Math.sin(Z));
+  return Math.acos(THREE.MathUtils.clamp(cosX,-1,1));
+}
+function plotCalcTriangle(){
+  if (!lastCalcResult){ runCalculator(); if(!lastCalcResult) return; }
+  const {b,c,A} = lastCalcResult;
+  // Place A-vertex at north pole, B along longitude 0 at colatitude c, C at longitude A, colatitude b
+  const Avert = {lat:90, lon:0};
+  const Bvec = new THREE.Vector3(Math.sin(c),0,Math.cos(c));
+  const Cvec = new THREE.Vector3(Math.sin(b)*Math.cos(A), Math.sin(b)*Math.sin(A), Math.cos(b));
+  const vecToLatLon = v => ({lat: 90-Math.acos(THREE.MathUtils.clamp(v.z,-1,1))*R2D, lon: Math.atan2(v.y,v.x)*R2D});
+  const Bll = vecToLatLon(Bvec), Cll = vecToLatLon(Cvec);
+  setMode('triangle');
+  ['A','B','C'].forEach((k,i)=>{
+    const v = [Avert,Bll,Cll][i];
+    state.vertices[k]=v;
+    document.getElementById(k+'-lat').value = v.lat.toFixed(0);
+    document.getElementById(k+'-lon').value = v.lon.toFixed(0);
+    document.getElementById(k+'-lat-val').textContent = v.lat.toFixed(0)+'°';
+    document.getElementById(k+'-lon-val').textContent = v.lon.toFixed(0)+'°';
+  });
+  renderTriangle();
+}
+
+/* ============================= QUIZ ============================= */
+const QUIZ = [
+  { q:"On a sphere, the sum of a triangle's three angles is always:", opts:['Exactly 180°','Less than 180°','Greater than 180°','Undefined'], correct:2,
+    explain:"Spherical excess $E=A+B+C-180°$ is always positive — it equals the triangle's area divided by $R^2$." },
+  { q:'Which formula finds a spherical side given the other two sides and the included angle?', opts:['Law of Sines','Cosine rule for sides','Cosine rule for angles (dual)',"Napier's analogy"], correct:1,
+    explain:'\\[ \\cos a=\\cos b\\cos c+\\sin b\\sin c\\cos A \\] is the SAS-solving cosine rule for sides.' },
+  { q:"The polar triangle of $\\triangle ABC$ has side $a'$ equal to:", opts:['$a$','$180°-a$','$180°-A$','$A$'], correct:2,
+    explain:"Polar duality swaps angles and sides: $a'=180°-A$, and $A'=180°-a$." },
+  { q:'For a right-angled spherical triangle ($C=90°$), Napier\u2019s rules relate:', opts:['Only the two legs','The five circular parts around the right angle','Only the hypotenuse and one angle',"Nothing — Napier's rules apply to plane triangles only"], correct:1,
+    explain:"Napier's circular parts diagram arranges the five non-right elements so any adjacent/opposite pair gives a simple sine/tangent/cosine relation." },
+];
+function buildQuiz(){
+  const host = document.getElementById('quiz-host');
+  host.innerHTML='';
+  QUIZ.forEach((item,qi)=>{
+    const wrap = document.createElement('div');
+    wrap.className='card p-3';
+    wrap.innerHTML = `<div class="text-[12.5px] font-medium mb-2">${qi+1}. ${item.q}</div>` +
+      item.opts.map((o,oi)=>`<button class="quiz-opt" onclick="answerQuiz(${qi},${oi},this)">${o}</button>`).join('') +
+      `<div class="text-[11px] mt-1 hidden" id="quiz-explain-${qi}" style="color:var(--text-muted)">${item.explain}</div>`;
+    host.appendChild(wrap);
+  });
+  renderKatex();
+}
+function answerQuiz(qi, oi, btn){
+  const item = QUIZ[qi];
+  const buttons = btn.parentElement.querySelectorAll('.quiz-opt');
+  buttons.forEach((b,i)=>{
+    b.onclick=null;
+    if (i===item.correct) b.classList.add('correct');
+    else if (i===oi) b.classList.add('wrong');
+  });
+  document.getElementById('quiz-explain-'+qi).classList.remove('hidden');
+  renderKatex();
+}
+
+/* ============================= KATEX ============================= */
+function renderKatex(){
+  if (window.renderMathInElement){
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left:'\\[', right:'\\]', display:true},
+        {left:'\\(', right:'\\)', display:false},
+        {left:'$$', right:'$$', display:true},
+        {left:'$', right:'$', display:false},
+      ],
+      throwOnError:false,
+    });
+  }
+}
+
+/* ============================= INIT ============================= */
+window.addEventListener('DOMContentLoaded', ()=>{
+  initScene();
+  setMode('triangle'); // sync group visibility + panel state before first render
+  renderTriangle();
+  renderCoord();
+  renderCalcInputs();
+  buildQuiz();
+  renderKatex();
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>

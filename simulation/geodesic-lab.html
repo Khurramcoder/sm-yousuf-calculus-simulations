@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geodesic Lab — Christoffel Symbols &amp; Geodesic Curves</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<style>
+:root{
+  --bg-void:#0a0e18;
+  --panel:#111726;
+  --panel-2:#0d1220;
+  --border:#242f47;
+  --text:#e8ecf5;
+  --muted:#8b95ab;
+  --brass:#d4a24c;
+  --brass-dim:#8a6d38;
+  --cyan:#5ec8d8;
+  --rose:#e0607a;
+  --mono:'IBM Plex Mono', monospace;
+  --serif:'Newsreader', serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg-void);color:var(--text);font-family:var(--mono);}
+body{
+  background-image:
+    radial-gradient(ellipse at top left, rgba(94,200,216,0.06), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(212,162,76,0.05), transparent 55%);
+}
+
+/* ---------- layout ---------- */
+#app{
+  display:grid;
+  grid-template-columns: 300px 1fr 340px;
+  grid-template-rows: 56px 1fr;
+  grid-template-areas:
+    "header header header"
+    "left   center  right";
+  height:100vh;
+}
+@media (max-width: 1100px){
+  #app{
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px auto auto auto;
+    grid-template-areas:
+      "header"
+      "center"
+      "left"
+      "right";
+    height:auto;
+    min-height:100vh;
+  }
+  #viewport-wrap{height:60vh;}
+}
+
+header{
+  grid-area:header;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel-2);
+}
+header .brand{display:flex;align-items:baseline;gap:10px;}
+header .brand .glyph{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--brass);}
+header .brand h1{font-family:var(--serif);font-weight:500;font-size:18px;margin:0;letter-spacing:0.3px;}
+header .brand small{color:var(--muted);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;}
+header .tagline{color:var(--muted);font-size:11px;letter-spacing:0.5px;}
+
+#left, #right{
+  overflow-y:auto;
+  padding:16px;
+  border-right:1px solid var(--border);
+  background:var(--panel);
+}
+#left{grid-area:left;}
+#right{grid-area:right;border-right:none;border-left:1px solid var(--border);}
+
+#center{
+  grid-area:center;
+  display:flex;flex-direction:column;
+  background:var(--bg-void);
+  min-width:0;
+}
+#viewport-wrap{
+  position:relative;
+  flex:1;
+  min-height:420px;
+}
+#canvas-holder{position:absolute;inset:0;}
+#hint{
+  position:absolute;top:12px;left:14px;
+  font-size:11px;color:var(--muted);
+  background:rgba(10,14,24,0.6);
+  padding:6px 10px;border:1px solid var(--border);border-radius:3px;
+  pointer-events:none;
+}
+
+/* ---------- panel typography ---------- */
+h2.section-title{
+  font-family:var(--serif);font-weight:500;font-style:italic;
+  font-size:15px;margin:22px 0 10px;color:var(--brass);
+  border-bottom:1px solid var(--border);padding-bottom:6px;
+}
+h2.section-title:first-child{margin-top:2px;}
+.field{margin-bottom:14px;}
+.field label{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:var(--muted);letter-spacing:0.4px;text-transform:uppercase;
+  margin-bottom:5px;
+}
+.field label .val{color:var(--cyan);font-weight:600;}
+select, input[type=text], textarea{
+  width:100%;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--border);border-radius:3px;
+  font-family:var(--mono);font-size:12.5px;padding:7px 8px;
+}
+textarea{resize:vertical;min-height:44px;}
+input[type=range]{
+  width:100%;accent-color:var(--brass);height:4px;
+}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn{
+  width:100%;padding:9px 10px;border-radius:3px;border:1px solid var(--brass-dim);
+  background:linear-gradient(180deg, rgba(212,162,76,0.16), rgba(212,162,76,0.05));
+  color:var(--brass);font-family:var(--mono);font-size:12px;letter-spacing:0.4px;
+  cursor:pointer;transition:all .15s ease;text-transform:uppercase;
+}
+.btn:hover{background:rgba(212,162,76,0.28);}
+.btn.secondary{border-color:var(--border);color:var(--muted);background:transparent;}
+.btn.secondary:hover{color:var(--text);border-color:var(--muted);}
+.btn-row{display:flex;gap:8px;margin-top:6px;}
+
+.play-cluster{
+  display:flex;align-items:center;gap:12px;margin-top:10px;
+}
+#playBtn{
+  width:44px;height:44px;border-radius:50%;flex:none;
+  border:1px solid var(--brass-dim);background:var(--panel-2);
+  color:var(--brass);cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+#sRing{
+  width:44px;height:44px;border-radius:50%;position:absolute;inset:0;
+  background:conic-gradient(var(--brass) calc(var(--pct,0)*1%), transparent 0);
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  pointer-events:none;
+}
+.slabel{font-size:11px;color:var(--muted);}
+.slabel b{color:var(--cyan);font-weight:600;}
+
+.note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:6px;}
+
+/* right panel math */
+.eq-block{
+  background:var(--panel-2);border:1px solid var(--border);border-radius:4px;
+  padding:10px 12px;margin-bottom:12px;overflow-x:auto;
+}
+.eq-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.katex{font-size:0.95em;}
+
+table.valtable{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:6px;}
+table.valtable th, table.valtable td{
+  padding:4px 6px;text-align:right;border-bottom:1px solid var(--border);
+}
+table.valtable th{color:var(--muted);font-weight:500;text-align:right;}
+table.valtable td:first-child, table.valtable th:first-child{text-align:left;color:var(--muted);}
+.numcell{color:var(--cyan);}
+.numcell.zero{color:#4a5468;}
+
+.coord-readout{
+  display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-bottom:10px;
+}
+.coord-readout .chip{
+  background:var(--panel-2);border:1px solid var(--border);border-radius:3px;
+  padding:5px 9px;
+}
+.coord-readout .chip span{color:var(--brass);}
+
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:var(--panel-2);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px;}
+::-webkit-scrollbar-thumb:hover{background:var(--brass-dim);}
+
+.surface-params{display:none;}
+.surface-params.active{display:block;}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <header>
+    <div class="brand">
+      <span class="glyph">Γ</span>
+      <div>
+        <h1>Geodesic Lab</h1>
+        <small>Christoffel Symbols &amp; Geodesics on Curved Surfaces</small>
+      </div>
+    </div>
+    <div class="tagline">Riemannian Geometry — interactive numerical laboratory</div>
+  </header>
+
+  <!-- ===================== LEFT: CONTROLS ===================== -->
+  <div id="left">
+    <h2 class="section-title">Surface</h2>
+    <div class="field">
+      <label>Metric surface</label>
+      <select id="surfaceSelect">
+        <option value="plane">Euclidean Plane ℝ²</option>
+        <option value="sphere" selected>Sphere S²</option>
+        <option value="torus">Torus T²</option>
+        <option value="custom">Custom embedding X(u,v)</option>
+      </select>
+    </div>
+
+    <div class="surface-params" id="params-plane"></div>
+
+    <div class="surface-params active" id="params-sphere">
+      <div class="field">
+        <label>Radius R <span class="val" id="sphereR-val">2.0</span></label>
+        <input type="range" id="sphereR" min="0.5" max="4" step="0.1" value="2.0">
+      </div>
+    </div>
+
+    <div class="surface-params" id="params-torus">
+      <div class="row2">
+        <div class="field">
+          <label>Major R <span class="val" id="torusRm-val">2.0</span></label>
+          <input type="range" id="torusRm" min="1" max="3.5" step="0.1" value="2.0">
+        </div>
+        <div class="field">
+          <label>Minor r <span class="val" id="torusRr-val">0.7</span></label>
+          <input type="range" id="torusRr" min="0.2" max="1.5" step="0.1" value="0.7">
+        </div>
+      </div>
+    </div>
+
+    <div class="surface-params" id="params-custom">
+      <div class="field"><label>x(u,v)</label><input type="text" id="cx" value="u"></div>
+      <div class="field"><label>y(u,v)</label><input type="text" id="cy" value="v"></div>
+      <div class="field"><label>z(u,v)</label><input type="text" id="cz" value="1.1*Math.exp(-(u*u+v*v)/4)"></div>
+      <div class="row2">
+        <div class="field"><label>u range ±</label><input type="text" id="cRangeU" value="3"></div>
+        <div class="field"><label>v range ±</label><input type="text" id="cRangeV" value="3"></div>
+      </div>
+      <div class="note">JS expressions in u,v. Metric is derived numerically from this embedding (first fundamental form), so any smooth surface works.</div>
+    </div>
+
+    <h2 class="section-title">Initial Point &amp; Direction</h2>
+    <div class="field">
+      <label>u₀ <span class="val" id="u0-val">0.00</span></label>
+      <input type="range" id="u0" min="-1" max="1" step="0.001" value="0.35">
+    </div>
+    <div class="field">
+      <label>v₀ <span class="val" id="v0-val">0.00</span></label>
+      <input type="range" id="v0" min="-1" max="1" step="0.001" value="0">
+    </div>
+    <div class="field">
+      <label>Launch angle θ (tangent plane) <span class="val" id="theta-val">30°</span></label>
+      <input type="range" id="theta" min="0" max="360" step="1" value="30">
+    </div>
+    <div class="note">Click any point on the surface in the viewport to set u₀, v₀ directly.</div>
+
+    <h2 class="section-title">Arc-length Integration</h2>
+    <div class="field">
+      <label>Max arc length S <span class="val" id="Smax-val">6.0</span></label>
+      <input type="range" id="Smax" min="1" max="14" step="0.5" value="6.0">
+    </div>
+    <div class="field">
+      <label>Integration step ds <span class="val" id="ds-val">0.02</span></label>
+      <input type="range" id="ds" min="0.005" max="0.08" step="0.005" value="0.02">
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="recomputeBtn">Trace Geodesic</button>
+      <button class="btn secondary" id="resetViewBtn">Reset View</button>
+    </div>
+
+    <div class="play-cluster">
+      <div style="position:relative;">
+        <div id="sRing" style="--pct:0;"></div>
+        <button id="playBtn">▶</button>
+      </div>
+      <div>
+        <div class="slabel">arc length s = <b id="sNow">0.00</b> / <span id="sMaxEcho">6.00</span></div>
+        <input type="range" id="sScrub" min="0" max="1000" step="1" value="0" style="width:140px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER: 3D VIEWPORT ===================== -->
+  <div id="center">
+    <div id="viewport-wrap">
+      <div id="canvas-holder"></div>
+      <div id="hint">drag — orbit · scroll — zoom · click surface — set start point</div>
+    </div>
+  </div>
+
+  <!-- ===================== RIGHT: MATH REFERENCE ===================== -->
+  <div id="right">
+    <h2 class="section-title">Live Point</h2>
+    <div class="coord-readout">
+      <div class="chip">u = <span id="ro-u">0.000</span></div>
+      <div class="chip">v = <span id="ro-v">0.000</span></div>
+      <div class="chip">s = <span id="ro-s">0.000</span></div>
+    </div>
+
+    <div class="eq-block">
+      <div class="eq-label">Metric tensor g<sub>ij</sub>(u,v)</div>
+      <table class="valtable" id="gTable"></table>
+    </div>
+
+    <div class="eq-block">
+      <div class="eq-label">Inverse metric g<sup>ij</sup></div>
+      <table class="valtable" id="ginvTable"></table>
+    </div>
+
+    <div class="eq-block">
+      <div class="eq-label">Christoffel symbols, first kind [pq,r]</div>
+      <table class="valtable" id="c1Table">
+        <tr><th>[pq,r]</th><th>value</th></tr>
+      </table>
+    </div>
+
+    <div class="eq-block">
+      <div class="eq-label">Christoffel symbols, second kind Γ<sup>s</sup><sub>pq</sub></div>
+      <table class="valtable" id="c2Table">
+        <tr><th>Γ<sup>s</sup><sub>pq</sub></th><th>value</th></tr>
+      </table>
+    </div>
+
+    <h2 class="section-title">Definitions</h2>
+    <div class="eq-block">
+      <div class="eq-label">First kind</div>
+      <div id="eqFirst"></div>
+    </div>
+    <div class="eq-block">
+      <div class="eq-label">Second kind</div>
+      <div id="eqSecond"></div>
+    </div>
+    <div class="eq-block">
+      <div class="eq-label">Geodesic equation</div>
+      <div id="eqGeodesic"></div>
+    </div>
+
+    <h2 class="section-title">Transformation Laws</h2>
+    <div class="eq-block"><div id="eqTrans1"></div></div>
+    <div class="eq-block"><div id="eqTrans2"></div></div>
+
+    <h2 class="section-title">Diagonal Metric Simplifications</h2>
+    <div class="eq-block" id="eqDiag"></div>
+  </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   1. MATH REFERENCE (static LaTeX, rendered once)
+   ===================================================================== */
+document.getElementById('eqFirst').innerHTML =
+  `\\[ [pq,r] = \\tfrac{1}{2}\\left( \\dfrac{\\partial g_{pr}}{\\partial x^q} + \\dfrac{\\partial g_{qr}}{\\partial x^p} - \\dfrac{\\partial g_{pq}}{\\partial x^r} \\right) \\]`;
+document.getElementById('eqSecond').innerHTML =
+  `\\[ \\Gamma^{s}_{pq} = \\begin{Bmatrix} s \\\\ pq \\end{Bmatrix} = g^{sr}[pq,r] \\]`;
+document.getElementById('eqGeodesic').innerHTML =
+  `\\[ \\dfrac{d^2 x^{\\mu}}{ds^2} + \\Gamma^{\\mu}_{\\alpha\\beta}\\dfrac{dx^{\\alpha}}{ds}\\dfrac{dx^{\\beta}}{ds} = 0 \\]`;
+document.getElementById('eqTrans1').innerHTML =
+  `\\[ \\overline{[jk,m]} = [pq,r]\\dfrac{\\partial x^p}{\\partial \\bar x^j}\\dfrac{\\partial x^q}{\\partial \\bar x^k}\\dfrac{\\partial x^r}{\\partial \\bar x^m} + g_{pq}\\dfrac{\\partial x^p}{\\partial \\bar x^m}\\dfrac{\\partial^2 x^q}{\\partial \\bar x^j \\partial \\bar x^k} \\]`;
+document.getElementById('eqTrans2').innerHTML =
+  `\\[ \\overline{\\begin{Bmatrix} n \\\\ jk \\end{Bmatrix}} = \\begin{Bmatrix} s \\\\ pq \\end{Bmatrix}\\dfrac{\\partial \\bar x^n}{\\partial x^s}\\dfrac{\\partial x^p}{\\partial \\bar x^j}\\dfrac{\\partial x^q}{\\partial \\bar x^k} + \\dfrac{\\partial \\bar x^n}{\\partial x^q}\\dfrac{\\partial^2 x^q}{\\partial \\bar x^j \\partial \\bar x^k} \\]`;
+document.getElementById('eqDiag').innerHTML =
+  `\\[ [pp,p]=\\tfrac12 \\partial_p g_{pp} \\qquad [pp,r]=-\\tfrac12 \\partial_r g_{pp} \\]
+   \\[ [pq,p]=\\tfrac12 \\partial_q g_{pp} \\qquad \\Gamma^{p}_{pp} = \\tfrac12 \\partial_p \\ln g_{pp} \\]
+   \\[ \\Gamma^{s}_{pp} = -\\dfrac{1}{2g_{ss}}\\partial_s g_{pp} \\qquad p\\neq q\\neq r\\neq p \\Rightarrow [pq,r]=0,\\ \\Gamma^{s}_{pq}=0 \\]`;
+
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: "\\[", right: "\\]", display: true},
+    {left: "\\(", right: "\\)", display: false}
+  ]
+});
+
+/* =====================================================================
+   2. GEOMETRY ENGINE — embeddings, metric, Christoffel symbols
+   ===================================================================== */
+
+const Surfaces = {
+  plane: {
+    uRange: () => [-4, 4],
+    vRange: () => [-4, 4],
+    embed: (u, v) => [u, v, 0]
+  },
+  sphere: {
+    uRange: () => [0.12, Math.PI - 0.12],   // theta, avoid poles
+    vRange: () => [0, 2*Math.PI],
+    embed: (u, v) => {
+      const R = parseFloat(document.getElementById('sphereR').value);
+      return [R*Math.sin(u)*Math.cos(v), R*Math.sin(u)*Math.sin(v), R*Math.cos(u)];
+    }
+  },
+  torus: {
+    uRange: () => [0, 2*Math.PI],
+    vRange: () => [0, 2*Math.PI],
+    embed: (u, v) => {
+      const Rm = parseFloat(document.getElementById('torusRm').value);
+      const r  = parseFloat(document.getElementById('torusRr').value);
+      return [(Rm + r*Math.cos(u))*Math.cos(v), (Rm + r*Math.cos(u))*Math.sin(v), r*Math.sin(u)];
+    }
+  },
+  custom: {
+    uRange: () => [-parseFloat(document.getElementById('cRangeU').value||3), parseFloat(document.getElementById('cRangeU').value||3)],
+    vRange: () => [-parseFloat(document.getElementById('cRangeV').value||3), parseFloat(document.getElementById('cRangeV').value||3)],
+    embed: (u, v) => {
+      try {
+        const fx = customFns.fx(u,v), fy = customFns.fy(u,v), fz = customFns.fz(u,v);
+        if ([fx,fy,fz].some(n => !isFinite(n))) return [u,v,0];
+        return [fx, fy, fz];
+      } catch(e) { return [u, v, 0]; }
+    }
+  }
+};
+
+let customFns = { fx: (u,v)=>u, fy: (u,v)=>v, fz: (u,v)=>0 };
+function rebuildCustomFns(){
+  try {
+    customFns.fx = new Function('u','v', 'return ' + document.getElementById('cx').value + ';');
+    customFns.fy = new Function('u','v', 'return ' + document.getElementById('cy').value + ';');
+    customFns.fz = new Function('u','v', 'return ' + document.getElementById('cz').value + ';');
+  } catch(e) { console.warn('custom fn parse error', e); }
+}
+
+let currentSurfaceKey = 'sphere';
+function surf(){ return Surfaces[currentSurfaceKey]; }
+
+// numeric embedding partials (central difference)
+function embedDerivs(u, v, h){
+  const s = surf();
+  const P   = s.embed(u, v);
+  const Pu1 = s.embed(u+h, v), Pu2 = s.embed(u-h, v);
+  const Pv1 = s.embed(u, v+h), Pv2 = s.embed(u, v-h);
+  const Xu = [ (Pu1[0]-Pu2[0])/(2*h), (Pu1[1]-Pu2[1])/(2*h), (Pu1[2]-Pu2[2])/(2*h) ];
+  const Xv = [ (Pv1[0]-Pv2[0])/(2*h), (Pv1[1]-Pv2[1])/(2*h), (Pv1[2]-Pv2[2])/(2*h) ];
+  return {P, Xu, Xv};
+}
+const dot3 = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+
+// metric g_ij at (u,v) via first fundamental form
+function metricAt(u, v){
+  const h = 1e-4;
+  const {Xu, Xv} = embedDerivs(u, v, h);
+  const g11 = dot3(Xu,Xu), g12 = dot3(Xu,Xv), g22 = dot3(Xv,Xv);
+  return [[g11, g12],[g12, g22]];
+}
+
+function inverse2x2(g){
+  const det = g[0][0]*g[1][1] - g[0][1]*g[1][0];
+  const d = Math.abs(det) < 1e-12 ? 1e-12 : det;
+  return [[ g[1][1]/d, -g[0][1]/d],[-g[1][0]/d, g[0][0]/d]];
+}
+
+// numeric derivative of the metric wrt x^k at (u,v)
+function metricDeriv(u, v, k, h){
+  let gp, gm;
+  if (k===0){ gp = metricAt(u+h, v); gm = metricAt(u-h, v); }
+  else      { gp = metricAt(u, v+h); gm = metricAt(u, v-h); }
+  const out = [[0,0],[0,0]];
+  for (let i=0;i<2;i++) for (let j=0;j<2;j++) out[i][j] = (gp[i][j]-gm[i][j])/(2*h);
+  return out;
+}
+
+// Christoffel symbols first kind [pq,r] and second kind Gamma^s_pq at (u,v)
+function christoffelAt(u, v){
+  const h = 2e-4;
+  const g = metricAt(u, v);
+  const ginv = inverse2x2(g);
+  const dg = [ metricDeriv(u, v, 0, h), metricDeriv(u, v, 1, h) ]; // dg[k][i][j] = d g_ij / dx^k
+
+  // first kind [pq,r] = 1/2 ( d g_pr/dx^q + d g_qr/dx^p - d g_pq/dx^r )
+  const first = [[[0,0],[0,0]],[[0,0],[0,0]]]; // [p][q][r]
+  for (let p=0;p<2;p++) for (let q=0;q<2;q++) for (let r=0;r<2;r++){
+    first[p][q][r] = 0.5*( dg[q][p][r] + dg[p][q][r] - dg[r][p][q] );
+  }
+  // second kind Gamma^s_pq = g^sr [pq,r]
+  const second = [[[0,0],[0,0]],[[0,0],[0,0]]]; // [s][p][q]
+  for (let s=0;s<2;s++) for (let p=0;p<2;p++) for (let q=0;q<2;q++){
+    let sum = 0;
+    for (let r=0;r<2;r++) sum += ginv[s][r]*first[p][q][r];
+    second[s][p][q] = sum;
+  }
+  return {g, ginv, first, second};
+}
+
+/* =====================================================================
+   3. GEODESIC RK4 INTEGRATOR
+   ===================================================================== */
+
+function geodesicDeriv(state){
+  const [u, v, pu, pv] = state;
+  const {second} = christoffelAt(u, v);
+  const p = [pu, pv];
+  let acc = [0,0];
+  for (let m=0;m<2;m++){
+    let s = 0;
+    for (let a=0;a<2;a++) for (let b=0;b<2;b++) s += second[m][a][b]*p[a]*p[b];
+    acc[m] = -s;
+  }
+  return [pu, pv, acc[0], acc[1]];
+}
+function addScaled(a,b,h){ return a.map((x,i)=>x+h*b[i]); }
+
+function integrateGeodesic(u0, v0, thetaDeg, Smax, ds){
+  const g0 = metricAt(u0, v0);
+  const th = thetaDeg*Math.PI/180;
+  let dir = [Math.cos(th), Math.sin(th)];
+  const speed2 = g0[0][0]*dir[0]*dir[0] + 2*g0[0][1]*dir[0]*dir[1] + g0[1][1]*dir[1]*dir[1];
+  const norm = Math.sqrt(Math.max(speed2, 1e-9));
+  dir = [dir[0]/norm, dir[1]/norm];
+
+  let state = [u0, v0, dir[0], dir[1]];
+  const uB = surf().uRange(), vB = surf().vRange();
+  const traj = { s:[0], u:[u0], v:[v0], pu:[dir[0]], pv:[dir[1]] };
+
+  let s = 0;
+  const steps = Math.ceil(Smax/ds);
+  for (let i=0;i<steps;i++){
+    const k1 = geodesicDeriv(state);
+    const k2 = geodesicDeriv(addScaled(state, k1, ds/2));
+    const k3 = geodesicDeriv(addScaled(state, k2, ds/2));
+    const k4 = geodesicDeriv(addScaled(state, k3, ds));
+    const next = state.map((x,idx)=> x + (ds/6)*(k1[idx]+2*k2[idx]+2*k3[idx]+k4[idx]));
+
+    // clamp to param domain for open surfaces (plane/custom) to avoid runaway
+    if (next[0] < uB[0]-50 || next[0] > uB[1]+50) break;
+
+    state = next;
+    s += ds;
+    traj.s.push(s); traj.u.push(state[0]); traj.v.push(state[1]);
+    traj.pu.push(state[2]); traj.pv.push(state[3]);
+    if (!isFinite(state[0]) || !isFinite(state[1])) break;
+  }
+  return traj;
+}
+
+/* =====================================================================
+   4. THREE.JS SCENE
+   ===================================================================== */
+
+const holder = document.getElementById('canvas-holder');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0e18);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 500);
+camera.position.set(6, 5, 7);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+holder.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+
+scene.add(new THREE.AmbientLight(0x8899bb, 0.65));
+const dl = new THREE.DirectionalLight(0xfff2dd, 0.9);
+dl.position.set(5,8,4); scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0x5ec8d8, 0.35);
+dl2.position.set(-6,-3,-4); scene.add(dl2);
+
+// grid-paper texture for the surface, echoing the "lab notebook" motif
+function makeGridTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#141c30'; ctx.fillRect(0,0,512,512);
+  ctx.strokeStyle = 'rgba(94,200,216,0.28)'; ctx.lineWidth = 1;
+  for (let i=0;i<=16;i++){
+    const p = i*512/16;
+    ctx.beginPath(); ctx.moveTo(p,0); ctx.lineTo(p,512); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,p); ctx.lineTo(512,p); ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+const gridTex = makeGridTexture();
+
+let surfaceMesh = null, wireMesh = null;
+const SEG = 60;
+
+function buildSurfaceMesh(){
+  if (surfaceMesh){ scene.remove(surfaceMesh); surfaceMesh.geometry.dispose(); }
+  if (wireMesh){ scene.remove(wireMesh); wireMesh.geometry.dispose(); }
+
+  const s = surf();
+  const [uMin,uMax] = s.uRange(), [vMin,vMax] = s.vRange();
+  const positions = [], uvs = [], indices = [];
+
+  for (let i=0;i<=SEG;i++){
+    const u = uMin + (uMax-uMin)*i/SEG;
+    for (let j=0;j<=SEG;j++){
+      const v = vMin + (vMax-vMin)*j/SEG;
+      const [x,y,z] = s.embed(u,v);
+      positions.push(x,y,z);
+      uvs.push(i/SEG, j/SEG);
+    }
+  }
+  const stride = SEG+1;
+  for (let i=0;i<SEG;i++){
+    for (let j=0;j<SEG;j++){
+      const a = i*stride+j, b = (i+1)*stride+j, c = (i+1)*stride+j+1, d = i*stride+j+1;
+      indices.push(a,b,d, b,c,d);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs,2));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+
+  const mat = new THREE.MeshStandardMaterial({
+    map: gridTex, side: THREE.DoubleSide, roughness:0.75, metalness:0.05,
+    transparent:true, opacity:0.96
+  });
+  surfaceMesh = new THREE.Mesh(geo, mat);
+  surfaceMesh.userData.uMin=uMin; surfaceMesh.userData.uMax=uMax;
+  surfaceMesh.userData.vMin=vMin; surfaceMesh.userData.vMax=vMax;
+  scene.add(surfaceMesh);
+
+  const wireGeo = new THREE.WireframeGeometry(geo);
+  wireMesh = new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({color:0x2a3654, transparent:true, opacity:0.18}));
+  scene.add(wireMesh);
+}
+
+// geodesic curve line + marker + tangent arrow
+let geoLine = null, startMarker = null, particle = null, tangentArrow = null;
+function build3DFromTraj(traj){
+  const s = surf();
+  const pts = [];
+  for (let i=0;i<traj.u.length;i++){
+    const [x,y,z] = s.embed(traj.u[i], traj.v[i]);
+    pts.push(new THREE.Vector3(x,y,z));
+  }
+  traj.points3D = pts;
+
+  if (geoLine){ scene.remove(geoLine); geoLine.geometry.dispose(); }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  geoLine = new THREE.Line(geo, new THREE.LineBasicMaterial({color:0xd4a24c, linewidth:2}));
+  scene.add(geoLine);
+
+  if (!startMarker){
+    startMarker = new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0xe0607a}));
+    scene.add(startMarker);
+  }
+  startMarker.position.copy(pts[0]);
+
+  if (!particle){
+    particle = new THREE.Mesh(new THREE.SphereGeometry(0.075,16,16), new THREE.MeshBasicMaterial({color:0x5ec8d8}));
+    scene.add(particle);
+  }
+  particle.position.copy(pts[0]);
+
+  if (tangentArrow){ scene.remove(tangentArrow); }
+  tangentArrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), pts[0], 0.9, 0x5ec8d8, 0.22, 0.12);
+  scene.add(tangentArrow);
+}
+
+function resizeRenderer(){
+  const wrap = document.getElementById('viewport-wrap');
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w,h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resizeRenderer);
+
+/* =====================================================================
+   5. STATE, UI WIRING, ANIMATION
+   ===================================================================== */
+
+let traj = null;
+let playing = false;
+let sIndex = 0;
+
+function paramToActual(range01, k){
+  // maps a -1..1 slider fraction into the surface's parametric domain,
+  // leaving a margin so start points aren't glued to the boundary/poles
+  const s = surf();
+  const [lo,hi] = k===0 ? s.uRange() : s.vRange();
+  const margin = (hi-lo)*0.12;
+  const a = lo+margin, b = hi-margin;
+  const mid = (a+b)/2, half = (b-a)/2;
+  return mid + range01*half;
+}
+
+function currentU0V0(){
+  const fu = parseFloat(document.getElementById('u0').value);
+  const fv = parseFloat(document.getElementById('v0').value);
+  return [paramToActual(fu,0), paramToActual(fv,1)];
+}
+
+function recompute(){
+  const [u0,v0] = currentU0V0();
+  const theta = parseFloat(document.getElementById('theta').value);
+  const Smax = parseFloat(document.getElementById('Smax').value);
+  const ds = parseFloat(document.getElementById('ds').value);
+  traj = integrateGeodesic(u0, v0, theta, Smax, ds);
+  build3DFromTraj(traj);
+  document.getElementById('sMaxEcho').textContent = Smax.toFixed(2);
+  sIndex = 0;
+  updateReadouts(traj.u[0], traj.v[0], 0);
+  document.getElementById('sScrub').value = 0;
+  setRing(0);
+}
+
+function setRing(pct){ document.getElementById('sRing').style.setProperty('--pct', pct.toFixed(1)); }
+
+function fmt(n){
+  if (Math.abs(n) < 1e-9) return '0';
+  return n.toFixed(4);
+}
+
+function updateReadouts(u, v, s){
+  document.getElementById('ro-u').textContent = u.toFixed(3);
+  document.getElementById('ro-v').textContent = v.toFixed(3);
+  document.getElementById('ro-s').textContent = s.toFixed(3);
+  document.getElementById('u0-val').textContent = u.toFixed(3);
+  document.getElementById('v0-val').textContent = v.toFixed(3);
+
+  const {g, ginv, first, second} = christoffelAt(u, v);
+
+  // metric table
+  const gT = document.getElementById('gTable');
+  gT.innerHTML = `<tr><th></th><th>u</th><th>v</th></tr>
+    <tr><td>u</td><td class="numcell">${fmt(g[0][0])}</td><td class="numcell">${fmt(g[0][1])}</td></tr>
+    <tr><td>v</td><td class="numcell">${fmt(g[1][0])}</td><td class="numcell">${fmt(g[1][1])}</td></tr>`;
+
+  const giT = document.getElementById('ginvTable');
+  giT.innerHTML = `<tr><th></th><th>u</th><th>v</th></tr>
+    <tr><td>u</td><td class="numcell">${fmt(ginv[0][0])}</td><td class="numcell">${fmt(ginv[0][1])}</td></tr>
+    <tr><td>v</td><td class="numcell">${fmt(ginv[1][0])}</td><td class="numcell">${fmt(ginv[1][1])}</td></tr>`;
+
+  const idx = ['1','2'];
+  let c1rows = '<tr><th>[pq,r]</th><th>value</th></tr>';
+  for (let p=0;p<2;p++) for (let q=p;q<2;q++) for (let r=0;r<2;r++){
+    const val = first[p][q][r];
+    c1rows += `<tr><td>[${idx[p]}${idx[q]}, ${idx[r]}]</td><td class="numcell ${Math.abs(val)<1e-9?'zero':''}">${fmt(val)}</td></tr>`;
+  }
+  document.getElementById('c1Table').innerHTML = c1rows;
+
+  let c2rows = '<tr><th>Γ<sup>s</sup><sub>pq</sub></th><th>value</th></tr>';
+  for (let sN=0;sN<2;sN++) for (let p=0;p<2;p++) for (let q=p;q<2;q++){
+    const val = second[sN][p][q];
+    c2rows += `<tr><td>Γ<sup>${idx[sN]}</sup><sub>${idx[p]}${idx[q]}</sub></td><td class="numcell ${Math.abs(val)<1e-9?'zero':''}">${fmt(val)}</td></tr>`;
+  }
+  document.getElementById('c2Table').innerHTML = c2rows;
+}
+
+// ---- animation loop ----
+let lastT = performance.now();
+function animate(t){
+  requestAnimationFrame(animate);
+  const dt = Math.min((t-lastT)/1000, 0.05); lastT = t;
+  controls.update();
+
+  if (playing && traj && traj.s.length>1){
+    const sMax = traj.s[traj.s.length-1];
+    let sNow = traj.s[sIndex] + dt*(sMax/3.5); // playback speed
+    if (sNow >= sMax){ sNow = sMax; playing=false; document.getElementById('playBtn').textContent='▶'; }
+    // find nearest index
+    while (sIndex < traj.s.length-1 && traj.s[sIndex] < sNow) sIndex++;
+    placeAtIndex(sIndex);
+    document.getElementById('sScrub').value = Math.round(1000*sIndex/(traj.s.length-1));
+  }
+
+  renderer.render(scene, camera);
+}
+
+function placeAtIndex(i){
+  if (!traj) return;
+  i = Math.max(0, Math.min(i, traj.points3D.length-1));
+  particle.position.copy(traj.points3D[i]);
+  document.getElementById('sNow').textContent = traj.s[i].toFixed(2);
+  setRing(100*traj.s[i]/traj.s[traj.s.length-1]);
+
+  // tangent direction in 3D via embedding partials * parametric velocity
+  const {Xu, Xv} = embedDerivs(traj.u[i], traj.v[i], 1e-4);
+  const pu = traj.pu[i], pv = traj.pv[i];
+  const dir = new THREE.Vector3(Xu[0]*pu+Xv[0]*pv, Xu[1]*pu+Xv[1]*pv, Xu[2]*pu+Xv[2]*pv);
+  if (dir.lengthSq() > 1e-10){
+    dir.normalize();
+    tangentArrow.position.copy(traj.points3D[i]);
+    tangentArrow.setDirection(dir);
+  }
+  updateReadouts(traj.u[i], traj.v[i], traj.s[i]);
+}
+
+/* =====================================================================
+   6. UI EVENT WIRING
+   ===================================================================== */
+
+function bindRangeEcho(id, decimals, suffix){
+  const el = document.getElementById(id);
+  const echo = document.getElementById(id+'-val');
+  const upd = () => { echo.textContent = parseFloat(el.value).toFixed(decimals) + (suffix||''); };
+  el.addEventListener('input', upd);
+  upd();
+}
+bindRangeEcho('sphereR',1); bindRangeEcho('torusRm',1); bindRangeEcho('torusRr',1);
+bindRangeEcho('theta',0,'°'); bindRangeEcho('Smax',1); bindRangeEcho('ds',3);
+
+document.getElementById('surfaceSelect').addEventListener('change', (e)=>{
+  currentSurfaceKey = e.target.value;
+  document.querySelectorAll('.surface-params').forEach(el=>el.classList.remove('active'));
+  const p = document.getElementById('params-'+currentSurfaceKey);
+  if (p) p.classList.add('active');
+  if (currentSurfaceKey === 'custom') rebuildCustomFns();
+  buildSurfaceMesh();
+  recompute();
+});
+
+['sphereR','torusRm','torusRr'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{ buildSurfaceMesh(); recompute(); });
+});
+['cx','cy','cz','cRangeU','cRangeV'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=>{ rebuildCustomFns(); buildSurfaceMesh(); recompute(); });
+});
+['u0','v0','theta','Smax','ds'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{ recompute(); });
+});
+
+document.getElementById('recomputeBtn').addEventListener('click', recompute);
+document.getElementById('resetViewBtn').addEventListener('click', ()=>{
+  camera.position.set(6,5,7); controls.target.set(0,0,0); controls.update();
+});
+
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  if (!traj) return;
+  if (sIndex >= traj.s.length-1) sIndex = 0;
+  playing = !playing;
+  document.getElementById('playBtn').textContent = playing ? '❚❚' : '▶';
+});
+
+document.getElementById('sScrub').addEventListener('input', (e)=>{
+  if (!traj) return;
+  playing = false; document.getElementById('playBtn').textContent = '▶';
+  const frac = parseFloat(e.target.value)/1000;
+  sIndex = Math.round(frac*(traj.s.length-1));
+  placeAtIndex(sIndex);
+});
+
+// click-to-pick start point via raycasting against the surface mesh
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+renderer.domElement.addEventListener('pointerdown', (ev)=>{
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((ev.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((ev.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hit = raycaster.intersectObject(surfaceMesh);
+  if (hit.length){
+    const uv = hit[0].uv; // fractional 0..1 along (u,v) grid
+    // convert fraction back to the -1..1 slider convention used by paramToActual
+    const fu = (uv.x-0.5)*2/0.88; // undo the 0.12 margin scaling roughly
+    const fv = (uv.y-0.5)*2/0.88;
+    document.getElementById('u0').value = Math.max(-1,Math.min(1,fu));
+    document.getElementById('v0').value = Math.max(-1,Math.min(1,fv));
+    recompute();
+  }
+});
+
+/* =====================================================================
+   7. BOOTSTRAP
+   ===================================================================== */
+rebuildCustomFns();
+buildSurfaceMesh();
+resizeRenderer();
+recompute();
+requestAnimationFrame(animate);
+new ResizeObserver(resizeRenderer).observe(document.getElementById('viewport-wrap'));
+</script>
+</body>
+</html>

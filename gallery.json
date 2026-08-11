@@ -14,6 +14,20 @@
         "thumb": ""
     },
     {
+        "title": "Bessel Functions",
+        "path": "simulation/Bessel_Functions.html",
+        "category": "Simulation",
+        "raw_file": "Bessel_Functions.html",
+        "thumb": ""
+    },
+    {
+        "title": "Bessel Functionsv1",
+        "path": "simulation/Bessel-Functionsv1.html",
+        "category": "Simulation",
+        "raw_file": "Bessel-Functionsv1.html",
+        "thumb": ""
+    },
+    {
         "title": "Bessel Legendre Sim",
         "path": "simulation/bessel_legendre_sim.html",
         "category": "Simulation",
@@ -43,8 +57,8 @@
     },
     {
         "title": "Cardioid Simulation",
-        "path": "simulation/Cardioid Simulation.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_6/Cardioid Simulation.html",
+        "category": "Chapters - Chapter 6",
         "raw_file": "Cardioid Simulation.html",
         "thumb": ""
     },
@@ -105,30 +119,37 @@
         "thumb": ""
     },
     {
-        "title": "Cycloid Simulation",
-        "path": "simulation/cycloid_simulation.html",
+        "title": "Curvilinear Atlas",
+        "path": "simulation/Curvilinear-Atlas.html",
         "category": "Simulation",
+        "raw_file": "Curvilinear-Atlas.html",
+        "thumb": ""
+    },
+    {
+        "title": "Cycloid Simulation",
+        "path": "chapters/chapter_6/cycloid_simulation.html",
+        "category": "Chapters - Chapter 6",
         "raw_file": "cycloid_simulation.html",
         "thumb": ""
     },
     {
         "title": "Differential Geometry Lab V3",
-        "path": "simulation/Differential_Geometry_Lab_V3.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Differential_Geometry_Lab_V3.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Differential_Geometry_Lab_V3.html",
         "thumb": ""
     },
     {
         "title": "Differential Geometry Lab V4",
-        "path": "simulation/Differential_Geometry_Lab_V4.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Differential_Geometry_Lab_V4.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Differential_Geometry_Lab_V4.html",
         "thumb": ""
     },
     {
         "title": "Differential Geometry Lab V5",
-        "path": "simulation/Differential_Geometry_Lab_V5.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Differential_Geometry_Lab_V5.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Differential_Geometry_Lab_V5.html",
         "thumb": ""
     },
@@ -148,8 +169,8 @@
     },
     {
         "title": "Epicycloid Simulator",
-        "path": "simulation/epicycloid_simulator.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_6/epicycloid_simulator.html",
+        "category": "Chapters - Chapter 6",
         "raw_file": "epicycloid_simulator.html",
         "thumb": ""
     },
@@ -162,22 +183,22 @@
     },
     {
         "title": "Evolute Explorer V1",
-        "path": "simulation/Evolute_Explorer_V1.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Evolute_Explorer_V1.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Evolute_Explorer_V1.html",
         "thumb": ""
     },
     {
         "title": "Evolute Explorer V2",
-        "path": "simulation/Evolute_Explorer_V2.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Evolute_Explorer_V2.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Evolute_Explorer_V2.html",
         "thumb": ""
     },
     {
         "title": "Fixed Evolute Explorer",
-        "path": "simulation/Fixed_Evolute_Explorer.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Fixed_Evolute_Explorer.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Fixed_Evolute_Explorer.html",
         "thumb": ""
     },
@@ -245,6 +266,13 @@
         "thumb": ""
     },
     {
+        "title": "Geodesic Lab",
+        "path": "simulation/geodesic-lab.html",
+        "category": "Simulation",
+        "raw_file": "geodesic-lab.html",
+        "thumb": ""
+    },
+    {
         "title": "Greens Theorem 3D",
         "path": "simulation/greens_theorem_3d.html",
         "category": "Simulation",
@@ -263,6 +291,20 @@
         "path": "chapters/chapter_3/indetermanint.html",
         "category": "Chapters - Chapter 3",
         "raw_file": "indetermanint.html",
+        "thumb": ""
+    },
+    {
+        "title": "Indeterminate Forms Lab",
+        "path": "chapters/chapter_3/indeterminate_forms_lab.html",
+        "category": "Chapters - Chapter 3",
+        "raw_file": "indeterminate_forms_lab.html",
+        "thumb": ""
+    },
+    {
+        "title": "Indeterminate Forms Lhopital Lab",
+        "path": "chapters/chapter_3/indeterminate-forms-lhopital-lab.html",
+        "category": "Chapters - Chapter 3",
+        "raw_file": "indeterminate-forms-lhopital-lab.html",
         "thumb": ""
     },
     {
@@ -319,6 +361,13 @@
         "path": "simulation/maclaurin_simulator.html",
         "category": "Simulation",
         "raw_file": "maclaurin_simulator.html",
+        "thumb": ""
+    },
+    {
+        "title": "Manim Studio",
+        "path": "manim_studio.html",
+        "category": "🎥 Manim Studio",
+        "raw_file": "manim_studio.html",
         "thumb": ""
     },
     {
@@ -582,8 +631,8 @@
     },
     {
         "title": "Special Curves",
-        "path": "simulation/special_curves.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_6/special_curves.html",
+        "category": "Chapters - Chapter 6",
         "raw_file": "special_curves.html",
         "thumb": ""
     },
@@ -595,10 +644,24 @@
         "thumb": ""
     },
     {
+        "title": "Special Functions",
+        "path": "simulation/Special_Functions.html",
+        "category": "Simulation",
+        "raw_file": "Special_Functions.html",
+        "thumb": ""
+    },
+    {
         "title": "Spherical Trig",
         "path": "chapters/chapter_8/spherical_trig.html",
         "category": "Chapters - Chapter 8",
         "raw_file": "spherical_trig.html",
+        "thumb": ""
+    },
+    {
+        "title": "Spherical Trigonometry Explorer",
+        "path": "chapters/chapter_8/Spherical Trigonometry Explorer.html",
+        "category": "Chapters - Chapter 8",
+        "raw_file": "Spherical Trigonometry Explorer.html",
         "thumb": ""
     },
     {
@@ -659,9 +722,23 @@
     },
     {
         "title": "Textbook Style Evolute App",
-        "path": "simulation/Textbook_Style_Evolute_App.html",
-        "category": "Simulation",
+        "path": "chapters/chapter_7/Textbook_Style_Evolute_App.html",
+        "category": "Chapters - Chapter 7",
         "raw_file": "Textbook_Style_Evolute_App.html",
+        "thumb": ""
+    },
+    {
+        "title": "The Divergence Theorem",
+        "path": "simulation/The-Divergence-Theorem.html",
+        "category": "Simulation",
+        "raw_file": "The-Divergence-Theorem.html",
+        "thumb": ""
+    },
+    {
+        "title": "The Divergence Theorem Explorer",
+        "path": "simulation/The-Divergence-Theorem-Explorer.html",
+        "category": "Simulation",
+        "raw_file": "The-Divergence-Theorem-Explorer.html",
         "thumb": ""
     },
     {
@@ -704,6 +781,13 @@
         "path": "simulation/transform-atlas.html",
         "category": "Simulation",
         "raw_file": "transform-atlas.html",
+        "thumb": ""
+    },
+    {
+        "title": "Vector Calculus Lab",
+        "path": "simulation/Vector-Calculus-Lab.html",
+        "category": "Simulation",
+        "raw_file": "Vector-Calculus-Lab.html",
         "thumb": ""
     },
     {

@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Indeterminate Forms &amp; L'Hôpital 3D Visual Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.js"></script>
+
+<style>
+  :root{
+    --bg:        #080B12;
+    --bg-panel:  #0E131D;
+    --bg-raise:  #131A26;
+    --line:      #212B3B;
+    --ink:       #E7ECF6;
+    --ink-dim:   #8A93A8;
+    --ink-faint: #545E72;
+    --accent:    #48D6C8;   /* result curve / signature teal */
+    --accent-dim:#1F5A55;
+    --red:       #FF5D6C;   /* original functions */
+    --red-dim:   #7A2530;
+    --rose:      #E8558E;   /* g curve */
+    --green:     #3ADD8B;   /* derivatives / L'Hopital */
+    --yellow:    #F6C445;   /* tracer / convergence */
+    --amber:     #F0A63A;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    margin:0; height:100%; overflow:hidden;
+  }
+  .font-display{font-family:'Space Grotesk',sans-serif;}
+  .font-mono{font-family:'JetBrains Mono',monospace;}
+
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--ink-faint);}
+
+  /* ---- lab console header ---- */
+  .console-tab{
+    position:relative;
+    border:1px solid var(--line);
+    background:var(--bg-panel);
+    transition:all .15s ease;
+  }
+  .console-tab:hover{ border-color:var(--ink-faint); background:var(--bg-raise); }
+  .console-tab.active{
+    border-color:var(--accent);
+    background:linear-gradient(180deg, rgba(72,214,200,.14), rgba(72,214,200,.03));
+    box-shadow: inset 0 0 0 1px rgba(72,214,200,.25);
+  }
+  .console-light{
+    width:6px;height:6px;border-radius:999px;background:var(--ink-faint);
+    box-shadow:0 0 0 3px rgba(84,94,114,0.08);
+    transition:all .2s ease;
+  }
+  .console-tab.active .console-light{
+    background:var(--accent);
+    box-shadow:0 0 8px 1px var(--accent), 0 0 0 3px rgba(72,214,200,0.12);
+  }
+
+  .panel{ background:var(--bg-panel); border:1px solid var(--line); }
+  .card{ background:var(--bg-raise); border:1px solid var(--line); }
+
+  .badge-indeterminate{
+    background:linear-gradient(180deg, rgba(255,93,108,.18), rgba(255,93,108,.06));
+    border:1px solid rgba(255,93,108,.45);
+    color:var(--red);
+  }
+  .badge-final{
+    background:linear-gradient(180deg, rgba(72,214,200,.18), rgba(72,214,200,.05));
+    border:1px solid rgba(72,214,200,.5);
+    color:var(--accent);
+  }
+  .badge-ok{ color:var(--green); }
+  .badge-warn{ color:var(--yellow); }
+
+  .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    height:4px; border-radius:99px;
+    background:var(--line); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:14px;height:14px;border-radius:999px;
+    background:var(--accent); border:2px solid #04110F;
+    cursor:pointer; box-shadow:0 0 6px rgba(72,214,200,.6);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:999px;
+    background:var(--accent); border:2px solid #04110F; cursor:pointer;
+  }
+
+  select, .text-input{
+    background:var(--bg-raise); border:1px solid var(--line); color:var(--ink);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px;
+  }
+  select:focus, .text-input:focus{ outline:none; border-color:var(--accent); }
+
+  .icon-btn{
+    border:1px solid var(--line); background:var(--bg-raise); color:var(--ink-dim);
+    transition:all .15s ease;
+  }
+  .icon-btn:hover{ color:var(--ink); border-color:var(--ink-faint); }
+  .icon-btn.primary{ color:var(--bg); background:var(--accent); border-color:var(--accent); }
+  .icon-btn.primary:hover{ filter:brightness(1.08); }
+  .icon-btn:focus-visible, .console-tab:focus-visible, select:focus-visible, .text-input:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+
+  .step-num{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-faint);
+    letter-spacing:.08em;
+  }
+
+  #canvas-wrap{ position:relative; }
+  #three-canvas{ display:block; width:100%; height:100%; }
+
+  .katex-display{ margin:0.35em 0; }
+  .katex{ font-size:1.02em; }
+
+  .scan-noise{
+    background-image: radial-gradient(circle at 50% 0%, rgba(72,214,200,0.05), transparent 60%);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .console-tab, .icon-btn{ transition:none; }
+  }
+</style>
+</head>
+<body class="scan-noise">
+
+<div class="h-screen w-screen flex flex-col">
+
+  <!-- ============ HEADER ============ -->
+  <header class="panel px-4 py-3 flex flex-wrap items-center gap-3 shrink-0 z-20">
+    <div class="flex items-center gap-2.5 pr-3 mr-1 border-r border-[var(--line)]">
+      <div class="w-2 h-2 rounded-full" style="background:var(--accent); box-shadow:0 0 8px var(--accent);"></div>
+      <div>
+        <h1 class="font-display font-semibold text-[15px] leading-tight tracking-tight">Indeterminate Forms &amp; L'Hôpital</h1>
+        <p class="text-[10px] font-mono text-[var(--ink-faint)] tracking-widest uppercase">3D Visual Lab</p>
+      </div>
+    </div>
+
+    <nav id="module-tabs" class="flex flex-wrap gap-1.5 flex-1 min-w-[280px]"></nav>
+
+    <div class="flex items-center gap-2">
+      <select id="preset-select" class="rounded px-2 py-1.5 text-[11px] w-44"></select>
+      <button id="custom-toggle" class="icon-btn rounded px-2.5 py-1.5 text-[11px] font-mono">Custom f,g</button>
+    </div>
+  </header>
+
+  <!-- custom expression bar -->
+  <div id="custom-bar" class="hidden panel px-4 py-2 flex flex-wrap items-center gap-2 shrink-0 border-t-0 z-10">
+    <span class="text-[11px] font-mono text-[var(--ink-dim)]">f(x) =</span>
+    <input id="input-f" class="text-input rounded px-2 py-1 w-36" value="sin(x)"/>
+    <span class="text-[11px] font-mono text-[var(--ink-dim)]">g(x) =</span>
+    <input id="input-g" class="text-input rounded px-2 py-1 w-36" value="x"/>
+    <span class="text-[11px] font-mono text-[var(--ink-dim)]">a =</span>
+    <input id="input-a" class="text-input rounded px-2 py-1 w-20" value="0"/>
+    <button id="apply-custom" class="icon-btn primary rounded px-3 py-1 text-[11px] font-mono font-semibold">Apply</button>
+    <span id="custom-error" class="text-[11px] font-mono text-[var(--red)]"></span>
+  </div>
+
+  <!-- ============ MAIN WORKSPACE ============ -->
+  <main class="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 p-3">
+
+    <!-- LEFT: 3D canvas -->
+    <section class="panel rounded-lg flex-1 min-h-[320px] lg:min-h-0 relative overflow-hidden" id="canvas-wrap">
+      <canvas id="three-canvas"></canvas>
+
+      <!-- legend -->
+      <div class="absolute top-3 left-3 card rounded-md px-3 py-2 text-[10.5px] font-mono space-y-1 leading-relaxed pointer-events-none">
+        <div class="flex items-center gap-1.5"><span class="swatch" style="background:var(--red)"></span> f(x) — original</div>
+        <div class="flex items-center gap-1.5"><span class="swatch" style="background:var(--rose)"></span> g(x) — original</div>
+        <div class="flex items-center gap-1.5"><span class="swatch" style="background:var(--accent)"></span> h(x) — combined value</div>
+        <div class="flex items-center gap-1.5"><span class="swatch" style="background:var(--green)"></span> derivative slopes</div>
+        <div class="flex items-center gap-1.5"><span class="swatch" style="background:var(--yellow)"></span> tracer / limit</div>
+      </div>
+
+      <!-- view toggle -->
+      <div class="absolute top-3 right-3 flex gap-1.5">
+        <button id="view-curve" class="icon-btn primary rounded px-2.5 py-1.5 text-[10.5px] font-mono">Curves</button>
+        <button id="view-surface" class="icon-btn rounded px-2.5 py-1.5 text-[10.5px] font-mono">Surface z=op(f,g)</button>
+      </div>
+
+      <!-- readout -->
+      <div class="absolute bottom-16 left-3 card rounded-md px-3 py-2 text-[11px] font-mono leading-relaxed" id="live-readout">
+      </div>
+
+      <!-- controls overlay -->
+      <div class="absolute bottom-3 left-3 right-3 card rounded-lg px-3 py-2.5 flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <button id="btn-play" class="icon-btn primary rounded w-8 h-8 flex items-center justify-center text-sm" title="Play/Pause approach">▶</button>
+          <button id="btn-step-back" class="icon-btn rounded w-8 h-8 flex items-center justify-center text-xs" title="Step back">⟵</button>
+          <button id="btn-step-fwd" class="icon-btn rounded w-8 h-8 flex items-center justify-center text-xs" title="Step forward">⟶</button>
+          <input id="scrub" type="range" min="0" max="1000" value="0" class="flex-1 mx-1"/>
+          <button id="btn-reset-view" class="icon-btn rounded px-2.5 h-8 text-[10.5px] font-mono" title="Reset camera">Reset View</button>
+        </div>
+        <div class="flex items-center gap-3 text-[10.5px] font-mono text-[var(--ink-dim)]">
+          <span>Speed</span>
+          <input id="speed" type="range" min="1" max="10" value="4" class="w-24"/>
+          <label class="flex items-center gap-1.5 ml-2 cursor-pointer select-none">
+            <input id="toggle-deriv" type="checkbox" checked class="accent-[var(--green)]"/> derivative curves
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input id="toggle-tangent" type="checkbox" checked class="accent-[var(--green)]"/> tangent lines
+          </label>
+          <span id="approach-label" class="ml-auto text-[var(--ink-faint)]"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: explanation engine -->
+    <aside class="panel rounded-lg w-full lg:w-[400px] shrink-0 overflow-y-auto p-4 space-y-3" id="explain-panel">
+
+      <div>
+        <p class="step-num">CURRENT STATE</p>
+        <div class="card rounded-md p-3 mt-1.5">
+          <div id="limit-expr" class="text-center py-1"></div>
+          <div class="flex items-center justify-center gap-2 mt-1">
+            <span class="text-[10.5px] font-mono text-[var(--ink-faint)]">evaluates to</span>
+            <span id="form-badge" class="badge-indeterminate rounded px-2 py-0.5 text-[12px] font-mono font-semibold"></span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="step-num">01 — TRANSFORMATION STEP</p>
+        <div class="card rounded-md p-3 mt-1.5 text-[13px] leading-relaxed text-[var(--ink-dim)]" id="transform-note"></div>
+      </div>
+
+      <div>
+        <p class="step-num">02 — L'HÔPITAL APPLICATION</p>
+        <div class="card rounded-md p-3 mt-1.5 space-y-2">
+          <div id="deriv-block" class="text-center"></div>
+          <div class="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1 border-t border-[var(--line)]">
+            <div>
+              <span class="text-[var(--ink-faint)]">differentiable near a</span>
+              <div id="cond-diff" class="badge-ok font-semibold">✓ yes</div>
+            </div>
+            <div>
+              <span class="text-[var(--ink-faint)]">denominator deriv. ≠ 0</span>
+              <div id="cond-denom" class="font-semibold">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="step-num">03 — FINAL LIMIT VALUE</p>
+        <div class="card rounded-md p-4 mt-1.5 text-center">
+          <div id="final-limit" class="badge-final inline-block rounded-md px-4 py-2 text-[18px]"></div>
+          <p id="final-note" class="text-[10.5px] font-mono text-[var(--ink-faint)] mt-2"></p>
+        </div>
+      </div>
+
+      <div id="module-blurb" class="text-[11.5px] leading-relaxed text-[var(--ink-faint)] pt-1 pb-2 border-t border-[var(--line)]"></div>
+
+    </aside>
+  </main>
+</div>
+
+<script>
+/* ============================================================================
+   MATH ENGINE
+============================================================================ */
+const M = math.create(math.all, {});
+
+function compileFn(exprStr){
+  try{
+    const node = M.parse(exprStr);
+    const code = node.compile();
+    return {
+      ok:true,
+      expr: exprStr,
+      fn: (x)=>{
+        try{
+          const v = code.evaluate({x:x});
+          if (typeof v === 'object' && v!==null){
+            if (v.im !== undefined) return (Math.abs(v.im) > 1e-9) ? NaN : v.re;
+            return NaN;
+          }
+          return v;
+        }catch(e){ return NaN; }
+      }
+    };
+  }catch(e){
+    return {ok:false, error:e.message, fn:()=>NaN, expr:exprStr};
+  }
+}
+
+function derivativeStr(exprStr){
+  try{
+    return M.derivative(exprStr,'x').toString({implicit:'show'});
+  }catch(e){ return null; }
+}
+
+function toLatex(exprStr){
+  try{ return M.parse(exprStr).toTex({parenthesis:'auto'}); }
+  catch(e){ return exprStr; }
+}
+
+function opValue(op, fx, gy){
+  if (!isFinite(fx) && !Number.isNaN(fx) === false) {} // no-op guard placeholder
+  switch(op){
+    case 'div': return fx/gy;
+    case 'mul': return fx*gy;
+    case 'sub': return fx-gy;
+    case 'pow': {
+      if (fx < 0){
+        // only allow integer exponents for negative base
+        if (Math.abs(gy - Math.round(gy)) > 1e-6) return NaN;
+      }
+      const r = Math.pow(fx, gy);
+      return isFinite(r) ? r : (Number.isNaN(r) ? NaN : r);
+    }
+  }
+}
+
+function opSymbol(op){
+  return {div:'/', mul:'\\cdot', sub:'-', pow:'^'}[op];
+}
+
+function fmtNum(v){
+  if (v === null || v === undefined || Number.isNaN(v)) return '\\text{undefined}';
+  if (!isFinite(v)) return v>0 ? '+\\infty' : '-\\infty';
+  const known = [
+    [0,'0'], [1,'1'], [-1,'-1'],
+    [Math.E,'e'], [Math.E*Math.E,'e^{2}'], [1/Math.E,'e^{-1}'],
+    [Math.LOG2E,'\\log_2 e'], [Math.PI,'\\pi'], [0.5,'\\tfrac12']
+  ];
+  for (const [val,label] of known){
+    if (Math.abs(v-val) < 1e-4) return label + '\\;(' + v.toFixed(4) + ')';
+  }
+  return (Math.round(v*10000)/10000).toString();
+}
+
+/* numeric limit estimator: approaches 'a' (or +inf) from the domain-defined side */
+function numericLimit(fn, a, isInfinite, farSide){
+  const eps = isInfinite ? [50,200,1000,5000,50000,500000] : [1e-2,1e-3,1e-4,1e-5,1e-6,1e-7];
+  let last = NaN;
+  for (const e of eps){
+    const x = isInfinite ? e : (a + Math.sign(farSide - a || 1) * e);
+    const v = fn(x);
+    if (isFinite(v)) last = v;
+    else if (!Number.isNaN(v)) last = v; // +-Infinity
+  }
+  return last;
+}
+
+/* ============================================================================
+   MODULE DEFINITIONS
+============================================================================ */
+const MODULES = [
+  {
+    key:'z0', navLabel:'0⁄0', label:'The 0/0 Form', formLatex:'\\dfrac{0}{0}', op:'div', infinite:false,
+    presets:[
+      {name:'sin(x)/x → 1', f:'sin(x)', g:'x', a:0, domain:[-6,6]},
+      {name:'(1-cos x)/x² → 1/2', f:'1-cos(x)', g:'x^2', a:0, domain:[-6,6]}
+    ],
+    transform:"Both curves already vanish at $x=a$, so no algebraic rewrite is needed. L'Hôpital's Rule replaces the ratio of the functions with the ratio of their tangent-line slopes, since near $a$ each curve is well approximated by $f(x)\\approx f'(a)(x-a)$ and $g(x)\\approx g'(a)(x-a)$ — the $(x-a)$ factors cancel.",
+    blurb:"This is L'Hôpital's original and most familiar setting: two curves that both cross zero at the same point. Zoom the tracer toward $x=a$ and watch the red curves collapse toward the origin while the teal ratio curve $h(x)=f(x)/g(x)$ settles onto a finite height — the slope-of-slope behind the scenes is exactly the green tangent lines."
+  },
+  {
+    key:'zi', navLabel:'∞⁄∞', label:'The ∞/∞ Form', formLatex:'\\dfrac{\\infty}{\\infty}', op:'div', infinite:true,
+    presets:[
+      {name:'eˣ/x² → ∞', f:'e^x', g:'x^2', a:Infinity, domain:[0.6,10]},
+      {name:'ln(x)/x → 0', f:'log(x)', g:'x', a:Infinity, domain:[1.2,40]}
+    ],
+    transform:"Both $f(x)$ and $g(x)$ grow without bound as $x\\to\\infty$. L'Hôpital's second rule applies directly to the same ratio — no rewrite required — and compares the *instantaneous growth rates* $f'(x)$ and $g'(x)$ instead of the raw diverging values.",
+    blurb:"Here the story is about relative speed. Exponentials outrun every polynomial, polynomials outrun logarithms — the green derivative curves reveal exactly why: the ratio of slopes converges even though both original curves race off to infinity."
+  },
+  {
+    key:'p0i', navLabel:'0·∞', label:"Indeterminate Product", formLatex:'0\\cdot\\infty', op:'mul', infinite:false,
+    presets:[
+      {name:'x·ln(x) → 0', f:'x', g:'log(x)', a:0, domain:[0.02,3]},
+      {name:'x·(1/x) → 1', f:'x', g:'1/x', a:0, domain:[0.02,3]}
+    ],
+    transform:"Rewrite the product as a quotient by inverting one factor: $f(x)\\cdot g(x)=\\dfrac{f(x)}{1/g(x)}$. This turns a $0\\cdot\\infty$ collision into a $0/0$ or $\\infty/\\infty$ quotient that L'Hôpital's Rule can act on directly.",
+    blurb:"A shrinking width multiplied by a growing height — think of a rectangle whose base tends to zero while its height tends to infinity. The product can vanish, blow up, or (surprisingly) settle on a perfectly ordinary finite number, as the second preset shows."
+  },
+  {
+    key:'dii', navLabel:'∞−∞', label:'Indeterminate Difference', formLatex:'\\infty-\\infty', op:'sub', infinite:false,
+    presets:[
+      {name:'1/sin(x) − 1/x → 0', f:'1/sin(x)', g:'1/x', a:0, domain:[-2,2]},
+      {name:'1/ln(x) − 1/(x−1) → 1/2', f:'1/log(x)', g:'1/(x-1)', a:1, domain:[0.15,3]}
+    ],
+    transform:"Unify the two divergent terms over a common denominator: $f(x)-g(x)=\\dfrac{\\frac{1}{g(x)}-\\frac{1}{f(x)}}{\\frac{1}{f(x)\\,g(x)}}$. Written this way the numerator and denominator both vanish together, converting an $\\infty-\\infty$ clash into an ordinary $0/0$ limit.",
+    blurb:"Two infinite towers rising side by side can still leave a finite gap between them. The combined-denominator trick makes that gap visible as an honest $0/0$ limit — the canyon between the red surfaces levels off along the diagonal $x=y$."
+  },
+  {
+    key:'p00', navLabel:'0⁰', label:'Indeterminate Power 0⁰', formLatex:'0^{0}', op:'pow', infinite:false,
+    presets:[
+      {name:'xˣ → 1', f:'x', g:'x', a:0, domain:[0.001,2]},
+      {name:'sin(x)ˣ → 1', f:'sin(x)', g:'x', a:0, domain:[0.001,2]}
+    ],
+    transform:"Take logarithms: let $y=f(x)^{g(x)}$, so $\\ln y = g(x)\\ln f(x)$, which is now a $0\\cdot\\infty$ product ($\\ln f(x)\\to-\\infty$, $g(x)\\to 0$ — treated as $\\ln f(x)/(1/g(x))$). Solve that limit $L$ with L'Hôpital, then exponentiate: $y\\to e^{L}$.",
+    blurb:"The surface $z=x^y$ near the origin is famously path-dependent — approach along different rays $y=kx$ and you can make the naive value do almost anything. Passing through the logarithm removes the ambiguity and gives a single well-defined limit."
+  },
+  {
+    key:'p1i', navLabel:'1^∞', label:'Indeterminate Power 1^∞', formLatex:'1^{\\infty}', op:'pow', infinite:true,
+    presets:[
+      {name:'(1+2/x)ˣ → e²', f:'1+2/x', g:'x', a:Infinity, domain:[2,60]},
+      {name:'(1+1/x)ˣ → e', f:'1+1/x', g:'x', a:Infinity, domain:[2,60]}
+    ],
+    transform:"Again take logs: $\\ln y = g(x)\\ln f(x)$. Since $f(x)\\to 1$, $\\ln f(x)\\to 0$ while $g(x)\\to\\infty$ — a $0\\cdot\\infty$ product. Rewritten as $\\ln f(x)/(1/g(x))$ it becomes $0/0$, ready for L'Hôpital; exponentiating the result recovers $y$.",
+    blurb:"This is the limit that defines Euler's number itself. As the base creeps toward 1 the exponent races toward infinity, and the two effects settle into the famous constant $e$ (or $e^{k}$ for a scaled variant) rather than collapsing to 1."
+  },
+  {
+    key:'pi0', navLabel:'∞⁰', label:'Indeterminate Power ∞⁰', formLatex:'\\infty^{0}', op:'pow', infinite:true,
+    presets:[
+      {name:'x^(1/x) → 1', f:'x', g:'1/x', a:Infinity, domain:[1.5,60]},
+      {name:'(x²)^(1/x) → 1', f:'x^2', g:'1/x', a:Infinity, domain:[1.5,60]}
+    ],
+    transform:"Once more, $\\ln y = g(x)\\ln f(x)$: now $\\ln f(x)\\to\\infty$ while $g(x)\\to 0$, a $0\\cdot\\infty$ product. Rewrite as $\\ln f(x)/(1/g(x))\\to\\infty/\\infty$, apply L'Hôpital, then exponentiate.",
+    blurb:"An unboundedly large base raised to a vanishing power is a tug-of-war between explosive growth and a shrinking exponent. The exponent almost always wins this particular race, flattening the towering base back down toward 1."
+  }
+];
+
+/* ============================================================================
+   STATE
+============================================================================ */
+const state = {
+  moduleIdx: 0,
+  preset: null,          // {f,g,a,domain}
+  isCustom: false,
+  t: 0,                  // 0..1 scrub param
+  playing: false,
+  speed: 4,
+  viewMode: 'curve',     // curve | surface
+  showDeriv: true,
+  showTangent: true,
+  compiledF: null,
+  compiledG: null,
+};
+
+function currentModule(){ return MODULES[state.moduleIdx]; }
+
+function xFromT(t){
+  const mod = currentModule();
+  const {a, domain} = state.preset;
+  if (mod.infinite){
+    return domain[0] + (domain[1]-domain[0]) * t;
+  } else {
+    const far = domain[1] > a ? domain[1] : domain[0];
+    return a + (far - a) * (1 - t*0.995);
+  }
+}
+
+/* ============================================================================
+   THREE.JS SCENE
+============================================================================ */
+let renderer, scene, camera, controls, contentGroup;
+let tracerMesh, convergenceRing;
+
+function initThree(){
+  const wrap = document.getElementById('canvas-wrap');
+  const canvas = document.getElementById('three-canvas');
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x080b12);
+  scene.fog = new THREE.FogExp2(0x080b12, 0.028);
+
+  camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+  setDefaultCamera();
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 4;
+  controls.maxDistance = 60;
+
+  const amb = new THREE.AmbientLight(0x8899bb, 0.65);
+  scene.add(amb);
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir1.position.set(8,12,10);
+  scene.add(dir1);
+  const dir2 = new THREE.DirectionalLight(0x48d6c8, 0.35);
+  dir2.position.set(-8,-4,-6);
+  scene.add(dir2);
+
+  const grid = new THREE.GridHelper(24, 24, 0x22303f, 0x151d29);
+  grid.position.y = -3.2;
+  scene.add(grid);
+
+  const axes = new THREE.AxesHelper(9);
+  axes.material.transparent = true;
+  axes.material.opacity = 0.35;
+  scene.add(axes);
+
+  contentGroup = new THREE.Group();
+  scene.add(contentGroup);
+
+  tracerMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 20, 20),
+    new THREE.MeshStandardMaterial({color:0xf6c445, emissive:0xf6c445, emissiveIntensity:0.9})
+  );
+  scene.add(tracerMesh);
+
+  convergenceRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.22,0.30,32),
+    new THREE.MeshBasicMaterial({color:0xf6c445, side:THREE.DoubleSide, transparent:true, opacity:0.85})
+  );
+  scene.add(convergenceRing);
+
+  resizeRenderer();
+  window.addEventListener('resize', resizeRenderer);
+  requestAnimationFrame(animate);
+}
+
+function setDefaultCamera(){
+  camera.position.set(9, 6, 11);
+  camera.lookAt(0,0,0);
+}
+
+function resizeRenderer(){
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+
+function clearGroup(g){
+  while(g.children.length){
+    const c = g.children.pop();
+    if (c.geometry) c.geometry.dispose();
+    if (c.material) c.material.dispose();
+    g.remove(c);
+  }
+}
+
+function makeLine(points, color, opts={}){
+  const geom = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({
+    color, transparent:true, opacity: opts.opacity ?? 1,
+    linewidth:1
+  });
+  const line = opts.dashed
+    ? new THREE.Line(geom, new THREE.LineDashedMaterial({color, dashSize:0.18, gapSize:0.12, transparent:true, opacity:opts.opacity ?? 1}))
+    : new THREE.Line(geom, mat);
+  if (opts.dashed) line.computeLineDistances();
+  return line;
+}
+
+/* map math-space -> scene-space:
+   scene X <- x (scaled), scene Y <- function value h (scaled, clamped), scene Z <- offset (curve lane) */
+const SX = 1.0;   // x scale
+const SY = 1.0;   // value scale
+const CAP = 6.5;  // vertical clamp for display sanity
+
+function clampY(v){
+  if (Number.isNaN(v)) return null;
+  if (!isFinite(v)) return v>0?CAP:-CAP;
+  return Math.max(-CAP, Math.min(CAP, v));
+}
+
+function sampleCurve(fn, domain, aExclude, zOffset, n=260){
+  const pts = [];
+  const [x0,x1] = domain;
+  const span = x1-x0;
+  for (let i=0;i<=n;i++){
+    const x = x0 + (span*i/n);
+    if (isFinite(aExclude) && Math.abs(x-aExclude) < span*0.006) { 
+      if (pts.length>1) pts.push(new THREE.Vector3(NaN,NaN,NaN)); // break
+      continue;
+    }
+    const y = fn(x);
+    const cy = clampY(y);
+    if (cy===null){ if (pts.length>1) pts.push(new THREE.Vector3(NaN,NaN,NaN)); continue; }
+    pts.push(new THREE.Vector3(x*SX, cy*SY, zOffset));
+  }
+  return splitOnNaN(pts);
+}
+
+function splitOnNaN(pts){
+  const segs = []; let cur=[];
+  for (const p of pts){
+    if (Number.isNaN(p.x)){ if (cur.length>1) segs.push(cur); cur=[]; }
+    else cur.push(p);
+  }
+  if (cur.length>1) segs.push(cur);
+  return segs;
+}
+
+function addMultiLine(group, segs, color, opts={}){
+  for (const seg of segs){ group.add(makeLine(seg,color,opts)); }
+}
+
+function buildCurveView(){
+  if (!state.preset) return;
+  clearGroup(contentGroup);
+  const mod = currentModule();
+  const {a, domain} = state.preset;
+  const F = state.compiledF.fn, G = state.compiledG.fn;
+  const H = (x)=>opValue(mod.op, F(x), G(x));
+
+  const zF = -1.7, zG = 1.7, zH = 0;
+
+  addMultiLine(contentGroup, sampleCurve(F, domain, a, zF), 0xff5d6c);
+  addMultiLine(contentGroup, sampleCurve(G, domain, a, zG), 0xe8558e);
+  addMultiLine(contentGroup, sampleCurve(H, domain, a, zH), 0x48d6c8, {opacity:1});
+
+  // connector rails between lanes for spatial clarity
+  const railMat = new THREE.LineBasicMaterial({color:0x1c2636, transparent:true, opacity:0.6});
+  [zF,zG].forEach(z=>{
+    const g = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(domain[0]*SX, -3.2, z), new THREE.Vector3(domain[1]*SX, -3.2, z)
+    ]);
+    contentGroup.add(new THREE.Line(g, railMat));
+  });
+
+  // derivative curves
+  if (state.showDeriv){
+    const fp = compileFn(state.dF);
+    const gp = compileFn(state.dG);
+    if (fp.ok) addMultiLine(contentGroup, sampleCurve(fp.fn, domain, a, zF), 0x3add8b, {dashed:true, opacity:0.85});
+    if (gp.ok) addMultiLine(contentGroup, sampleCurve(gp.fn, domain, a, zG), 0x3add8b, {dashed:true, opacity:0.85});
+  }
+
+  // tangent lines (local linear approx) at x=a
+  if (state.showTangent && !mod.infinite){
+    const span = (domain[1]-domain[0])*0.22;
+    tryTangent(F, state.dFfn, a, zF, span);
+    tryTangent(G, state.dGfn, a, zG, span);
+  }
+
+  // axis label sprites
+  addLabel(contentGroup, `x`, domain[1]*SX+0.4, -3.0, zH, '#8A93A8');
+  addLabel(contentGroup, `f(x)`, domain[0]*SX-0.6, 0, zF, '#FF5D6C');
+  addLabel(contentGroup, `g(x)`, domain[0]*SX-0.6, 0, zG, '#E8558E');
+  addLabel(contentGroup, `h(x)`, domain[0]*SX-0.6, 0, zH, '#48D6C8');
+}
+
+function tryTangent(fn, dfn, a, z, span){
+  if (!isFinite(a) || !dfn) return;
+  const fa = fn(a);
+  const slope = dfn(a);
+  if (!isFinite(fa) || !isFinite(slope)) return;
+  const p1 = new THREE.Vector3((a-span)*SX, clampY(fa - slope*span), z);
+  const p2 = new THREE.Vector3((a+span)*SX, clampY(fa + slope*span), z);
+  contentGroup.add(makeLine([p1,p2], 0x3add8b, {opacity:0.95}));
+}
+
+function addLabel(group, text, x,y,z, colorHex){
+  const cvs = document.createElement('canvas');
+  cvs.width = 256; cvs.height = 96;
+  const ctx = cvs.getContext('2d');
+  ctx.font = '600 40px JetBrains Mono, monospace';
+  ctx.fillStyle = colorHex;
+  ctx.fillText(text, 8, 56);
+  const tex = new THREE.CanvasTexture(cvs);
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true});
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.6,0.6,1);
+  sprite.position.set(x,y,z);
+  group.add(sprite);
+}
+
+function buildSurfaceView(){
+  if (!state.preset) return;
+  clearGroup(contentGroup);
+  const mod = currentModule();
+  const {a, domain} = state.preset;
+  const F = state.compiledF.fn, G = state.compiledG.fn;
+
+  const res = 46;
+  let x0,x1;
+  if (mod.infinite){ x0 = domain[0]; x1 = domain[1]; }
+  else {
+    const far = domain[1] > a ? domain[1] : domain[0];
+    const half = Math.abs(far-a);
+    x0 = a-half; x1 = a+half;
+  }
+  const span = x1-x0;
+
+  const geom = new THREE.PlaneGeometry(span*SX, span*SX, res, res);
+  geom.rotateX(-Math.PI/2);
+  const pos = geom.attributes.position;
+  const colors = [];
+  const col = new THREE.Color();
+
+  for (let i=0;i<pos.count;i++){
+    const px = pos.getX(i); // -span/2..span/2
+    const pz = pos.getZ(i);
+    const x = x0 + span*SX/2 + px;
+    const y = x0 + span*SX/2 + pz;
+    let z = opValue(mod.op, F(x), G(y));
+    if (Number.isNaN(z)) z = 0;
+    const cz = clampY(z);
+    pos.setY(i, cz*SY*0.7);
+
+    const n = (cz+CAP)/(2*CAP);
+    if (n<0.5) col.setStyle('#FF5D6C').lerp(new THREE.Color('#F6C445'), n*2);
+    else col.setStyle('#F6C445').lerp(new THREE.Color('#48D6C8'), (n-0.5)*2);
+    colors.push(col.r,col.g,col.b);
+  }
+  geom.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+  geom.computeVertexNormals();
+
+  const mat = new THREE.MeshStandardMaterial({
+    vertexColors:true, side:THREE.DoubleSide, roughness:0.55, metalness:0.05,
+    transparent:true, opacity:0.92
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  contentGroup.add(mesh);
+
+  const wire = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({color:0x0b0f16, wireframe:true, transparent:true, opacity:0.18}));
+  contentGroup.add(wire);
+
+  addLabel(contentGroup, `z = f(x) ${opSymbol(mod.op)} g(y)`, 0, CAP*0.75, 0, '#48D6C8');
+}
+
+function updateTracer(){
+  if (!state.preset || !state.compiledF || !state.compiledG) return;
+  const mod = currentModule();
+  const {a, domain} = state.preset;
+  const x = xFromT(state.t);
+  const F = state.compiledF.fn, G = state.compiledG.fn;
+  const h = opValue(mod.op, F(x), G(x));
+
+  if (state.viewMode==='curve'){
+    tracerMesh.visible = true;
+    const cy = clampY(h);
+    tracerMesh.position.set(x*SX, cy===null?0:cy*SY, 0);
+
+    const limitVal = state.limitEstimate;
+    convergenceRing.visible = isFinite(limitVal) && !Number.isNaN(limitVal);
+    if (convergenceRing.visible){
+      const targetX = mod.infinite ? domain[1]*SX : a*SX;
+      convergenceRing.position.set(targetX, clampY(limitVal)*SY, 0);
+      convergenceRing.lookAt(camera.position);
+    }
+  } else {
+    tracerMesh.visible = false;
+    convergenceRing.visible = false;
+  }
+
+  // live readout
+  const xLabel = mod.infinite ? `x = ${x.toFixed(2)}  (x→∞)` : `x = ${x.toFixed(5)}  (a = ${isFinite(a)?a:'∞'})`;
+  document.getElementById('live-readout').innerHTML =
+    `<div>${xLabel}</div>
+     <div style="color:var(--red)">f(x) = ${isFinite(F(x))?F(x).toFixed(5):String(F(x))}</div>
+     <div style="color:var(--rose)">g(x) = ${isFinite(G(x))?G(x).toFixed(5):String(G(x))}</div>
+     <div style="color:var(--accent)">h(x) = ${Number.isNaN(h)?'undefined':(isFinite(h)?h.toFixed(5):(h>0?'+∞':'-∞'))}</div>`;
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if (state.playing){
+    state.t += 0.0018 * state.speed;
+    if (state.t >= 1){ state.t = 0; }
+    document.getElementById('scrub').value = Math.round(state.t*1000);
+  }
+  updateTracer();
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+/* ============================================================================
+   EXPLANATION ENGINE
+============================================================================ */
+function renderKatexInto(el, latex, displayMode=true){
+  try{
+    katex.render(latex, el, {throwOnError:false, displayMode});
+  }catch(e){ el.textContent = latex; }
+}
+
+function buildExplanation(){
+  const mod = currentModule();
+  const {f,g,a,domain} = state.preset;
+  const F = state.compiledF, G = state.compiledG;
+
+  state.dF = derivativeStr(f);
+  state.dG = derivativeStr(g);
+  const dFc = state.dF ? compileFn(state.dF) : null;
+  const dGc = state.dG ? compileFn(state.dG) : null;
+  state.dFfn = dFc && dFc.ok ? dFc.fn : null;
+  state.dGfn = dGc && dGc.ok ? dGc.fn : null;
+
+  // -------- current state --------
+  const aTex = mod.infinite ? '\\infty' : (Number.isInteger(a) ? a : a.toString());
+  const opTex = {
+    div: `\\dfrac{${toLatex(f)}}{${toLatex(g)}}`,
+    mul: `\\left(${toLatex(f)}\\right)\\cdot\\left(${toLatex(g)}\\right)`,
+    sub: `\\left(${toLatex(f)}\\right)-\\left(${toLatex(g)}\\right)`,
+    pow: `\\left(${toLatex(f)}\\right)^{${toLatex(g)}}`
+  }[mod.op];
+  renderKatexInto(document.getElementById('limit-expr'),
+    `\\lim_{x\\to ${aTex}} ${opTex}`);
+  document.getElementById('form-badge').textContent = katexPlain(mod.formLatex);
+  renderBadgeKatex(mod.formLatex);
+
+  // -------- transform note --------
+  document.getElementById('transform-note').innerHTML = mdish(mod.transform);
+  renderMathIn(document.getElementById('transform-note'));
+
+  // -------- derivative block --------
+  const derivBlockEl = document.getElementById('deriv-block');
+  let derivLatex = '';
+  let limitEstimate, subLimitDesc = '';
+
+  const isRight = domain[1] > (isFinite(a)?a:domain[1]);
+  const farSide = domain[1] > (isFinite(a)?a:0) ? domain[1] : domain[0];
+
+  if (mod.op === 'div'){
+    derivLatex = `f'(x) = ${state.dF||'\\text{n/a}'} \\qquad g'(x) = ${state.dG||'\\text{n/a}'}`;
+    const num = (x)=> state.dFfn ? state.dFfn(x) : NaN;
+    const den = (x)=> state.dGfn ? state.dGfn(x) : NaN;
+    const ratioFn = (x)=> num(x)/den(x);
+    limitEstimate = mod.infinite
+      ? numericLimit(ratioFn, a, true, farSide)
+      : numericLimit(ratioFn, a, false, farSide);
+  } else {
+    // build the 0*inf sub-problem: ln f(x) / (1/g(x))  for pow;  f(x)/(1/g(x)) for mul; combined for sub
+    let numExpr, denExpr, label;
+    if (mod.op === 'mul'){
+      numExpr = f; denExpr = `1/(${g})`; label = `\\dfrac{f(x)}{1/g(x)}`;
+    } else if (mod.op === 'sub'){
+      numExpr = `1/(${g}) - 1/(${f})`; denExpr = `1/((${f})*(${g}))`; label = `\\dfrac{\\tfrac{1}{g(x)}-\\tfrac{1}{f(x)}}{\\tfrac{1}{f(x)g(x)}}`;
+    } else if (mod.op === 'pow'){
+      numExpr = `log(${f})`; denExpr = `1/(${g})`; label = `\\dfrac{\\ln f(x)}{1/g(x)}`;
+    }
+    const dNum = derivativeStr(numExpr);
+    const dDen = derivativeStr(denExpr);
+    const numC = compileFn(numExpr), denC = compileFn(denExpr);
+    const dNumC = dNum ? compileFn(dNum) : null;
+    const dDenC = dDen ? compileFn(dDen) : null;
+
+    derivLatex = `\\text{rewritten: } ${label} \\qquad
+      \\dfrac{d}{dx}\\!\\left[\\text{num}\\right] = ${dNum||'\\text{n/a}'} \\quad
+      \\dfrac{d}{dx}\\!\\left[\\text{den}\\right] = ${dDen||'\\text{n/a}'}`;
+
+    const ratioFn = (x)=> (dNumC&&dNumC.ok?dNumC.fn(x):NaN) / (dDenC&&dDenC.ok?dDenC.fn(x):NaN);
+    const subLimit = mod.infinite
+      ? numericLimit(ratioFn, a, true, farSide)
+      : numericLimit(ratioFn, a, false, farSide);
+
+    if (mod.op === 'pow'){
+      limitEstimate = Math.exp(subLimit);
+      subLimitDesc = `\\ln L = ${fmtNum(subLimit)} \\;\\Rightarrow\\; L = e^{${fmtNum(subLimit)}} = ${fmtNum(limitEstimate)}`;
+    } else {
+      limitEstimate = subLimit;
+    }
+  }
+
+  renderKatexInto(derivBlockEl, derivLatex, true);
+  let extra = document.getElementById('sub-limit-extra');
+  if (subLimitDesc){
+    if (!extra){
+      extra = document.createElement('div');
+      extra.id = 'sub-limit-extra';
+      extra.className = 'pt-2 text-[13px]';
+      derivBlockEl.parentElement.insertBefore(extra, derivBlockEl.nextSibling);
+    }
+    renderKatexInto(extra, subLimitDesc, true);
+  } else if (extra){
+    extra.remove();
+  }
+
+  // condition checks
+  document.getElementById('cond-diff').innerHTML = (state.dF && state.dG) ? '✓ yes' : '⚠ check';
+  document.getElementById('cond-diff').className = (state.dF && state.dG) ? 'badge-ok font-semibold' : 'badge-warn font-semibold';
+  const nearA = mod.infinite ? farSide*0.9 : (isFinite(a) ? a + (farSide-a)*0.02 : farSide*0.02);
+  const denomOk = mod.op==='div' ? Math.abs((state.dGfn?state.dGfn(nearA):1)) > 1e-6 : true;
+  document.getElementById('cond-denom').innerHTML = denomOk ? '✓ ≠ 0 near a' : '⚠ vanishes';
+  document.getElementById('cond-denom').className = denomOk ? 'badge-ok font-semibold' : 'badge-warn font-semibold';
+
+  // -------- final value --------
+  state.limitEstimate = limitEstimate;
+  renderKatexInto(document.getElementById('final-limit'), `L = ${fmtNum(limitEstimate)}`, false);
+  document.getElementById('final-note').textContent = 'value obtained via symbolic derivatives + numeric approach to the limit point';
+
+  document.getElementById('module-blurb').textContent = mod.blurb;
+  document.getElementById('approach-label').textContent = mod.infinite ? 'approaching x → ∞' : `approaching x → ${aTex}`;
+}
+
+function katexPlain(latex){ return ''; }
+function renderBadgeKatex(latex){
+  renderKatexInto(document.getElementById('form-badge'), latex, false);
+}
+function mdish(s){
+  // minimal markdown-ish passthrough (keeps $..$ for katex auto-render)
+  return s;
+}
+function renderMathIn(el){
+  if (window.renderMathInElement){
+    renderMathInElement(el, {
+      delimiters:[
+        {left:'$$', right:'$$', display:true},
+        {left:'$', right:'$', display:false}
+      ],
+      throwOnError:false
+    });
+  }
+}
+
+/* ============================================================================
+   UI WIRING
+============================================================================ */
+function buildTabs(){
+  const nav = document.getElementById('module-tabs');
+  nav.innerHTML = '';
+  MODULES.forEach((mod, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'console-tab rounded px-2.5 py-1.5 flex items-center gap-2';
+    btn.innerHTML = `<span class="console-light"></span>
+      <span class="font-mono text-[12px]">${mod.navLabel}</span>`;
+    btn.title = mod.label;
+    btn.addEventListener('click', ()=> selectModule(i));
+    nav.appendChild(btn);
+  });
+}
+
+function refreshTabActive(){
+  document.querySelectorAll('#module-tabs .console-tab').forEach((el,i)=>{
+    el.classList.toggle('active', i===state.moduleIdx);
+  });
+}
+
+function buildPresetSelect(){
+  const sel = document.getElementById('preset-select');
+  sel.innerHTML = '';
+  currentModule().presets.forEach((p,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+function selectModule(i){
+  state.moduleIdx = i;
+  state.isCustom = false;
+  document.getElementById('custom-bar').classList.add('hidden');
+  buildPresetSelect();
+  selectPreset(0);
+  refreshTabActive();
+  setDefaultCamera();
+}
+
+function selectPreset(i){
+  const p = currentModule().presets[i];
+  document.getElementById('preset-select').value = i;
+  applyProblem(p.f, p.g, p.a, p.domain);
+}
+
+function applyProblem(f,g,a,domain){
+  const cf = compileFn(f), cg = compileFn(g);
+  state.compiledF = cf; state.compiledG = cg;
+  state.preset = {f,g,a,domain};
+  state.t = 0;
+  document.getElementById('scrub').value = 0;
+  buildExplanation();
+  if (state.viewMode==='curve') buildCurveView(); else buildSurfaceView();
+}
+
+function wireUI(){
+  document.getElementById('preset-select').addEventListener('change', (e)=>{
+    state.isCustom = false;
+    document.getElementById('custom-bar').classList.add('hidden');
+    selectPreset(parseInt(e.target.value));
+  });
+
+  document.getElementById('custom-toggle').addEventListener('click', ()=>{
+    document.getElementById('custom-bar').classList.toggle('hidden');
+  });
+
+  document.getElementById('apply-custom').addEventListener('click', ()=>{
+    const f = document.getElementById('input-f').value.trim();
+    const g = document.getElementById('input-g').value.trim();
+    const aStr = document.getElementById('input-a').value.trim();
+    const errEl = document.getElementById('custom-error');
+    errEl.textContent = '';
+    const a = (aStr==='inf'||aStr==='infinity'||aStr==='∞') ? Infinity : parseFloat(aStr);
+    const cf = compileFn(f), cg = compileFn(g);
+    if (!cf.ok || !cg.ok){ errEl.textContent = 'parse error — check syntax'; return; }
+    const mod = currentModule();
+    let domain;
+    if (isFinite(a)){
+      domain = [a-4, a+4];
+    } else {
+      domain = [1, 30];
+    }
+    state.isCustom = true;
+    applyProblem(f,g,a,domain);
+  });
+
+  document.getElementById('view-curve').addEventListener('click', ()=>{
+    state.viewMode='curve';
+    document.getElementById('view-curve').classList.add('primary');
+    document.getElementById('view-surface').classList.remove('primary');
+    buildCurveView();
+  });
+  document.getElementById('view-surface').addEventListener('click', ()=>{
+    state.viewMode='surface';
+    document.getElementById('view-surface').classList.add('primary');
+    document.getElementById('view-curve').classList.remove('primary');
+    buildSurfaceView();
+  });
+
+  document.getElementById('btn-play').addEventListener('click', (e)=>{
+    state.playing = !state.playing;
+    e.target.textContent = state.playing ? '❚❚' : '▶';
+  });
+  document.getElementById('btn-step-fwd').addEventListener('click', ()=>{
+    state.t = Math.min(1, state.t + 0.02);
+    document.getElementById('scrub').value = Math.round(state.t*1000);
+  });
+  document.getElementById('btn-step-back').addEventListener('click', ()=>{
+    state.t = Math.max(0, state.t - 0.02);
+    document.getElementById('scrub').value = Math.round(state.t*1000);
+  });
+  document.getElementById('scrub').addEventListener('input', (e)=>{
+    state.t = parseInt(e.target.value)/1000;
+    state.playing = false;
+    document.getElementById('btn-play').textContent = '▶';
+  });
+  document.getElementById('speed').addEventListener('input', (e)=>{ state.speed = parseInt(e.target.value); });
+  document.getElementById('btn-reset-view').addEventListener('click', ()=>{ setDefaultCamera(); controls.target.set(0,0,0); });
+
+  document.getElementById('toggle-deriv').addEventListener('change', (e)=>{
+    state.showDeriv = e.target.checked;
+    if (state.viewMode==='curve') buildCurveView();
+  });
+  document.getElementById('toggle-tangent').addEventListener('change', (e)=>{
+    state.showTangent = e.target.checked;
+    if (state.viewMode==='curve') buildCurveView();
+  });
+}
+
+/* ============================================================================
+   BOOT
+============================================================================ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  buildTabs();
+  wireUI();
+  initThree();
+  selectModule(0);
+  refreshTabActive();
+});
+</script>
+</body>
+</html>

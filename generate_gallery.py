@@ -11,6 +11,8 @@ def clean_title(filename):
     return name.strip().title()
 
 def get_category(parts):
+    if len(parts) == 1 and 'manim' in parts[0].lower():
+        return "🎥 Manim Studio"
     if len(parts) > 1:
         cat = parts[0].replace('_', ' ').replace('-', ' ').title()
         if cat.lower() == 'chapters' and len(parts) > 2:

@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curvilinear Atlas — Interactive Orthogonal Coordinate Systems in ℝ³</title>
+<meta name="description" content="Interactive 3D visualizations of rectangular, cylindrical, spherical, spheroidal, toroidal, conical and paraboloidal coordinate systems with scale factors and Laplacians.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      disp: ['"Bricolage Grotesque"','ui-sans-serif','sans-serif'],
+      sans: ['"IBM Plex Sans"','ui-sans-serif','sans-serif'],
+      mono: ['"IBM Plex Mono"','ui-monospace','monospace']
+    },
+    colors: { ink:'#e9eef9', mut:'#94a3c2', deep:'#090e1c', panel:'#0e1626',
+              amb:'#f6b24e', cyn:'#53c7f0', ros:'#f0708f', line:'rgba(150,166,205,0.16)' }
+  } }
+};
+</script>
+
+<!-- KaTeX -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<!-- Three.js -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1100px 700px at 12% -10%, rgba(83,199,240,.07), transparent 60%),
+      radial-gradient(900px 620px at 105% 112%, rgba(246,178,78,.06), transparent 60%),
+      #090e1c;
+  }
+  .bg-gridlayer{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(148,163,199,.045) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(148,163,199,.045) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(ellipse at 62% 40%, #000 35%, transparent 78%);
+            mask-image:radial-gradient(ellipse at 62% 40%, #000 35%, transparent 78%);
+  }
+  .glowdrift{position:fixed;width:58vw;height:58vw;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;opacity:.55}
+  .g1{background:radial-gradient(circle, rgba(83,199,240,.10), transparent 60%);top:-22vw;left:-16vw;animation:drift1 46s ease-in-out infinite alternate}
+  .g2{background:radial-gradient(circle, rgba(240,112,143,.08), transparent 60%);bottom:-26vw;right:-18vw;animation:drift2 58s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate(8vw,6vh) scale(1.15)}}
+  @keyframes drift2{to{transform:translate(-7vw,-5vh) scale(1.1)}}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .rise{animation:rise .55s cubic-bezier(.22,.75,.25,1) both}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  #viewport canvas{animation:fadein 1.1s ease both}
+
+  .sec-label{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:#94a3c2;text-transform:uppercase}
+  .sec-label::before{content:'';width:14px;height:2px;background:linear-gradient(90deg,#f6b24e,transparent)}
+
+  .math-card{background:rgba(7,12,24,.62);border:1px solid rgba(150,166,205,.14);border-radius:10px;
+             padding:16px 14px 12px;position:relative;overflow-x:auto}
+  .math-card .tag{position:absolute;top:-8px;left:12px;background:#0e1626;border:1px solid rgba(150,166,205,.2);
+             border-radius:4px;padding:1px 8px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+             letter-spacing:.18em;color:#f6b24e;text-transform:uppercase}
+  .katex{font-size:1.02em}
+  .math-card .katex-display{margin:.35em 0}
+
+  input[type=range].sld-input{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer}
+  input[type=range].sld-input::-webkit-slider-runnable-track{height:4px;border-radius:2px;
+    background:linear-gradient(90deg, rgba(83,199,240,.5), rgba(246,178,78,.55));
+    box-shadow:inset 0 0 0 1px rgba(148,163,199,.15)}
+  input[type=range].sld-input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+    margin-top:-5px;background:#f6b24e;border:2px solid #0b1120;
+    box-shadow:0 0 0 1px rgba(246,178,78,.6),0 0 12px rgba(246,178,78,.4);
+    transition:transform .15s ease, box-shadow .15s ease}
+  input[type=range].sld-input:hover::-webkit-slider-thumb{transform:scale(1.25);
+    box-shadow:0 0 0 1px rgba(246,178,78,.9),0 0 18px rgba(246,178,78,.65)}
+  input[type=range].sld-input::-moz-range-track{height:4px;border-radius:2px;
+    background:linear-gradient(90deg, rgba(83,199,240,.5), rgba(246,178,78,.55))}
+  input[type=range].sld-input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#f6b24e;
+    border:2px solid #0b1120;box-shadow:0 0 0 1px rgba(246,178,78,.6),0 0 12px rgba(246,178,78,.4)}
+
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;
+    border:1px solid rgba(150,166,205,.22);background:rgba(10,16,30,.72);backdrop-filter:blur(8px);
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#cdd7ec;cursor:pointer;
+    transition:all .18s ease;user-select:none}
+  .chip:hover{transform:translateY(-1px);border-color:rgba(246,178,78,.5);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  .chip .dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor}
+  .chip.off{opacity:.35;filter:saturate(.3)}
+  .chip.active-toggle{border-color:rgba(246,178,78,.65);color:#f6b24e}
+
+  .scroller{scrollbar-width:thin;scrollbar-color:rgba(148,163,199,.35) transparent}
+  .scroller::-webkit-scrollbar{width:9px}
+  .scroller::-webkit-scrollbar-thumb{background:rgba(148,163,199,.28);border-radius:8px;border:2px solid #0b1220}
+</style>
+</head>
+
+<body class="bg-deep text-ink font-sans antialiased overflow-hidden">
+<div class="bg-gridlayer"></div>
+<div class="glowdrift g1"></div>
+<div class="glowdrift g2"></div>
+
+<div class="relative z-10 h-screen w-screen flex flex-col overflow-hidden">
+
+  <!-- ============ HEADER ============ -->
+  <header class="flex items-center gap-4 px-5 h-[68px] shrink-0 border-b border-line bg-deep/70 backdrop-blur z-20">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" class="shrink-0">
+      <ellipse cx="17" cy="17" rx="14" ry="5.6" stroke="#f6b24e" stroke-width="1.4"/>
+      <ellipse cx="17" cy="17" rx="14" ry="5.6" stroke="#53c7f0" stroke-width="1.4" transform="rotate(60 17 17)"/>
+      <ellipse cx="17" cy="17" rx="14" ry="5.6" stroke="#f0708f" stroke-width="1.4" transform="rotate(120 17 17)"/>
+      <circle cx="17" cy="17" r="2.1" fill="#e9eef9"/>
+    </svg>
+    <div class="min-w-0">
+      <h1 class="font-disp font-extrabold text-[19px] tracking-tight text-ink leading-none">Curvilinear <span class="text-amb">Atlas</span></h1>
+      <p class="font-mono text-[9.5px] tracking-[0.28em] text-mut mt-1.5">ORTHOGONAL COORDINATES · ℝ³ · ELEVEN SYSTEMS</p>
+    </div>
+    <div class="flex-1"></div>
+    <div id="headerEq" class="hidden lg:block text-[13px] text-mut border border-line rounded-lg px-4 py-2 bg-panel/60 hover:border-amb/40 transition-colors cursor-default"
+         title="Laplacian in any orthogonal curvilinear frame"></div>
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <main class="relative z-10 flex-1 flex flex-col-reverse lg:flex-row overflow-hidden min-h-0">
+
+    <!-- LEFT: CONTROL + MATH PANEL -->
+    <aside class="relative flex-1 lg:flex-none lg:w-[478px] xl:w-[512px] border-r border-line bg-panel/75 backdrop-blur-sm overflow-y-auto scroller">
+      <div class="p-5 xl:p-6 space-y-7">
+
+        <!-- 01 · system -->
+        <section>
+          <div class="sec-label mb-3">01 · Coordinate system</div>
+          <div class="relative">
+            <select id="sysSelect" class="w-full appearance-none bg-deep border border-line hover:border-amb/50 focus:border-amb outline-none rounded-lg px-4 py-3 pr-10 text-[14px] text-ink font-medium cursor-pointer transition-colors"></select>
+            <svg class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" width="12" height="8" viewBox="0 0 12 8" fill="none">
+              <path d="M1 1.5L6 6.5L11 1.5" stroke="#94a3c2" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div id="cardBlurb" class="mt-3 rounded-lg border border-line bg-deep/50 p-3.5">
+            <p id="elBlurb" class="text-[12.5px] leading-relaxed text-mut"></p>
+            <div class="mt-2 flex items-baseline gap-2 flex-wrap">
+              <span class="font-mono text-[9px] tracking-[0.22em] text-amb/80">DOMAIN</span>
+              <span id="elDomain" class="text-[12px] text-ink/80"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 · metric -->
+        <section>
+          <div class="sec-label mb-3">02 · Metric &amp; operators</div>
+          <div class="space-y-4">
+            <div class="math-card" id="cardTransform"><span class="tag">Transformation x, y, z</span><div id="elTransform" class="pt-1.5"></div></div>
+            <div class="math-card" id="cardScale"><span class="tag">Scale factors h²</span><div id="elScale" class="pt-1.5"></div></div>
+            <div class="math-card" id="cardLap"><span class="tag">Laplacian ∇²Φ</span><div id="elLap" class="pt-1.5"></div><div id="lapNote" class="mt-1.5 text-[11px] text-mut"></div></div>
+          </div>
+        </section>
+
+        <!-- 03 · parameters -->
+        <section>
+          <div class="flex items-center justify-between mb-3">
+            <div class="sec-label">03 · Parameters</div>
+            <button id="btnSlidersReset" class="font-mono text-[9.5px] tracking-[0.18em] text-mut hover:text-amb transition-colors">↺ RESET</button>
+          </div>
+          <div class="font-mono text-[9px] tracking-[0.22em] text-cyn/80 mb-2">POINT COORDINATES</div>
+          <div id="slidersPoint"></div>
+          <div id="shapeWrap">
+            <div class="font-mono text-[9px] tracking-[0.22em] text-amb/80 mt-4 mb-2">SYSTEM SHAPE</div>
+            <div id="slidersShape"></div>
+          </div>
+        </section>
+
+        <!-- 04 · live readout -->
+        <section>
+          <div class="sec-label mb-3">04 · Live readout</div>
+          <div class="rounded-lg border border-line bg-deep/50 p-3.5 font-mono">
+            <div class="flex items-baseline justify-between gap-2 flex-wrap">
+              <span class="text-[10px] tracking-[0.18em] text-mut">P = (x, y, z)</span>
+              <span id="roP" class="text-[12.5px] text-ink tabular-nums"></span>
+            </div>
+            <div id="roH" class="grid grid-cols-3 gap-2 mt-3"></div>
+            <div class="mt-3 pt-3 border-t border-line/60">
+              <div class="text-[10px] tracking-[0.18em] text-mut mb-2">ORTHONORMAL FRAME AT P</div>
+              <div id="roBasis" class="space-y-1.5"></div>
+              <div id="roOrtho" class="mt-2.5 text-[10px] text-mut/90 leading-relaxed"></div>
+            </div>
+          </div>
+          <div id="verifyBadge" class="mt-3 font-mono text-[9.5px] tracking-[0.14em] text-mut/70"></div>
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- RIGHT: 3D VIEWPORT -->
+    <div id="viewport" class="relative h-[46vh] lg:h-auto lg:flex-1 overflow-hidden shrink-0 lg:shrink">
+      <div class="absolute left-4 top-4 sm:left-6 sm:top-5 pointer-events-none select-none z-10">
+        <div id="sysIndex" class="font-mono text-[10px] tracking-[0.3em] text-amb/90"></div>
+        <div id="sysName" class="font-disp font-bold text-[24px] sm:text-[30px] leading-[1.05] text-ink mt-1" style="text-shadow:0 2px 18px rgba(5,10,25,.9)"></div>
+        <div id="sysCoords" class="mt-1.5 text-[15px] text-cyn/95"></div>
+      </div>
+      <div id="roPOverlay" class="absolute right-4 top-4 sm:right-6 sm:top-5 z-10 font-mono text-[11px] text-mut bg-deep/65 border border-line rounded-lg px-3 py-2 backdrop-blur pointer-events-none"></div>
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 hidden md:block font-mono text-[9.5px] tracking-[0.18em] text-mut/60 pointer-events-none">DRAG ORBIT&nbsp;·&nbsp;SCROLL ZOOM&nbsp;·&nbsp;RIGHT-DRAG PAN</div>
+      <div id="chips" class="absolute left-4 bottom-4 sm:left-6 sm:bottom-5 z-10 flex flex-wrap gap-2 max-w-[68%]"></div>
+      <div class="absolute right-4 bottom-4 sm:right-6 sm:bottom-5 z-10 flex gap-2">
+        <button id="btnRotate" class="chip active-toggle">⟳ auto-orbit</button>
+        <button id="btnReset" class="chip">reset view</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ============================================================ -->
+<!-- =====================  APPLICATION  ======================== -->
+<!-- ============================================================ -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------------- helpers ---------------- */
+const TAU   = Math.PI * 2;
+const clamp = (x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt   = (x,n=3)=> isFinite(x) ? ((Math.abs(x)<1e-10?0:x).toFixed(n)) : '—';
+const R3    = String.raw;
+const SURF_COLORS = [0xf6b24e, 0x53c7f0, 0xf0708f];
+const SURF_HEX    = ['#f6b24e','#53c7f0','#f0708f'];
+
+function tex(el, str, disp=false){
+  if(!el) return;
+  if(window.katex){ try{ katex.render(str, el, {displayMode:disp, throwOnError:false}); }
+                    catch(e){ el.textContent = str; } }
+  else { el.textContent = str; el.classList.add('font-mono','text-[11px]'); }
+}
+
+/* ---------------- geometry builders ---------------- */
+function paramGeometry(fn, u0, u1, v0, v1, su=46, sv=46){
+  const pos = new Float32Array((su+1)*(sv+1)*3), idx=[];
+  let k=0;
+  for(let j=0;j<=sv;j++){ const tv=v0+(v1-v0)*j/sv;
+    for(let i=0;i<=su;i++){ const tu=u0+(u1-u0)*i/su;
+      const p=fn(tu,tv); pos[k++]=p[0]; pos[k++]=p[1]; pos[k++]=p[2]; } }
+  for(let j=0;j<sv;j++) for(let i=0;i<su;i++){
+    const a=j*(su+1)+i, b=a+1, c=a+su+1, d=c+1; idx.push(a,c,b, b,c,d); }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+function patchesGeometry(patches){
+  const positions=[], indices=[]; let base=0;
+  for(const p of patches){
+    const su=p.su, sv=p.sv;
+    for(let j=0;j<=sv;j++){ const tv=p.v0+(p.v1-p.v0)*j/sv;
+      for(let i=0;i<=su;i++){ const tu=p.u0+(p.u1-p.u0)*i/su;
+        const q=p.fn(tu,tv); positions.push(q[0],q[1],q[2]); } }
+    for(let j=0;j<sv;j++) for(let i=0;i<su;i++){
+      const a=base+j*(su+1)+i, b=a+1, c=a+su+1, d=c+1; indices.push(a,c,b, b,c,d); }
+    base += (su+1)*(sv+1);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  g.setIndex(indices); g.computeVertexNormals(); return g;
+}
+class CoordCurve extends THREE.Curve{
+  constructor(sys, vals, key, r0, r1){ super(); this.sys=sys; this.vals={...vals}; this.key=key; this.r0=r0; this.r1=r1; }
+  getPoint(t, target=new THREE.Vector3()){
+    const q=this.r0+(this.r1-this.r0)*t;
+    const p=this.sys.toXYZ({...this.vals, [this.key]:q});
+    return target.set(p[0],p[1],p[2]);
+  }
+}
+
+/* =====================================================================
+   THE ELEVEN COORDINATE SYSTEMS
+   Each: transformation, surfaces q_i = const, scale factors, Laplacian.
+   ===================================================================== */
+const coneUnit = (b,mu,nu)=>[
+  Math.sqrt(Math.max(0,(1-mu)*(1-nu)/(1-b))),
+  Math.sqrt(Math.max(0,(mu-b)*(b-nu)/((1-b)*b))),
+  Math.sqrt(Math.max(0,mu*nu/b))
+];
+
+const SYSTEMS = {
+
+/* 0 ─────────────────────────── RECTANGULAR ─────────────────────────── */
+rectangular: {
+  name:'Rectangular', plain:'(x, y, z)', coordsTex:R3`(x,\;y,\;z)`,
+  blurb:'The reference frame itself: three mutually perpendicular families of parallel planes — x = const, y = const, z = const. Every scale factor is unity and the basis is constant throughout space; all curvilinear systems in this atlas are measured against it.',
+  domainTex:R3`x,\;y,\;z\in\mathbb{R}`,
+  params:[
+    {key:'x', tex:R3`x`, min:-3.5, max:3.5, step:0.01, init:1.6, coord:0},
+    {key:'y', tex:R3`y`, min:-3.5, max:3.5, step:0.01, init:1.1, coord:1},
+    {key:'z', tex:R3`z`, min:-3,   max:3,   step:0.01, init:1.4, coord:2},
+  ],
+  vecLabels:['x\u0302','y\u0302','z\u0302'],
+  toXYZ(v){ return [v.x, v.y, v.z]; },
+  surfaces(v){ return [
+    {tex:R3`x`, geom:()=>paramGeometry((s,t)=>[v.x, s, t], -3.8,3.8, -3.2,3.2, 14,14)},
+    {tex:R3`y`, geom:()=>paramGeometry((s,t)=>[s, v.y, t], -3.8,3.8, -3.2,3.2, 14,14)},
+    {tex:R3`z`, geom:()=>paramGeometry((s,t)=>[s, t, v.z], -3.8,3.8, -3.8,3.8, 14,14)},
+  ];},
+  math:{
+    transform:R3`\begin{aligned}x&=x\\[2pt] y&=y\\[2pt] z&=z\end{aligned}`,
+    scale:R3`h_{x}^{2}=h_{y}^{2}=h_{z}^{2}=1`,
+    lap:R3`\nabla^{2}\Phi=\frac{\partial^{2}\Phi}{\partial x^{2}}+\frac{\partial^{2}\Phi}{\partial y^{2}}+\frac{\partial^{2}\Phi}{\partial z^{2}}`,
+  }
+},
+
+/* 1 ────────────────────────── CYLINDRICAL ───────────────────────── */
+cylindrical: {
+  name:'Cylindrical', plain:'(r, θ, z)', coordsTex:R3`(r,\;\theta,\;z)`,
+  blurb:'Distance from an axis, angle about it, height along it. Surfaces r = const are circular cylinders, θ = const vertical half-planes, z = const horizontal planes. Singular on the z-axis, where θ loses meaning.',
+  domainTex:R3`r\geq 0,\;\;\theta\in[0,2\pi),\;\;z\in\mathbb{R}`,
+  params:[
+    {key:'r',  tex:R3`r`,           min:0.15, max:4,   step:0.01, init:2.2, coord:0},
+    {key:'th', tex:R3`\theta`,      min:0,    max:TAU, step:0.01, init:0.9, coord:1},
+    {key:'z',  tex:R3`z`,           min:-3,   max:3,   step:0.01, init:1.1, coord:2},
+  ],
+  vecLabels:['r\u0302','θ\u0302','z\u0302'],
+  toXYZ(v){ return [v.r*Math.cos(v.th), v.r*Math.sin(v.th), v.z]; },
+  surfaces(v){ return [
+    {tex:R3`r`,       geom:()=>paramGeometry((z,p)=>[v.r*Math.cos(p), v.r*Math.sin(p), z], -3.2,3.2, 0,TAU, 12,56)},
+    {tex:R3`\theta`,  geom:()=>paramGeometry((t,z)=>[t*Math.cos(v.th), t*Math.sin(v.th), z], 0.02,4.6, -3.2,3.2, 16,12)},
+    {tex:R3`z`,       geom:()=>paramGeometry((r,p)=>[r*Math.cos(p), r*Math.sin(p), v.z], 0.02,4.6, 0,TAU, 16,56)},
+  ];},
+  math:{
+    transform:R3`\begin{aligned}x&=r\cos\theta\\[2pt] y&=r\sin\theta\\[2pt] z&=z\end{aligned}`,
+    scale:R3`h_{r}^{2}=1\qquad h_{\theta}^{2}=r^{2}\qquad h_{z}^{2}=1`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{r}\frac{\partial}{\partial r}\!\left(r\frac{\partial\Phi}{\partial r}\right)+\frac{1}{r^{2}}\frac{\partial^{2}\Phi}{\partial\theta^{2}}+\frac{\partial^{2}\Phi}{\partial z^{2}}`,
+  }
+},
+
+/* 2 ─────────────────────────── SPHERICAL ─────────────────────────── */
+spherical: {
+  name:'Spherical', plain:'(r, θ, φ)', coordsTex:R3`(r,\;\theta,\;\varphi)`,
+  blurb:'Physics convention: θ is the polar angle from the +z axis, φ the azimuth. Spheres r = const, circular cones θ = const and meridian half-planes φ = const cut space into an orthogonal honeycomb; the frame degenerates on the polar axis and at the origin.',
+  domainTex:R3`r\geq 0,\;\;\theta\in[0,\pi],\;\;\varphi\in[0,2\pi)`,
+  params:[
+    {key:'r',  tex:R3`r`,        min:0.25, max:4,            step:0.01, init:2.6,  coord:0},
+    {key:'th', tex:R3`\theta`,   min:0.07, max:Math.PI-0.07, step:0.01, init:1.0,  coord:1},
+    {key:'ph', tex:R3`\varphi`,  min:0,    max:TAU,          step:0.01, init:0.75, coord:2},
+  ],
+  vecLabels:['r\u0302','θ\u0302','φ\u0302'],
+  toXYZ(v){ const st=Math.sin(v.th);
+    return [v.r*st*Math.cos(v.ph), v.r*st*Math.sin(v.ph), v.r*Math.cos(v.th)]; },
+  surfaces(v){ return [
+    {tex:R3`r`, geom:()=>paramGeometry((t,p)=>{const st=Math.sin(t);
+        return [v.r*st*Math.cos(p), v.r*st*Math.sin(p), v.r*Math.cos(t)];}, 0.001,Math.PI, 0,TAU, 36,56)},
+    {tex:R3`\theta`, geom:()=>paramGeometry((t,p)=>{const st=Math.sin(v.th);
+        return [t*st*Math.cos(p), t*st*Math.sin(p), t*Math.cos(v.th)];}, 0.02,4.6, 0,TAU, 14,56)},
+    {tex:R3`\varphi`, geom:()=>paramGeometry((r,z)=>[r*Math.cos(v.ph), r*Math.sin(v.ph), z], 0.02,4.6, -3.4,3.4, 14,14)},
+  ];},
+  math:{
+    transform:R3`\begin{aligned}x&=r\sin\theta\cos\varphi\\[2pt] y&=r\sin\theta\sin\varphi\\[2pt] z&=r\cos\theta\end{aligned}`,
+    scale:R3`h_{r}^{2}=1\qquad h_{\theta}^{2}=r^{2}\qquad h_{\varphi}^{2}=r^{2}\sin^{2}\theta`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{r^{2}}\frac{\partial}{\partial r}\!\left(r^{2}\frac{\partial\Phi}{\partial r}\right)+\frac{1}{r^{2}\sin\theta}\frac{\partial}{\partial\theta}\!\left(\sin\theta\,\frac{\partial\Phi}{\partial\theta}\right)+\frac{1}{r^{2}\sin^{2}\theta}\frac{\partial^{2}\Phi}{\partial\varphi^{2}}`,
+  }
+},
+
+/* 3 ───────────────────── PARABOLIC CYLINDRICAL ───────────────────── */
+paraboliccyl: {
+  name:'Parabolic Cylindrical', plain:'(u, v, z)', coordsTex:R3`(u,\;v,\;z)`,
+  blurb:'Two confocal families of parabolic cylinders — u = const opening toward −x, v = const toward +x, every cross-section focused on the origin — sliced by planes z = const. The cross-section is conformal: h_u = h_v.',
+  domainTex:R3`u,v\in\mathbb{R},\;\;z\in\mathbb{R}`,
+  params:[
+    {key:'u', tex:R3`u`, min:-2.6, max:2.6, step:0.01, init:1.3, coord:0},
+    {key:'v', tex:R3`v`, min:-2.6, max:2.6, step:0.01, init:0.9, coord:1},
+    {key:'z', tex:R3`z`, min:-3,   max:3,   step:0.01, init:0.6, coord:2},
+  ],
+  vecLabels:['u\u0302','v\u0302','z\u0302'],
+  toXYZ(v){ return [0.5*(v.u*v.u - v.v*v.v), v.u*v.v, v.z]; },
+  surfaces(v){ return [
+    {tex:R3`u`, geom:()=>paramGeometry((t,z)=>[0.5*(v.u*v.u - t*t), v.u*t, z], -2.8,2.8, -3.2,3.2, 26,10)},
+    {tex:R3`v`, geom:()=>paramGeometry((t,z)=>[0.5*(t*t - v.v*v.v), t*v.v, z], -2.8,2.8, -3.2,3.2, 26,10)},
+    {tex:R3`z`, geom:()=>paramGeometry((x,y)=>[x,y,v.z], -4,4, -4,4, 14,14)},
+  ];},
+  math:{
+    transform:R3`\begin{aligned}x&=\tfrac{1}{2}\left(u^{2}-v^{2}\right)\\[2pt] y&=uv\\[2pt] z&=z\end{aligned}`,
+    scale:R3`h_{u}^{2}=h_{v}^{2}=u^{2}+v^{2}\qquad h_{z}^{2}=1`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{u^{2}+v^{2}}\left(\frac{\partial^{2}\Phi}{\partial u^{2}}+\frac{\partial^{2}\Phi}{\partial v^{2}}\right)+\frac{\partial^{2}\Phi}{\partial z^{2}}`,
+  }
+},
+
+/* 4 ───────────────────── ELLIPTIC CYLINDRICAL ────────────────────── */
+ellipticcyl: {
+  name:'Elliptic Cylindrical', plain:'(u, v, z)', coordsTex:R3`(u,\;v,\;z)`,
+  blurb:'Ellipses u = const and confocal hyperbolas v = const in the plane, extruded along z. Every conic shares the foci (±a, 0), drawn as glowing filaments; the shape parameter a rescales the focal split.',
+  domainTex:R3`u\geq 0,\;\;v\in[0,2\pi),\;\;z\in\mathbb{R}`,
+  params:[
+    {key:'u', tex:R3`u`, min:0.08, max:2.4, step:0.01, init:0.9, coord:0},
+    {key:'v', tex:R3`v`, min:0,    max:TAU, step:0.01, init:1.0, coord:1},
+    {key:'z', tex:R3`z`, min:-3,   max:3,   step:0.01, init:0.7, coord:2},
+    {key:'a', tex:R3`a`, min:0.5,  max:2,   step:0.01, init:1.3, shape:true},
+  ],
+  vecLabels:['u\u0302','v\u0302','z\u0302'],
+  toXYZ(v){ return [v.a*Math.cosh(v.u)*Math.cos(v.v), v.a*Math.sinh(v.u)*Math.sin(v.v), v.z]; },
+  focal(v){ return [{type:'line',from:[ v.a,0,-3.2],to:[ v.a,0,3.2]},
+                    {type:'line',from:[-v.a,0,-3.2],to:[-v.a,0,3.2]}]; },
+  surfaces(v){
+    const tM = Math.acosh(Math.min(4.8/v.a, 13));
+    return [
+      {tex:R3`u`, geom:()=>paramGeometry((t,z)=>[v.a*Math.cosh(v.u)*Math.cos(t), v.a*Math.sinh(v.u)*Math.sin(t), z], 0,TAU, -3.2,3.2, 56,10)},
+      {tex:R3`v`, geom:()=>paramGeometry((t,z)=>[v.a*Math.cosh(t)*Math.cos(v.v), v.a*Math.sinh(t)*Math.sin(v.v), z], -tM,tM, -3.2,3.2, 26,10)},
+      {tex:R3`z`, geom:()=>paramGeometry((x,y)=>[x,y,v.z], -4.2,4.2, -4.2,4.2, 14,14)},
+    ];},
+  math:{
+    transform:R3`\begin{aligned}x&=a\cosh u\cos v\\[2pt] y&=a\sinh u\sin v\\[2pt] z&=z\end{aligned}`,
+    scale:R3`h_{u}^{2}=h_{v}^{2}=a^{2}\!\left(\sinh^{2}\!u+\sin^{2}\!v\right)\qquad h_{z}^{2}=1`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{a^{2}(\sinh^{2}u+\sin^{2}v)}\left(\frac{\partial^{2}\Phi}{\partial u^{2}}+\frac{\partial^{2}\Phi}{\partial v^{2}}\right)+\frac{\partial^{2}\Phi}{\partial z^{2}}`,
+  }
+},
+
+/* 5 ───────────────────── PROLATE SPHEROIDAL ──────────────────────── */
+prolate: {
+  name:'Prolate Spheroidal', plain:'(ξ, η, φ)', coordsTex:R3`(\xi,\;\eta,\;\varphi)`,
+  blurb:'The elliptic plane revolved about its major axis. ξ = const gives prolate (cigar-shaped) spheroids, η = const two-sheeted hyperboloids, all sharing the focal segment −a ≤ z ≤ a. The natural frame for diatomic molecules and rugby balls.',
+  domainTex:R3`\xi\geq 0,\;\;\eta\in[0,\pi],\;\;\varphi\in[0,2\pi)`,
+  params:[
+    {key:'xi',  tex:R3`\xi`,      min:0.12, max:2.3,           step:0.01, init:0.8,  coord:0},
+    {key:'eta', tex:R3`\eta`,     min:0.07, max:Math.PI-0.07,  step:0.01, init:1.05, coord:1},
+    {key:'ph',  tex:R3`\varphi`,  min:0,    max:TAU,           step:0.01, init:0.7,  coord:2},
+    {key:'a',   tex:R3`a`,        min:0.5,  max:2,             step:0.01, init:1.2,  shape:true},
+  ],
+  vecLabels:['ξ\u0302','η\u0302','φ\u0302'],
+  toXYZ(v){ const k=v.a*Math.sinh(v.xi)*Math.sin(v.eta);
+    return [k*Math.cos(v.ph), k*Math.sin(v.ph), v.a*Math.cosh(v.xi)*Math.cos(v.eta)]; },
+  focal(v){ return [{type:'line',from:[0,0,-v.a],to:[0,0,v.a]}]; },
+  surfaces(v){
+    const xM = Math.acosh(Math.min(4.8/v.a, 13));
+    return [
+      {tex:R3`\xi`, geom:()=>paramGeometry((t,p)=>{const k=v.a*Math.sinh(v.xi)*Math.sin(t);
+          return [k*Math.cos(p), k*Math.sin(p), v.a*Math.cosh(v.xi)*Math.cos(t)];}, 0.001,Math.PI, 0,TAU, 36,56)},
+      {tex:R3`\eta`, geom:()=>paramGeometry((t,p)=>{const k=v.a*Math.sinh(t)*Math.sin(v.eta);
+          return [k*Math.cos(p), k*Math.sin(p), v.a*Math.cosh(t)*Math.cos(v.eta)];}, 0.001,xM, 0,TAU, 24,56)},
+      {tex:R3`\varphi`, geom:()=>paramGeometry((r,z)=>[r*Math.cos(v.ph), r*Math.sin(v.ph), z], 0.02,4.6, -3.6,3.6, 14,14)},
+    ];},
+  math:{
+    transform:R3`\begin{aligned}x&=a\sinh\xi\,\sin\eta\,\cos\varphi\\[2pt] y&=a\sinh\xi\,\sin\eta\,\sin\varphi\\[2pt] z&=a\cosh\xi\,\cos\eta\end{aligned}`,
+    scale:R3`h_{\xi}^{2}=h_{\eta}^{2}=a^{2}\!\left(\sinh^{2}\!\xi+\sin^{2}\!\eta\right)\qquad h_{\varphi}^{2}=a^{2}\sinh^{2}\!\xi\,\sin^{2}\!\eta`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{a^{2}(\sinh^{2}\xi+\sin^{2}\eta)}\left[\frac{1}{\sinh\xi}\frac{\partial}{\partial\xi}\!\left(\sinh\xi\,\frac{\partial\Phi}{\partial\xi}\right)+\frac{1}{\sin\eta}\frac{\partial}{\partial\eta}\!\left(\sin\eta\,\frac{\partial\Phi}{\partial\eta}\right)\right]+\frac{1}{a^{2}\sinh^{2}\xi\,\sin^{2}\eta}\frac{\partial^{2}\Phi}{\partial\varphi^{2}}`,
+  }
+},
+
+/* 6 ───────────────────── OBLATE SPHEROIDAL ───────────────────────── */
+oblate: {
+  name:'Oblate Spheroidal', plain:'(ξ, η, φ)', coordsTex:R3`(\xi,\;\eta,\;\varphi)`,
+  blurb:'Revolution about the minor axis instead: ξ = const are flattened (lentil-shaped) spheroids, η = const one-sheeted hyperboloids, all sharing the focal ring ρ = a in the plane z = 0. The natural frame for discs, lenses and spinning planets.',
+  domainTex:R3`\xi\geq 0,\;\;\eta\in[-\tfrac{\pi}{2},\tfrac{\pi}{2}],\;\;\varphi\in[0,2\pi)`,
+  params:[
+    {key:'xi',  tex:R3`\xi`,      min:0.05, max:2.2, step:0.01, init:0.7, coord:0},
+    {key:'eta', tex:R3`\eta`,     min:-1.5, max:1.5, step:0.01, init:0.6, coord:1},
+    {key:'ph',  tex:R3`\varphi`,  min:0,    max:TAU, step:0.01, init:0.8, coord:2},
+    {key:'a',   tex:R3`a`,        min:0.5,  max:2,   step:0.01, init:1.3, shape:true},
+  ],
+  vecLabels:['ξ\u0302','η\u0302','φ\u0302'],
+  toXYZ(v){ const k=v.a*Math.cosh(v.xi)*Math.cos(v.eta);
+    return [k*Math.cos(v.ph), k*Math.sin(v.ph), v.a*Math.sinh(v.xi)*Math.sin(v.eta)]; },
+  focal(v){ return [{type:'ring', r:v.a}]; },
+  surfaces(v){
+    const xM = Math.acosh(Math.min(4.8/v.a, 13));
+    return [
+      {tex:R3`\xi`, geom:()=>paramGeometry((t,p)=>{const k=v.a*Math.cosh(v.xi)*Math.cos(t);
+          return [k*Math.cos(p), k*Math.sin(p), v.a*Math.sinh(v.xi)*Math.sin(t)];}, -Math.PI/2,Math.PI/2, 0,TAU, 30,56)},
+      {tex:R3`\eta`, geom:()=>paramGeometry((t,p)=>{const k=v.a*Math.cosh(t)*Math.cos(v.eta);
+          return [k*Math.cos(p), k*Math.sin(p), v.a*Math.sinh(t)*Math.sin(v.eta)];}, -xM,xM, 0,TAU, 30,56)},
+      {tex:R3`\varphi`, geom:()=>paramGeometry((r,z)=>[r*Math.cos(v.ph), r*Math.sin(v.ph), z], 0.02,4.6, -3.4,3.4, 14,14)},
+    ];},
+  math:{
+    transform:R3`\begin{aligned}x&=a\cosh\xi\,\cos\eta\,\cos\varphi\\[2pt] y&=a\cosh\xi\,\cos\eta\,\sin\varphi\\[2pt] z&=a\sinh\xi\,\sin\eta\end{aligned}`,
+    scale:R3`h_{\xi}^{2}=h_{\eta}^{2}=a^{2}\!\left(\sinh^{2}\!\xi+\sin^{2}\!\eta\right)\qquad h_{\varphi}^{2}=a^{2}\cosh^{2}\!\xi\,\cos^{2}\!\eta`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{a^{2}(\sinh^{2}\xi+\sin^{2}\eta)}\left[\frac{1}{\cosh\xi}\frac{\partial}{\partial\xi}\!\left(\cosh\xi\,\frac{\partial\Phi}{\partial\xi}\right)+\frac{1}{\cos\eta}\frac{\partial}{\partial\eta}\!\left(\cos\eta\,\frac{\partial\Phi}{\partial\eta}\right)\right]+\frac{1}{a^{2}\cosh^{2}\xi\,\cos^{2}\eta}\frac{\partial^{2}\Phi}{\partial\varphi^{2}}`,
+  }
+},
+
+/* 7 ───────────────────── BIPOLAR CYLINDRICAL ─────────────────────── */
+bipolar: {
+  name:'Bipolar Cylindrical', plain:'(u, v, z)', coordsTex:R3`(u,\;v,\;z)`,
+  blurb:'Circles u = const threading through both foci (±a, 0) and Apollonius circles v = const enclosing one focus, extruded along z. Every metric coefficient carries the conformal weight cosh v − cos u.',
+  domainTex:R3`u\in[0,2\pi),\;\;v\in\mathbb{R},\;\;z\in\mathbb{R}`,
+  params:[
+    {key:'u', tex:R3`u`, min:0.12, max:TAU-0.12, step:0.01, init:1.9, coord:0},
+    {key:'v', tex:R3`v`, min:-2.6, max:2.6,      step:0.01, init:0.9, coord:1},
+    {key:'z', tex:R3`z`, min:-3,   max:3,        step:0.01, init:0.8, coord:2},
+    {key:'a', tex:R3`a`, min:0.6,  max:2,        step:0.01, init:1.5, shape:true},
+  ],
+  vecLabels:['u\u0302','v\u0302','z\u0302'],
+  toXYZ(v){ const D=Math.cosh(v.v)-Math.cos(v.u);
+    return [v.a*Math.sinh(v.v)/D, v.a*Math.sin(v.u)/D, v.z]; },
+  focal(v){ return [{type:'line',from:[ v.a,0,-3.2],to:[ v.a,0,3.2]},
+                    {type:'line',from:[-v.a,0,-3.2],to:[-v.a,0,3.2]}]; },
+  surfaces(v){ return [
+    {tex:R3`u`, geom:()=>paramGeometry((t,z)=>{const D=Math.cosh(t)-Math.cos(v.u);
+        return [v.a*Math.sinh(t)/D, v.a*Math.sin(v.u)/D, z];}, -4.3,4.3, -3.2,3.2, 40,10)},
+    {tex:R3`v`, geom:()=>paramGeometry((t,z)=>{const D=Math.cosh(v.v)-Math.cos(t);
+        return [v.a*Math.sinh(v.v)/D, v.a*Math.sin(t)/D, z];}, 0,TAU, -3.2,3.2, 56,10)},
+    {tex:R3`z`, geom:()=>paramGeometry((x,y)=>[x,y,v.z], -4.2,4.2, -4.2,4.2, 14,14)},
+  ];},
+  math:{
+    transform:R3`\begin{aligned}x&=\frac{a\sinh v}{\cosh v-\cos u}\\[3pt] y&=\frac{a\sin u}{\cosh v-\cos u}\\[3pt] z&=z\end{aligned}`,
+    scale:R3`h_{u}^{2}=h_{v}^{2}=\frac{a^{2}}{(\cosh v-\cos u)^{2}}\qquad h_{z}^{2}=1`,
+    lap:R3`\nabla^{2}\Phi=\frac{(\cosh v-\cos u)^{2}}{a^{2}}\left(\frac{\partial^{2}\Phi}{\partial u^{2}}+\frac{\partial^{2}\Phi}{\partial v^{2}}\right)+\frac{\partial^{2}\Phi}{\partial z^{2}}`,
+  }
+},
+
+/* 8 ─────────────────────────── TOROIDAL ──────────────────────────── */
+toroidal: {
+  name:'Toroidal', plain:'(u, v, φ)', coordsTex:R3`(u,\;v,\;\varphi)`,
+  blurb:'Bipolar coordinates revolved about the z-axis: v = const are nested tori encircling the focal ring ρ = a, z = 0, while u = const are spheres passing through that ring. The frame built for doughnuts, tokamaks and anchor rings.',
+  domainTex:R3`u\in[0,2\pi),\;\;v\geq 0,\;\;\varphi\in[0,2\pi)`,
+  params:[
+    {key:'u',  tex:R3`u`,        min:0.12, max:TAU-0.12, step:0.01, init:1.1, coord:0},
+    {key:'v',  tex:R3`v`,        min:0.14, max:2.8,      step:0.01, init:1.0, coord:1},
+    {key:'ph', tex:R3`\varphi`,  min:0,    max:TAU,      step:0.01, init:0.6, coord:2},
+    {key:'a',  tex:R3`a`,        min:0.8,  max:2.4,      step:0.01, init:1.6, shape:true},
+  ],
+  vecLabels:['u\u0302','v\u0302','φ\u0302'],
+  toXYZ(v){ const D=Math.cosh(v.v)-Math.cos(v.u), k=v.a*Math.sinh(v.v)/D;
+    return [k*Math.cos(v.ph), k*Math.sin(v.ph), v.a*Math.sin(v.u)/D]; },
+  focal(v){ return [{type:'ring', r:v.a}]; },
+  surfaces(v){ return [
+    {tex:R3`u`, geom:()=>paramGeometry((t,p)=>{const D=Math.cosh(t)-Math.cos(v.u), k=v.a*Math.sinh(t)/D;
+        return [k*Math.cos(p), k*Math.sin(p), v.a*Math.sin(v.u)/D];}, 0.0,7, 0,TAU, 30,56)},
+    {tex:R3`v`, geom:()=>paramGeometry((t,p)=>{const D=Math.cosh(v.v)-Math.cos(t), k=v.a*Math.sinh(v.v)/D;
+        return [k*Math.cos(p), k*Math.sin(p), v.a*Math.sin(t)/D];}, 0,TAU, 0,TAU, 56,56)},
+    {tex:R3`\varphi`, geom:()=>paramGeometry((r,z)=>[r*Math.cos(v.ph), r*Math.sin(v.ph), z], 0.02,4.6, -3.4,3.4, 14,14)},
+  ];},
+  math:{
+    transform:R3`\begin{aligned}x&=\frac{a\sinh v\,\cos\varphi}{\cosh v-\cos u}\\[3pt] y&=\frac{a\sinh v\,\sin\varphi}{\cosh v-\cos u}\\[3pt] z&=\frac{a\sin u}{\cosh v-\cos u}\end{aligned}`,
+    scale:R3`h_{u}^{2}=h_{v}^{2}=\frac{a^{2}}{(\cosh v-\cos u)^{2}}\qquad h_{\varphi}^{2}=\frac{a^{2}\sinh^{2}v}{(\cosh v-\cos u)^{2}}`,
+    lap:R3`\nabla^{2}\Phi=\frac{(\cosh v-\cos u)^{2}}{a^{2}}\left[\frac{\partial^{2}\Phi}{\partial u^{2}}+\frac{\partial^{2}\Phi}{\partial v^{2}}+\left(\coth v-\frac{\sinh v}{\cosh v-\cos u}\right)\frac{\partial\Phi}{\partial v}-\frac{\sin u}{\cosh v-\cos u}\,\frac{\partial\Phi}{\partial u}\right]+\frac{(\cosh v-\cos u)^{2}}{a^{2}\sinh^{2}v}\frac{\partial^{2}\Phi}{\partial\varphi^{2}}`,
+  }
+},
+
+/* 9 ──────────────────────────── CONICAL ──────────────────────────── */
+conical: {
+  name:'Conical', plain:'(λ, μ, ν)', coordsTex:R3`(\lambda,\;\mu,\;\nu)`,
+  blurb:'A radius λ and two confocal families of elliptic cones, μ = const and ν = const, all with vertex at the origin; λ = const is a sphere. Constructed from the confocal roots with α = 1, γ = 0 fixed and β = b adjustable — the point is plotted in the first octant.',
+  domainTex:R3`\lambda\geq 0,\;\;\beta<\mu<\alpha,\;\;\gamma<\nu<\beta\quad(\alpha=1,\;\gamma=0,\;\beta=b)`,
+  params:[
+    {key:'lam', tex:R3`\lambda`, min:0.6, max:4, step:0.01,  init:2.6,  coord:0},
+    {key:'mu',  tex:R3`\mu`,     dynMin:s=>s.b+0.02, dynMax:()=>0.98, step:0.005, init:0.78, coord:1},
+    {key:'nu',  tex:R3`\nu`,     dynMin:()=>0.02, dynMax:s=>s.b-0.02,  step:0.005, init:0.24, coord:2},
+    {key:'b',   tex:R3`\beta`,   min:0.15, max:0.85, step:0.01, init:0.5, shape:true},
+  ],
+  vecLabels:['λ\u0302','μ\u0302','ν\u0302'],
+  toXYZ(v){ const u=coneUnit(v.b, v.mu, v.nu); return [v.lam*u[0], v.lam*u[1], v.lam*u[2]]; },
+  surfaces(v){
+    const b=v.b, e=0.015;
+    const octantCones = which => {
+      const patches=[];
+      for(const sx of [1,-1]) for(const sy of [1,-1]) for(const sz of [1,-1]){
+        patches.push({ su:9, sv:13, u0:0.04, u1:4.4,
+          v0: which==='mu' ? e : b+e,  v1: which==='mu' ? b-e : 0.985,
+          fn:(t,w)=>{ const d=coneUnit(b, which==='mu'?v.mu:w, which==='mu'?w:v.nu);
+                      return [sx*t*d[0], sy*t*d[1], sz*t*d[2]]; } });
+      }
+      return patchesGeometry(patches);
+    };
+    return [
+      {tex:R3`\lambda`, geom:()=>paramGeometry((t,p)=>{const st=Math.sin(t);
+          return [v.lam*st*Math.cos(p), v.lam*st*Math.sin(p), v.lam*Math.cos(t)];}, 0.001,Math.PI, 0,TAU, 36,56)},
+      {tex:R3`\mu`, geom:()=>octantCones('mu')},
+      {tex:R3`\nu`, geom:()=>octantCones('nu')},
+    ];},
+  math:{
+    transform:R3`\begin{aligned}x&=\lambda\sqrt{\frac{(\alpha-\mu)(\alpha-\nu)}{(\alpha-\beta)(\alpha-\gamma)}}\\[5pt] y&=\lambda\sqrt{\frac{(\mu-\beta)(\beta-\nu)}{(\alpha-\beta)(\beta-\gamma)}}\\[5pt] z&=\lambda\sqrt{\frac{(\mu-\gamma)(\nu-\gamma)}{(\alpha-\gamma)(\beta-\gamma)}}\end{aligned}`,
+    scale:R3`h_{\lambda}^{2}=1\qquad h_{\mu}^{2}=\frac{\lambda^{2}(\mu-\nu)}{4(\alpha-\mu)(\mu-\beta)(\mu-\gamma)}\qquad h_{\nu}^{2}=\frac{\lambda^{2}(\mu-\nu)}{4(\alpha-\nu)(\beta-\nu)(\nu-\gamma)}`,
+    lap:R3`\nabla^{2}\Phi=\frac{1}{\lambda^{2}}\frac{\partial}{\partial\lambda}\!\left(\lambda^{2}\frac{\partial\Phi}{\partial\lambda}\right)+\frac{4}{\lambda^{2}(\mu-\nu)}\left[\sqrt{P_{\mu}}\,\frac{\partial}{\partial\mu}\!\left(\sqrt{P_{\mu}}\,\frac{\partial\Phi}{\partial\mu}\right)+\sqrt{P_{\nu}}\,\frac{\partial}{\partial\nu}\!\left(\sqrt{P_{\nu}}\,\frac{\partial\Phi}{\partial\nu}\right)\right]`,
+    lapNote:R3`P_{\mu}=(\alpha-\mu)(\mu-\beta)(\mu-\gamma),\;\;P_{\nu}=(\alpha-\nu)(\beta-\nu)(\nu-\gamma)`,
+  }
+},
+
+/* 10 ─────────────────── CONFOCAL PARABOLOIDAL ────────────────────── */
+paraboloidal: {
+  name:'Confocal Paraboloidal', plain:'(λ, μ, ν)', coordsTex:R3`(\lambda,\;\mu,\;\nu)`,
+  blurb:'Three confocal paraboloid families: μ = const and ν = const are elliptic paraboloids opening toward ±x, while λ = const are hyperbolic paraboloids (saddles). Roots obey ν < −b² < λ < −c² < μ; P is plotted in the positive octant.',
+  domainTex:R3`\nu<-b^{2}<\lambda<-c^{2}<\mu,\qquad b>c>0`,
+  params:[
+    {key:'lam', tex:R3`\lambda`, dynMin:s=>-(s.b*s.b)+0.05, dynMax:s=>-(s.c*s.c)-0.05, step:0.005, init:-1.3, coord:0},
+    {key:'mu',  tex:R3`\mu`,     dynMin:s=>-(s.c*s.c)+0.05, max:3,                     step:0.005, init:0.3,  coord:1},
+    {key:'nu',  tex:R3`\nu`,     min:-5, dynMax:s=>-(s.b*s.b)-0.05,                    step:0.005, init:-2.8, coord:2},
+    {key:'b',   tex:R3`b`,       min:0.75, max:1.9, step:0.01, init:1.35, shape:true},
+    {key:'c',   tex:R3`c`,       min:0.3, dynMax:s=>s.b-0.15, step:0.01, init:0.85, shape:true},
+  ],
+  vecLabels:['λ\u0302','μ\u0302','ν\u0302'],
+  toXYZ(v){ const B=v.b*v.b, C=v.c*v.c;
+    return [ -0.5*(v.lam+v.mu+v.nu+B+C),
+      Math.sqrt(Math.max(0, -((v.lam+B)*(v.mu+B)*(v.nu+B))/(B-C))),
+      Math.sqrt(Math.max(0,  ((v.lam+C)*(v.mu+C)*(v.nu+C))/(B-C))) ]; },
+  surfaces(v){
+    const B=v.b*v.b, C=v.c*v.c, L=v.lam;
+    const yM=Math.sqrt(Math.max(0.2,(3.6+0.5*Math.abs(L))*(B+L)));
+    const zM=Math.sqrt(Math.max(0.2,(3.6+0.5*Math.abs(L))*(-(C+L))));
+    return [
+      {tex:R3`\lambda`, geom:()=>paramGeometry((y,z)=>[0.5*(y*y/(B+L)+z*z/(C+L)-L), y, z], -yM,yM, -zM,zM, 26,26)},
+      {tex:R3`\mu`, geom:()=>paramGeometry((t,p)=>[0.5*(t*t-v.mu),
+          Math.sqrt(B+v.mu)*t*Math.cos(p), Math.sqrt(C+v.mu)*t*Math.sin(p)], 0,3.2, 0,TAU, 14,48)},
+      {tex:R3`\nu`, geom:()=>paramGeometry((t,p)=>[-0.5*(t*t+v.nu),
+          Math.sqrt(Math.abs(B+v.nu))*t*Math.cos(p), Math.sqrt(Math.abs(C+v.nu))*t*Math.sin(p)], 0,3.2, 0,TAU, 14,48)},
+    ];},
+  math:{
+    transform:R3`\begin{aligned}x&=-\tfrac{1}{2}\left(\lambda+\mu+\nu+b^{2}+c^{2}\right)\\[2pt] y&=\sqrt{-\frac{(\lambda+b^{2})(\mu+b^{2})(\nu+b^{2})}{b^{2}-c^{2}}}\\[5pt] z&=\sqrt{\frac{(\lambda+c^{2})(\mu+c^{2})(\nu+c^{2})}{b^{2}-c^{2}}}\end{aligned}`,
+    scale:R3`h_{\lambda}^{2}=\frac{(\lambda-\mu)(\lambda-\nu)}{4(\lambda+b^{2})(\lambda+c^{2})}\qquad h_{\mu}^{2}=\frac{(\mu-\lambda)(\mu-\nu)}{4(\mu+b^{2})(\mu+c^{2})}\qquad h_{\nu}^{2}=\frac{(\nu-\lambda)(\nu-\mu)}{4(\nu+b^{2})(\nu+c^{2})}`,
+    lap:R3`\nabla^{2}\Phi=4\!\left[\frac{S_{\lambda}^{2}}{(\mu-\lambda)(\lambda-\nu)}\frac{\partial}{\partial\lambda}\!\left(S_{\lambda}\frac{\partial\Phi}{\partial\lambda}\right)+\frac{S_{\mu}^{2}}{(\mu-\lambda)(\mu-\nu)}\frac{\partial}{\partial\mu}\!\left(S_{\mu}\frac{\partial\Phi}{\partial\mu}\right)+\frac{S_{\nu}^{2}}{(\nu-\lambda)(\nu-\mu)}\frac{\partial}{\partial\nu}\!\left(S_{\nu}\frac{\partial\Phi}{\partial\nu}\right)\right]`,
+    lapNote:R3`S_{q}=\sqrt{\left|(q+b^{2})(q+c^{2})\right|},\;\;q\in\{\lambda,\mu,\nu\}`,
+  }
+},
+};
+
+const ORDER = Object.keys(SYSTEMS);
+const coordParams = S => S.params.filter(p=>p.coord!==undefined).sort((a,b)=>a.coord-b.coord);
+
+/* ---------------- differential frame (central differences) ---------------- */
+function frameAt(S, v){
+  const P = S.toXYZ(v), keys = coordParams(S).map(p=>p.key), e=[], h=[];
+  for(let i=0;i<3;i++){
+    const k=keys[i], d=Math.max(1e-5, Math.abs(v[k])*2e-5);
+    const A=S.toXYZ({...v,[k]:v[k]+d}), Bp=S.toXYZ({...v,[k]:v[k]-d});
+    const dx=(A[0]-Bp[0])/(2*d), dy=(A[1]-Bp[1])/(2*d), dz=(A[2]-Bp[2])/(2*d);
+    const n=Math.hypot(dx,dy,dz); h.push(n);
+    e.push(n>1e-9 ? {x:dx/n,y:dy/n,z:dz/n} : null);
+  }
+  return {P,e,h};
+}
+const dot3=(a,b)=> (a&&b)? a.x*b.x+a.y*b.y+a.z*b.z : NaN;
+
+/* ---------------- three.js scene ---------------- */
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.domElement.className='block w-full h-full';
+viewport.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x070c18);
+scene.fog = new THREE.FogExp2(0x070c18, 0.016);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+camera.up.set(0,0,1);
+camera.position.set(7.6,-7.0,5.6);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.autoRotate=true; controls.autoRotateSpeed=0.65;
+controls.minDistance=2.5; controls.maxDistance=45;
+controls.target.set(0,0,0.5); controls.update();
+
+scene.add(new THREE.HemisphereLight(0xcfd9ff, 0x0a0e1a, 0.95));
+const dl=new THREE.DirectionalLight(0xffffff,1.05); dl.position.set(6,-9,11); scene.add(dl);
+const dl2=new THREE.DirectionalLight(0x88aaff,0.25); dl2.position.set(-8,6,-4); scene.add(dl2);
+
+const grid=new THREE.GridHelper(11,22,0x2c3d63,0x1a2440);
+grid.rotation.x=Math.PI/2; grid.position.z=-0.012;
+grid.material.transparent=true; grid.material.opacity=0.45; scene.add(grid);
+
+function textSprite(text, color, scale=0.55){
+  const pad=18, fs=72, font=`italic ${fs}px Georgia, 'Times New Roman', serif`;
+  const c=document.createElement('canvas'); let ctx=c.getContext('2d');
+  ctx.font=font; const w=Math.ceil(ctx.measureText(text).width);
+  c.width=w+pad*2; c.height=fs+pad*2;
+  ctx=c.getContext('2d'); ctx.font=font; ctx.textBaseline='middle'; ctx.textAlign='center';
+  ctx.shadowColor='rgba(0,0,0,.85)'; ctx.shadowBlur=10; ctx.fillStyle=color;
+  ctx.fillText(text, c.width/2, c.height/2);
+  const t=new THREE.CanvasTexture(c); t.minFilter=THREE.LinearFilter;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthWrite:false}));
+  s.scale.set(scale*c.width/c.height, scale, 1); return s;
+}
+(function buildAxes(){
+  const defs=[{d:[1,0,0],c:0xf47c8f,l:'x'},{d:[0,1,0],c:0x7fd99a,l:'y'},{d:[0,0,1],c:0x82b4f7,l:'z'}];
+  defs.forEach(({d,c,l})=>{
+    const dir=new THREE.Vector3(...d);
+    const ah=new THREE.ArrowHelper(dir,new THREE.Vector3(),4.8,c,0.24,0.12);
+    ah.line.material.transparent=true; ah.line.material.opacity=0.7;
+    ah.cone.material.transparent=true; ah.cone.material.opacity=0.95;
+    scene.add(ah);
+    const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), dir.clone().multiplyScalar(-3.9)]);
+    scene.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:c,transparent:true,opacity:0.16})));
+    const s=textSprite(l,'#'+new THREE.Color(c).getHexString(),0.5);
+    s.position.copy(dir.clone().multiplyScalar(5.15)); scene.add(s);
+  });
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.035,12,8), new THREE.MeshBasicMaterial({color:0x94a3c2})));
+})();
+
+const gFocal=new THREE.Group(), gSurfaces=new THREE.Group(), gCurves=new THREE.Group(),
+      gPoint=new THREE.Group(), gBasis=new THREE.Group();
+scene.add(gFocal,gSurfaces,gCurves,gPoint,gBasis);
+
+function makeGlowSprite(){
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const x=c.getContext('2d'), g=x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,235,200,.9)'); g.addColorStop(.35,'rgba(255,190,110,.35)');
+  g.addColorStop(1,'rgba(255,170,80,0)');
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  return new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+}
+const pointMesh=new THREE.Mesh(new THREE.SphereGeometry(0.09,24,16), new THREE.MeshBasicMaterial({color:0xffffff}));
+pointMesh.renderOrder=6;
+const glow=makeGlowSprite(); glow.renderOrder=5;
+const dashGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);
+const dashLine=new THREE.Line(dashGeo, new THREE.LineDashedMaterial({color:0x9fb2d8,dashSize:0.14,gapSize:0.1,transparent:true,opacity:0.55}));
+gPoint.add(pointMesh,glow,dashLine);
+
+const arrows=[0,1,2].map(i=>{
+  const a=new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(),1.15,SURF_COLORS[i],0.26,0.14);
+  a.visible=false; a.traverse(o=>o.renderOrder=6); gBasis.add(a); return a;
+});
+let basisLabels=[];
+
+function disposeDeep(obj){ obj.traverse(o=>{ if(o.geometry)o.geometry.dispose();
+  if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m.map)m.map.dispose(); m.dispose(); }); } }); }
+function clearGroup(g){ disposeDeep(g); g.clear(); }
+
+function makeSurfaceMesh(geom,color){
+  const grp=new THREE.Group();
+  const fill=new THREE.Mesh(geom, new THREE.MeshStandardMaterial({color, transparent:true, opacity:0.15,
+    side:THREE.DoubleSide, depthWrite:false, roughness:0.6, metalness:0.05, emissive:color, emissiveIntensity:0.18}));
+  fill.renderOrder=2;
+  const wire=new THREE.Mesh(geom, new THREE.MeshBasicMaterial({color, wireframe:true, transparent:true, opacity:0.085, depthWrite:false}));
+  wire.renderOrder=3;
+  grp.add(fill,wire); return grp;
+}
+
+/* ---------------- state & DOM ---------------- */
+const state = { sys:'spherical', v:{}, show:[true,true,true] };
+const $ = id => document.getElementById(id);
+const sysSelect=$('sysSelect'), sysIndex=$('sysIndex'), sysName=$('sysName'), sysCoords=$('sysCoords'),
+  elBlurb=$('elBlurb'), elDomain=$('elDomain'), elTransform=$('elTransform'), elScale=$('elScale'),
+  elLap=$('elLap'), lapNote=$('lapNote'), slidersPoint=$('slidersPoint'), slidersShape=$('slidersShape'),
+  shapeWrap=$('shapeWrap'), roP=$('roP'), roPOverlay=$('roPOverlay'), roH=$('roH'), roBasis=$('roBasis'),
+  roOrtho=$('roOrtho'), chipsEl=$('chips'), verifyBadge=$('verifyBadge');
+let sliderMap={}, surfaceGroups=[], basisRows=[], hCells=[];
+
+/* ---------------- update pipeline ---------------- */
+function syncDynamic(S){
+  S.params.forEach(p=>{
+    if(!p.dynMin && !p.dynMax) return;
+    const rec=sliderMap[p.key]; if(!rec) return;
+    const mn = p.dynMin ? p.dynMin(state.v) : parseFloat(rec.input.min);
+    const mx = p.dynMax ? p.dynMax(state.v) : parseFloat(rec.input.max);
+    rec.input.min=mn; rec.input.max=mx;
+    let val=state.v[p.key];
+    if(val<mn||val>mx){ val=clamp(val,mn,mx); state.v[p.key]=val;
+      rec.input.value=val; rec.valEl.textContent=val.toFixed(2); }
+  });
+}
+function updateSurfaces(S,v){
+  clearGroup(gSurfaces);
+  surfaceGroups = S.surfaces(v).map((sp,i)=>{
+    const grp=makeSurfaceMesh(sp.geom(), SURF_COLORS[i]);
+    grp.visible = state.show[i]!==false;
+    gSurfaces.add(grp); return grp;
+  });
+}
+function updateCurves(S,v){
+  clearGroup(gCurves);
+  coordParams(S).forEach((p,i)=>{
+    const r0 = p.dynMin ? p.dynMin(v) : p.min, r1 = p.dynMax ? p.dynMax(v) : p.max;
+    if(!(r1>r0)) return;
+    const tube=new THREE.Mesh(new THREE.TubeGeometry(new CoordCurve(S,v,p.key,r0,r1),150,0.013,6,false),
+      new THREE.MeshBasicMaterial({color:SURF_COLORS[i], transparent:true, opacity:0.9}));
+    tube.renderOrder=4; gCurves.add(tube);
+  });
+}
+function updateFocal(S,v){
+  clearGroup(gFocal);
+  const mat=new THREE.LineBasicMaterial({color:0xffe3a3,transparent:true,opacity:0.9});
+  (S.focal?S.focal(v):[]).forEach(f=>{
+    if(f.type==='line'){
+      const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...f.from),new THREE.Vector3(...f.to)]);
+      const l=new THREE.Line(g,mat); l.renderOrder=1; gFocal.add(l);
+    } else if(f.type==='ring'){
+      const pts=[]; for(let k=0;k<=96;k++){ const a=k/96*TAU; pts.push(new THREE.Vector3(f.r*Math.cos(a),f.r*Math.sin(a),0)); }
+      const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat); l.renderOrder=1; gFocal.add(l);
+    }
+  });
+}
+function updatePointAndBasis(S,v){
+  const fr=frameAt(S,v), P=new THREE.Vector3(...fr.P);
+  pointMesh.position.copy(P); glow.position.copy(P);
+  dashGeo.setFromPoints([new THREE.Vector3(),P]); dashLine.computeLineDistances();
+  fr.e.forEach((e,i)=>{
+    const a=arrows[i], L=basisLabels[i];
+    if(!e){ a.visible=false; if(L)L.visible=false; return; }
+    a.visible=true; a.position.copy(P);
+    a.setDirection(new THREE.Vector3(e.x,e.y,e.z)); a.setLength(1.15,0.26,0.14);
+    if(L){ L.visible=true; L.position.set(P.x+e.x*1.5, P.y+e.y*1.5, P.z+e.z*1.5); }
+  });
+  return fr;
+}
+function updateReadout(fr){
+  const s=`( ${fmt(fr.P[0])}, ${fmt(fr.P[1])}, ${fmt(fr.P[2])} )`;
+  roP.textContent=s;
+  roPOverlay.textContent=`P = ( ${fmt(fr.P[0],2)}, ${fmt(fr.P[1],2)}, ${fmt(fr.P[2],2)} )`;
+  fr.h.forEach((h,i)=>{ if(hCells[i]) hCells[i].textContent=fmt(h); });
+  fr.e.forEach((e,i)=>{ if(basisRows[i]) basisRows[i].textContent = e ? `( ${fmt(e.x)}, ${fmt(e.y)}, ${fmt(e.z)} )` : 'undefined'; });
+  const pairs=[[0,1],[1,2],[0,2]].map(([i,j])=>{
+    const d=dot3(fr.e[i],fr.e[j]);
+    return `e\u2091${i+1}\u00B7e\u2091${j+1} = ${fmt(d,5)}${isFinite(d)&&Math.abs(d)<1e-3?' \u2713':''}`;
+  });
+  roOrtho.textContent = pairs.join('    ');
+}
+function updateAll(){
+  const S=SYSTEMS[state.sys], v=state.v;
+  updateSurfaces(S,v); updateCurves(S,v); updateFocal(S,v);
+  updateReadout(updatePointAndBasis(S,v));
+}
+
+/* ---------------- UI builders ---------------- */
+function buildSliders(S){
+  slidersPoint.innerHTML=''; slidersShape.innerHTML=''; sliderMap={};
+  S.params.forEach(p=>{
+    const row=document.createElement('div'); row.className='mb-3.5';
+    row.innerHTML=`<div class="flex items-baseline justify-between mb-1">
+        <span class="sld-tex text-ink/90 text-[14px]"></span>
+        <span class="sld-val font-mono text-[11.5px] tabular-nums" style="color:${p.shape?'#f6b24e':'#53c7f0'}"></span>
+      </div><input type="range" class="sld-input w-full">`;
+    (p.shape?slidersShape:slidersPoint).appendChild(row);
+    tex(row.querySelector('.sld-tex'), p.tex);
+    const input=row.querySelector('input'), valEl=row.querySelector('.sld-val');
+    const mn = p.dynMin ? p.dynMin(state.v) : p.min;
+    const mx = p.dynMax ? p.dynMax(state.v) : p.max;
+    input.min=mn; input.max=mx; input.step=p.step||0.01;
+    input.value=clamp(state.v[p.key],mn,mx); state.v[p.key]=+input.value;
+    valEl.textContent=(+input.value).toFixed(2);
+    input.addEventListener('input',()=>{
+      state.v[p.key]=parseFloat(input.value);
+      valEl.textContent=state.v[p.key].toFixed(2);
+      syncDynamic(S); syncDynamic(S);   // two passes for chained constraints (b→c→λ…)
+      updateAll();
+    });
+    sliderMap[p.key]={input,valEl,p};
+  });
+  shapeWrap.style.display = S.params.some(p=>p.shape) ? '' : 'none';
+}
+function buildReadoutRows(S){
+  roBasis.innerHTML=''; roH.innerHTML=''; basisRows=[]; hCells=[];
+  coordParams(S).forEach((p,i)=>{
+    const hr=document.createElement('div');
+    hr.className='rounded-md border border-line bg-deep/60 px-2 py-1.5';
+    hr.innerHTML=`<div class="text-[9px] tracking-widest" style="color:${SURF_HEX[i]}">h<sub>${i+1}</sub></div>
+                  <div class="text-[12px] text-ink tabular-nums hc">–</div>`;
+    roH.appendChild(hr); hCells.push(hr.querySelector('.hc'));
+    const row=document.createElement('div'); row.className='flex items-center gap-2';
+    row.innerHTML=`<span class="w-2 h-2 rounded-full shrink-0" style="background:${SURF_HEX[i]};box-shadow:0 0 8px ${SURF_HEX[i]}"></span>
+      <span class="w-9 shrink-0 text-[13px] italic text-mut" style="font-family:Georgia,serif">${S.vecLabels[i]}</span>
+      <span class="tabular-nums text-[12px] text-ink/90 bv">( – )</span>`;
+    roBasis.appendChild(row); basisRows.push(row.querySelector('.bv'));
+  });
+}
+function buildChips(S){
+  chipsEl.innerHTML='';
+  S.surfaces(state.v).forEach((sp,i)=>{
+    const b=document.createElement('button'); b.className='chip';
+    b.innerHTML=`<span class="dot" style="background:${SURF_HEX[i]};color:${SURF_HEX[i]}"></span>
+                 <span class="ct"></span><span class="text-[9px] tracking-[0.14em] text-mut">SURFACE</span>`;
+    tex(b.querySelector('.ct'), sp.tex);
+    b.addEventListener('click',()=>{
+      state.show[i]=!state.show[i];
+      b.classList.toggle('off',!state.show[i]);
+      if(surfaceGroups[i]) surfaceGroups[i].visible=state.show[i];
+    });
+    chipsEl.appendChild(b);
+  });
+}
+function rebuildBasisLabels(S){
+  basisLabels.forEach(s=>{ gBasis.remove(s); if(s.material){ if(s.material.map)s.material.map.dispose(); s.material.dispose(); } });
+  basisLabels=S.vecLabels.map((t,i)=>{ const s=textSprite(t,SURF_HEX[i],0.55); s.visible=false; s.renderOrder=7; gBasis.add(s); return s; });
+}
+function selectSystem(id){
+  state.sys=id; const S=SYSTEMS[id];
+  state.v={}; S.params.forEach(p=>state.v[p.key]=p.init);
+  state.show=[true,true,true];
+  sysSelect.value=id;
+  const idx=ORDER.indexOf(id);
+  sysIndex.textContent=`${String(idx+1).padStart(2,'0')} / ${String(ORDER.length).padStart(2,'0')}`;
+  sysName.textContent=S.name;
+  tex(sysCoords,S.coordsTex); tex(elDomain,S.domainTex);
+  elBlurb.textContent=S.blurb;
+  tex(elTransform,S.math.transform,true); tex(elScale,S.math.scale,true); tex(elLap,S.math.lap,true);
+  if(S.math.lapNote){ lapNote.style.display=''; tex(lapNote,S.math.lapNote); } else { lapNote.style.display='none'; lapNote.innerHTML=''; }
+  buildSliders(S); buildReadoutRows(S); buildChips(S); rebuildBasisLabels(S);
+  [ $('cardBlurb'), $('cardTransform'), $('cardScale'), $('cardLap') ].forEach((c,i)=>{
+    c.classList.remove('rise'); void c.offsetWidth; c.style.animationDelay=(i*80)+'ms'; c.classList.add('rise');
+  });
+  updateAll();
+}
+
+/* ---------------- wiring ---------------- */
+tex($('headerEq'), R3`\nabla^{2}\Phi=\frac{1}{h_{1}h_{2}h_{3}}\sum_{i=1}^{3}\frac{\partial}{\partial q_{i}}\!\left(\frac{h_{1}h_{2}h_{3}}{h_{i}^{2}}\,\frac{\partial\Phi}{\partial q_{i}}\right)`);
+ORDER.forEach(id=>{ const o=document.createElement('option'); o.value=id;
+  o.textContent=`${SYSTEMS[id].name}  ${SYSTEMS[id].plain}`; sysSelect.appendChild(o); });
+sysSelect.addEventListener('change',()=>selectSystem(sysSelect.value));
+$('btnSlidersReset').addEventListener('click',()=>{ const S=SYSTEMS[state.sys];
+  S.params.forEach(p=>state.v[p.key]=p.init); buildSliders(S); updateAll(); });
+$('btnReset').addEventListener('click',()=>{ camera.position.set(7.6,-7.0,5.6);
+  controls.target.set(0,0,0.5); controls.update(); });
+const btnRotate=$('btnRotate');
+btnRotate.addEventListener('click',()=>{ controls.autoRotate=!controls.autoRotate;
+  btnRotate.classList.toggle('active-toggle',controls.autoRotate); });
+
+/* ---------------- boot ---------------- */
+selectSystem('spherical');
+function resize(){ const w=viewport.clientWidth,h=viewport.clientHeight;
+  if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(viewport); resize();
+
+(function selfTest(){
+  const rows=[];
+  ORDER.forEach(id=>{
+    const S=SYSTEMS[id], v={}; S.params.forEach(p=>v[p.key]=p.init);
+    const fr=frameAt(S,v);
+    const m=Math.max(Math.abs(dot3(fr.e[0],fr.e[1])),Math.abs(dot3(fr.e[1],fr.e[2])),Math.abs(dot3(fr.e[0],fr.e[2])));
+    rows.push({system:S.name, maxOffDiagonal:m.toExponential(2), pass:m<1e-4});
+  });
+  console.table(rows);
+  verifyBadge.textContent = rows.every(r=>r.pass)
+    ? '\u2713 ORTHOGONALITY VERIFIED IN-BROWSER VIA CENTRAL DIFFERENCES \u00B7 e\u1D62\u00B7e\u2C7C \u2248 0'
+    : '\u26A0 metric check: see console';
+})();
+
+(function animate(t){
+  requestAnimationFrame(animate);
+  controls.update();
+  const k=1+0.12*Math.sin((t||0)*0.0026);
+  glow.scale.set(1.05*k,1.05*k,1);
+  glow.material.opacity=0.55+0.18*Math.sin((t||0)*0.0026);
+  renderer.render(scene,camera);
+})(0);
+</script>
+</body>
+</html>

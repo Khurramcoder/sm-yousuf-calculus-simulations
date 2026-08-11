@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Explorer: The Divergence Theorem</title>
+    
+    <!-- Professional Styling -->
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --light: #ecf0f1;
+            --success: #27ae60;
+            --text: #333;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.5rem; }
+        header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9rem; }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Theory & Math */
+        .info-panel {
+            flex: 0 0 35%;
+            background: white;
+            padding: 2rem;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        }
+
+        .info-panel h2 { color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; }
+        .info-panel h3 { color: var(--secondary); margin-top: 1.5rem; }
+        
+        .theorem-box {
+            background-color: var(--light);
+            border-left: 5px solid var(--accent);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-size: 1.1rem;
+        }
+
+        .math-block {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #eee;
+        }
+
+        .example-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            background-color: #fff;
+        }
+        .example-card:hover { box-shadow: var(--shadow); }
+
+        /* Right Panel - 3D Simulation */
+        .simulation-panel {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #renderer-container {
+            flex: 1;
+            width: 100%;
+            background-color: #000; /* fallback */
+        }
+
+        /* Controls Overlay */
+        .controls-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 5;
+            width: 280px;
+        }
+
+        .control-group { margin-bottom: 10px; }
+        .control-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;}
+        
+        select, input[type=range] {
+            width: 100%;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .live-data {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(44, 62, 80, 0.85);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    </style>
+
+    <!-- MathJax for LaTeX equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>The Divergence Theorem Explorer</h1>
+    <p>Bridging Surface Flux and Volume Divergence through 3D Visualization</p>
+</header>
+
+<div class="main-container">
+    
+    <!-- Information Panel -->
+    <aside class="info-panel">
+        <h2>1. Intuition</h2>
+        <p>Imagine a fluid flowing through space. A <strong>vector field \(\mathbf{F}\)</strong> represents the velocity and direction of the fluid at any point.</p>
+        <p>The <strong>Divergence Theorem</strong> (also known as Gauss's Theorem) states a fundamental truth connecting what happens <em>inside</em> a region to what happens on its <em>boundary</em>.</p>
+        
+        <div class="theorem-box">
+            "The total expansion (divergence) of a vector field inside a closed volume is exactly equal to the total net flow (flux) out of that volume's surface."
+        </div>
+
+        <h2>2. Mathematical Statement</h2>
+        <p>Let \(V\) be a simple closed region in 3D space, and \(S\) be the boundary surface of \(V\) oriented outwards. If \(\mathbf{F}\) is a continuously differentiable vector field, then:</p>
+        
+        <div class="math-block">
+            \[ \iiint_V (\nabla \cdot \mathbf{F}) \, dV = \oiint_S (\mathbf{F} \cdot \mathbf{n}) \, dS \]
+        </div>
+
+        <h3>Key Components:</h3>
+        <ul>
+            <li><strong>\(\oiint_S (\mathbf{F} \cdot \mathbf{n}) \, dS\) (Surface Integral):</strong> The net <strong>Flux</strong>. It measures how much field is passing through the surface \(S\) in the direction of the outward normal unit vector \(\mathbf{n}\).</li>
+            <li><strong>\(\nabla \cdot \mathbf{F}\) (Divergence):</strong> Measures the "sourceness" at a point. If \(\nabla \cdot \mathbf{F} > 0\), the point acts like a source (fluid expands). If \(< 0\), it's a sink.</li>
+            <li><strong>\(\iiint_V (\nabla \cdot \mathbf{F}) \, dV\) (Volume Integral):</strong> Adds up all the "sources" and "sinks" inside the entire region \(V\).</li>
+        </ul>
+
+        <h2>3. Educational Example</h2>
+        <div class="example-card">
+            <h4>Problem: Calculate Flux via the Theorem</h4>
+            <p>Consider a unit cube \(V\) (\(0\le x,y,z \le 1\)) and vector field \(\mathbf{F} = \langle x, y, z \rangle\).</p>
+            
+            <strong>Step 1: Calculate Divergence \(\nabla \cdot \mathbf{F}\)</strong>
+            \[ \nabla \cdot \mathbf{F} = \frac{\partial}{\partial x}(x) + \frac{\partial}{\partial y}(y) + \frac{\partial}{\partial z}(z) = 1 + 1 + 1 = 3 \]
+            
+            <strong>Step 2: Evaluate Volume Integral</strong>
+            \[ \iiint_V 3 \, dV = 3 \times \text{Volume}(V) = 3 \times 1^3 = 3 \]
+            
+            <em>Conclusion: Without calculating six separate surface integrals, we know the net flux out of the cube is exactly 3.</em>
+        </div>
+    </aside>
+
+    <!-- Simulation Panel -->
+    <section class="simulation-panel">
+        <div id="renderer-container">
+            <!-- Three.js Canvas will be inserted here -->
+        </div>
+
+        <!-- Dynamic Data Overlay -->
+        <div class="live-data">
+            <div>Field: <span id="field-desc">\(\langle x, y, z \rangle\)</span></div>
+            <div>Avg. Divergence (\(\nabla \cdot \mathbf{F}\)): <span id="div-val">1.0</span></div>
+            <div>Net Flux State: <span id="flux-state">Outward</span></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-overlay">
+            <div class="control-group">
+                <label for="fieldSelect">Vector Field (\(\mathbf{F}\))</label>
+                <select id="fieldSelect">
+                    <option value="source">Positive Divergence (Source): ⟨x, y, z⟩</option>
+                    <option value="sink">Negative Divergence (Sink): ⟨-x, -y, -z⟩</option>
+                    <option value="zero">Zero Divergence (Incompressible): ⟨y, -x, 0.1⟩</option>
+                    <option value="complex">Mixed: ⟨x², y-z, z²⟩</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Surface Opacity</label>
+                <input type="range" id="opacityRange" min="0" max="1" step="0.01" value="0.3">
+            </div>
+
+            <div class="control-group" style="font-size: 0.8rem; color: #666;">
+                <em>Interaction: Left Click + Drag to rotate. Scroll to zoom.</em>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Three.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- OrbitControls for Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    // --- Setup Three.js Scene ---
+    const container = document.getElementById('renderer-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
+    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(2, 2, 4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // --- Lights ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    // --- Scene Objects ---
+    
+    // 1. The Closed Surface (A Sphere)
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x3498db,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false // Helps with transparency artifacts
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+
+    // 2. Normal Vectors (n) - Optional visual aid
+    // scene.add(new THREE.BoxHelper(sphere, 0xffff00)); // Show bounds
+
+    // 3. Grid Helper for context
+    const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+    gridHelper.position.y = -1.1;
+    scene.add(gridHelper);
+
+    // 4. Vector Field (Arrows)
+    let vectorFieldGroup = new THREE.Group();
+    scene.add(vectorFieldGroup);
+
+    // --- Vector Field Logic ---
+
+    const fieldDefinitions = {
+        source: {
+            func: (x, y, z) => new THREE.Vector3(x, y, z).multiplyScalar(0.5),
+            desc: "\\(\\langle x, y, z \\rangle\\)",
+            div: "3.0 (Constant Source)",
+            flux: "Strongly Outward"
+        },
+        sink: {
+            func: (x, y, z) => new THREE.Vector3(-x, -y, -z).multiplyScalar(0.5),
+            desc: "\\(\\langle -x, -y, -z \\rangle\\)",
+            div: "-3.0 (Constant Sink)",
+            flux: "Strongly Inward"
+        },
+        zero: {
+            func: (x, y, z) => new THREE.Vector3(y, -x, 0.1).multiplyScalar(0.5),
+            desc: "\\(\\langle y, -x, 0.1 \\rangle\\)",
+            div: "0.0 (Solenoidal)",
+            flux: "Zero Net Flux (In = Out)"
+        },
+        complex: {
+            func: (x, y, z) => new THREE.Vector3(x*x, y-z, z*z).multiplyScalar(0.3),
+            desc: "\\(\\langle x^2, y-z, z^2 \\rangle\\)",
+            div: "2x + 1 + 2z (Variable)",
+            flux: "Mixed (Depends on V)"
+        }
+    };
+
+    let currentField = 'source';
+
+    function createVectorField() {
+        // Clear existing arrows
+        while(vectorFieldGroup.children.length > 0){ 
+            vectorFieldGroup.remove(vectorFieldGroup.children[0]); 
+        }
+
+        const func = fieldDefinitions[currentField].func;
+        const spacing = 0.5;
+        const range = 2;
+
+        for (let x = -range; x <= range; x += spacing) {
+            for (let y = -range; y <= range; y += spacing) {
+                for (let z = -range; z <= range; z += spacing) {
+                    
+                    const pos = new THREE.Vector3(x, y, z);
+                    const dir = func(x, y, z);
+                    const length = dir.length();
+
+                    if (length < 0.01) continue; // Don't draw tiny arrows
+
+                    const normalizeDir = dir.clone().normalize();
+                    
+                    // Color based on intersection with sphere
+                    let color = 0xaaaaaa; // Default outside color
+                    const dist = pos.distanceTo(new THREE.Vector3(0,0,0));
+                    
+                    if (dist < 1.0) {
+                        // Inside sphere - color by field type
+                        if (currentField === 'source') color = 0x27ae60; // Green for expansion
+                        else if (currentField === 'sink') color = 0xc0392b; // Red for compression
+                        else color = 0xffff00; // Yellow for zero div
+                    }
+
+                    const arrowHelper = new THREE.ArrowHelper(
+                        normalizeDir, 
+                        pos, 
+                        Math.min(length, 0.4), // Cap length for visual clarity
+                        color,
+                        0.1, // Head length
+                        0.05 // Head width
+                    );
+                    vectorFieldGroup.add(arrowHelper);
+                }
+            }
+        }
+    }
+
+    // --- UI Interaction ---
+
+    // Field Selector
+    document.getElementById('fieldSelect').addEventListener('change', (e) => {
+        currentField = e.target.value;
+        createVectorField();
+        
+        // Update UI data
+        const data = fieldDefinitions[currentField];
+        document.getElementById('field-desc').innerHTML = data.desc;
+        document.getElementById('div-val').innerText = data.div;
+        document.getElementById('flux-state').innerText = data.flux;
+        
+        // Re-render MathJax
+        MathJax.typeset();
+    });
+
+    // Opacity Slider
+    document.getElementById('opacityRange').addEventListener('input', (e) => {
+        sphere.material.opacity = parseFloat(e.target.value);
+    });
+
+    // --- Animation Loop ---
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update(); // required for damping
+        renderer.render(scene, camera);
+    }
+
+    // --- Initialization & Resizing ---
+    window.addEventListener('resize', onWindowResize, false);
+
+    function onWindowResize() {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    // Start
+    createVectorField();
+    animate();
+
+</script>
+</body>
+</html>
